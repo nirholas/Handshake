@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T01:54:47.940Z",
+	"generated_at": "2026-09-04T02:00:38.891Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -15,6 +15,16 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Agent wallets can pay three.ws on X Layer again",
+			"summary": "Buying agents that pay for a 3D generation on X Layer sign their payment with a wallet that carries an on-chain delegation, which is how every OKX agent wallet is built. Our checker judged those signatures with a contract call that answers a different question, so it turned away correct, fully funded payments and quoted the price a second time instead of doing the work. Payments are now checked the same way the stablecoin itself checks them, so a signed authorization that the network would honour is one we accept.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

@@ -6,6 +6,83 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-04, the third defect: OKX's QA did reach the payment stage, and we rejected its signature
+
+Parallel session to the 402-shape work below, same rejection, different leg. The reviewer's
+internal note says the flow "has not entered the payment stage". The production access log
+says otherwise, and the log is the primary source: **OKX's listing QA presented a real,
+signed, funded payment on 2026-08-27 and every one of the four paid rows answered it with a
+second 402.**
+
+### What the wire says
+
+`Java-http-client/17.0.8.1` from `8.212.100.234` / `8.212.101.240` (Alibaba Cloud), 11
+requests in 18 seconds, exactly our five listed forge rows plus `/catalog` and `/health`,
+minutes after the 2026-08-27 resubmission. Two POSTs per paid row:
+
+| row | probe 1 | probe 2 |
+|---|---|---|
+| forge-draft | 569 B → 402 in 0.115 s | **1716 B → 402 in 0.468 s** |
+| forge-standard | 521 B → 402 in 0.154 s | **1676 B → 402 in 0.707 s** |
+| forge-hd | 478 B → 402 in 0.104 s | **1624 B → 402 in 0.402 s** |
+| forge-image | 683 B → 402 in 0.011 s | **1836 B → 402 in 0.416 s** |
+
+The second request of each pair is ~1.15 kB larger: a `PAYMENT-SIGNATURE` header. It cost
+0.4 s to 0.7 s of RPC where the unpaid probe cost milliseconds, so we ran chain work and
+then refused. And each paid response body is 65 to 69 bytes larger than its unpaid sibling,
+which after the base64 `PAYMENT-REQUIRED` mirror is a 57-character `error` string. The only
+57-character error our X Layer verifier can emit behind an RPC call is
+`EIP-3009 signature does not verify for authorization.from`.
+
+### Why a correct signature failed
+
+**Every OKX agentic wallet is an EIP-7702 delegated EOA.** `eth_getCode` for their audit
+address `0xbc59eb75C55e3bF1E63aaeE653C2b8E02BFd2033` returns
+`0xef0100e40ccb2d94975c51bff0c004efdfd9b3a5796fa4`, the 23-byte delegation designator, and
+the address holds **19.550213 USD₮0**, so it was funded the whole time. Our own buyer
+`0x75d0…cf69` carries the same shape.
+
+`verifyOkxXLayerPayment()` asked viem's `client.verifyTypedData`. With code at the address
+that helper takes its contract branch, calls the delegate's ERC-1271 `isValidSignature`
+(present in the delegate, confirmed by selector), and the delegate answers over its own
+replay-safe wrapper hash, not the raw EIP-712 digest EIP-3009 signs. It returns `false`
+cleanly, so viem never falls back to plain recovery, and we rejected a perfectly good
+authorization. Anyone paying us on this rail from an OKX wallet hit this, so funding our own
+buyer would NOT have fixed the listing: the WO-04 gauntlet would have failed the same way
+with money committed.
+
+**The token disagrees with the helper, and the token is the authority.** USD₮0's
+`transferWithAuthorization` recovers ECDSA first. Proven read-only against X Layer mainnet:
+simulating the redemption for a signer state-overridden with the OKX delegation designator
+is **accepted, no revert**, exactly like a plain EOA.
+
+### Fixed
+
+`eip3009SignatureIsValid()` in `api/_lib/x402-xlayer-okx.js` now checks the way the token
+checks: recover the EIP-712 signature and compare to `authorization.from` first (no RPC at
+all in the common case, so it is also a round trip cheaper), and fall back to the on-chain
+ERC-1271/6492 path only when recovery cannot name the payer, which is what a real smart
+account needs. Nothing else about the money changes: recipient, amount, time window, unused
+nonce and `balanceOf` are all still enforced, and there is still no per-address logic of any
+kind, so the note in the entry below stays true.
+
+Five regression tests in `tests/api/okx-xlayer-verify.test.js`, signing with a real key
+against USD₮0's real domain and mocking only the RPC boundary: a delegated payer whose
+ERC-1271 says no still verifies, a smart account that is not ECDSA-recoverable still
+verifies through 1271, a foreign signature is still refused, a wrong recipient still dies
+before any chain read, and an empty wallet still answers `insufficient_balance`.
+
+The rail contract is updated with the rule and the evidence: `specs/okx-agent-payments.md`
+§1.2a.
+
+### Next
+
+Deploy (owner-gated) alongside the 402-shape fixes below, then resubmit. On the resubmission
+the QA replay should settle for real, on-chain, from their funded audit wallet, which also
+makes it the first funded settlement this rail has ever taken.
+
+---
+
 ## 2026-09-04, listing rejection #3 root-caused on the wire: two defects in the 402, both fixed
 
 OKX rejected the resubmission with the same sentence on all four paid rows ("failed the

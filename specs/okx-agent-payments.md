@@ -118,6 +118,44 @@ On a request that carries the payment header, the seller calls the **OKX facilit
 
 Source: SDK-REPO `app-x402-core/src/facilitator/OKXFacilitatorClient.ts` (verify L92-115, settle L124-150), `app-x402-core/src/http/x402HTTPResourceServer.ts` (header read L1560, `PAYMENT-RESPONSE` emit L1663-1676), `app-x402-core/src/http/index.ts` (base64 codecs L17-80). Live-confirmed by PAY-LEG1/2.
 
+### 1.2a Signature check order: recover first, ERC-1271 second (EIP-7702 buyers)
+
+**Every OKX agentic wallet on X Layer is an EIP-7702 delegated EOA**, not a plain EOA and not
+a deployed smart account. `eth_getCode` on one returns the 23-byte delegation designator
+`0xef0100 || implementation`: verified 2026-09-04 for the OKX audit test address
+`0xbc59eb75C55e3bF1E63aaeE653C2b8E02BFd2033` (delegate `0xe40ccb2d…96fa4`, holding 19.550213
+USD₮0) and for our own buyer `0x75d0…cf69`.
+
+That makes verification-by-contract-call wrong for this rail. A seller that hands the
+authorization to a generic "is this signature valid for this address" helper (viem's
+`verifyTypedData`, ethers' `isValidSignature` wrappers) gets the **contract** branch, because
+the address has code: the helper calls the delegate's ERC-1271 `isValidSignature`, the
+delegate answers over its own replay-safe wrapper hash rather than the raw EIP-712 digest,
+and the check returns `false` for a signature the wallet's own key produced correctly.
+
+The token does not judge it that way, and the token is the authority: USD₮0's
+`transferWithAuthorization` recovers the ECDSA signature first (ERC-1271 is only its
+fallback). Proven read-only against mainnet on 2026-09-04 by simulating the redemption with
+a state-overridden delegated signer: **accepted, no revert**, identical to a plain EOA.
+
+**Rule: recover the EIP-712 signature and compare to `authorization.from` FIRST; only when
+recovery cannot name the payer (a real smart account, an ERC-6492 wrapper) fall back to the
+on-chain ERC-1271/6492 check.** Implemented in `eip3009SignatureIsValid()`
+([x402-xlayer-okx.js](../api/_lib/x402-xlayer-okx.js)), covered by
+`tests/api/okx-xlayer-verify.test.js`.
+
+**Wire evidence (why this is not theoretical).** OKX's listing QA ran against production on
+2026-08-27T00:53:47Z-00:53:58Z from `Java-http-client/17.0.8.1` (8.212.100.234 /
+8.212.101.240), two POSTs per paid row: an unpaid probe (402, ~480-680 B request) then a
+signed replay (~1.6-1.8 kB request, i.e. the `PAYMENT-SIGNATURE` header). Every replay was
+answered **402 again**, 0.40-0.71 s of RPC latency each, and each response body grew by
+exactly the bytes of a 57-character `error` over the unpaid one: the length of
+`EIP-3009 signature does not verify for authorization.from`. The 2026-09-04 rejection
+("failed the official test, we are unable to verify the availability of your service", plus
+the internal note that the flow "has not entered the payment stage") is that rejection,
+seen from their side.
+
+
 ### 1.3 The paid-replay header (buyer → seller)
 
 The buyer replays the original request adding **`PAYMENT-SIGNATURE: <base64 PaymentPayload>`**. The decoded payload we must accept (from PAY-LEG1, our real signature):
@@ -236,7 +274,7 @@ of the presented payment. Spec → code map (file:line at landing commit `05de05
 | §1.1 | Advertise the accept only when settlement is actually possible (never 402-then-502) | [`xlayerSettleable()`](../api/_lib/x402-xlayer-okx.js#L179-L185); wired into [`paymentRequirements()`](../api/_lib/x402-spec.js#L239-L246) after the Solana/Base/BSC accepts (multi-rail coexistence, requirement 4) |
 | §1.1 amount | Advertised == verified == settled, all from `priceBatch`/`studioX402Amount` (requirement 6) | The X Layer accept takes `common.amount` (the per-tool price) unchanged, USD₮0 shares USDC's 6-decimal atomic scale, so `150000` = $0.15 across every rail. [x402-spec.js#L245](../api/_lib/x402-spec.js#L245) |
 | §1.2 step 3, G6 | Route verify/settle to the OKX rail by network | [`facilitatorFor()` → `{okxXLayer:true}`](../api/_lib/x402-spec.js#L287-L292) for `eip155:196` |
-| §1.2 step 4, requirement 2 | Verify BEFORE work, real EIP-712 recovery (ERC-1271-aware for smart-account wallets), recipient/amount/time-window checks, unused-nonce + `balanceOf` on-chain, then the OKX facilitator `/verify` when credentialed | [`verifyOkxXLayerPayment()`](../api/_lib/x402-xlayer-okx.js#L272-L416); dispatched from [`verifyPayment()`](../api/_lib/x402-spec.js#L1014-L1022). Invalid/underpaid/expired throws `X402Error` 402 → fresh challenge, tool does not run |
+| §1.2 step 4, §1.2a, requirement 2 | Verify BEFORE work: EIP-712 ECDSA recovery FIRST, ERC-1271/6492 only as the fallback (§1.2a, EIP-7702 buyers), recipient/amount/time-window checks, unused-nonce + `balanceOf` on-chain, then the OKX facilitator `/verify` when credentialed | [`verifyOkxXLayerPayment()`](../api/_lib/x402-xlayer-okx.js#L272-L416); dispatched from [`verifyPayment()`](../api/_lib/x402-spec.js#L1014-L1022). Invalid/underpaid/expired throws `X402Error` 402 → fresh challenge, tool does not run |
 | §1.2 step 6, §1.4, requirement 3 | Settle only after tool success; OKX facilitator `/settle` (`syncSettle:true`) primary, direct EIP-3009 redemption fallback; return `{success,status,transaction,payer,amount}` | [`settleOkxXLayerPayment()`](../api/_lib/x402-xlayer-okx.js#L442-L530); dispatched from [`settlePayment()`](../api/_lib/x402-spec.js#L1110-L1120). Called only after `anySuccess` in [mcp-3d.js](../api/mcp-3d.js#L103-L119) and [okx/3d/[service].js](../api/okx/3d/%5Bservice%5D.js#L377-L392) |
 | §1.3, G7 | Read the buyer's `PAYMENT-SIGNATURE` (x402 v2) header; parse the OKX `{accepted, payload:{authorization,signature}}` dialect | [auth.js reads `payment-signature`](../api/_mcp/auth.js#L94-L97); [`selectRequirement()` matches `paymentPayload.accepted.network`](../api/_lib/x402-spec.js#L786-L792); [`extractAuthorization()`](../api/_lib/x402-xlayer-okx.js#L237-L249) |
 | §1.4, G8 | Emit `PAYMENT-RESPONSE` (x402 v2) receipt with `status`+`amount`; keep `x-payment-response` (v1) as an alias | [`encodePaymentResponseHeader()`](../api/_lib/x402-spec.js#L1169-L1186) now passes through `status`/`amount`; both header names set in [mcp-3d.js#L108-L116](../api/mcp-3d.js#L108-L116) and [service].js; both added to the [CORS expose list](../api/_lib/http.js#L383-L386) |

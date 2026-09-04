@@ -20,7 +20,8 @@
 //      resource }, note `accepted`, not the standard x402 top-level
 //      scheme/network fields.
 //   4. Verification is seller-side and on-chain: EIP-712 signature recovery
-//      (ERC-1271-aware, OKX agentic wallets may be smart accounts), recipient/
+//      first, then ERC-1271/6492 (OKX agentic wallets are EIP-7702 delegated
+//      EOAs, so the order matters, see eip3009SignatureIsValid), recipient/
 //      amount/time-window checks, unused authorizationState, and a balanceOf
 //      check. Insufficient balance re-issues the 402 with top-level
 //      error:"insufficient_balance", the exact behavior captured from the
@@ -45,6 +46,7 @@ import {
 	fallback,
 	getAddress,
 	http,
+	recoverTypedDataAddress,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { xLayer } from 'viem/chains';
@@ -271,6 +273,50 @@ function asBigInt(value, field) {
 	}
 }
 
+// Is this EIP-3009 authorization signed by `from`, judged the way USD₮0's own
+// transferWithAuthorization judges it: recover the ECDSA signature first, and
+// only ask an on-chain contract when recovery does not name the payer.
+//
+// The order is load-bearing, not a micro-optimisation. Every OKX agentic wallet
+// on X Layer is an EIP-7702 delegated EOA: the address holds 23 bytes of
+// delegation code (`0xef0100 || implementation`), so viem's verifyTypedData
+// takes its contract branch, calls the delegate's ERC-1271 isValidSignature,
+// and returns false for a signature the EOA's own key produced. The delegate
+// answers 1271 over its own replay-safe wrapper hash, never the raw EIP-712
+// digest that EIP-3009 requires. That is what OKX's 2026-08-27 listing QA hit:
+// its buyer signed a correct, fully funded authorization from
+// 0xbc59eb75C55e3bF1E63aaeE653C2b8E02BFd2033 and we answered a second 402
+// ("EIP-3009 signature does not verify for authorization.from"), which the
+// review reported as the service failing its payment test. Recovery first
+// matches the token: it redeems on ecrecover, so any signature accepted here
+// is one the settlement transaction can actually spend.
+//
+// The ERC-1271/6492 branch stays for real smart accounts, whose proofs are not
+// recoverable ECDSA at all.
+async function eip3009SignatureIsValid({ client, from, domain, message, signature }) {
+	try {
+		const recovered = await recoverTypedDataAddress({
+			domain,
+			types: TRANSFER_WITH_AUTHORIZATION_TYPES,
+			primaryType: 'TransferWithAuthorization',
+			message,
+			signature,
+		});
+		if (getAddress(recovered) === from) return true;
+	} catch {
+		// Not a 65-byte ECDSA signature (a smart account's proof can be any
+		// length or an ERC-6492 wrapper), so let the on-chain check answer.
+	}
+	return client.verifyTypedData({
+		address: from,
+		domain,
+		types: TRANSFER_WITH_AUTHORIZATION_TYPES,
+		primaryType: 'TransferWithAuthorization',
+		message,
+		signature,
+	});
+}
+
 // Verify an OKX/X Layer EIP-3009 payment end to end WITHOUT trusting any
 // third party: typed-data signature (ERC-1271-aware via the public client, so
 // smart-account agentic wallets verify too), recipient binding, amount, time
@@ -318,22 +364,22 @@ export async function verifyOkxXLayerPayment({ paymentPayload, requirement }) {
 	const asset = asAddress(requirement.asset || env.X402_ASSET_ADDRESS_XLAYER, 'requirement.asset');
 	const client = xlayerClient();
 
-	// EIP-712 recovery. Domain name/version come from the requirement's extra
-	// block (what the buyer signed against) with the on-chain-verified USD₮0
-	// defaults. verifyTypedData on a PUBLIC client falls back to ERC-6492/1271
-	// isValidSignature for contract accounts.
+	// EIP-712 signature check, in the order the TOKEN itself checks it (see
+	// eip3009SignatureIsValid): plain ECDSA recovery first, ERC-1271/6492 only
+	// when recovery does not name the payer. Domain name/version come from the
+	// requirement's extra block (what the buyer signed against) with the
+	// on-chain-verified USD₮0 defaults.
 	let sigOk = false;
 	try {
-		sigOk = await client.verifyTypedData({
-			address: from,
+		sigOk = await eip3009SignatureIsValid({
+			client,
+			from,
 			domain: {
 				name: requirement.extra?.name || USDT0_DOMAIN_NAME,
 				version: requirement.extra?.version || USDT0_DOMAIN_VERSION,
 				chainId: XLAYER_CHAIN_ID,
 				verifyingContract: asset,
 			},
-			types: TRANSFER_WITH_AUTHORIZATION_TYPES,
-			primaryType: 'TransferWithAuthorization',
 			message: {
 				from,
 				to,
