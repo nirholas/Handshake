@@ -1,5 +1,5 @@
 {
-	"updated": "2026-09-03",
+	"updated": "2026-09-04",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -1179,6 +1179,22 @@
 					}
 				},
 				"expect": "guard-proof.example.com"
+			}
+		},
+		{
+			"id": "audit-ibm-hosted-page",
+			"script": "scripts/audit-ibm-hosted-page.mjs",
+			"npm": "audit:ibm-hosted",
+			"title": "The IBM partnership page still works on the host that serves it",
+			"protects": "pages/ibm/hello.html keeps working from a foreign origin: every three.ws file it reads answers with a cross-origin header, the live document it swaps in names no root-relative URL, and the page raises no console error.",
+			"why": "That page is uploaded once onto a domain we do not control, so every asset it names and every document it fetches is a cross-origin request. Both ways it breaks are invisible to audit:console, which loads it from three.ws where all of it is same-origin. A missing access-control-allow-origin froze the hosted copy on its baked baseline, killed the language switcher and left the paid demo unarmed on 2026-09-04 while the same page on three.ws was perfect, and a root-relative URL inside the fetched live document resolves against the publisher, asking their domain for a file only we have. Reproducing the hosted deployment (a throwaway publisher origin, a real network hop to three.ws, no stubs) is the only way a browser applies its real cross-origin rules to it.",
+			"stages": [
+				"manual"
+			],
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "Serves pages/ibm/ from a throwaway origin and lets it talk to a real three.ws over the network, because the thing under test is the browser enforcing cross-origin rules against live response headers. Any stub or proxy would answer for three.ws and satisfy CORS on the browser behalf, blinding the audit to the only failure it exists to catch."
 			}
 		}
 	],
