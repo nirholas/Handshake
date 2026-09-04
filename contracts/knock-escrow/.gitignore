@@ -1,0 +1,13 @@
+# Build output
+/target
+.anchor
+test-ledger
+
+# Local deploy keypairs / authority secrets. The program keypair that backs the
+# declare_id! in src/lib.rs lives in ~/.config/solana and a secret manager, and
+# is never committed here.
+/.deploy
+*-keypair.json
+*program*.json
+*deployer*.json
+*authority*.json

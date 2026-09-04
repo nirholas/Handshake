@@ -1,0 +1,37 @@
+# Self-contained workspace so `cargo build-sbf` here never walks up into an
+# unrelated parent workspace. Matches contracts/skill-license.
+[workspace]
+
+[package]
+name = "knock-escrow"
+version = "0.1.0"
+description = "Escrowed, refundable payments for a knock: a priced message to a person that pays out only against a reply."
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/nirholas/three.ws"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "knock_escrow"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+anchor-lang = "0.31.1"
+anchor-spl = "0.31.1"
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[profile.release.build-override]
+opt-level = 3
+incremental = false
+codegen-units = 1
