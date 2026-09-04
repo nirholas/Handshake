@@ -78,8 +78,8 @@
 	// list mixes 90 KB props with a 10.7 MB scan, and taking its first entry put
 	// a 4.6 MB model on the critical path of every homepage visit: Lighthouse
 	// desktop measured 29.7 s of total blocking time, against 9.6 s for the same
-	// page with the GLB withheld. Two megabytes still buys a rigged, textured,
-	// animated humanoid; it does not buy a raw photogrammetry capture.
+	// page with the GLB withheld. Two and a half megabytes still buys a rigged,
+	// textured, animated humanoid; it does not buy a raw photogrammetry capture.
 	const HERO_GLB_BUDGET_BYTES = 2_500_000;
 
 	// The curated hero avatar can disappear (deleted, or a fresh deploy whose

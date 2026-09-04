@@ -861,6 +861,10 @@ const WALK_AUTO_SKIP =
 // it shows up while the page is still loading.
 const WALK_AUTO_QUIET_MS = 1200;
 const WALK_AUTO_GIVE_UP_MS = 20_000;
+// Used only where `longtask` is not reportable, so there is nothing to wait for.
+// It is the delay the old schedule already gave those browsers (2s after load,
+// then a 1.5s timer), kept as-is so this change moves nobody's companion earlier.
+const WALK_AUTO_NO_SIGNAL_MS = 3500;
 
 function initCompanionAutoStart() {
 	// Every check lives inside the deferred callback: boot() can run while this
@@ -886,15 +890,16 @@ function initCompanionAutoStart() {
 		window.dispatchEvent(new CustomEvent('walk-companion:change'));
 	};
 
-	// Resolve once no `longtask` entry has been observed for WALK_AUTO_QUIET_MS,
-	// or reject by resolving false once WALK_AUTO_GIVE_UP_MS has passed. A
-	// browser without the longtask entry type (Safari) has no way to tell busy
-	// from idle, so it keeps the previous behaviour: one deferred idle callback.
+	// Calls `onQuiet` once no `longtask` entry has been observed for
+	// WALK_AUTO_QUIET_MS, and never calls it at all if WALK_AUTO_GIVE_UP_MS
+	// passes first. A browser without the longtask entry type (Safari) cannot
+	// tell busy from idle, so it keeps the delay the old schedule gave it and
+	// always proceeds.
 	const whenQuiet = (onQuiet) => {
 		const Observer = window.PerformanceObserver;
 		const types = (Observer && Observer.supportedEntryTypes) || [];
 		if (!Observer || types.indexOf('longtask') === -1) {
-			setTimeout(onQuiet, WALK_AUTO_QUIET_MS);
+			setTimeout(onQuiet, WALK_AUTO_NO_SIGNAL_MS);
 			return;
 		}
 		let quietTimer = 0;
@@ -918,7 +923,7 @@ function initCompanionAutoStart() {
 		} catch (_) {
 			// Observing longtask can throw on browsers that list the type but do
 			// not implement it. Fall back to the timer rather than never booting.
-			setTimeout(onQuiet, WALK_AUTO_QUIET_MS);
+			setTimeout(onQuiet, WALK_AUTO_NO_SIGNAL_MS);
 			return;
 		}
 		giveUpTimer = setTimeout(stop, WALK_AUTO_GIVE_UP_MS);
