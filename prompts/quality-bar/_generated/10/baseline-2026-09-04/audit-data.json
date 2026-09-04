@@ -1,0 +1,67 @@
+{
+	"startedAt": "2026-09-04T08:22:27.364Z",
+	"finishedAt": null,
+	"baseUrl": "https://three.ws",
+	"cases": {
+		"a": {
+			"id": "a",
+			"label": "Athlete",
+			"prompt": "A synthetic persona, not a real person: a professional sprinter in her late twenties, lean muscular build, short natural curls, wearing a fitted team tracksuit and running shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {}
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"b": {
+			"id": "b",
+			"label": "Grandmother",
+			"prompt": "A synthetic persona, not a real person: a grandmother in her seventies, soft build, silver hair pinned in a bun, reading glasses, wearing a knitted cardigan over a floral blouse and a long skirt with flat shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {}
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"c": {
+			"id": "c",
+			"label": "Stylized kid (child-safe)",
+			"prompt": "A clearly stylized cartoon toy character of a child: chunky vinyl-figure proportions, oversized round head, simple mitten-like hands, matte toy-plastic finish with visible seam lines, painted-on facial features, wearing dungarees and a striped shirt, standing upright with arms slightly away from the body. Deliberately non-photoreal: a collectible vinyl figure, never a photographic human child.",
+			"subjectClass": "person",
+			"stylized": true,
+			"variants": {},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		}
+	},
+	"variants": [
+		{
+			"id": "before",
+			"tier": "standard"
+		},
+		{
+			"id": "after",
+			"tier": "high"
+		}
+	],
+	"judge": {
+		"model": "google/gemini-2.5-pro",
+		"maxTokens": 4096,
+		"callsPerView": 2
+	}
+}
