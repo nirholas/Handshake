@@ -492,7 +492,9 @@ export function classifyOkxChatBotBeat(beat, now = Date.now()) {
 		detail: String(meta.detail || `bot reports ${reported}`),
 		hint: meta.needsHumanLogin
 			? 'The OKX wallet session expired and only a human can renew it (email OTP as claude@three.ws). The live login URL and the exact three commands are on the host: curl -s $OKX_BOT_URL/readyz | jq .remedy'
-			: 'Read the host logs: gcloud logging read \'resource.labels.service_name="okx-chat-bot"\' --freshness=1h --project aerial-vehicle-466722-p5.',
+			: meta.reason === 'ai_provider_unauthorized'
+				? 'The AI credential is configured but the provider refuses it (an expired key, or an account that cannot bill). Chat still arrives and no reply is ever authored. The three ways out are on the host: curl -s $OKX_BOT_URL/readyz | jq .remedy'
+				: 'Read the host logs: gcloud logging read \'resource.labels.service_name="okx-chat-bot"\' --freshness=1h --project aerial-vehicle-466722-p5.',
 	};
 }
 

@@ -13,31 +13,40 @@
 # daemon, not a request handler), and --no-cpu-throttling keeps it ticking when
 # no HTTP request is in flight.
 #
-# ── ONE-TIME SETUP (run once per project, never commit secret values) ─────────
-# Steps 1 and 2 were run on 2026-09-02 and are DONE: the bucket exists and is
-# versioned, and okx-chat-bot-database-url was created from the project's own
-# DATABASE_URL secret. Both grant three-ws@ the role below. The AI-provider
-# secret is the only one left, and its value is owner-only.
-#   # 1. State bucket. Versioning is the undo button for a torn snapshot.
-#   gcloud storage buckets create gs://three-ws-okx-bot-state \
-#     --location=us-central1 --uniform-bucket-level-access --project aerial-vehicle-466722-p5
-#   gcloud storage buckets update gs://three-ws-okx-bot-state --versioning
-#   gcloud storage buckets add-iam-policy-binding gs://three-ws-okx-bot-state \
-#     --member=serviceAccount:three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
-#     --role=roles/storage.objectAdmin
+# ── ONE-TIME SETUP: DONE (2026-09-02 / 2026-09-04) ───────────────────────────
+# Nothing below needs running again; it is recorded so the next reader knows
+# what the deploy depends on.
+#   1. State bucket (versioning is the undo button for a torn snapshot):
+#      gcloud storage buckets create gs://three-ws-okx-bot-state \
+#        --location=us-central1 --uniform-bucket-level-access --project aerial-vehicle-466722-p5
+#      gcloud storage buckets update gs://three-ws-okx-bot-state --versioning
+#      gcloud storage buckets add-iam-policy-binding gs://three-ws-okx-bot-state \
+#        --member=serviceAccount:three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
+#        --role=roles/storage.objectAdmin
+#   2. Heartbeat DB secret, copied from the project's own DATABASE_URL so the two
+#      cannot drift, with secretAccessor granted to three-ws@:
+#      printf '%s' "$DATABASE_URL" | gcloud secrets create okx-chat-bot-database-url --data-file=-
+#   3. The AI credential. There is no secret to create: three-ws@ already holds
+#      roles/aiplatform.user, so CLAUDE_CODE_USE_VERTEX below authenticates the
+#      spawned Claude Code subsession with the runtime service account through
+#      ADC. Nothing to mint, rotate, or forget.
 #
-#   # 2. Secrets. DATABASE_URL feeds the heartbeat that /api/healthz reads.
-#   printf '%s' "$DATABASE_URL" | gcloud secrets create okx-chat-bot-database-url --data-file=-
-#   # AI-provider credential (OWNER ACTION, see the README): one of
-#   printf '%s' "$ANTHROPIC_API_KEY" | gcloud secrets create anthropic-api-key --data-file=-
-#   printf '%s' "$OPENAI_API_KEY"    | gcloud secrets create openai-api-key --data-file=-
-#   for s in okx-chat-bot-database-url anthropic-api-key openai-api-key; do \
-#     gcloud secrets add-iam-policy-binding "$s" \
-#       --member=serviceAccount:three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
-#       --role=roles/secretmanager.secretAccessor; done
+# ── WHY THIS DEPLOYS WITHOUT AN AI SECRET ────────────────────────────────────
+# It used to demand an `anthropic-api-key` secret and fail loudly without one, on
+# the reasoning that a bot receiving buyer chat it can never answer is worse than
+# a refused deploy. That reasoning was right about the failure and wrong about the
+# remedy: the key was never minted, so the deploy simply never happened and chat
+# was delivered by a codespace that dies every night.
 #
-#   # 3. Optional Telegram push for the session-expired alert (it always lands on
-#   #    /admin/ops regardless). Reuse the existing alert secrets if present.
+# Vertex removes the trade. The credential IS the runtime service account, so it
+# cannot be missing, and the case the old gate really guarded against (a
+# credential that is present but refused) is now caught at runtime instead:
+# provider.js asks the provider on every boot and every 15 minutes, and a refusal
+# reports `ai_provider_unauthorized`, fails /readyz, pages ops, and puts the three
+# ways out in the /readyz `remedy`. Measured on 2026-09-04, both of this project's
+# existing credentials are present and refused (Vertex answers "Lightning dunning
+# decision is deny", a billing hold; the openai-api-key account answers
+# billing_not_active), which is exactly the state a presence check calls green.
 #
 # ── AFTER THE FIRST DEPLOY ────────────────────────────────────────────────────
 # The bot boots logged out (there is no snapshot yet) and pages for a human OTP.
@@ -96,15 +105,20 @@ steps:
       - --timeout=3600
       - --no-allow-unauthenticated
       - --service-account=three-ws@$PROJECT_ID.iam.gserviceaccount.com
-      - --set-env-vars=NODE_ENV=production,OKX_BOT_HOME=/state,OKX_BOT_REPO_ROOT=/app,OKX_BOT_AGENT_ID=2632,OKX_BOT_STATE_BUCKET=${_STATE_BUCKET}
-      # The AI-provider key belongs HERE, not patched on after the deploy:
-      # --set-secrets replaces the whole secret set, so a key added by hand would
-      # be silently stripped by the next deploy. The bot would then receive buyer
-      # chat and never answer it, which is the exact failure this worker exists to
-      # kill. A missing secret failing the deploy loudly is the better trade.
-      # Switching the provider to codex means swapping BOTH the variable name and
-      # the secret here (see workers/okx-chat-bot/config.js).
-      - --set-secrets=DATABASE_URL=okx-chat-bot-database-url:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest
+      # OKX_A2A_AI_PERMISSION_PRESET is load-bearing on a headless host: without
+      # bypass the spawned subsession stalls on a tool-approval prompt nobody is
+      # there to answer, and the buyer experiences that as an unresponsive bot.
+      # CLAUDE_CODE_USE_VERTEX points the subsession at Vertex AI, authenticated
+      # by three-ws@ through ADC (roles/aiplatform.user, already granted).
+      - --set-env-vars=NODE_ENV=production,OKX_BOT_HOME=/state,OKX_BOT_REPO_ROOT=/app,OKX_BOT_AGENT_ID=2632,OKX_BOT_STATE_BUCKET=${_STATE_BUCKET},OKX_A2A_AI_PERMISSION_PRESET=bypass,CLAUDE_CODE_USE_VERTEX=1,ANTHROPIC_VERTEX_PROJECT_ID=$PROJECT_ID,CLOUD_ML_REGION=global
+      # An API key, if one is ever preferred over Vertex, belongs HERE and not
+      # patched on afterwards: --set-secrets replaces the whole secret set, so a
+      # hand-added key is silently stripped by the next deploy. Add
+      # ANTHROPIC_API_KEY=anthropic-api-key:latest (or, for codex,
+      # OPENAI_API_KEY=openai-api-key:latest plus OKX_BOT_AI_PROVIDER=codex above)
+      # once the secret exists; resolveProvider in config.js prefers Vertex over
+      # both, so drop CLAUDE_CODE_USE_VERTEX when you mean to use the key.
+      - --set-secrets=DATABASE_URL=okx-chat-bot-database-url:latest
       # Liveness only. Readiness is deliberately NOT wired to Cloud Run: a
       # logged-out session fails /readyz and no restart can fix it, so probing it
       # here would put the service in a crash loop instead of paging a human.
