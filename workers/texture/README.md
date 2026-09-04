@@ -32,11 +32,20 @@ other half of "the surface reads as real" this campaign targets.
 ## Status: built, not currently deployed
 
 There is **no `texture-service` running in `aerial-vehicle-466722-p5`** (checked
-in every region on 2026-08-11: no Cloud Run service, no Artifact Registry repo),
-and `three-ws-api` carries no `GCP_TEXTURE_URL`. Both callers below therefore
-take their designed missing-lane path today: the HTTP gateway answers `501
-region_retex_unconfigured` and the MCP tool raises a JSON-RPC error naming the
-two env vars. Nothing is faked and no other lane is affected. Re-check with:
+in every region on 2026-08-11 and again on 2026-09-04: no Cloud Run service, no
+Artifact Registry repo), and `three-ws-api` carries no `GCP_TEXTURE_URL`. Both
+callers below therefore take their designed missing-lane path today: the HTTP
+gateway answers `501 region_retex_unconfigured` (verified live against
+three.ws on 2026-09-04) and the MCP tool raises a JSON-RPC error naming the two
+env vars. Nothing is faked and no other lane is affected.
+
+**Step 1 of "Bringing it up" is already done.** The checkpoints were staged on
+2026-09-04: `gs://three-ws-model-weights/sdxl-texture` holds 15.7 GiB across
+the four repos below, so a deploy no longer has to download SDXL inside the
+first request. Only the two `gcloud` commands (build/deploy, then point the site
+at the service) remain, and both need owner approval per the deploy gate in
+CLAUDE.md. Re-check the staged tree with `gsutil du -s
+gs://three-ws-model-weights/sdxl-texture`; re-check the service with:
 
 ```bash
 gcloud run services list --project aerial-vehicle-466722-p5 --region us-central1 | grep texture
@@ -59,7 +68,7 @@ Bringing it up is three commands, in this order:
 # 1. stage the checkpoints (~15 GiB, once, and again on any checkpoint change).
 #    Needs huggingface_hub and google-cloud-storage on the host, and credentials
 #    the storage client can find (a service account, or gcloud application
-#    default credentials).
+#    default credentials). DONE on 2026-09-04; re-run only on a checkpoint change.
 python3 workers/texture/stage_weights.py --prefix sdxl-texture
 
 # 2. build + deploy from the repo root (the build step declares dir: workers/texture,

@@ -466,9 +466,12 @@ async function probeMcp(path, label) {
 	const tools = list.json?.result?.tools || [];
 	record(`${label} tools/list`, `POST ${path}`, list.status === 200 && tools.length > 0, list.status === 200 ? `${tools.length} tools` : `HTTP ${list.status}: ${list.text.slice(0, 140)}`);
 	if (!tools.length) return;
-	// Call the cheapest read-only tool the server advertises, so a probe never
-	// bills a generation just to prove the JSON-RPC surface answers.
-	const readOnly = tools.find((t) => /catalog|list|capabilit|health|search|browse/i.test(t.name));
+	// Call a tool the server itself advertises as FREE, so a probe never bills a
+	// generation just to prove the JSON-RPC surface answers. mcp-3d marks its
+	// free tools in the description; fall back to a read-only-sounding name.
+	const readOnly =
+		tools.find((t) => /\bFREE\b/.test(t.description || '')) ||
+		tools.find((t) => /catalog|list|capabilit|health|search|browse/i.test(t.name));
 	if (!readOnly) return record(`${label} tools/call`, `POST ${path}`, 'skip', 'no read-only tool advertised');
 	const call = await req(path, {
 		method: 'POST',
@@ -477,6 +480,36 @@ async function probeMcp(path, label) {
 	});
 	const content = call.json?.result?.content || [];
 	record(`${label} tools/call`, `${readOnly.name}`, call.status === 200 && content.length > 0 && !call.json?.result?.isError, call.status === 200 ? `${readOnly.name} → ${content.length} content block(s)` : `HTTP ${call.status}: ${call.text.slice(0, 140)}`);
+}
+
+// The talking-avatar lane (workers/longcat). Its own README records the worker
+// as built but not deployed, so the bar this leg holds production to is the one
+// that matters to a user: either a real MP4 comes back, or the site refuses
+// cleanly with 503 worker_unconfigured and burns none of the caller's free
+// trial. A 500, or a 202 that never produces a video, is a failure.
+async function probeTalkingAvatar() {
+	if (!selected('talking-avatar')) return;
+	const cookie = await qaSession();
+	const headers = cookie ? { cookie } : {};
+	const post = await req('/api/avatar/video-generate', {
+		method: 'POST',
+		headers,
+		body: { image_url: REF_IMAGE, audio_url: `${BASE}/audio/notification.mp3` },
+		timeoutMs: 60_000,
+	});
+	if (post.status === 503) {
+		return record('talking-avatar', 'POST /api/avatar/video-generate', false, `worker not deployed: ${post.json?.error || post.text.slice(0, 120)} (LONGCAT_WORKER_URL unset)`);
+	}
+	if (post.status !== 202 && post.status !== 200) {
+		return record('talking-avatar', 'POST /api/avatar/video-generate', false, `HTTP ${post.status}: ${post.text.slice(0, 160)}`);
+	}
+	const jobId = post.json?.job_id;
+	if (!jobId) return record('talking-avatar', 'POST /api/avatar/video-generate', false, `no job_id: ${post.text.slice(0, 160)}`);
+	const done = await pollJob(`/api/avatar/video-status?job=${encodeURIComponent(jobId)}`, { jobKey: 'talking-avatar', headers, budgetMs: 600_000 });
+	const url = done.json?.video_url;
+	if (!url) return record('talking-avatar', 'POST /api/avatar/video-generate', false, `job ${done.json?.status || done.status}: ${done.json?.error || done.text.slice(0, 160)}`);
+	const s2 = await sniff(url);
+	record('talking-avatar', 'POST /api/avatar/video-generate', s2.ok && s2.kind === 'mp4', s2.ok ? `${s2.bytes} B ${s2.kind}` : s2.detail, { artifact: url });
 }
 
 async function main() {
@@ -491,6 +524,7 @@ async function main() {
 	if (selected('rembg')) await meshJob('rembg', '/api/forge-rembg', { image_url: REF_IMAGE }, 'result_url', 'png');
 	await probeMotion();
 	await probeRetexture();
+	await probeTalkingAvatar();
 	await probeX402();
 	await probeMcp('/api/mcp-3d', 'mcp-3d');
 	await probeMcp('/api/mcp-studio', 'mcp-studio');
