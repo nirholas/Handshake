@@ -55,6 +55,9 @@ const MIN_PEER_CLOSED = 3;
 /** Closed trades this agent needs before a deck is worth cutting at all. */
 const MIN_DECK_CLOSED = 3;
 
+/** Exported so the endpoint and the picker's empty state quote the same gate. */
+export const WRAPPED_MIN_CLOSED = MIN_DECK_CLOSED;
+
 const num = (v) => {
 	const n = Number(v);
 	return Number.isFinite(n) ? n : 0;
@@ -303,11 +306,15 @@ function headlineFor(metrics, best, agent) {
 	const n = metrics.closed_count;
 	if (!n) return `${who} closed no round-trips in this window.`;
 	const sign = pnl >= 0 ? '+' : '';
+	// A season can settle a few thousand lamports up. Rounding that to "+0.00 SOL"
+	// reads as a typo, so small totals keep the digits that make them true.
+	const mag = Math.abs(pnl);
+	const dp = mag === 0 ? 2 : mag < 0.001 ? 6 : mag < 0.01 ? 4 : 2;
 	const bestPct = best?.realized_pnl_pct != null ? Number(best.realized_pnl_pct) : null;
 	const bestBit = bestPct != null && bestPct > 0
 		? ` Best trade: +${Math.round(bestPct)}% on ${best.symbol ? `$${best.symbol}` : 'one coin'}.`
 		: '';
-	return `${who} closed ${n} round-trip${n === 1 ? '' : 's'} across ${metrics.unique_coins} coin${metrics.unique_coins === 1 ? '' : 's'} for ${sign}${pnl.toFixed(2)} SOL.${bestBit}`;
+	return `${who} closed ${n} round-trip${n === 1 ? '' : 's'} across ${metrics.unique_coins} coin${metrics.unique_coins === 1 ? '' : 's'} for ${sign}${pnl.toFixed(dp)} SOL.${bestBit}`;
 }
 
 // --- DB layer ---------------------------------------------------------------

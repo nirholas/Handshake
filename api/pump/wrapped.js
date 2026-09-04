@@ -18,7 +18,7 @@
 import { cors, json, error, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
-import { WRAPPED_WINDOWS, WRAPPED_WINDOW_CHOICES, fetchWrappableTraders, getWrapped } from '../_lib/wrapped.js';
+import { WRAPPED_WINDOWS, WRAPPED_WINDOW_CHOICES, WRAPPED_MIN_CLOSED, fetchWrappableTraders, getWrapped } from '../_lib/wrapped.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 
@@ -57,6 +57,7 @@ export default wrap(async (req, res) => {
 			network,
 			window,
 			windows: WRAPPED_WINDOW_CHOICES,
+			min_closed: WRAPPED_MIN_CLOSED,
 			traders,
 			custody: 'none',
 		});
