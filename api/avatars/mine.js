@@ -9,6 +9,7 @@
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { listAvatars } from '../_lib/avatars.js';
+import { readStorageModes } from '../_lib/storage-mode.js';
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
@@ -21,7 +22,7 @@ async function resolveAuth(req) {
 	return null;
 }
 
-export function slimAvatar(av) {
+export function slimAvatar(av, storageMode) {
 	return {
 		id: av.id,
 		name: av.name || 'Untitled avatar',
@@ -30,6 +31,20 @@ export function slimAvatar(av) {
 		has_thumbnail: !!av.thumbnail_url,
 		thumb_url: `${env.APP_ORIGIN}/api/avatars/${av.id}/thumb`,
 		created_at: av.created_at,
+		size_bytes: av.size_bytes ?? null,
+		// Flattened storage state, so the dashboard settings page can render an
+		// R2-vs-IPFS row per avatar without a per-avatar /storage-mode request.
+		// The attestation block stays out: it is chain provenance, not storage,
+		// and /api/avatars/:id/storage-mode already serves the full record.
+		storage: storageMode
+			? {
+					primary: storageMode.primary,
+					r2_present: !!storageMode.r2?.present,
+					ipfs_pinned: !!storageMode.ipfs?.pinned,
+					ipfs_cid: storageMode.ipfs?.cid ?? null,
+					ipfs_pinned_at: storageMode.ipfs?.pinned_at ?? null,
+				}
+			: null,
 	};
 }
 
@@ -52,8 +67,10 @@ export default wrap(async (req, res) => {
 		cursor: url.searchParams.get('cursor'),
 	});
 
+	const modes = await readStorageModes(avatars.map((a) => a.id));
+
 	return json(res, 200, {
-		avatars: avatars.map(slimAvatar),
+		avatars: avatars.map((a) => slimAvatar(a, modes.get(a.id) || null)),
 		next_cursor,
 	});
 });

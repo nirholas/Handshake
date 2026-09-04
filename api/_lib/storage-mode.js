@@ -74,3 +74,48 @@ export async function readStorageMode(avatarId) {
 export function validateStorageMode(input) {
 	return storageModeSchema.parse(input);
 }
+
+/**
+ * Batch sibling of readStorageMode: resolve the stored mode for many avatars in
+ * one indexed query instead of one round trip per row.
+ *
+ * The settings page lists every avatar the caller owns with its R2 / IPFS
+ * state, so the per-id endpoint would have turned one panel into N requests.
+ * Rows missing a stored mode fall back to the same default the single reader
+ * uses, and a deployment whose avatars table predates the storage_mode column
+ * gets an empty map rather than a 500 (identical guard to readStorageMode).
+ *
+ * @param {string[]} avatarIds
+ * @returns {Promise<Map<string, ReturnType<typeof defaultStorageMode>>>}
+ */
+export async function readStorageModes(avatarIds) {
+	const ids = [...new Set((avatarIds || []).filter(Boolean))];
+	if (!ids.length) return new Map();
+	try {
+		const rows = await sql`
+			SELECT id, storage_key, checksum_sha256, storage_mode
+			FROM avatars
+			WHERE id = ANY(${ids}::uuid[]) AND deleted_at IS NULL
+		`;
+		const out = new Map();
+		for (const row of rows) {
+			const base = defaultStorageMode(row);
+			out.set(
+				row.id,
+				row.storage_mode
+					? {
+							...base,
+							...row.storage_mode,
+							r2: { ...base.r2, ...(row.storage_mode.r2 || {}) },
+							ipfs: { ...base.ipfs, ...(row.storage_mode.ipfs || {}) },
+							attestation: { ...base.attestation, ...(row.storage_mode.attestation || {}) },
+						}
+					: base,
+			);
+		}
+		return out;
+	} catch (err) {
+		if (/column .* does not exist/i.test(String(err?.message))) return new Map();
+		throw err;
+	}
+}
