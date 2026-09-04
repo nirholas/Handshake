@@ -242,13 +242,19 @@
 			width: Number.isFinite(w) && w > 0 ? Math.round(w) : 0
 		};
 		markReserved(key, spec.el || null);
-		return applyReserve();
+		var applied = applyReserve();
+		/* The dock budget is what the reservation left over, so a changed claim
+		   has to re-run the probe or the stack keeps yesterday's total. */
+		scheduleDocks();
+		return applied;
 	}
 
 	function release(key) {
 		delete reservations[key];
 		unmarkReserved(key);
-		return applyReserve();
+		var applied = applyReserve();
+		scheduleDocks();
+		return applied;
 	}
 
 	function reservedHeight() {
