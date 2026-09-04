@@ -16,6 +16,7 @@
  */
 
 import { createLogger } from './shared/log.js';
+import { proxiedModelURL } from './ipfs.js';
 import { enterStagger, liveDot, setLiveDot } from './ui-juice.js';
 import { ensureX402 } from './shared/x402-loader.js';
 
@@ -77,12 +78,17 @@ function truncate(s, n) {
 // leaderboard row reach the link that wraps it. The `disable-*` attributes went
 // with it; they only ever qualified camera-controls.
 function thumbHTML(glbUrl, alt, posterUrl) {
-	if (!glbUrl) return `<div class="cr-card-noglb" aria-hidden="true">3D</div>`;
+	// The asset bucket allowlists the production origin by name, so a GLB read
+	// straight from it dies inside model-viewer on every other origin (partner
+	// embeds, notebooks, previews, local audits) with an unrecoverable "Failed
+	// to fetch". /api/glb serves the same public object with open CORS.
+	const src = proxiedModelURL(glbUrl);
+	if (!src) return `<div class="cr-card-noglb" aria-hidden="true">3D</div>`;
 	// The feed ships a rendered still alongside every GLB, so paint that first
 	// and let the interactive mesh swap in once it has streamed.
 	const poster = posterUrl ? ` poster="${esc(posterUrl)}"` : '';
 	return `<model-viewer
-			src="${esc(glbUrl)}"
+			src="${esc(src)}"
 			alt="${esc(alt)}"${poster}
 			class="cr-card-mv"
 			reveal="auto"

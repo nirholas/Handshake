@@ -18,6 +18,7 @@
 // import starts only once a model is actually in hand.
 
 import { describeModel, diffDescriptions, formatBytes, formatMarkdown, SEVERITY_MEANING } from '@three-ws/glb-diff';
+import { proxiedModelURL } from './ipfs.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -117,15 +118,11 @@ function fieldText(change) {
 
 // Same-origin models are fetched directly. Anything else goes through the
 // site's own GLB proxy, which exists precisely because a third-party CDN's CORS
-// policy would otherwise make the model unreadable from a browser.
+// policy would otherwise make the model unreadable from a browser. The rule
+// itself lives in src/ipfs.js beside the image-proxy rule, so a surface that
+// paints a model and a surface that paints token art cannot drift apart.
 function proxied(url) {
-	try {
-		const resolved = new URL(url, location.href);
-		if (resolved.origin === location.origin) return resolved.href;
-		return `/api/glb?src=${encodeURIComponent(resolved.href)}`;
-	} catch {
-		return null;
-	}
+	return proxiedModelURL(url) || null;
 }
 
 function setSlotState(role, slotState) {

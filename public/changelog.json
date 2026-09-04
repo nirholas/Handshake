@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T00:54:16.165Z",
+	"generated_at": "2026-09-04T01:30:59.955Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -300,6 +300,17 @@
 			"link": "/fees",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Coin art and 3D models load again, wherever the page is running",
+			"summary": "Token logos on the launches feed and every coin card were painted straight from a public IPFS gateway that now rate-limits us, so a feed of launches rendered a wall of blank tiles and filled the console with blocked requests. Art now comes through the site's own image service, which retries across gateways, resizes to the size actually shown, and falls back to a generated placeholder instead of an error. Creation gallery models load the same way, through the site's model proxy, so a 3D preview also works inside an embed on somebody else's site.",
+			"link": "/launches",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

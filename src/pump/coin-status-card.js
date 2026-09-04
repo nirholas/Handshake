@@ -35,6 +35,7 @@
  */
 
 import { computeView, getSolUsd } from '../widgets/bonding-curve.js';
+import { proxiedImageURL } from '../ipfs.js';
 
 const COIN_ENDPOINT = '/api/pump/coin';
 const CURVE_ENDPOINT = '/api/pump/curve';
@@ -411,18 +412,34 @@ function renderCard(coin, opts) {
 	return el('div', { class: 'csc csc-card' }, [head, stats, coin.graduationPct != null ? bar : null, badge, foot]);
 }
 
+// Every coin logo this widget renders comes from a launch's own metadata: a
+// public IPFS gateway, an Arweave tx, or whatever CDN the creator used. Painted
+// straight into an <img> those fail in the browser for reasons no page code can
+// fix: ipfs.io now answers our art requests 429 behind a sunset notice, and the
+// error page it returns is opaque to a no-cors image load, so the browser logs
+// ERR_BLOCKED_BY_RESPONSE.NotSameOrigin once per card (89 on a single /launches
+// paint). /api/img fetches the same art server-side with multi-gateway IPFS
+// retry and answers a deterministic placeholder rather than an error when every
+// gateway is down, so the loader always receives a valid image.
+//
+// The width is the largest this avatar is ever painted (72 px in the featured
+// launch cell) at 2x, which the proxy snaps up to its 192 px rung: coin art is
+// stored at upload size, and a 40 px tile was pulling 130 KB PNGs.
+const COIN_ART_WIDTH = 192;
+
 /**
  * Avatar for the card variant. A real pump.fun logo fades in over an optional
- * caller-supplied placeholder node (e.g. a deterministic identicon) — the same
+ * caller-supplied placeholder node (e.g. a deterministic identicon), the same
  * crossfade the launches feed used before unification. Renders nothing when
  * there is neither an image nor a placeholder.
  */
 function coinAvatar(coin, placeholder) {
-	if (!coin.image && !placeholder) return null;
+	const art = proxiedImageURL(coin.image, coin.mint || '', { width: COIN_ART_WIDTH });
+	if (!art && !placeholder) return null;
 	const box = el('div', { class: 'csc-avatar' });
 	if (placeholder) box.appendChild(placeholder);
-	if (coin.image) {
-		const img = el('img', { class: 'csc-card-img', src: coin.image, alt: '', loading: 'lazy' });
+	if (art) {
+		const img = el('img', { class: 'csc-card-img', src: art, alt: '', loading: 'lazy' });
 		img.addEventListener('load', () => img.classList.add('csc-img-in'), { once: true });
 		// No placeholder behind it → show immediately rather than fading from blank.
 		if (!placeholder) img.classList.add('csc-img-in');

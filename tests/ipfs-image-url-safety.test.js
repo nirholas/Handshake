@@ -17,7 +17,7 @@
 // Server-side fetching of the resolved URL is covered by api-img-proxy.test.js.
 
 import { describe, it, expect } from 'vitest';
-import { isSafeImageURL, proxiedImageURL, resolveURI } from '../src/ipfs.js';
+import { isSafeImageURL, proxiedImageURL, proxiedModelURL, resolveURI } from '../src/ipfs.js';
 
 const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
@@ -172,5 +172,55 @@ describe('proxiedImageURL', () => {
 		for (const v of [null, undefined, '', 0, {}]) {
 			expect(proxiedImageURL(v)).toBe('');
 		}
+	});
+});
+
+describe('proxiedModelURL', () => {
+	// Models have the same trust boundary as art and one extra failure mode: the
+	// asset bucket's CORS policy allowlists the production origin by name, so a
+	// GLB read straight from it dies inside model-viewer on every other origin
+	// (partner embeds, notebooks, previews, a local audit run) as an
+	// unrecoverable "Failed to fetch". /api/glb reads the same public object
+	// server-side and answers with open CORS.
+	const GLB = 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/model.glb';
+
+	it('routes a cross-origin model through the same-origin GLB proxy', () => {
+		const out = proxiedModelURL(GLB);
+		expect(out.startsWith('/api/glb?')).toBe(true);
+		expect(new URLSearchParams(out.split('?')[1]).get('src')).toBe(GLB);
+	});
+
+	it('resolves ipfs:// and ar:// to a gateway before proxying', () => {
+		const src = (u) => new URLSearchParams(proxiedModelURL(u).split('?')[1]).get('src');
+		expect(src('ipfs://bafyexample')).toBe(resolveURI('ipfs://bafyexample'));
+		expect(src('ar://sometransactionid')).toBe('https://arweave.net/sometransactionid');
+	});
+
+	it('leaves sources the browser can already load alone', () => {
+		expect(proxiedModelURL('/forge/local.glb')).toBe('/forge/local.glb');
+		expect(proxiedModelURL('models/scene.glb')).toBe('models/scene.glb');
+		expect(proxiedModelURL('blob:https://three.ws/6d9a')).toBe('blob:https://three.ws/6d9a');
+	});
+
+	it('drops a hostile scheme instead of handing it to a model sink', () => {
+		for (const url of [
+			'javascript:window.x=1',
+			'vbscript:msgbox(1)',
+			'data:text/html,<script>window.x=1</script>',
+			'file:///etc/passwd',
+			'',
+		]) {
+			expect(proxiedModelURL(url), url).toBe('');
+		}
+		expect(proxiedModelURL(null)).toBe('');
+	});
+
+	it('refuses a source too long to be a real model URL', () => {
+		expect(proxiedModelURL('https://cdn.example/' + 'a'.repeat(3000) + '.glb')).toBe('');
+	});
+
+	it('gives a protocol-relative model the scheme the page is on', () => {
+		const out = proxiedModelURL('//cdn.example/model.glb');
+		expect(new URLSearchParams(out.split('?')[1]).get('src')).toBe('https://cdn.example/model.glb');
 	});
 });

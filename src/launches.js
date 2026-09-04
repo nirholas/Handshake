@@ -21,6 +21,7 @@
 import { mountCoinStatus, formatMcap } from './pump/coin-status-card.js';
 import { walletChipEl } from './shared/agent-wallet-chip.js';
 import { createLogger } from './shared/log.js';
+import { proxiedImageURL } from './ipfs.js';
 import { countUp, updateValue, enterStagger, rippleOnce, liveDot, setLiveDot } from './ui-juice.js';
 
 const log = createLogger('launches');
@@ -476,8 +477,13 @@ function agentChip(agent) {
 			el('span', { class: 'lx-agent-name', text: 'Unknown agent' }),
 		]);
 	}
-	const avatar = agent.avatar_thumbnail_url
-		? el('img', { src: agent.avatar_thumbnail_url, alt: '', loading: 'lazy' })
+	// 22 px circle, so ask the proxy for the 64 px rung: agent thumbnails are
+	// stored at render resolution and a raw one is a ~130 KB PNG per row. The
+	// proxy is also what keeps a retired or rate-limited art host from painting
+	// a broken tile, since it answers a placeholder rather than an error.
+	const avatarSrc = proxiedImageURL(agent.avatar_thumbnail_url || '', agent.id || '', { width: 64 });
+	const avatar = avatarSrc
+		? el('img', { src: avatarSrc, alt: '', loading: 'lazy' })
 		: el('span', { class: 'lx-agent-fallback', text: (agent.name || '?')[0].toUpperCase() });
 	return el(
 		'a',
@@ -967,8 +973,9 @@ async function renderAgentFilterChip(agentId) {
 		const agent = body.agent || body;
 		if (state.agentId !== agentId || !agent?.name) return;
 		chip.textContent = '';
-		if (agent.avatar_thumbnail_url) {
-			chip.appendChild(el('img', { src: agent.avatar_thumbnail_url, alt: '' }));
+		const chipArt = proxiedImageURL(agent.avatar_thumbnail_url || '', agentId, { width: 64 });
+		if (chipArt) {
+			chip.appendChild(el('img', { src: chipArt, alt: '' }));
 		}
 		chip.appendChild(el('span', { text: agent.name }));
 	} catch {

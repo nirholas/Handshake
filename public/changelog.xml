@@ -239,6 +239,14 @@
 			<description>Every chain row on the fees and revenue tables showed a broken image. The upstream data source hands out chain logo links that are missing a piece of their address, so each one failed to load. We repair the address before the data reaches the page, and any icon that still fails for its own reasons now quietly becomes the same neutral disc a protocol without a logo already gets, rather than a broken-image mark. The same repair covers the DEX volume, protocol and chain pages that draw from the same feed.</description>
 		</item>
 		<item>
+			<title>Coin art and 3D models load again, wherever the page is running</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-09-03:Coin art and 3D models load again, wherever the page is running</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Token logos on the launches feed and every coin card were painted straight from a public IPFS gateway that now rate-limits us, so a feed of launches rendered a wall of blank tiles and filled the console with blocked requests. Art now comes through the site's own image service, which retries across gateways, resizes to the size actually shown, and falls back to a generated placeholder instead of an error. Creation gallery models load the same way, through the site's model proxy, so a 3D preview also works inside an embed on somebody else's site.</description>
+		</item>
+		<item>
 			<title>Coin Radar tells you when it is your filter, not the market, that is empty</title>
 			<link>https://three.ws/radar</link>
 			<guid isPermaLink="false">2026-09-03:Coin Radar tells you when it is your filter, not the market, that is empty</guid>

@@ -28,6 +28,21 @@
  * mid-sweep and every remaining route then reads as a navigation failure. The
  * dev server proxies /api/* to https://three.ws, so API calls hit real
  * endpoints — auth/payment-gated 4xx are classified "expected", never failures.
+ *
+ * Which API the pages talk to decides what a finding MEANS, so pick it on
+ * purpose:
+ *
+ *   • Default (proxy to https://three.ws) measures what users actually get. It
+ *     is the right run for judging the live site, and the one whose numbers
+ *     belong in a report.
+ *   • DEV_API_PROXY=http://localhost:8080, with `node server/index.mjs` running
+ *     there, measures THIS working tree. Use it to tell a page defect apart
+ *     from deploy lag: on 2026-09-03 a sweep against production blamed pages
+ *     for a 404 on /api/home and a 500 on /api/oracle/model, and both handlers
+ *     were already fixed on main and merely unshipped. Note the reverse trap
+ *     too: endpoints whose credentials live only on the Cloud Run service
+ *     answer 503 `not_configured` against a local server, which is environment,
+ *     not a defect.
  */
 
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';

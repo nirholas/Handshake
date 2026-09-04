@@ -175,6 +175,39 @@ export function proxiedImageURL(url, seed = '', { width = 0 } = {}) {
 	return `/api/img?${q.toString()}`;
 }
 
+/**
+ * Route an external model URL through the same-origin /api/glb proxy.
+ *
+ * Generated models live on the public asset bucket, whose CORS policy is an
+ * origin allowlist naming the production site. Every other origin that loads a
+ * GLB in a browser (a partner embed, a notebook on localhost, a Codespaces
+ * preview, a local audit run) gets no `access-control-allow-origin` header back
+ * and the fetch dies inside model-viewer as "Failed to fetch", with nothing on
+ * the page able to recover it. `/api/glb` reads the same public object
+ * server-side through the SSRF-hardened fetcher and answers with open CORS and
+ * an immutable cache header, so the model loads from anywhere and repeat views
+ * cost one upstream read.
+ *
+ * Same-origin, relative, data: and blob: URLs are handed back untouched: the
+ * proxy only earns its keep cross-origin. ipfs:// and ar:// resolve to a gateway
+ * URL first, so a model pinned on decentralised storage proxies like any other.
+ * Anything that is not a safe URL for an asset sink resolves to '' so callers
+ * fall through to their own "no model" branch.
+ *
+ * @param {string} url  Model URL (https://, ipfs:// or ar:// accepted).
+ * @returns {string}
+ */
+export function proxiedModelURL(url) {
+	if (typeof url !== 'string' || !url) return '';
+	const raw = /^\/\/[^/]/.test(url.trim()) ? 'https:' + url.trim() : url.trim();
+	if (!isSafeImageURL(raw)) return '';
+	if (!/^(https?|ipfs|ar):/i.test(raw)) return raw;
+	if (raw.length > MAX_SOURCE_URL) return '';
+	const resolved = resolveURI(raw);
+	if (typeof location !== 'undefined' && resolved.startsWith(location.origin + '/')) return resolved;
+	return `/api/glb?src=${encodeURIComponent(resolved)}`;
+}
+
 // Pull the CID (plus any path) back out of a URL that already names a gateway,
 // so content whose gateway was baked in upstream can still be rotated. Matches
 // the /ipfs/<cid>[/path] form every gateway in the list serves.
