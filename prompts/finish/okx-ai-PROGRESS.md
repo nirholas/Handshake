@@ -6,6 +6,74 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-04, listing rejection #3 root-caused on the wire: two defects in the 402, both fixed
+
+OKX rejected the resubmission with the same sentence on all four paid rows ("failed the
+official test, we are unable to verify the availability of your service") plus an internal
+note the reviewer forwarded verbatim: *"x402 quotation cannot be parsed or is non-compliant
+(parsing failed / no exact / missing amount), and has not entered the payment stage."*
+
+That note is the whole diagnosis: their validator never got a usable quote, so nothing about
+generation, pricing copy or funding was ever reached. Two defects produce exactly that, and
+both were live in production. Wire capture of both, all four rows:
+`prompts/okx-ai/e2e-evidence/80-2026-09-04-rejection-prefix-probe.json`.
+
+### Defect 1: the guide's own self-check curl was answered 415
+
+The A2MCP guide tells every ASP to self-check with `curl -i -X POST <endpoint>` (no body, no
+content-type) and states the pass condition for a paid row: `HTTP 402` carrying
+`PAYMENT-REQUIRED`. Ours answered:
+
+```
+HTTP/2 415
+{"error":"bad_request","error_description":"content-type must be application/json"}
+```
+
+`handleA2mcp` opened with `readJson()`, which rejects a missing content-type before any
+payment logic runs. To a validator that probes the endpoint the documented way, four paid
+rows had no x402 quotation at all. Fixed: the A2MCP POST path now reads the body leniently.
+A body-less or non-JSON POST prices as nothing, which on a paid row is the 402 the probe
+expects; a caller already past the paywall that sent unparseable bytes gets the JSON-RPC
+parse error (`-32700`) and nothing settles.
+
+### Defect 2: any unpriced POST quoted eip155:196 twice, at two different prices
+
+`handleA2mcp` passed `priceBatch`'s raw total into `authenticateRequest`. That total is null
+for any POST naming no priced tool: an empty body, a plain business payload, a mistyped tool
+name. `paymentRequirements()` then fell back to the platform-wide default ($0.001) while the
+prepended X Layer accept still quoted the catalog price, so the challenge went out with
+**two eip155:196 USD₮0 entries at 10000 and 1000**, and the Solana/Base rails at $0.001
+against a listing registered at $0.01. An ambiguous quotation reads as non-compliant to any
+validator that resolves one price per rail. `handleSse` had already been pinned to the list
+price for precisely this reason on the GET path; the POST path was left on the raw total.
+Fixed by passing `x402Amount || listPrice`, the same fallback the prepended accept uses, so
+`mergeAccepts` dedupes the twin and every rail quotes the row's own price.
+
+### What was ruled out, so nobody re-checks it
+
+- The quotation shape itself is fine. The SDK's own `parsePaymentRequired` (zod, from
+  `@okxweb3/app-x402-core/schemas`) accepts both the body and the header on a well-formed
+  `tools/call`, and OKX's own `onchainos agent x402-check` returns `valid: true` with
+  `amountHuman` matching the listing on all four rows.
+- The discovery paywall from the 2026-09-02 review **has** shipped: `initialize` and
+  `tools/list` are 200 to a spec-compliant MCP client (WO-04's case 1d now passes).
+- Registered endpoints, prices and service ids on the listing are correct and unchanged.
+- `maxTimeoutSeconds: 86400` stays: it is the approved-seller (oklink) capture, per
+  `specs/okx-agent-payments.md` §1.1.
+- The audit test address `0xbc59eb75C55e3bF1E63aaeE653C2b8E02BFd2033` is not intercepted by
+  anything here; there is no allowlist, no per-address logic, and the 402 challenge is served
+  before any rate limit on the MCP path.
+
+Regression tests in `tests/api/okx-forge.test.js`: the documented self-check POST answers 402
+on every paid row, three unpriced POST shapes each quote one price per rail at the list
+price, and unparseable bytes hit the paywall on a paid row and `-32700` on the free row.
+Whole api suite green (554 files).
+
+**Next:** deploy (owner-gated), re-run the wire capture against production, then resubmit the
+listing through the agent conversation.
+
+---
+
 ## 2026-09-02, Work Order 04: gauntlet rebuilt for the forge listing, one false promise removed, funding is the only gate
 
 Fourth session on this stream today. WO-04 is the funded end-to-end payment test, so the
