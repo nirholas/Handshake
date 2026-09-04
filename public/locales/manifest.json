@@ -67,6 +67,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "id",
+			"name": "Bahasa Indonesia",
+			"dir": "ltr"
+		},
+		{
 			"code": "th",
 			"name": "ไทย",
 			"dir": "ltr"
@@ -87,8 +92,33 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "pl",
+			"name": "Polski",
+			"dir": "ltr"
+		},
+		{
 			"code": "nl",
 			"name": "Nederlands",
+			"dir": "ltr"
+		},
+		{
+			"code": "fa",
+			"name": "فارسی",
+			"dir": "rtl"
+		},
+		{
+			"code": "bn",
+			"name": "বাংলা",
+			"dir": "ltr"
+		},
+		{
+			"code": "ur",
+			"name": "اردو",
+			"dir": "rtl"
+		},
+		{
+			"code": "ta",
+			"name": "தமிழ்",
 			"dir": "ltr"
 		},
 		{
@@ -99,6 +129,46 @@
 		{
 			"code": "ms",
 			"name": "Bahasa Melayu",
+			"dir": "ltr"
+		},
+		{
+			"code": "no",
+			"name": "Norsk",
+			"dir": "ltr"
+		},
+		{
+			"code": "fi",
+			"name": "Suomi",
+			"dir": "ltr"
+		},
+		{
+			"code": "el",
+			"name": "Ελληνικά",
+			"dir": "ltr"
+		},
+		{
+			"code": "cs",
+			"name": "Čeština",
+			"dir": "ltr"
+		},
+		{
+			"code": "ro",
+			"name": "Română",
+			"dir": "ltr"
+		},
+		{
+			"code": "hr",
+			"name": "Hrvatski",
+			"dir": "ltr"
+		},
+		{
+			"code": "sk",
+			"name": "Slovenčina",
+			"dir": "ltr"
+		},
+		{
+			"code": "az",
+			"name": "Azərbaycan dili",
 			"dir": "ltr"
 		}
 	]
