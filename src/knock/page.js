@@ -232,6 +232,11 @@ async function refreshChainState(door) {
 			`Open on-chain: ${formatAtomics(onChain.price)} per knock, ${Math.round(onChain.replyWindow / 3600)}h to answer. ${onChain.knocks} knock(s), ${onChain.answered} answered.`,
 		);
 	} catch (err) {
+		// An unreadable chain is not evidence that the door is fine, and it is
+		// not a reason to strand the owner: the action stays available, and
+		// opening an already-open door updates it rather than failing.
+		els['chain-actions'].hidden = false;
+		els['open-chain-door'].textContent = 'Open or update it on-chain';
 		setChainState('warn', `Could not read your on-chain door just now: ${err.message}`);
 	}
 }

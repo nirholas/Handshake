@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T06:25:16.108Z",
+	"generated_at": "2026-09-04T06:40:04.104Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -41,12 +41,44 @@
 		{
 			"date": "2026-09-04",
 			"type": "update",
+			"title": "DeFi tables stop showing broken logos when a coin icon disappears",
+			"summary": "The protocol and chain logos on the fees, DeFi, DEX volumes, chain, protocol and exchange pages were loaded straight from a third-party icon host. When that host renamed or removed an icon, the row rendered a broken-image glyph and every reader's browser recorded a failed request. Those logos now come from three.ws itself: we fetch and resize them on our side, cache them, and hand back an empty answer for an icon that no longer exists, so the row shows the same neutral disc a protocol without a logo already gets. Pages load a little faster too, since a 24-pixel icon no longer arrives at full size, and your browser no longer talks to an outside host on every table paint.",
+			"link": "/fees",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Knock on a stranger and get your money back if they never answer",
+			"summary": "A door that takes escrowed knocks now shows the option on its own page, next to paying up front. Choose it and your payment goes into an on-chain vault instead of the recipient's wallet: they are paid by answering you, and if they decline or the window runs out, every unit comes back to you. Before anything is signed, a dialog states the amount, who it reaches, and the exact deadline. Afterwards the page counts down to that deadline, and the moment it passes, a button hands your payment back. three.ws holds no key that can move it either way.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
 			"title": "Knock somebody's door and get your money back if they never answer",
 			"summary": "Paying to reach a stranger has meant paying first and hoping. The money left your wallet the moment the payment cleared, and if the person never replied, that was that. Doors can now take escrowed knocks instead: your payment sits in a vault on Solana that the recipient cannot touch until they actually answer you. If they answer, they are paid. If they decline, you get everything back and are charged nothing, because reading something and passing on it is not a service. And if they simply never respond before the window they set, anyone at all can trigger the refund and every cent comes back to you, so it does not depend on you remembering to chase it. three.ws holds no key that can move that money, and neither does anyone else. Door owners can turn the lane on in their knock settings and choose how long they get to reply, from an hour to a month.",
 			"link": "/docs/knock",
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Run an escrowed door from your own wallet, and see what the chain actually says",
+			"summary": "Door settings now carry the escrowed lane: switch it on, choose how long you want to answer within, and open your on-chain door with your own wallet, which is the only thing that can. The panel reads the chain and tells you the truth rather than your intent, so a door you never opened, or one still charging last month's price, says so plainly instead of quietly turning strangers away. Escrowed knocks in your inbox show how long you have and what answering is worth, replying releases the payment, and refusing refunds the sender in full with no fee. Money still in escrow is no longer counted as earned.",
+			"link": null,
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

@@ -252,6 +252,7 @@ a 404, not a 403: an id on its own should not confirm that a knock exists.
 | `POST /api/knock/send` | none | Knock on a free door. |
 | `POST /api/x402/knock?to=` | x402 payment | Knock on a priced door. |
 | `POST /api/knock/escrowed` | on-chain escrow | Knock on a door that takes escrowed knocks, where the money only moves if you get an answer. |
+| `POST /api/knock/escrow-sync` | none | Re-read one escrow on-chain and update the cached state on its delivered knock. Open to anybody: it can only write back what the program already recorded. |
 | `GET /api/knock/reply?id=&token=` | receipt token | What became of a knock you sent. |
 | `GET /api/knock/settings` | session | Your door, your totals, your block list. |
 | `PATCH /api/knock/settings` | session | Change any of it. |
@@ -334,6 +335,11 @@ commits to its SHA-256, so both sides can prove later what was actually sent
 without publishing a stranger's private message to a public ledger. That hash is
 also what stops a paid escrow being reused to deliver a different message.
 
+Hash the **trimmed** message body, exactly the bytes you are about to send as
+`message`. The API hashes the same trimmed string and refuses to deliver
+anything whose hash is not the one on-chain, so a stray leading newline is the
+difference between a delivery and a `message_mismatch`.
+
 ### Opening an escrowed door
 
 ```bash
@@ -346,6 +352,56 @@ Off by default on every door, because turning it on changes what a stranger is
 agreeing to when they pay. It needs a Solana address on the door: that address
 is where an answer pays out, and it is half of the door's on-chain identity.
 The window can be 1 hour to 30 days, the same band the program enforces.
+
+That call only flips the switch on three.ws. The door also has to exist
+**on-chain**, and only your wallet can create it: the account is derived from
+your own address, so no server, including ours, can open, reprice or shut it for
+you. Do it from [/knock](https://three.ws/knock), where the escrow panel reads
+the chain and shows you one of three states.
+
+| What the chain says | What the panel offers |
+| --- | --- |
+| No door account yet | **Open my door on-chain**. Until you do, escrowed knocks have nowhere to land and senders are shown the normal lane. |
+| Open, and matching your settings | Nothing to do. It shows the on-chain price, window, and how many knocks it has answered. |
+| Open but different, or shut | **Update it on-chain**, with the on-chain numbers spelled out, because those are the ones a sender is actually agreeing to. |
+
+### Keeping the cache honest
+
+The `escrow_*` columns on a delivered knock are a cache of what the program
+recorded, and nothing ever tells this server that a settlement happened: answers,
+refusals and refunds are transactions signed by wallets we do not hold. So the
+only correct move is to look.
+
+```bash
+curl -sX POST https://three.ws/api/knock/escrow-sync \
+  -H 'content-type: application/json' \
+  -d '{ "knock": "<the knock address>" }'
+```
+
+It reads the account, writes back exactly the state the program recorded, and
+answers with `{ state, changed, expires_at, expired }`. It is deliberately open
+to anybody, because it cannot be used to claim anything: a caller who lies about
+a settlement gets the truth written instead. The site calls it after an answer or
+a refusal, which is what keeps a refunded knock from sitting in an inbox looking
+like money still on the table.
+
+### From the browser
+
+Both sides of the lane work without an agent or a CLI.
+
+**Knocking.** A door that takes escrow shows a chooser on its page: pay now, or
+escrow. Pick escrow and the button says what it will do, a dialog states the
+amount, who it goes to, the deadline and the escrow's own address, and nothing
+is signed until you agree to that. Your wallet signs the `knock`; three.ws is
+handed nothing but the message afterwards. The page then shows a live countdown
+against the deadline, and the moment it passes, a button that cranks the refund
+back to you.
+
+**Answering.** An escrowed knock in your inbox says how long you have to answer
+and what answering is worth. Writing a reply saves it first and then asks your
+wallet to release the payment, in that order deliberately: a wallet prompt you
+dismiss costs you the money, never the reply you already wrote. **Refuse and
+refund** is offered beside it, and takes no fee.
 
 ---
 

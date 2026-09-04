@@ -31,12 +31,36 @@
 			<description>Embedding a three.ws avatar on your own site loads the model straight from us, and the site answers every origin. One case still failed: if your loader attached any extra header (a trace id, an auth token, anything a browser does not treat as standard), the browser first asked us for permission and we answered with a 404 page, so the model never loaded. That request is now answered properly, and the answer echoes exactly the headers you asked about. Alongside it, the media docs now spell out the three ways to read a model file and which one to pick: files under three.ws load directly, generated assets load directly from three.ws/cdn, and the /api/glb proxy is there for a URL whose host you cannot identify.</description>
 		</item>
 		<item>
+			<title>DeFi tables stop showing broken logos when a coin icon disappears</title>
+			<link>https://three.ws/fees</link>
+			<guid isPermaLink="false">2026-09-04:DeFi tables stop showing broken logos when a coin icon disappears</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The protocol and chain logos on the fees, DeFi, DEX volumes, chain, protocol and exchange pages were loaded straight from a third-party icon host. When that host renamed or removed an icon, the row rendered a broken-image glyph and every reader's browser recorded a failed request. Those logos now come from three.ws itself: we fetch and resize them on our side, cache them, and hand back an empty answer for an icon that no longer exists, so the row shows the same neutral disc a protocol without a logo already gets. Pages load a little faster too, since a 24-pixel icon no longer arrives at full size, and your browser no longer talks to an outside host on every table paint.</description>
+		</item>
+		<item>
+			<title>Knock on a stranger and get your money back if they never answer</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-04:Knock on a stranger and get your money back if they never answer</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A door that takes escrowed knocks now shows the option on its own page, next to paying up front. Choose it and your payment goes into an on-chain vault instead of the recipient's wallet: they are paid by answering you, and if they decline or the window runs out, every unit comes back to you. Before anything is signed, a dialog states the amount, who it reaches, and the exact deadline. Afterwards the page counts down to that deadline, and the moment it passes, a button hands your payment back. three.ws holds no key that can move it either way.</description>
+		</item>
+		<item>
 			<title>Knock somebody's door and get your money back if they never answer</title>
 			<link>https://three.ws/docs/knock</link>
 			<guid isPermaLink="false">2026-09-04:Knock somebody's door and get your money back if they never answer</guid>
 			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Paying to reach a stranger has meant paying first and hoping. The money left your wallet the moment the payment cleared, and if the person never replied, that was that. Doors can now take escrowed knocks instead: your payment sits in a vault on Solana that the recipient cannot touch until they actually answer you. If they answer, they are paid. If they decline, you get everything back and are charged nothing, because reading something and passing on it is not a service. And if they simply never respond before the window they set, anyone at all can trigger the refund and every cent comes back to you, so it does not depend on you remembering to chase it. three.ws holds no key that can move that money, and neither does anyone else. Door owners can turn the lane on in their knock settings and choose how long they get to reply, from an hour to a month.</description>
+		</item>
+		<item>
+			<title>Run an escrowed door from your own wallet, and see what the chain actually says</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-04:Run an escrowed door from your own wallet, and see what the chain actually says</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Door settings now carry the escrowed lane: switch it on, choose how long you want to answer within, and open your on-chain door with your own wallet, which is the only thing that can. The panel reads the chain and tells you the truth rather than your intent, so a door you never opened, or one still charging last month's price, says so plainly instead of quietly turning strangers away. Escrowed knocks in your inbox show how long you have and what answering is worth, replying releases the payment, and refusing refunds the sender in full with no fee. Money still in escrow is no longer counted as earned.</description>
 		</item>
 		<item>
 			<title>The 3D services we sell to other agents quote one clear price, however they are asked</title>

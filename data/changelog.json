@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-04",
+			"title": "Two paid endpoints now quote a price to anyone who asks, instead of an error",
+			"summary": "The 3D asset pipeline and pay-by-name resolution both checked your request for missing fields before they ever mentioned the price, so a caller who simply asked what they cost got a validation error back. Directories that index paid APIs ask exactly that way, with an empty request, and read an error as a service that sells nothing, which is why neither endpoint could be listed anywhere. Both now answer with the payment challenge and the real price first. The pipeline quotes the published example chain when the request names no stages, and anyone who pays and then sends an incomplete request still gets the same clear validation error, with nothing charged.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
 			"title": "The Smart Money directory stops asking your browser for pictures it can never get",
 			"summary": "Every wallet in the copy-trading Smart Money list carried a portrait link pointing at an outside image host that serves nobody but its own site. Browsers blocked all of them, so the list drew the trader initials it was designed to fall back on while quietly recording a failed request for each row on screen. That unusable link is no longer sent, so the directory looks exactly as it did with none of the wasted traffic behind it.",
 			"tags": [
@@ -26454,6 +26463,23 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"title": "Knock on a stranger and get your money back if they never answer",
+			"summary": "A door that takes escrowed knocks now shows the option on its own page, next to paying up front. Choose it and your payment goes into an on-chain vault instead of the recipient's wallet: they are paid by answering you, and if they decline or the window runs out, every unit comes back to you. Before anything is signed, a dialog states the amount, who it reaches, and the exact deadline. Afterwards the page counts down to that deadline, and the moment it passes, a button hands your payment back. three.ws holds no key that can move it either way.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"title": "Run an escrowed door from your own wallet, and see what the chain actually says",
+			"summary": "Door settings now carry the escrowed lane: switch it on, choose how long you want to answer within, and open your on-chain door with your own wallet, which is the only thing that can. The panel reads the chain and tells you the truth rather than your intent, so a door you never opened, or one still charging last month's price, says so plainly instead of quietly turning strangers away. Escrowed knocks in your inbox show how long you have and what answering is worth, replying releases the payment, and refusing refunds the sender in full with no fee. Money still in escrow is no longer counted as earned.",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		}
 	]
