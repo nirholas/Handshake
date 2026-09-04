@@ -77,6 +77,34 @@ Run a WebKit pass before any release that touched page-level JavaScript. It is
 worth the extra minutes precisely because nothing else in the pipeline looks at
 a non-V8 engine.
 
+## Which routes get audited
+
+`scripts/lib/audit-routes.mjs` is the one answer, shared with the visual sweep
+(`scripts/page-snapshot.mjs`) so the two can never disagree about what pages
+the site has. It draws from three sources:
+
+1. **`data/pages.json`**, the public manifest that also drives `/sitemap`,
+   `llms.txt` and the changelog. The machine-readable section and any non-HTML
+   path are skipped: there is no DOM to audit.
+2. **`AUTHED_ROUTES`**, the signed-in surfaces the public manifest deliberately
+   omits. These are read out of the `vercel.json` route table rather than
+   hand-listed: every concrete `/dashboard/*` entry that serves a page, plus
+   `/profile`, `/settings` and `/my-agents`. Redirect stubs and regex patterns
+   are excluded, since neither addresses a page with content in it.
+3. **`seedDynamicRoutes()`**, parameterised routes (an agent id, a launch mint)
+   filled with real ids read from the live API at run time.
+
+The authed list is derived because the hand-kept copy of it went stale with no
+signal at all. By 2026-09-04 ten of its eighteen entries had become 301 stubs
+pointing at consolidated dashboard pages, so a third of every authenticated
+sweep was spent loading empty redirects, while twenty-one live dashboard pages
+had never once been audited under a session. The first sweep after the change
+found real defects on two of the newly covered pages. Reading the route table
+means a dashboard page that is added, renamed or consolidated is picked up by
+the next sweep without anyone remembering to edit a second list.
+`tests/audit-routes.test.js` pins that: a stub or a pattern in `AUTHED_ROUTES`,
+or a served dashboard page missing from it, fails the suite.
+
 ## Targeting
 
 `BASE_URL` selects the target and defaults to production:
