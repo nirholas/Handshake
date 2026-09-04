@@ -104,7 +104,7 @@ export function resolveRiskOfficerLevel(strat, envDefault = process.env.SNIPER_R
 	const perStrategy = String(strat?.risk_officer_level || '').trim().toLowerCase();
 	if (perStrategy) {
 		// A value IS set on the row. If it is not one we recognise (hand-edited row,
-		// a level from a newer deploy) it degrades to 'shadow' and stops here — it
+		// a level from a newer deploy) it degrades to 'shadow' and stops here. It
 		// must NOT fall through to an env default that might be 'enforce', because
 		// then a typo in a strategy would silently arm the thing nobody armed.
 		return RISK_OFFICER_LEVELS.includes(perStrategy) ? perStrategy : 'shadow';
