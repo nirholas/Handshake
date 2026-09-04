@@ -208,9 +208,9 @@ async function probeHuggingFace() {
 //   otherwise 2xx/3xx           → ok
 // A 4xx means the worker is routable but exposes no health contract; that is
 // still reachable, so it stays ok with the readiness caveat in the message.
-function gcpWorkerProbe(id, urlEnv) {
+function gcpWorkerProbe(id, urlEnv, labelOverride = null) {
 	return async function probeGcpWorker() {
-		const label = BACKENDS[id]?.label || id;
+		const label = labelOverride || BACKENDS[id]?.label || id;
 		const url = readEnv(urlEnv);
 		const key = readEnv('GCP_RECONSTRUCTION_KEY');
 		if (!url || !key) {
@@ -269,6 +269,35 @@ const PROBES = {
 	// workers do, load_error included, so the shared probe reads it as down.
 	trellis_selfhost: gcpWorkerProbe('trellis_selfhost', 'MODEL_TRELLIS_URL'),
 };
+
+// The editing lanes: everything the result panel offers AFTER a mesh exists
+// (remesh/retopo, stylize, segment, background removal, text-to-motion, auto-rig
+// and region retexture). None of them were in this report, which is precisely
+// how the retexture lane sat dead: `GCP_TEXTURE_URL` was never set on the
+// service, /api/studio/retexture-region answered 501 to every caller, and the
+// health endpoint said the forge was fine because it only ever looked at the
+// generation backends. A tool the UI shows a button for is a lane a user can
+// hit, so it is probed like any other upstream.
+//
+// They all speak the same worker contract the generation workers do (GET
+// /health behind GCP_RECONSTRUCTION_KEY), so the shared probe reads them
+// unchanged, including the load_error and readiness branches.
+const EDITING_WORKERS = [
+	{ id: 'remesh', env: 'GCP_REMESH_URL', label: 'Remesh / retopology' },
+	{ id: 'stylize', env: 'GCP_STYLIZE_URL', label: 'Stylize' },
+	{ id: 'segment', env: 'GCP_SEGMENT_URL', label: 'Segment' },
+	{ id: 'rembg', env: 'GCP_REMBG_URL', label: 'Background removal' },
+	{ id: 'text2motion', env: 'GCP_TEXT2MOTION_URL', label: 'Text to motion' },
+	{ id: 'rig', env: 'GCP_UNIRIG_URL', label: 'Auto-rig' },
+	{ id: 'texture', env: 'GCP_TEXTURE_URL', label: 'Retexture' },
+];
+
+async function probeEditingLanes() {
+	const entries = await Promise.all(
+		EDITING_WORKERS.map((w) => gcpWorkerProbe(w.id, w.env, w.label)()),
+	);
+	return Object.fromEntries(entries.map((e) => [e.id, e]));
+}
 
 // The distributed rate-limiter store gates every paid lane: when Redis is
 // unreachable (or the Upstash account is over quota) the cost-protecting
@@ -363,7 +392,7 @@ export async function probeForgeHealth({ force = false } = {}) {
 		return { ...cache.payload, cached: true };
 	}
 
-	const [entries, limiter, llm, world, redis, metrics] = await Promise.all([
+	const [entries, editing, limiter, llm, world, redis, metrics] = await Promise.all([
 		Promise.all(
 			Object.values(BACKENDS).map(async (b) => {
 				if (b.byok) return byokResult(b.id);
@@ -378,6 +407,8 @@ export async function probeForgeHealth({ force = false } = {}) {
 				return probe();
 			}),
 		),
+		// Every post-generation tool lane, probed live rather than assumed.
+		probeEditingLanes(),
 		probeLimiterStore(),
 		// LLM providers gate every AI-driven generation surface (prompt rewriting,
 		// agent responses). A dead provider chain degrades the product the same way
@@ -413,6 +444,7 @@ export async function probeForgeHealth({ force = false } = {}) {
 
 	const statuses = entries
 		.map((e) => e.status)
+		.concat(Object.values(editing).map((e) => e.status))
 		.concat(
 			limiter.status,
 			llm.overall,
@@ -426,6 +458,7 @@ export async function probeForgeHealth({ force = false } = {}) {
 		status: overall,
 		generated_at: new Date().toISOString(),
 		backends,
+		editing,
 		limiter,
 		llm,
 		world,

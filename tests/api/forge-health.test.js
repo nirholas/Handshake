@@ -17,6 +17,13 @@ const ENV_VARS = [
 	'GCP_TRIPOSG_URL',
 	'GCP_RECONSTRUCTION_URL',
 	'GCP_RECONSTRUCTION_KEY',
+	'GCP_REMESH_URL',
+	'GCP_STYLIZE_URL',
+	'GCP_SEGMENT_URL',
+	'GCP_REMBG_URL',
+	'GCP_TEXT2MOTION_URL',
+	'GCP_UNIRIG_URL',
+	'GCP_TEXTURE_URL',
 	'UPSTASH_REDIS_REST_URL',
 	'UPSTASH_REDIS_REST_TOKEN',
 	'three_KV_REST_API_URL',
@@ -390,5 +397,44 @@ describe('forge-health — caching', () => {
 		const third = await probeForgeHealth({ force: true });
 		expect(third.cached).toBe(false);
 		expect(global.fetch.mock.calls.length).toBeGreaterThan(calls);
+	});
+});
+
+describe('forge-health: editing lanes', () => {
+	// Every tool the result panel offers after a mesh exists. They were absent
+	// from this report entirely, which is how the retexture lane ran dead in
+	// production (GCP_TEXTURE_URL unset, 501 to every caller) while health said
+	// the forge was fine. Coverage is derived from the payload so a newly added
+	// tool worker cannot be silently missing.
+	const LANES = ['remesh', 'stylize', 'segment', 'rembg', 'text2motion', 'rig', 'texture'];
+
+	it('reports every editing lane, unconfigured when its URL is unset', async () => {
+		mockUpstreams([]);
+		const health = await probeForgeHealth();
+		expect(Object.keys(health.editing).sort()).toEqual([...LANES].sort());
+		for (const id of LANES) expect(health.editing[id].status).toBe('unconfigured');
+		// An unconfigured lane is reported but does not by itself declare an
+		// outage, matching how an unconfigured backend is treated.
+		expect(backendProbes()).toEqual([]);
+	});
+
+	it('probes a configured lane live and passes it on a healthy worker', async () => {
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		process.env.GCP_REMESH_URL = 'https://remesh-service.example.run.app';
+		mockUpstreams([['remesh-service.example.run.app', 200]]);
+		const health = await probeForgeHealth();
+		expect(health.editing.remesh.status).toBe('ok');
+		expect(health.editing.remesh.latency_ms).toBeGreaterThanOrEqual(0);
+		// It really went to the worker rather than reading the env var.
+		expect(backendProbes().some((u) => u.includes('remesh-service.example.run.app/health'))).toBe(true);
+	});
+
+	it('a 5xx from a tool worker degrades the overall verdict', async () => {
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		process.env.GCP_SEGMENT_URL = 'https://segment-service.example.run.app';
+		mockUpstreams([['segment-service.example.run.app', 503]]);
+		const health = await probeForgeHealth();
+		expect(health.editing.segment.status).toBe('down');
+		expect(health.status).toBe('degraded');
 	});
 });
