@@ -3,13 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-09-04",
-			"title": "The IBM partnership page, hosted on IBM's own site, is live again in every sense",
-			"summary": "The partnership page is published once onto IBM's domain and then keeps itself current by quietly pulling the latest copy from three.ws. That pull was being refused by the browser, and so were the payment script and the translation script it loads, because three.ws was not telling other sites they were allowed to read them. The hosted page had quietly frozen on the version baked in at publish time: no language switcher, and the pay-per-call demo never armed. All three now answer any site that asks, the live copy carries its script and translation addresses with it instead of asking IBM's server for files only we have, and a new check runs the page from a stranger's domain so this cannot go unnoticed again.",
+			"title": "The friends panel tells you when it cannot reach the server, instead of saying you have no friends",
+			"summary": "When the friends list could not be loaded, the panel showed the same screen it shows a brand new player: \"No friends yet\", with a button inviting you to go and add someone. That reads as though your friends were gone, when the truth was only that we could not look. It now says plainly that the connection dropped, that nothing was lost, and offers a Try again button that really does retry, and if the list had already loaded once, it stays on screen and is marked as possibly out of date rather than being thrown away. Coming back online repaints the panel straight away, even when your friends list is exactly as you left it. The panel also had a stray word \"null\" printed under the tabs every time it opened, on both the world and the walk pages, which is now gone.",
 			"tags": [
 				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-09-04",
+			"title": "The one-line x402 script now works on your site, not just on ours",
+			"summary": "Our docs tell you to make any element payable by dropping one line onto your page: a script tag pointing at three.ws/x402.js. On your own domain that line never worked. Your browser asked us whether another site was allowed to read the file and we never answered, so the script was refused and the button stayed inert. The same silence broke the runtime translation script and the language catalogs it reads, and it broke the IBM partnership page that IBM hosts on its own domain: that page keeps itself current by pulling the latest copy from us, and instead had quietly frozen on the version baked in the day it was published. All of it answers any site that asks now. The live copy also carries its own script and translation addresses with it, instead of asking your server for files only we have, and a new check loads that page from a stranger's domain so none of this can go unnoticed again.",
+			"tags": [
+				"fix",
+				"sdk",
 				"infra"
 			],
-			"link": "/ibm/hello"
+			"link": "/docs/x402-studio"
 		},
 		{
 			"date": "2026-09-04",
@@ -26498,6 +26509,15 @@
 			"summary": "Inviting somebody into your home hands you a link that works once. It used to vanish the instant the household list refreshed behind it, and since we keep only a fingerprint of that link and never the link itself, there was no way to get it back. It now stays put until you close the panel, whether or not the email went out.",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"title": "The agent answering for us on the OKX.AI marketplace now says when it cannot answer",
+			"summary": "Our marketplace listing is answered by an agent that reads a buyer's message and writes back. It could fail in the quietest possible way: the process alive, the health page green, and every reply dying against an AI credential the provider had stopped honouring, which from the buyer's side is indistinguishable from being ignored. The host now asks the provider itself, on every boot and every fifteen minutes, and a refused credential turns the listing amber on our status page, raises an alert, and carries the exact commands that fix it. It also stopped crying wolf: a daemon that is merely still starting up no longer reports as dead.",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		}
 	]

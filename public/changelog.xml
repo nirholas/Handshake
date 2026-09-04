@@ -71,20 +71,28 @@
 			<description>Our four paid 3D generation services on the OKX.AI agent marketplace answer every caller with a price quote before any work happens. Two flaws in that quote are fixed. A request that arrived with no body and no content type was turned away with a formatting complaint instead of a price, and that is exactly how the marketplace's own compatibility check asks, so the check saw four services that looked like they had no payment set up at all. Separately, a request that named no specific tool got a quote listing the same payment network twice at two different prices, one of them wrong. Every unpaid request now receives a single unambiguous quote at the service's listed price, on each payment network it accepts.</description>
 		</item>
 		<item>
+			<title>The agent answering for us on the OKX.AI marketplace now says when it cannot answer</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-04:The agent answering for us on the OKX.AI marketplace now says when it cannot answer</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Our marketplace listing is answered by an agent that reads a buyer's message and writes back. It could fail in the quietest possible way: the process alive, the health page green, and every reply dying against an AI credential the provider had stopped honouring, which from the buyer's side is indistinguishable from being ignored. The host now asks the provider itself, on every boot and every fifteen minutes, and a refused credential turns the listing amber on our status page, raises an alert, and carries the exact commands that fix it. It also stopped crying wolf: a daemon that is merely still starting up no longer reports as dead.</description>
+		</item>
+		<item>
+			<title>The friends panel tells you when it cannot reach the server, instead of saying you have no friends</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-09-04:The friends panel tells you when it cannot reach the server, instead of saying you have no friends</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the friends list could not be loaded, the panel showed the same screen it shows a brand new player: &quot;No friends yet&quot;, with a button inviting you to go and add someone. That reads as though your friends were gone, when the truth was only that we could not look. It now says plainly that the connection dropped, that nothing was lost, and offers a Try again button that really does retry, and if the list had already loaded once, it stays on screen and is marked as possibly out of date rather than being thrown away. Coming back online repaints the panel straight away, even when your friends list is exactly as you left it. The panel also had a stray word &quot;null&quot; printed under the tabs every time it opened, on both the world and the walk pages, which is now gone.</description>
+		</item>
+		<item>
 			<title>The IBM partnership demos arm wherever the page is opened</title>
 			<link>https://three.ws/ibm/hello</link>
 			<guid isPermaLink="false">2026-09-04:The IBM partnership demos arm wherever the page is opened</guid>
 			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The live demo pages loaded their own payment script across the network by full address, so on any address other than the main site (a preview, a local run, a copy published on a partner domain) the browser refused it and the paid demos never armed. Each page now loads the copy it ships with. The publish-once page IBM hosts got the opposite fix: every file it pulls now carries our full address, so its language switcher no longer looks for a file on the host's own domain and comes back empty.</description>
-		</item>
-		<item>
-			<title>The IBM partnership page, hosted on IBM's own site, is live again in every sense</title>
-			<link>https://three.ws/ibm/hello</link>
-			<guid isPermaLink="false">2026-09-04:The IBM partnership page, hosted on IBM's own site, is live again in every sense</guid>
-			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>The partnership page is published once onto IBM's domain and then keeps itself current by quietly pulling the latest copy from three.ws. That pull was being refused by the browser, and so were the payment script and the translation script it loads, because three.ws was not telling other sites they were allowed to read them. The hosted page had quietly frozen on the version baked in at publish time: no language switcher, and the pay-per-call demo never armed. All three now answer any site that asks, the live copy carries its script and translation addresses with it instead of asking IBM's server for files only we have, and a new check runs the page from a stranger's domain so this cannot go unnoticed again.</description>
 		</item>
 		<item>
 			<title>The invitation link you just created stays on screen</title>
@@ -101,6 +109,14 @@
 			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The page that pins your agents to real places offers to measure how far away each pin is and to drop a new one where you are standing. None of it could work: the page arrived with the browser location service switched off for it, so every attempt failed on the spot. Location is allowed on that page now. It also no longer reaches for your position the second the page opens: it reads it only when you have already granted permission, and otherwise waits for you to press one of the location buttons.</description>
+		</item>
+		<item>
+			<title>The one-line x402 script now works on your site, not just on ours</title>
+			<link>https://three.ws/docs/x402-studio</link>
+			<guid isPermaLink="false">2026-09-04:The one-line x402 script now works on your site, not just on ours</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Our docs tell you to make any element payable by dropping one line onto your page: a script tag pointing at three.ws/x402.js. On your own domain that line never worked. Your browser asked us whether another site was allowed to read the file and we never answered, so the script was refused and the button stayed inert. The same silence broke the runtime translation script and the language catalogs it reads, and it broke the IBM partnership page that IBM hosts on its own domain: that page keeps itself current by pulling the latest copy from us, and instead had quietly frozen on the version baked in the day it was published. All of it answers any site that asks now. The live copy also carries its own script and translation addresses with it, instead of asking your server for files only we have, and a new check loads that page from a stranger's domain so none of this can go unnoticed again.</description>
 		</item>
 		<item>
 			<title>The Smart Money directory stops asking your browser for pictures it can never get</title>
