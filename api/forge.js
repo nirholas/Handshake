@@ -164,6 +164,28 @@ const NIM_TRELLIS_COOLDOWN_KEY = 'forge-nim-trellis';
 const NIM_FORGE_COOLDOWN_SECONDS = 120;
 const NIM_FORGE_GATEWAY_COOLDOWN_SECONDS = 30;
 
+// Honest cold-start signal for a self-host lane: true only when the liveness
+// probe reached the worker but it answered slowly (a scale-to-zero container
+// spinning up). Reuses the cached lane-health snapshot, so the common path pays
+// no extra probe. Used to widen the ETA + flag `cold_start`, never to fabricate
+// progress; the client's real polling still drives actual status.
+//
+// Module-level because BOTH ends of a job need it. It used to be a closure inside
+// the submit handler, so only the submit response could say a worker was booting;
+// a client that never saw that response (a coalesced job, a page resumed after a
+// reload, a poll-time failover successor) was told "queued" with no explanation
+// for a wait that is a container boot, not a stall.
+async function laneColdStart(backendId) {
+	if (!backendId || !isSelfHostBackend(backendId) || !coldStartSecondsFor(backendId)) return false;
+	try {
+		const snap = await laneHealthSnapshot([backendId]);
+		const rec = snap.byId[backendId];
+		return Boolean(rec && rec.status === 'ok' && rec.warm === false);
+	} catch {
+		return false;
+	}
+}
+
 // The platform-keyed paid reconstruct lane (Replicate TRELLIS) recorded as down.
 // Set only on an out-of-credit/billing failure: which won't self-heal until ops
 // tops the account up, so the window is long (reason 'auth'). The NIM-cooldown
@@ -1148,21 +1170,7 @@ async function startJob(req, res) {
 		}
 	}
 
-	// Honest cold-start signal for a chosen self-host lane: true only when the
-	// liveness probe reached the worker but it answered slowly (a scale-to-zero
-	// container spinning up). Reuses the cached snapshot, so the common path pays no
-	// extra probe. Used to widen the ETA + flag `cold_start` in the response, never
-	// to fabricate progress; the client's real polling still drives actual status.
-	const coldStartFor = async (id) => {
-		if (!isSelfHostBackend(id) || !coldStartSecondsFor(id)) return false;
-		try {
-			const snap = await laneHealthSnapshot([id]);
-			const rec = snap.byId[id];
-			return Boolean(rec && rec.status === 'ok' && rec.warm === false);
-		} catch {
-			return false;
-		}
-	};
+	const coldStartFor = laneColdStart;
 
 	// Content-addressed result cache (see _lib/forge-cache.js): a text→3D request
 	// on a platform-keyed lane (never BYOK: that spends the caller's own account,
@@ -2792,6 +2800,34 @@ async function pollJob(req, res, jobId) {
 			}
 		: {};
 
+	// Honest timing on every non-terminal poll: how long this job has actually
+	// been alive, the lane's typical total, and what is left of it. /api/gpt-forge
+	// has returned these since the ChatGPT surface needed them; /api/forge is the
+	// endpoint every browser and MCP client polls and it returned neither, so each
+	// caller either invented its own copy of the estimate or fell back to a static
+	// "usually under a minute" line that nothing measured.
+	//
+	// eta_remaining_seconds is floored at 5 for the reason gpt-forge floors it: the
+	// estimate is a typical duration, not a deadline, and a countdown that goes
+	// negative reads as "stuck" for a job that is merely slower than average.
+	const elapsedSeconds = meta?.created_at
+		? Math.max(0, Math.round((Date.now() - Date.parse(meta.created_at)) / 1000))
+		: null;
+	const etaTotalSeconds = meta?.backend
+		? estimateEtaSeconds({ backendId: meta.backend, tier: meta.tier })
+		: null;
+	const timingFields = {
+		...(Number.isFinite(elapsedSeconds) ? { elapsed_seconds: elapsedSeconds } : {}),
+		...(Number.isFinite(etaTotalSeconds) && etaTotalSeconds > 0
+			? {
+					eta_seconds: etaTotalSeconds,
+					eta_remaining_seconds: Number.isFinite(elapsedSeconds)
+						? Math.max(5, etaTotalSeconds - elapsedSeconds)
+						: etaTotalSeconds,
+				}
+			: {}),
+	};
+
 	// Poll the provider that owns this job. BYOK providers re-resolve the key per
 	// poll (the client resends it, or it loads from the session store).
 	let result;
@@ -2864,7 +2900,7 @@ async function pollJob(req, res, jobId) {
 	} catch {
 		// A transient poll error shouldn't fail the job: report running so the
 		// client's loop retries.
-		return json(res, 200, { job_id: jobId, status: 'running', ...metaFields });
+		return json(res, 200, { job_id: jobId, status: 'running', ...metaFields, ...timingFields });
 	}
 
 	if (result.status === 'done' && result.resultGlbUrl) {
@@ -3004,6 +3040,7 @@ async function pollJob(req, res, jobId) {
 							job_id: jobId,
 							status: 'running',
 							...metaFields,
+							...timingFields,
 							backend: nextLane,
 							failover_from: failedBackend,
 						});
@@ -3030,7 +3067,23 @@ async function pollJob(req, res, jobId) {
 			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});
 	}
-	return json(res, 200, { job_id: jobId, status: result.status || 'running', ...metaFields });
+	// A job still QUEUED on a scale-to-zero self-host worker is waiting on a
+	// container boot, and that is the one wait a client can explain instead of
+	// showing a stalled bar. Resolved from the cached lane-health snapshot (one
+	// probe per 20s per instance, shared across every concurrent poll), and only
+	// while queued: a worker that answered "running" is up by definition, so the
+	// flag clears on a real signal rather than on a timer.
+	const pendingStatus = result.status || 'running';
+	const cold = pendingStatus === 'queued' ? await laneColdStart(metaFields.backend) : false;
+	return json(res, 200, {
+		job_id: jobId,
+		status: pendingStatus,
+		...metaFields,
+		...timingFields,
+		...(cold
+			? { cold_start: true, cold_start_seconds: coldStartSecondsFor(metaFields.backend) }
+			: {}),
+	});
 }
 
 export default wrap(async (req, res) => {

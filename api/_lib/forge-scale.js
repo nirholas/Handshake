@@ -101,6 +101,77 @@ export async function clearInFlight(hash) {
 	}
 }
 
+// ── Self-host lane occupancy ─────────────────────────────────────────────────
+// How many generations WE have in flight on each of our own GPU lanes right now.
+//
+// This exists because liveness is not capacity. Our GPU workers accept a job
+// with a 202 and run it on a background task, so an overloaded worker still
+// answers /health instantly and still reads `ok` to the health-aware router,
+// which then hands it the next job, and the next. Cloud Run cannot see the
+// backlog either: request concurrency never rises above the poll traffic, so the
+// autoscaler leaves the service at one instance no matter how deep the queue is.
+// A 10-job load test on 2026-09-04 landed all ten on the single warm TRELLIS
+// instance and 7 were still queued 12 minutes later, while the Hunyuan3D worker
+// (a different accelerator, its own quota, min-scale 1, completely idle) and both
+// free external lanes sat unused.
+//
+// The count is of OUR OWN submissions, not a guess at the worker's internals: one
+// sorted-set member per live job keyed by its handle, scored with an expiry, so
+// an instance that dies without ever seeing the job finish cannot pin the lane
+// (the same self-healing eviction acquireBlockingSlot uses below). Best-effort
+// throughout: without Redis every lane reports 0 occupancy and routing behaves
+// exactly as it did before this existed.
+
+const LANE_BUSY_PREFIX = 'fc:lane:';
+// A generation that has not reached a terminal poll by now is not still running:
+// it is a client that closed the tab, or a job whose successor took over. Matches
+// INFLIGHT_TTL_S, the same "longest a generation stays pollable" horizon.
+const LANE_BUSY_TTL_S = INFLIGHT_TTL_S;
+
+// Record that `jobHandle` now occupies `backendId`. Called at submit.
+export async function markLaneJobStarted(backendId, jobHandle) {
+	if (!redis || !backendId || !jobHandle) return;
+	const key = `${LANE_BUSY_PREFIX}${backendId}`;
+	try {
+		await redis.zadd(key, { score: Date.now() + LANE_BUSY_TTL_S * 1000, member: String(jobHandle) });
+		await redis.expire(key, LANE_BUSY_TTL_S + 10);
+	} catch {
+		/* best-effort: a missed mark just means the lane looks emptier */
+	}
+}
+
+// Release a lane slot. Called when a poll reaches a terminal status, and when a
+// submit throws before the job ever ran.
+export async function markLaneJobFinished(backendId, jobHandle) {
+	if (!redis || !backendId || !jobHandle) return;
+	try {
+		await redis.zrem(`${LANE_BUSY_PREFIX}${backendId}`, String(jobHandle));
+	} catch {
+		/* the score-based eviction reclaims it */
+	}
+}
+
+// Live occupancy for a set of lane ids, as { [id]: count }. Expired members are
+// evicted first so a stale entry can never make a lane look permanently full.
+// Returns an empty object (every lane unconstrained) without Redis or on error.
+export async function laneOccupancy(backendIds = []) {
+	const ids = [...new Set(backendIds)].filter(Boolean);
+	if (!redis || !ids.length) return {};
+	const now = Date.now();
+	try {
+		const counts = await Promise.all(
+			ids.map(async (id) => {
+				const key = `${LANE_BUSY_PREFIX}${id}`;
+				await redis.zremrangebyscore(key, 0, now);
+				return [id, Number(await redis.zcard(key)) || 0];
+			}),
+		);
+		return Object.fromEntries(counts);
+	} catch {
+		return {};
+	}
+}
+
 // ── Bounded-concurrency lease (for the blocking free lane) ────────────────────
 // The HuggingFace Spaces lane BLOCKS a serverless worker for up to ~280s per call
 // (see huggingface.js HF_INFERENCE_TIMEOUT_MS). Past a few dozen concurrent holds,

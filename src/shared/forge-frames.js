@@ -77,10 +77,22 @@ export function laneLabel(backendId) {
 //   failed               → generation failed
 // `mode` ('image' before the mesh stage) and `eta_seconds` refine the line when
 // the pipeline reports them. Unknown states fall back to a neutral "working".
+//
+// Two optional numbers make a wait measurable instead of merely named, and both
+// come off the poll payload (/api/forge returns `elapsed_seconds` and
+// `eta_remaining_seconds` on every non-terminal poll): `elapsed_seconds` is how
+// long the job has really been alive, `eta_remaining_seconds` is the lane's
+// typical total minus that. Neither is ever synthesized here from a local clock,
+// so a page reopened mid-generation reports the job's age, not the tab's.
 export function forgeStageNarration(state = {}) {
 	const status = String(state.status || state.stage || '').toLowerCase();
-	const eta = Number(state.eta_seconds) > 0 ? Math.round(Number(state.eta_seconds)) : null;
-	const etaSuffix = eta ? ` — ~${eta}s` : '';
+	const num = (v) => (Number(v) > 0 ? Math.round(Number(v)) : null);
+	const eta = num(state.eta_seconds);
+	const elapsed = Number(state.elapsed_seconds) >= 0 ? Math.round(Number(state.elapsed_seconds)) : null;
+	// Prefer the live remaining estimate: repeating the lane's static total on
+	// every frame is what made a poll loop read as "stuck at ~60s" for a minute.
+	const remaining = num(state.eta_remaining_seconds) ?? eta;
+	const etaSuffix = remaining ? ` (~${remaining}s left)` : '';
 	// The lane that actually ran, when the caller knows it. Older callers pass no
 	// `backend`, so every line degrades to a lane-agnostic phrasing rather than
 	// naming the wrong engine.
@@ -90,8 +102,11 @@ export function forgeStageNarration(state = {}) {
 	// `cold_seconds` is the lane's spin-up budget from the API, never a timer we
 	// invent; without it we still name the state but promise no number.
 	const cold = Boolean(state.cold_start);
-	const coldSeconds = Number(state.cold_seconds) > 0 ? Math.round(Number(state.cold_seconds)) : null;
+	const coldSeconds = num(state.cold_seconds);
 	const coldWho = lane ? ` ${lane}` : '';
+	// Elapsed is only worth showing once it means something; under 5s it just
+	// flickers. A boot past its budget says so instead of counting into negatives.
+	const elapsedSuffix = elapsed != null && elapsed >= 5 ? ` (${elapsed}s in)` : '';
 
 	switch (status) {
 		case 'submitting':
@@ -100,18 +115,23 @@ export function forgeStageNarration(state = {}) {
 		case 'queued':
 		case 'queue':
 			if (cold) {
-				return coldSeconds
-					? `Waking up the${coldWho} GPU worker (about ${coldSeconds}s), then sculpting starts`
-					: `Waking up the${coldWho} GPU worker, then sculpting starts`;
+				if (!coldSeconds) return `Waking up the${coldWho} GPU worker, then sculpting starts`;
+				const bootLeft = elapsed != null ? coldSeconds - elapsed : null;
+				if (bootLeft != null && bootLeft <= 0) {
+					return `Still waking the${coldWho} GPU worker${elapsedSuffix}. The job is accepted and starts the moment it answers`;
+				}
+				return bootLeft != null
+					? `Waking up the${coldWho} GPU worker${elapsedSuffix}, about ${bootLeft}s of boot left, then sculpting starts`
+					: `Waking up the${coldWho} GPU worker (about ${coldSeconds}s), then sculpting starts`;
 			}
-			return `Queued${laneSuffix}${etaSuffix}`;
+			return `Queued${laneSuffix}${elapsedSuffix}${etaSuffix}`;
 		case 'image':
 		case 'texturing':
 			return 'Drafting the look…';
 		case 'running':
 		case 'reconstruct':
 		case 'mesh':
-			return `Building geometry & texturing${etaSuffix}`;
+			return `Building geometry & texturing${elapsedSuffix}${etaSuffix}`;
 		case 'done':
 		case 'ready':
 			return 'Model ready — loading into the cam';
