@@ -28,6 +28,12 @@ const patchBody = z.object({
 	max_chars: z.number().int().min(40).max(2000).optional(),
 	daily_cap: z.number().int().min(1).max(1000).optional(),
 	listed: z.boolean().optional(),
+	// The escrowed lane. Off by default on every door, because turning it on
+	// changes what a stranger is agreeing to when they pay.
+	escrow_enabled: z.boolean().optional(),
+	// Bounded to the same 1-hour..30-day band the program enforces, so a door
+	// cannot advertise a window the chain would refuse.
+	escrow_window_hours: z.number().int().min(1).max(720).optional(),
 	block: z.string().trim().min(1).max(120).optional(),
 	unblock: z.string().uuid().optional(),
 });
@@ -69,6 +75,8 @@ export default wrap(async (req, res) => {
 	if (body.max_chars !== undefined) patch.max_chars = body.max_chars;
 	if (body.daily_cap !== undefined) patch.daily_cap = body.daily_cap;
 	if (body.listed !== undefined) patch.listed = body.listed;
+	if (body.escrow_enabled !== undefined) patch.escrow_enabled = body.escrow_enabled;
+	if (body.escrow_window_hours !== undefined) patch.escrow_window_hours = body.escrow_window_hours;
 
 	// Opening a door with a price and nowhere to send the money would take
 	// payments into the platform's own wallet. Refuse instead of quietly
@@ -80,6 +88,18 @@ export default wrap(async (req, res) => {
 			400,
 			'missing_payout',
 			'add the wallet that should receive the USDC before opening a priced door',
+		);
+	}
+
+	// An escrowed door's PDA is derived from the owner's Solana address, and an
+	// answer pays out to it. Without one there is no on-chain door to knock at,
+	// so enabling the lane would advertise something that cannot work.
+	if (merged.escrow_enabled && !merged.pay_to_solana) {
+		return error(
+			res,
+			400,
+			'missing_solana_payout',
+			'the escrowed lane needs a Solana address: it is where an answer pays out, and half of the door\'s on-chain address',
 		);
 	}
 

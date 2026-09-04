@@ -15,6 +15,14 @@
 			<description>Paying to reach someone used to send your money the instant the payment cleared, which meant an owner could take every knock and answer none, and you had no way to get it back. A new Solana program makes the payment conditional: it sits in a vault that only the knock itself controls, and exactly three things can happen to it. The owner answers inside the reply window and gets paid, the owner declines and you are refunded in full with no fee taken, or the window closes and anyone at all can trigger your refund. There is no admin key that can move a knock that is parked, the fee is capped at 10% in the program itself, and the fee you agreed to when you knocked cannot be raised on money that is already in escrow. Your message never touches the chain: only a fingerprint of it is stored, so either side can later prove what was sent without publishing it. Ten invariants covering every one of those promises run against the real compiled program on every test run.</description>
 		</item>
 		<item>
+			<title>Knock somebody's door and get your money back if they never answer</title>
+			<link>https://three.ws/docs/knock</link>
+			<guid isPermaLink="false">2026-09-04:Knock somebody's door and get your money back if they never answer</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Paying to reach a stranger has meant paying first and hoping. The money left your wallet the moment the payment cleared, and if the person never replied, that was that. Doors can now take escrowed knocks instead: your payment sits in a vault on Solana that the recipient cannot touch until they actually answer you. If they answer, they are paid. If they decline, you get everything back and are charged nothing, because reading something and passing on it is not a service. And if they simply never respond before the window they set, anyone at all can trigger the refund and every cent comes back to you, so it does not depend on you remembering to chase it. three.ws holds no key that can move that money, and neither does anyone else. Door owners can turn the lane on in their knock settings and choose how long they get to reply, from an hour to a month.</description>
+		</item>
+		<item>
 			<title>The 3D services we sell to other agents quote one clear price, however they are asked</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-04:The 3D services we sell to other agents quote one clear price, however they are asked</guid>

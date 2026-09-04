@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-04",
+			"title": "Knock somebody's door and get your money back if they never answer",
+			"summary": "Paying to reach a stranger has meant paying first and hoping. The money left your wallet the moment the payment cleared, and if the person never replied, that was that. Doors can now take escrowed knocks instead: your payment sits in a vault on Solana that the recipient cannot touch until they actually answer you. If they answer, they are paid. If they decline, you get everything back and are charged nothing, because reading something and passing on it is not a service. And if they simply never respond before the window they set, anyone at all can trigger the refund and every cent comes back to you, so it does not depend on you remembering to chase it. three.ws holds no key that can move that money, and neither does anyone else. Door owners can turn the lane on in their knock settings and choose how long they get to reply, from an hour to a month.",
+			"link": "/docs/knock",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-09-04",
 			"title": "The 3D services we sell to other agents quote one clear price, however they are asked",
 			"summary": "Our four paid 3D generation services on the OKX.AI agent marketplace answer every caller with a price quote before any work happens. Two flaws in that quote are fixed. A request that arrived with no body and no content type was turned away with a formatting complaint instead of a price, and that is exactly how the marketplace's own compatibility check asks, so the check saw four services that looked like they had no payment set up at all. Separately, a request that named no specific tool got a quote listing the same payment network twice at two different prices, one of them wrong. Every unpaid request now receives a single unambiguous quote at the service's listed price, on each payment network it accepts.",
 			"tags": [

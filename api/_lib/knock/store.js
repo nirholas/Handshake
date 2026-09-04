@@ -10,6 +10,7 @@ import { DEFAULT_PRICE_ATOMICS, KNOCK_STATUSES, normalizeHandle } from './policy
 
 const DOOR_COLUMNS = sql`
 	user_id, open, price_atomics::text as price_atomics, pay_to_solana, pay_to_base,
+	escrow_enabled, escrow_window_hours,
 	headline, greeting, max_chars, daily_cap, listed, created_at, updated_at
 `;
 
@@ -42,6 +43,8 @@ export async function updateDoor(userId, patch) {
 			max_chars     = coalesce(${patch.max_chars ?? null}, max_chars),
 			daily_cap     = coalesce(${patch.daily_cap ?? null}, daily_cap),
 			listed        = coalesce(${patch.listed ?? null}, listed),
+			escrow_enabled = coalesce(${patch.escrow_enabled ?? null}, escrow_enabled),
+			escrow_window_hours = coalesce(${patch.escrow_window_hours ?? null}, escrow_window_hours),
 			updated_at    = now()
 		where user_id = ${userId}
 		returning ${DOOR_COLUMNS}
@@ -62,6 +65,7 @@ export async function publicDoorByHandle(handle) {
 		select u.id as user_id, u.username, u.display_name, u.avatar_url, u.verified_type,
 		       d.open, d.price_atomics::text as price_atomics, d.headline, d.greeting,
 		       d.max_chars, d.daily_cap, d.listed,
+		       d.escrow_enabled, d.escrow_window_hours,
 		       d.pay_to_solana is not null as has_solana_payout,
 		       d.pay_to_base is not null as has_base_payout
 		from users u
@@ -120,18 +124,62 @@ export async function isBlocked(userId, keys) {
  * knock instead of two.
  */
 export async function recordKnock(userId, knock) {
+	// escrow_* is a cache of what the chain says (api/_lib/knock/escrow.js), so
+	// the inbox can show a countdown without an RPC read per row. Null on both
+	// non-escrow lanes, which is how a reader tells the three apart.
 	const [row] = await sql`
 		insert into knock_messages
 			(recipient_user_id, sender_name, sender_url, sender_kind, payer_wallet, network,
-			 tx_hash, amount_atomics, asset, subject, message, companion_event_id, request_id)
+			 tx_hash, amount_atomics, asset, subject, message, companion_event_id, request_id,
+			 escrow_knock, escrow_expires_at, escrow_state)
 		values (${userId}, ${knock.senderName}, ${knock.senderUrl ?? null}, ${knock.senderKind ?? 'unknown'},
 		        ${knock.payerWallet ?? null}, ${knock.network ?? null}, ${knock.txHash ?? null},
 		        ${String(knock.amountAtomics ?? 0)}, ${knock.asset ?? null}, ${knock.subject ?? null},
-		        ${knock.message}, ${knock.companionEventId ?? null}, ${knock.requestId ?? null})
+		        ${knock.message}, ${knock.companionEventId ?? null}, ${knock.requestId ?? null},
+		        ${knock.escrowKnock ?? null},
+		        ${knock.escrowExpiresAt ? new Date(knock.escrowExpiresAt * 1000) : null},
+		        ${knock.escrowState ?? null})
 		on conflict (recipient_user_id, request_id) where request_id is not null do nothing
 		returning id, sender_name, sender_url, sender_kind, payer_wallet, network, tx_hash,
 		          amount_atomics::text as amount_atomics, asset, subject, message, status,
-		          companion_event_id, created_at
+		          companion_event_id, created_at, escrow_knock, escrow_expires_at, escrow_state
+	`;
+	return row || null;
+}
+
+/**
+ * Has this exact on-chain knock already bought a message?
+ *
+ * One escrowed knock buys exactly one delivery. The unique index on
+ * escrow_knock is what actually enforces it; this read is so a replay gets a
+ * clean "already delivered" with the original row instead of a constraint
+ * violation surfacing as a 500.
+ */
+export async function findByEscrowKnock(escrowKnock) {
+	if (!escrowKnock) return null;
+	const [row] = await sql`
+		select id, recipient_user_id, sender_name, subject, message, status, created_at,
+		       escrow_knock, escrow_expires_at, escrow_state
+		  from knock_messages
+		 where escrow_knock = ${escrowKnock}
+		 limit 1
+	`;
+	return row || null;
+}
+
+/**
+ * Write back what the chain now says about an escrowed knock.
+ *
+ * Called after re-reading the account, so a row that says `pending` in the
+ * inbox cannot keep saying it after the money has already gone back.
+ */
+export async function updateEscrowState(escrowKnock, state) {
+	if (!escrowKnock) return null;
+	const [row] = await sql`
+		update knock_messages
+		   set escrow_state = ${state}
+		 where escrow_knock = ${escrowKnock}
+		 returning id, escrow_knock, escrow_state
 	`;
 	return row || null;
 }

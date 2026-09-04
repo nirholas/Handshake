@@ -251,6 +251,7 @@ a 404, not a 403: an id on its own should not confirm that a knock exists.
 | `GET /api/knock/directory` | none | Every open, listed door, cheapest first. |
 | `POST /api/knock/send` | none | Knock on a free door. |
 | `POST /api/x402/knock?to=` | x402 payment | Knock on a priced door. |
+| `POST /api/knock/escrowed` | on-chain escrow | Knock on a door that takes escrowed knocks, where the money only moves if you get an answer. |
 | `GET /api/knock/reply?id=&token=` | receipt token | What became of a knock you sent. |
 | `GET /api/knock/settings` | session | Your door, your totals, your block list. |
 | `PATCH /api/knock/settings` | session | Change any of it. |
@@ -260,6 +261,91 @@ a 404, not a 403: an id on its own should not confirm that a knock exists.
 Error codes are stable and mean what they say: `no_door`, `door_closed`,
 `door_full` (429, retryable tomorrow), `message_too_long`, `message_too_short`,
 `bad_url`, `missing_sender`, `free_door`, `payment_required`.
+
+The escrowed lane adds `escrow_not_enabled` (409, and the body names the lane
+to use instead), `no_payout_wallet` (409), `knock_not_found` (402, nothing is
+escrowed at the address the request derives), and four 409s for an escrow that
+exists but cannot be used: `already_settled`, `message_mismatch`,
+`window_closed`, `underpaid`.
+
+---
+
+## The escrowed lane
+
+The x402 lane sends your USDC to the recipient the instant the payment clears.
+Between people who already know each other that is the right shape, and it is
+why the lane exists. Between strangers it is the whole risk: a door can bank
+every knock and answer none, and you have no recourse. Nobody is going to keep
+paying strangers under those terms, and when they stop, the price stops meaning
+anything, which was the entire point of pricing a door.
+
+An escrowed door fixes that without giving three.ws your money either. You sign
+a `knock` instruction on the [knock_escrow](https://github.com/nirholas/three.ws/tree/main/contracts/knock-escrow)
+Solana program, which parks your payment in a vault owned by that knock's own
+program address. From there exactly three things can happen to it:
+
+| Outcome | Who can trigger it | Where your money goes |
+| --- | --- | --- |
+| Answered inside the window | the door's owner, and nobody else | to them, minus the protocol fee |
+| Refused | the door's owner | **all of it back to you**, no fee taken |
+| The window closes | **anyone at all** | **all of it back to you** |
+
+There is no fourth path. three.ws holds no key that can move a parked knock,
+and neither can the protocol authority: the vault's only authority is the
+knock's own address. The worst case for a sender is that their money is
+unavailable until the window they agreed to runs out.
+
+Two details worth knowing:
+
+**The refund is permissionless.** If only you could claim it back, the guarantee
+would be worth exactly as much as your diligence, and an agent that knocked and
+went away would leave the money stranded. Anybody can crank an expired refund,
+and it can only ever pay the original sender.
+
+**Refusing costs you nothing.** An owner who will not engage is better off
+refusing than letting the clock run out: you get your money back immediately
+rather than a day later. Reading something and declining to answer is not a
+service, so it is not charged for.
+
+### Sending an escrowed knock
+
+```bash
+# 1. Check the door takes escrowed knocks and read its price.
+curl -s 'https://three.ws/api/knock/door?handle=nirholas'
+
+# 2. Sign the on-chain `knock` instruction yourself, parking the price in escrow.
+#    The knock's address derives from (door, your wallet, a nonce you choose).
+
+# 3. Deliver the message against it.
+curl -sX POST https://three.ws/api/knock/escrowed \
+  -H 'content-type: application/json' \
+  -d '{
+        "to": "nirholas",
+        "from": "Ada (research agent)",
+        "message": "two questions about the facilitator, happy to pay for the time",
+        "sender_wallet": "<the wallet that signed the knock>",
+        "nonce": 7
+      }'
+```
+
+The response carries the knock's address, its vault, the deadline, and the
+seconds remaining. The message body itself never touches the chain: the escrow
+commits to its SHA-256, so both sides can prove later what was actually sent
+without publishing a stranger's private message to a public ledger. That hash is
+also what stops a paid escrow being reused to deliver a different message.
+
+### Opening an escrowed door
+
+```bash
+curl -sX PATCH https://three.ws/api/knock/settings \
+  -H 'content-type: application/json' \
+  -d '{ "escrow_enabled": true, "escrow_window_hours": 24 }'
+```
+
+Off by default on every door, because turning it on changes what a stranger is
+agreeing to when they pay. It needs a Solana address on the door: that address
+is where an answer pays out, and it is half of the door's on-chain identity.
+The window can be 1 hour to 30 days, the same band the program enforces.
 
 ---
 
@@ -283,7 +369,10 @@ avatar as a speaker.
 
 **No custody, no cut.** `payTo` on the 402 challenge is the recipient's own
 address. There is no platform wallet in the path to be drained, reconciled, or
-argued about.
+argued about. The escrowed lane keeps that property while removing the trust it
+used to require: the money sits in a vault whose only authority is the knock's
+own program address, so three.ws cannot release it, refund it, or redirect it,
+and neither can anyone else outside the three outcomes above.
 
 ---
 

@@ -61,6 +61,9 @@ export async function checkDoor(userId, input) {
  * @param {string} args.userId          recipient
  * @param {object} args.clean           the output of validateKnock()
  * @param {object} [args.payment]       { payerWallet, network, txHash, amountAtomics, asset }
+ *                                      plus { escrowKnock, escrowExpiresAt, escrowState } on
+ *                                      the escrowed lane, where the money is parked on-chain
+ *                                      rather than already in the recipient's wallet.
  * @returns {Promise<{knock: object, duplicate: boolean, importance: number}>}
  */
 export async function deliverKnock({ userId, clean, payment = {} }) {
@@ -106,6 +109,10 @@ export async function deliverKnock({ userId, clean, payment = {} }) {
 		amountAtomics,
 		asset: payment.asset ?? null,
 		companionEventId: event?.id ?? null,
+		// Only the escrowed lane sets these; both other lanes leave them null.
+		escrowKnock: payment.escrowKnock ?? null,
+		escrowExpiresAt: payment.escrowExpiresAt ?? null,
+		escrowState: payment.escrowState ?? null,
 	});
 
 	// recordKnock returns null only on the request-id conflict, which the check
