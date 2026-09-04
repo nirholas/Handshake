@@ -160,6 +160,9 @@
 	   would wrap into taller blocks than the lift they replaced. */
 	var SIDE_BY_SIDE_MIN_COL = 160;
 	var NARROW_GUTTERS = 24; /* the 12px inset on each side of the narrow rule */
+	/* Never park the stack past mid-screen, whether the offset came from a
+	   declared reservation, a measured page dock, or both together. */
+	var DOCK_MAX_RATIO = 0.45;
 
 	function applyReserve() {
 		var maxH = 0;
@@ -175,7 +178,13 @@
 			vw > 0 &&
 			vw <= SIDE_BY_SIDE_MAX_VW &&
 			vw - NARROW_GUTTERS - maxW >= SIDE_BY_SIDE_MIN_COL;
-		var lift = beside ? 0 : maxH;
+		/* A claim taller than half the screen (a landscape phone, a short
+		   window) would strand the stack above the fold. Overlapping the
+		   bottom of the claiming widget is the lesser evil: the widget knows
+		   it owns the corner, the page's own controls do not. */
+		var vh = typeof window !== 'undefined' ? window.innerHeight || 0 : 0;
+		var liftCap = vh > 0 ? Math.round(vh * DOCK_MAX_RATIO) : Infinity;
+		var lift = beside ? 0 : Math.min(maxH, liftCap);
 		var inset = beside ? maxW : 0;
 		var root = document.documentElement;
 		if (lift > 0) root.style.setProperty('--tws-corner-reserve', lift + 'px');
@@ -191,8 +200,35 @@
 		return maxH;
 	}
 
-	/* px: a height in pixels, or { height, width } for a widget that can also be
-	   stepped around horizontally. */
+	/* Elements whose claim is already declared, keyed the same way as the
+	   reservation that owns them. A declared widget must never ALSO be counted
+	   by the dock probe below: the Walk Companion is a bottom-anchored fixed
+	   box, so it matched both paths and the stack was lifted twice, landing
+	   mid-screen. On a 320px /forge that put the language control and the
+	   Getting started pill exactly over the "From photos" and "From a sketch"
+	   tabs, making two of the three input modes unclickable on a phone. */
+	var reservedEls = Object.create(null);
+
+	function markReserved(key, el) {
+		var prev = reservedEls[key];
+		if (prev && prev !== el && prev.removeAttribute) prev.removeAttribute('data-corner-ignore');
+		if (el && el.setAttribute) {
+			el.setAttribute('data-corner-ignore', '');
+			reservedEls[key] = el;
+		} else {
+			delete reservedEls[key];
+		}
+	}
+
+	function unmarkReserved(key) {
+		var el = reservedEls[key];
+		if (el && el.removeAttribute) el.removeAttribute('data-corner-ignore');
+		delete reservedEls[key];
+	}
+
+	/* px: a height in pixels, or { height, width, el } for a widget that can
+	   also be stepped around horizontally. `el` is the widget itself, so the
+	   dock probe can skip a claim that is already declared. */
 	function reserve(key, px) {
 		if (!key) return reservedHeight();
 		var spec = px && typeof px === 'object' ? px : { height: px };
@@ -205,11 +241,13 @@
 			height: Math.round(h),
 			width: Number.isFinite(w) && w > 0 ? Math.round(w) : 0
 		};
+		markReserved(key, spec.el || null);
 		return applyReserve();
 	}
 
 	function release(key) {
 		delete reservations[key];
+		unmarkReserved(key);
 		return applyReserve();
 	}
 
@@ -234,7 +272,6 @@
 	   on every resize and DOM change. */
 	var DOCK_VAR = '--tws-corner-dock';
 	var DOCK_GAP = 10; /* breathing room between the dock and the stack */
-	var DOCK_MAX_RATIO = 0.45; /* never lift the stack past mid-screen */
 	var dockLift = 0;
 
 	/* The fixed/sticky box `el` belongs to, or null when it is ordinary
@@ -296,7 +333,16 @@
 		   to the corner it is anchored to. */
 		var left = band.width > 0 ? band.left : vw * 0.6;
 		var right = band.width > 0 ? band.right : vw;
-		var cap = Math.round(vh * DOCK_MAX_RATIO);
+		/* The cap belongs to the TOTAL offset, not to the measured half of it.
+		   A reservation already lifts the stack, and the two used to be capped
+		   independently and then summed, so a declared 218px claim plus a
+		   measured 228px dock put the stack 64% of the way up a phone screen,
+		   on top of the page's own controls. Whatever the reservation already
+		   took comes out of the dock's budget. */
+		var reserveLift = parseFloat(
+			document.documentElement.style.getPropertyValue('--tws-corner-reserve')
+		) || 0;
+		var cap = Math.max(0, Math.round(vh * DOCK_MAX_RATIO) - reserveLift);
 		/* Docks stack: /app pins an action bar under a chat composer. Climb one
 		   band at a time until nothing new appears above, so clearing the first
 		   one never parks the stack on the second. */

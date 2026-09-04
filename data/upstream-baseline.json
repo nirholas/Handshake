@@ -1,16 +1,16 @@
 {
 	"generated": "scripts/audit-upstreams.mjs",
 	"summary": {
-		"total": 225,
+		"total": 226,
 		"grades": {
 			"A": 0,
 			"B": 54,
 			"C": 92,
-			"D": 79,
+			"D": 80,
 			"F": 0
 		},
 		"protections": {
-			"deadline": 225,
+			"deadline": 226,
 			"retry": 97,
 			"failover": 49,
 			"lastGood": 5,
@@ -195,6 +195,7 @@
 		"src/erc8004/agent-registry.js::api.pinata.cloud::fetch": "D",
 		"src/shared/wallet-networth.js::lite-api.jup.ag::fetch": "D",
 		"src/social/x-post-impact.js::publish.twitter.com::fetch": "D",
-		"api/_lib/print/ops-notify.js::api.telegram.org::fetchUpstream": "C"
+		"api/_lib/print/ops-notify.js::api.telegram.org::fetchUpstream": "C",
+		"workers/agent-sniper/risk-officer.js::openrouter.ai::fetch": "D"
 	}
 }

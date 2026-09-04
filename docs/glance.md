@@ -111,17 +111,18 @@ three.ws declares a `widgets` member in its PWA manifest, so the widget installs
 2. Open the widgets board (`Win + W`) and choose **Add widgets**.
 3. Pick **Agent glance**.
 
-The board then talks to the site's service worker, which supplies the data:
+The board renders an Adaptive Card, and it fetches neither half of it for you: the site's service worker supplies both the card and the data bound into it.
 
 | Event | What happens |
 | --- | --- |
-| `widgetinstall` | fetch `/api/glance/mine`, push it into the host |
+| `activate` | a slot pinned before this worker took over is re-rendered, not left empty |
+| `widgetinstall` | register the refresh, fetch `/api/glance/template` and `/api/glance/mine`, push both into the host |
 | `widgetresume` | render from the cached payload, then refresh |
 | `widgetclick` | refresh on demand |
-| `widgetuninstall` | drop the cached payload |
-| `periodicsync` | refresh every pinned widget on the platform's schedule |
+| `widgetuninstall` | drop the refresh with the last instance, and the cached payload |
+| `periodicsync` | refresh every pinned widget, every `update` seconds (900, the manifest's value) |
 
-Two behaviours are deliberate: signed out renders a sign-in card rather than an error, and an offline machine renders the last card it saw, labelled `(offline)`, rather than an empty slot. The implementation is [public/glance-sw.js](https://github.com/nirholas/three.ws/blob/main/public/glance-sw.js), covered by `tests/glance-sw.test.js`.
+Three behaviours are deliberate: signed out renders a sign-in card rather than an error, an offline machine renders the last card it saw, labelled `(offline)`, rather than an empty slot, and a refresh that cannot reach the card template leaves the slot holding its previous render instead of blanking it. The implementation is [public/glance-sw.js](https://github.com/nirholas/three.ws/blob/main/public/glance-sw.js), covered by `tests/glance-sw.test.js`.
 
 ---
 
