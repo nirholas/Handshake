@@ -152,8 +152,16 @@ function buildRouteList(dynamic) {
 		for (const r of skipped) console.log(`  skipping ${r} (non-HTML endpoint, nothing to audit)`);
 		return [...new Set(explicitRoutes.filter(isHtmlRoute))];
 	}
-	const authed = existsSync(AUTH_STATE) ? AUTHED_ROUTES : [];
-	return [...new Set([...manifestRoutes(), ...authed, ...dynamic])];
+	// With a session, the manifest's own auth-gated pages come in too. Asking
+	// for the public set alone dropped five of them (/conversions, /agent-screen,
+	// /agent-studio, /proof, /autopilot-activity): flagged `auth` in
+	// data/pages.json, so the public filter removed them, and absent from
+	// AUTHED_ROUTES, which only carries what the manifest deliberately omits.
+	// They fell between the two lists and no sweep had ever loaded them.
+	const signedIn = existsSync(AUTH_STATE);
+	const manifest = manifestRoutes(signedIn ? { access: 'all' } : undefined);
+	const authed = signedIn ? AUTHED_ROUTES : [];
+	return [...new Set([...manifest, ...authed, ...dynamic])];
 }
 
 // ── Login (storageState bootstrap) ────────────────────────────────────────────
