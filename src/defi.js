@@ -5,6 +5,7 @@
 // cv-table, designed loading / empty / error states.
 
 import { formatUsd, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
+import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -130,6 +131,16 @@ const state = {
 	error: false,
 };
 
+// Upstream logos are proxied same-origin so a retired icon answers 204 instead
+// of 404ing in every reader's console; the swap above turns that empty image
+// into the neutral disc.
+function logoImg(logo) {
+	const src = logo ? upstreamLogoURL(logo, 24) : '';
+	return src
+		? `<img class="defi-logo" src="${esc(src)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />`
+		: '<span class="defi-logo-fallback" aria-hidden="true"></span>';
+}
+
 function pctCell(v, extraClass = '') {
 	if (v == null) return `<td class="pct dim ${extraClass}">—</td>`;
 	const up = v >= 0;
@@ -221,7 +232,7 @@ function renderTable() {
 			<tr${nav}>
 				<td class="rank hide-sm cv-mono">${p.__rank}</td>
 				<td class="left name-cell"><span class="inner">
-					${p.logo ? `<img src="${esc(p.logo)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />` : '<span class="defi-logo-fallback" aria-hidden="true"></span>'}
+					${logoImg(p.logo)}
 					<span class="nm">${esc(p.name)}</span>
 					${p.symbol ? `<span class="sym">${esc(p.symbol)}</span>` : ''}
 				</span></td>
@@ -241,6 +252,10 @@ function renderTable() {
 				<tbody>${body}</tbody>
 			</table>
 		</div>`;
+
+	// A protocol icon the CDN has retired arrives empty (204 through the proxy);
+	// paint the same neutral disc a logo-less row already gets.
+	swapFailedLogos(el, '.defi-logo', 'defi-logo-fallback');
 
 	el.querySelectorAll('th[data-key]').forEach((th) => {
 		const activate = () => {

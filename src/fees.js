@@ -12,6 +12,7 @@ import {
 	formatChartTick,
 	escapeHtml as esc,
 } from './shared/coin-format.js';
+import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -298,8 +299,9 @@ function sortedProtocols() {
 }
 
 function nameCell(p) {
-	const logo = p.logo
-		? `<img src="${esc(p.logo)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />`
+	const src = p.logo ? upstreamLogoURL(p.logo, 24) : '';
+	const logo = src
+		? `<img class="fx-logo" src="${esc(src)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />`
 		: '<span class="fx-logo-fallback" aria-hidden="true"></span>';
 	const inner = `${logo}<span class="nm">${esc(p.name)}</span>`;
 	if (p.slug) {
@@ -364,23 +366,10 @@ function renderTable() {
 			</table>
 		</div>`;
 
-	// A protocol icon is fetched from a third-party CDN, so one that has been
-	// renamed or pulled answers 404 and the row renders a broken-image glyph.
-	// Swap any icon that fails to load for the same neutral disc a logo-less
-	// protocol already gets. The error event does not bubble, so this listens in
-	// the capture phase on the container rather than per image.
-	el.addEventListener(
-		'error',
-		(e) => {
-			const img = e.target;
-			if (!(img instanceof HTMLImageElement) || !img.closest('.name-cell')) return;
-			const fallback = document.createElement('span');
-			fallback.className = 'fx-logo-fallback';
-			fallback.setAttribute('aria-hidden', 'true');
-			img.replaceWith(fallback);
-		},
-		true,
-	);
+	// A protocol icon the CDN has retired resolves to 204 through the proxy, so
+	// the image arrives empty: swap it for the same neutral disc a logo-less
+	// protocol already gets.
+	swapFailedLogos(el, '.fx-logo', 'fx-logo-fallback');
 
 	el.querySelectorAll('th[data-key]').forEach((th) => {
 		const activate = () => {

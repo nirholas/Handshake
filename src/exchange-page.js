@@ -14,6 +14,7 @@ import {
 	formatChartTick,
 	escapeHtml as esc,
 } from './shared/coin-format.js';
+import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -130,11 +131,12 @@ function heroDescription(d) {
 
 function renderHero(d) {
 	$('ex-crumb-name').textContent = d.name;
+	const logoSrc = d.image ? upstreamLogoURL(d.image, 72) : '';
 	$('ex-hero').innerHTML = `
 		<div class="ex-hero">
 			${
-				d.image
-					? `<img class="ex-logo" src="${esc(d.image)}" alt="${esc(d.name)} logo" width="72" height="72" loading="eager" data-no-dark-filter />`
+				logoSrc
+					? `<img class="ex-logo" src="${esc(logoSrc)}" alt="${esc(d.name)} logo" width="72" height="72" loading="eager" data-no-dark-filter />`
 					: '<div class="ex-logo ex-logo-fallback" aria-hidden="true"></div>'
 			}
 			<div class="ex-hero-body">
@@ -148,6 +150,10 @@ function renderHero(d) {
 				${heroLinks(d)}
 			</div>
 		</div>`;
+
+	// Proxied same-origin: a logo host that has dropped the image answers 204
+	// and arrives empty instead of logging a 404, and this paints the disc.
+	swapFailedLogos($('ex-hero'), '.ex-logo', 'ex-logo ex-logo-fallback', 'div');
 }
 
 // ── Stat cards ───────────────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ import {
 	formatChartTick,
 	escapeHtml as esc,
 } from './shared/coin-format.js';
+import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -275,8 +276,9 @@ function shareCell(share, maxShare) {
 }
 
 function nameCell(p) {
-	const logo = p.logo
-		? `<img src="${esc(p.logo)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />`
+	const src = p.logo ? upstreamLogoURL(p.logo, 24) : '';
+	const logo = src
+		? `<img class="dx-logo" src="${esc(src)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />`
 		: '<span class="dx-logo-fallback" aria-hidden="true"></span>';
 	const inner = `${logo}<span class="nm">${esc(p.name)}</span>`;
 	if (p.slug) {
@@ -363,6 +365,10 @@ function renderTable() {
 				<tbody>${body}</tbody>
 			</table>
 		</div>`;
+
+	// A DEX icon the CDN has retired arrives empty (204 through the proxy); paint
+	// the same neutral disc a logo-less row already gets.
+	swapFailedLogos(el, '.dx-logo', 'dx-logo-fallback');
 
 	el.querySelectorAll('th[data-key]').forEach((th) => {
 		const activate = () => {

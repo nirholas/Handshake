@@ -13,6 +13,7 @@ import {
 	formatChartTick,
 	escapeHtml as esc,
 } from './shared/coin-format.js';
+import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -333,8 +334,9 @@ function changeCell(v) {
 
 function protoRow(p) {
 	const label = esc(p.name || 'Unknown');
-	const logo = p.logo
-		? `<img class="ch-proto-logo" src="${esc(p.logo)}" alt="" width="22" height="22" loading="lazy" data-no-dark-filter />`
+	const src = p.logo ? upstreamLogoURL(p.logo, 22) : '';
+	const logo = src
+		? `<img class="ch-proto-logo" src="${esc(src)}" alt="" width="22" height="22" loading="lazy" data-no-dark-filter />`
 		: '<span class="ch-proto-logo ch-proto-logo-fallback" aria-hidden="true"></span>';
 	const nameCell = p.slug
 		? `<a class="ch-proto-link" href="/protocol/${encodeURIComponent(p.slug)}">${logo}<span>${label}</span></a>`
@@ -399,6 +401,10 @@ function drawProtoTable() {
 			</table>
 		</div>
 		${note}`;
+
+	// A protocol icon the CDN has retired arrives empty (204 through the proxy);
+	// paint the same neutral disc a logo-less row already gets.
+	swapFailedLogos(el, '.ch-proto-logo', 'ch-proto-logo ch-proto-logo-fallback');
 
 	el.querySelectorAll('.ch-sortable').forEach((th) => {
 		const apply = () => {

@@ -9,6 +9,7 @@
 // the /exchange/:id detail-page pattern (src/exchange-page.js).
 
 import { formatUsd, formatDateShort, escapeHtml as esc } from './shared/coin-format.js';
+import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -139,11 +140,12 @@ function heroDescription(d) {
 
 function renderHero(d) {
 	$('pr-crumb-name').textContent = d.name;
+	const logoSrc = d.logo ? upstreamLogoURL(d.logo, 72) : '';
 	$('pr-hero').innerHTML = `
 		<div class="pr-hero">
 			${
-				d.logo
-					? `<img class="pr-logo" src="${esc(d.logo)}" alt="${esc(d.name)} logo" width="72" height="72" loading="eager" data-no-dark-filter />`
+				logoSrc
+					? `<img class="pr-logo" src="${esc(logoSrc)}" alt="${esc(d.name)} logo" width="72" height="72" loading="eager" data-no-dark-filter />`
 					: '<div class="pr-logo pr-logo-fallback" aria-hidden="true"></div>'
 			}
 			<div class="pr-hero-body">
@@ -157,6 +159,11 @@ function renderHero(d) {
 				${heroLinks(d)}
 			</div>
 		</div>`;
+
+	// The logo is proxied same-origin, so an icon upstream has retired answers
+	// 204 and arrives empty rather than 404ing in the console: swap it for the
+	// same disc a logo-less protocol gets.
+	swapFailedLogos($('pr-hero'), '.pr-logo', 'pr-logo pr-logo-fallback', 'div');
 }
 
 // ── Stat cards ───────────────────────────────────────────────────────────────

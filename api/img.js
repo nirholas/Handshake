@@ -26,6 +26,14 @@
 //      external dependency that could itself be down, and is unique per seed:
 //      an abstract gradient "gem" that reads as token art rather than a generic
 //      "broken image" tile.
+//   5. `?fallback=none` opts out of step 4 and answers 204 No Content instead.
+//      Token art wants the gem; a surface that already designs its own "no
+//      logo" state (the neutral disc on every DeFi table) does not, and would
+//      rather paint that disc than a gem that belongs to a different visual
+//      language. 204 rather than 404 because a withdrawn upstream icon is an
+//      ordinary outcome, not an error: the browser logs nothing for a 204, and
+//      the <img> still fires `error` with no bytes, so the caller's designed
+//      fallback runs exactly as it always did.
 //
 // Responses are immutable and CDN-cached: a given upstream URL yields the same
 // bytes forever, so we cache hard at the edge and the proxy is hit once per art.
@@ -287,6 +295,9 @@ export default wrap(async function handler(req, res) {
 	const metaUri = url.searchParams.get('meta');
 	const seed = url.searchParams.get('seed') || directUrl || metaUri || '';
 	const width = requestedWidth(url.searchParams.get('w'));
+	// Callers that paint their own "no image" state ask for 204 instead of the
+	// placeholder art; anything else (including an absent param) keeps the gem.
+	const placeholderOff = url.searchParams.get('fallback') === 'none';
 
 	// Accept one of: ?url=<image>, ?meta=<metadata-json>, or ?seed=<x> (placeholder
 	// only). Callers streaming launch feeds pass `meta` so the real artwork is
@@ -351,6 +362,16 @@ export default wrap(async function handler(req, res) {
 		// the texture/image loader resolves with a 200 instead of logging an error.
 		// Served same-origin (no external dependency to fail) and cached, but for a
 		// shorter window than real art so a transiently-down source can recover.
+		if (placeholderOff) {
+			// `?fallback=none`: the caller draws its own empty state, so send no
+			// body at all. Cached on the same short window as the placeholder, for
+			// the same reason: a source that comes back should be picked up soon.
+			res.statusCode = 204;
+			res.setHeader('access-control-allow-origin', '*');
+			res.setHeader('cache-control', 'public, max-age=300, s-maxage=3600');
+			res.end();
+			return;
+		}
 		res.statusCode = 200;
 		res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
 		res.setHeader('access-control-allow-origin', '*');

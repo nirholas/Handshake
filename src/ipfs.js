@@ -154,12 +154,19 @@ export function isSafeImageURL(url) {
  * that are a few hundred pixels on screen. Pass the size the art is actually
  * used at; leave it off to get the original bytes.
  *
+ * `fallback: 'none'` asks the proxy for 204 No Content instead of the gem when
+ * every source fails. Use it wherever the surface already designs its own "no
+ * image" state (the neutral logo disc on the DeFi tables): the browser logs
+ * nothing for a 204, and the <img> still fires `error`, so the designed state
+ * renders and the console stays clean. Leave it off for token art, which wants
+ * the placeholder.
+ *
  * @param {string} url          Image URL (https://, ipfs:// or ar:// accepted).
  * @param {string} [seed]       Stable placeholder seed (e.g. the token mint).
- * @param {{ width?: number }} [opts]  Max delivered width in pixels.
+ * @param {{ width?: number, fallback?: 'art'|'none' }} [opts]
  * @returns {string}
  */
-export function proxiedImageURL(url, seed = '', { width = 0 } = {}) {
+export function proxiedImageURL(url, seed = '', { width = 0, fallback = 'art' } = {}) {
 	if (typeof url !== 'string' || !url) return '';
 	// Protocol-relative art still deserves the proxy's CORS and gateway retry,
 	// so give it the scheme the page is already on before anything else looks
@@ -172,6 +179,7 @@ export function proxiedImageURL(url, seed = '', { width = 0 } = {}) {
 	const q = new URLSearchParams({ url: resolveURI(raw) });
 	if (seed) q.set('seed', seed);
 	if (width > 0) q.set('w', String(Math.round(width)));
+	if (fallback === 'none') q.set('fallback', 'none');
 	return `/api/img?${q.toString()}`;
 }
 

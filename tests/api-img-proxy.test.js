@@ -19,6 +19,9 @@
 //   8. A data: image in a followed doc is rejected → placeholder.
 //   9. ?url=<image> is served directly, unchanged (no JSON path taken).
 //  10. The `?meta=` path does not accept JSON for the artwork itself.
+//
+// Plus `?fallback=none`, the opt-out the DeFi logo tables use: 204 No Content
+// instead of the placeholder, so a retired upstream icon logs nothing.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -126,6 +129,58 @@ describe('api/img metadata resolution', () => {
 		const res = mockRes();
 		await handler(mockReq(''), res);
 		expect(res.statusCode).toBe(400);
+	});
+});
+
+// `?fallback=none` is what the DeFi tables (/fees, /defi, /dex-volumes,
+// /chain/:id, /protocol/:slug, /exchange/:id) ask for: they already draw a
+// neutral disc for a logo-less row, so a withdrawn upstream icon should arrive
+// empty rather than as token-art. 204 keeps the browser console silent (a 404
+// logs a failed resource on every table paint) while still firing `error` on
+// the <img>, which is what swaps in the disc.
+describe('api/img ?fallback=none', () => {
+	beforeEach(() => {
+		safeFetchJson.mockReset();
+		fetchModel.mockReset();
+	});
+
+	it('answers 204 with no body when every source fails', async () => {
+		fetchModel.mockRejectedValue(new Error('404 from the icon CDN'));
+
+		const res = mockRes();
+		await handler(mockReq('?url=https%3A%2F%2Ficons.example%2Fgone.png&fallback=none'), res);
+
+		expect(res.statusCode).toBe(204);
+		expect(res.body).toBeUndefined();
+		expect(res.headers['content-type']).toBeUndefined();
+		expect(res.headers['access-control-allow-origin']).toBe('*');
+	});
+
+	it('still serves the real image when the upstream resolves', async () => {
+		fetchModel.mockResolvedValue({
+			bytes: new Uint8Array([9, 9]),
+			url: 'https://icons.example/live.png',
+			contentType: 'image/png',
+			filename: 'live.png',
+		});
+
+		const res = mockRes();
+		await handler(mockReq('?url=https%3A%2F%2Ficons.example%2Flive.png&fallback=none'), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.headers['content-type']).toBe('image/png');
+		expect([...res.body]).toEqual([9, 9]);
+	});
+
+	it('keeps the placeholder for every other caller', async () => {
+		fetchModel.mockRejectedValue(new Error('gone'));
+
+		const res = mockRes();
+		await handler(mockReq('?url=https%3A%2F%2Fcdn.example%2Fart.png&seed=THREE'), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.headers['content-type']).toMatch(/image\/svg\+xml/);
+		expect(String(res.body)).toContain('<svg');
 	});
 });
 

@@ -119,6 +119,20 @@ describe('proxiedImageURL', () => {
 		expect(proxiedImageURL('javascript:alert(1)', '', { width: 512 })).toBe('');
 	});
 
+	// The DeFi logo tables draw their own neutral disc, so they ask the proxy for
+	// 204 rather than the gem placeholder. Token art must keep the placeholder,
+	// which is why the flag is opt-in and absent by default.
+	it("carries fallback=none only when the caller asks for it", () => {
+		const dflt = new URL(proxiedImageURL('https://icons.example/logo.png'), 'http://l');
+		expect(dflt.searchParams.has('fallback')).toBe(false);
+		const none = new URL(
+			proxiedImageURL('https://icons.example/logo.png', '', { width: 48, fallback: 'none' }),
+			'http://l',
+		);
+		expect(none.searchParams.get('fallback')).toBe('none');
+		expect(none.searchParams.get('w')).toBe('48');
+	});
+
 	it('routes cross-origin art through the same-origin proxy, carrying the seed', () => {
 		const out = proxiedImageURL('https://ipfs.io/ipfs/bafyexample', MINT);
 		expect(out.startsWith('/api/img?')).toBe(true);
