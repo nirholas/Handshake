@@ -36,7 +36,7 @@
 // The element is dependency-free apart from <model-viewer>, which is loaded
 // lazily from the npm CDN on first connect (the same source three.ws uses).
 
-const MODEL_VIEWER_CDN = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
+const MODEL_VIEWER_CDN = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js';
 const MESHOPT_DECODER_CDN = 'https://cdn.jsdelivr.net/npm/meshoptimizer@0.22.0/meshopt_decoder.js';
 
 // Register the EXT_meshopt_compression decoder with <model-viewer> before it
