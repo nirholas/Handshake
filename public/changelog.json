@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T08:35:42.656Z",
+	"generated_at": "2026-09-04T08:45:45.752Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -127,6 +127,17 @@
 		{
 			"date": "2026-09-04",
 			"type": "update",
+			"title": "Pin your avatars to IPFS from Settings, and choose which copy loads first",
+			"summary": "Settings now has an Avatar storage panel. Every avatar you own is listed with its size, its three.ws storage copy, and whether it also lives on IPFS. Pin one and it gets a permanent content address you can open on any public gateway, and a small R2 / IPFS switch decides which copy a viewer resolves first. If a deployment has no pinning provider it says so plainly instead of showing an address that leads nowhere. The About block on the same page now reports the build that is actually serving you and the language the page is really rendering in, rather than today's date and a hardcoded English.",
+			"link": "/dashboard/settings",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
 			"title": "Run an escrowed door from your own wallet, and see what the chain actually says",
 			"summary": "Door settings now carry the escrowed lane: switch it on, choose how long you want to answer within, and open your on-chain door with your own wallet, which is the only thing that can. The panel reads the chain and tells you the truth rather than your intent, so a door you never opened, or one still charging last month's price, says so plainly instead of quietly turning strangers away. Escrowed knocks in your inbox show how long you have and what answering is worth, replying releases the payment, and refusing refunds the sender in full with no fee. Money still in escrow is no longer counted as earned.",
 			"link": null,
@@ -165,6 +176,17 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The DeFi page reads on a phone, links straight to each protocol, and can refresh itself",
+			"summary": "Every protocol name on /defi is now a real link into its detail page, so you can open one in a new tab, and dragging to copy a TVL figure no longer navigates away. A Refresh button in the toolbar pulls new figures without reloading the page and keeps the current table on screen while it works; if the refresh fails, the numbers you already had stay put and the page says so. On a phone the table now fits the screen, so TVL and the 1-day move are readable without scrolling sideways. When the upstream is down you get a real retry button instead of a dead link, an empty feed says so plainly instead of showing a $0.00 total, and figures served from cache are labelled as cached rather than passed off as live.",
+			"link": "/defi",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -240,6 +262,16 @@
 			"link": "/glance",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Trader Wrapped: every trading agent's season, in eight slides you can share",
+			"summary": "Pick any trading agent on three.ws and read its season back as a recap you swipe through: what it made, the trade that carried it, the trade that hurt, the streaks and hours behind both, where it finished against every comparable trader, and the receipt with its verification state. Every number is cut from closed on-chain round-trips with buy and sell signatures attached, using the exact same arithmetic the leaderboard and the trader profile use, so a recap can never disagree with the record it links to. It is built to be honest rather than flattering: the worst trade is its own slide, a losing season is labelled a losing season and drawn in red, coins that cost the trader money still rank in the breakdown, coins a trader launched themselves are excluded from every superlative, the rank always shows how big the field really was, and a trader with fewer than three settled trades gets told there is no season yet instead of a chart made out of noise. Sharing a recap gives you a real preview card on X, Telegram and Farcaster, and the link carries your referral code when you are signed in. Nothing here signs, spends, or touches your wallet: browse it all signed out, and open the trade panel only if you choose to fork a coin you read about.",
+			"link": "/wrapped",
+			"tags": [
+				"feature"
 			]
 		},
 		{

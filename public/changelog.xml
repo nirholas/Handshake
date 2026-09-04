@@ -95,6 +95,14 @@
 			<description>A packaging rule left two small token modules out of the deployed image, and because the server loads them the moment a request arrives, every route that touched them answered with a server error instead of a page: pairing or managing a house, the agent payment endpoint, and the public status page. The modules ship again, and the check that simulates the upload now runs as part of every deploy, so a file the server needs can no longer go missing quietly.</description>
 		</item>
 		<item>
+			<title>Pin your avatars to IPFS from Settings, and choose which copy loads first</title>
+			<link>https://three.ws/dashboard/settings</link>
+			<guid isPermaLink="false">2026-09-04:Pin your avatars to IPFS from Settings, and choose which copy loads first</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Settings now has an Avatar storage panel. Every avatar you own is listed with its size, its three.ws storage copy, and whether it also lives on IPFS. Pin one and it gets a permanent content address you can open on any public gateway, and a small R2 / IPFS switch decides which copy a viewer resolves first. If a deployment has no pinning provider it says so plainly instead of showing an address that leads nowhere. The About block on the same page now reports the build that is actually serving you and the language the page is really rendering in, rather than today's date and a hardcoded English.</description>
+		</item>
+		<item>
 			<title>Run an escrowed door from your own wallet, and see what the chain actually says</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-04:Run an escrowed door from your own wallet, and see what the chain actually says</guid>
@@ -125,6 +133,14 @@
 			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Buyers who message our marketplace listing were being answered from a development workspace that goes to sleep on its own, and one message this week sat unread for twenty hours because of it. It now runs on a host that stays up, keeps its identity across restarts, and reports its own reachability alongside every other part of the platform on the status page.</description>
+		</item>
+		<item>
+			<title>The DeFi page reads on a phone, links straight to each protocol, and can refresh itself</title>
+			<link>https://three.ws/defi</link>
+			<guid isPermaLink="false">2026-09-04:The DeFi page reads on a phone, links straight to each protocol, and can refresh itself</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every protocol name on /defi is now a real link into its detail page, so you can open one in a new tab, and dragging to copy a TVL figure no longer navigates away. A Refresh button in the toolbar pulls new figures without reloading the page and keeps the current table on screen while it works; if the refresh fails, the numbers you already had stay put and the page says so. On a phone the table now fits the screen, so TVL and the 1-day move are readable without scrolling sideways. When the upstream is down you get a real retry button instead of a dead link, an empty feed says so plainly instead of showing a $0.00 total, and figures served from cache are labelled as cached rather than passed off as live.</description>
 		</item>
 		<item>
 			<title>The friends panel tells you when it cannot reach the server, instead of saying you have no friends</title>
@@ -181,6 +197,14 @@
 			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Windows renders the Agent glance widget from a card layout the site has to hand it, and we were handing it the address of that layout instead of the layout itself, so a pinned widget had nothing to draw. The worker now fetches the card, keeps a copy so a machine that wakes up offline still renders, re-paints slots that were pinned before it took over, and registers the 15 minute refresh the widget advertises, which was never actually being scheduled. Pin it with Win + W, Add widgets, Agent glance.</description>
+		</item>
+		<item>
+			<title>Trader Wrapped: every trading agent's season, in eight slides you can share</title>
+			<link>https://three.ws/wrapped</link>
+			<guid isPermaLink="false">2026-09-04:Trader Wrapped: every trading agent's season, in eight slides you can share</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Pick any trading agent on three.ws and read its season back as a recap you swipe through: what it made, the trade that carried it, the trade that hurt, the streaks and hours behind both, where it finished against every comparable trader, and the receipt with its verification state. Every number is cut from closed on-chain round-trips with buy and sell signatures attached, using the exact same arithmetic the leaderboard and the trader profile use, so a recap can never disagree with the record it links to. It is built to be honest rather than flattering: the worst trade is its own slide, a losing season is labelled a losing season and drawn in red, coins that cost the trader money still rank in the breakdown, coins a trader launched themselves are excluded from every superlative, the rank always shows how big the field really was, and a trader with fewer than three settled trades gets told there is no season yet instead of a chart made out of noise. Sharing a recap gives you a real preview card on X, Telegram and Farcaster, and the link carries your referral code when you are signed in. Nothing here signs, spends, or touches your wallet: browse it all signed out, and open the trade panel only if you choose to fork a coin you read about.</description>
 		</item>
 		<item>
 			<title>Two paid endpoints now quote a price to anyone who asks, instead of an error</title>
