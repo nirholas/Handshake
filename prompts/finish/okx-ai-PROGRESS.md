@@ -72,15 +72,61 @@ and now runs at worker boot.
   workspace. It answered with the real catalog (draft/standard/HD at $0.01/$0.05/$0.25, image
   to 3D at $0.25), named `$THREE` and Solana, and identified agent 2632 correctly.
 
+### DEPLOYED, 2026-09-04 08:18 UTC
+
+Owner approved the deploy. Build `8f27bf79-ba3b-4e2c-9adc-37b0266ad566` SUCCESS (16m40s,
+1.5 GiB context), service `okx-chat-bot`, revision `okx-chat-bot-00001-926`, `Ready=True`,
+url `https://okx-chat-bot-lp642k3kpa-uc.a.run.app` (authenticated invocations only). The
+codespace stopgap was stopped and the snapshot re-seeded (442,593 bytes, generation
+1788508593396745) before the submit, so the object kept exactly one writer.
+
+Its boot chain, read off Cloud Logging, is the whole design working:
+
+```
+boot            host=cloudrun:okx-chat-bot (okx-chat-bot-00001-926)
+state restored  bytes=442593          <- the seeded snapshot, byte for byte
+workspace built
+daemon spawned
+health server listening
+provider credential  unauthorized     <- 403 Lightning dunning decision is deny
+health changed       ai_provider_unauthorized
+```
+
+No `daemon_down` page on the way up: the grace window did its job on the first real boot.
+
+Read off the service itself:
+
+| Field | Value |
+|---|---|
+| `host.durable` | **true** (the codespace era is over) |
+| `session` | `loggedIn: true`, `claude@three.ws` (restored, **no OTP was needed**) |
+| `agents` | 1 XMTP client serving 1 agent identity: buyer chat is delivered, durably |
+| `provider.transport` | `vertex` |
+| `provider.verdict` | `unauthorized`, quoting the dunning 403 verbatim |
+| `/readyz` | **503**, `ai_provider_unauthorized`, with the three-step `remedy` attached |
+| `ops_alerts` | `warn | OKX chat bot degraded: ai_provider_unauthorized | count 1` |
+| `bot_heartbeat` | beating from Cloud Run; `/api/healthz` renders it degraded with the remedy hint |
+
+That is the intended state, not a failure: the listing now receives chat on a host that
+survives, and the one thing it cannot do says so on the wire instead of going quiet.
+
 ### What is left, and who owns it
 
-1. **The deploy itself (owner).** Prerequisites are complete; it is one command, in
-   `workers/okx-chat-bot/README.md` under "Ship it". Re-seed and stop the codespace stopgap
-   first: the GCS object has exactly one writer.
-2. **The GCP billing hold (owner).** Until it clears, a deployed host will report
-   `ai_provider_unauthorized`: chat is received and durable, replies are not authored. That
-   is strictly better than today (no durable host at all) and it is loud rather than silent.
-   Clearing the hold needs no redeploy; the next probe flips it to ok on its own.
+**One line, and it is the owner's: clear the GCP billing hold.** Vertex answers
+`403 PERMISSION_DENIED: Lightning dunning decision is deny for project: projects/93741856042`
+to every call, so the subsession cannot author a reply. Nothing needs redeploying when it
+clears: the credential probe runs every 15 minutes and flips `/readyz` to 200 on its own, and
+an info alert fires on recovery. The alternatives, if billing cannot be cleared, are in the
+service's own `remedy` (an `anthropic-api-key` secret, or reactivating the OpenAI account
+behind `openai-api-key` and pinning `OKX_BOT_AI_PROVIDER=codex`).
+
+**One thing to watch on that first working reply.** The billing hold meant the subsession's
+own Vertex round trip could never be exercised, only the credential probe against the same
+endpoint. If the CLI reports an unknown model, pin one with `ANTHROPIC_MODEL` on the service
+(config-only `gcloud run services update --update-env-vars`, pre-approved).
+
+**Do not restart the codespace stopgap.** The GCS state object has exactly one writer and
+Cloud Run now owns it. `npm run okx:bot` on this machine would interleave snapshots.
 
 ---
 

@@ -211,16 +211,28 @@ someone has to go find.
 
 ## Deploying
 
-**Status: built, prerequisites complete, deploy owner-gated.** There is still no
-`okx-chat-bot` Cloud Run service in `aerial-vehicle-466722-p5`; a codespace runs
-the stopgap. Everything the deploy depends on now exists:
+**Status: deployed 2026-09-04.** Service `okx-chat-bot` in
+`aerial-vehicle-466722-p5`, revision `okx-chat-bot-00001-926`, `Ready=True` at
+`https://okx-chat-bot-lp642k3kpa-uc.a.run.app` (authenticated invocations only).
+The first boot restored the seeded snapshot byte for byte, came up
+`loggedIn: true` with no OTP, and serves one XMTP client for agent 2632. The
+codespace stopgap is stopped and **must stay stopped**: the GCS state object has
+exactly one writer and Cloud Run owns it now.
+
+It reports `ai_provider_unauthorized` and answers `/readyz` 503, which is the
+design working rather than a fault: chat is delivered durably, the GCP billing
+hold denies Vertex, and the bot says so with the fix attached instead of going
+quiet. Clearing the hold needs no redeploy; the credential probe flips readiness
+on its own within 15 minutes.
+
+Everything the deploy depends on:
 
 | Prerequisite | State |
 |---|---|
 | `gs://three-ws-okx-bot-state` | created 2026-09-02, versioned, `three-ws@` holds `objectAdmin` |
 | `okx-chat-bot-database-url` secret | created 2026-09-02 from the project's own `DATABASE_URL`, `three-ws@` holds `secretAccessor` |
 | AI credential | **no secret needed.** `three-ws@` already holds `roles/aiplatform.user`, so `CLAUDE_CODE_USE_VERTEX=1` in the deploy authenticates through ADC |
-| Seeded session | seeded 2026-09-04, so the first boot restores an authenticated wallet instead of paging for an OTP |
+| Seeded session | seeded 2026-09-04 and proven: the first revision restored it and needed no OTP |
 
 The AI-provider secret used to be the one blocker, and the deploy was written to
 fail loudly without it on the reasoning that a bot receiving chat it can never
@@ -239,7 +251,7 @@ cannot survive on its own reads as **degraded**, never `ok`, with the deploy
 command as its hint. Calling a codespace green would rebuild, one level up, the
 false-green this worker exists to kill.
 
-### Ship it (one command, after the two steps below)
+### Re-shipping it (one command, after the two steps below)
 
 ```bash
 # 1. Refresh the seeded session from the host that holds it, daemon stopped:

@@ -1606,8 +1606,17 @@ first Cloud Run boot comes up authenticated. Workspace context verified by askin
 subsession a platform question: it answered with the real catalog, `$THREE`, Solana and
 agent 2632.
 
-Left: the deploy itself (owner-gated, one command in `workers/okx-chat-bot/README.md` under
-"Ship it"; re-seed and stop the codespace stopgap first, the GCS object has exactly one
-writer), and the GCP billing hold (owner). Until the hold clears a deployed host reports
-`ai_provider_unauthorized`: chat is received and durable, replies are not authored. That is
-loud rather than silent, and clearing the hold needs no redeploy.
+Then deployed it, once the owner approved: build `8f27bf79-ba3b-4e2c-9adc-37b0266ad566`
+SUCCESS, service `okx-chat-bot` revision `okx-chat-bot-00001-926` `Ready=True` at
+`https://okx-chat-bot-lp642k3kpa-uc.a.run.app`. The stopgap was stopped and the snapshot
+re-seeded (442,593 bytes) first, so the GCS object kept one writer. The revision restored that
+snapshot byte for byte, came up `loggedIn: true` with **no OTP**, and serves 1 XMTP client for
+agent 2632 from a host with `durable: true`. It booted without the false `daemon_down` page.
+`/readyz` answers 503 `ai_provider_unauthorized` quoting the dunning 403 and carrying the
+three-step remedy, `ops_alerts` holds the matching `warn` row, and the Cloud Run heartbeat is
+what `/api/healthz` now renders.
+
+Left: **the GCP billing hold, owner only.** Vertex denies every call, so chat is received
+durably and no reply is authored. Nothing needs redeploying when it clears: the credential
+probe re-runs every 15 minutes and flips readiness on its own. Do NOT restart the codespace
+stopgap; Cloud Run owns the single-writer state object now.

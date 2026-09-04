@@ -19,7 +19,8 @@
 //
 // Usage:
 //   node scripts/avatar-likeness-audit.mjs [--cases=a,b] [--concurrency=2]
-//     [--base-url=https://three.ws] [--skip-generate] [--skip-render] [--skip-judge]
+//     [--base-url=https://three.ws] [--out-dir=<dir>]
+//     [--skip-generate] [--skip-render] [--skip-judge]
 //
 // Credentials (never committed): CRON_SECRET for the internal seed header and
 // GCP_SERVICE_ACCOUNT_JSON for the Vertex judge. Both are read from the process
@@ -36,8 +37,15 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const OUT_DIR = path.join(ROOT, 'prompts', 'quality-bar', '_generated', '10');
-const DATA_FILE = path.join(OUT_DIR, 'audit-data.json');
+const DEFAULT_OUT_DIR = path.join(ROOT, 'prompts', 'quality-bar', '_generated', '10');
+// Set by main() from --out-dir so one run's evidence never overwrites another's.
+let OUT_DIR = DEFAULT_OUT_DIR;
+let DATA_FILE = path.join(OUT_DIR, 'audit-data.json');
+
+function setOutDir(dir) {
+	OUT_DIR = path.isAbsolute(dir) ? dir : path.join(ROOT, dir);
+	DATA_FILE = path.join(OUT_DIR, 'audit-data.json');
+}
 
 // ---------------------------------------------------------------------------
 // Env: .env for local credentials, plus an optional SA key file for Vertex.
@@ -170,6 +178,7 @@ function parseArgs(argv) {
 		cases: 'all',
 		baseUrl: 'https://three.ws',
 		concurrency: 2,
+		outDir: DEFAULT_OUT_DIR,
 		skipGenerate: false,
 		skipRender: false,
 		skipJudge: false,
@@ -180,6 +189,7 @@ function parseArgs(argv) {
 		if (k === 'cases') args.cases = v;
 		else if (k === 'base-url') args.baseUrl = v;
 		else if (k === 'concurrency') args.concurrency = Math.max(1, Number(v) || 2);
+		else if (k === 'out-dir') args.outDir = v;
 		else if (k === 'skip-generate') args.skipGenerate = true;
 		else if (k === 'skip-render') args.skipRender = true;
 		else if (k === 'skip-judge') args.skipJudge = true;
@@ -594,6 +604,7 @@ async function main() {
 		process.env.GCP_SERVICE_ACCOUNT_JSON = await readFile(process.env.AVATAR_AUDIT_SA_FILE, 'utf8');
 	}
 	const args = parseArgs(process.argv.slice(2));
+	setOutDir(args.outDir);
 	const selected = args.cases === 'all' ? CASES : CASES.filter((c) => args.cases.split(',').includes(c.id));
 	if (!selected.length) throw new Error(`no cases matched --cases=${args.cases}`);
 
