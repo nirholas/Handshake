@@ -54,10 +54,20 @@ const LAMPORTS_PER_SOL = 1_000_000_000n;
 const TIMEOUT_MS = Math.max(1_500, Number(process.env.SNIPER_RISK_OFFICER_TIMEOUT_MS || 6_000));
 const MAX_CONCURRENT = Math.max(1, Number(process.env.SNIPER_RISK_OFFICER_MAX_CONCURRENT || 3));
 
-// Independence is the point, so the officer's default model is NOT the judge's
-// (`strat.llm_model`). 'openrouter/auto' on both would frequently route to the
-// same weights and turn a second opinion into an echo.
-const DEFAULT_MODEL = (process.env.SNIPER_RISK_OFFICER_MODEL || 'anthropic/claude-sonnet-4.5').trim();
+// Which brain reviews. UNSET BY DEFAULT, and that default is deliberate: with no
+// model named, the officer asks the platform's own free-first chain
+// (`llmComplete`), which leads with Vertex Claude on GCP credits where that is
+// enabled and falls through the free lanes otherwise. That satisfies the
+// prefer-GCP-over-paid-third-parties rule, and it keeps the officer independent
+// of the buy-side judge, which routes its own `strat.llm_model` through
+// OpenRouter — a second opinion from the same weights is an echo, not a review.
+//
+// Naming a model here (env, or a strategy's `risk_officer_model`) routes the
+// review through OpenRouter first and keeps the platform chain as the backstop.
+// Only pay that hop when someone actually chose the model: OpenRouter answers a
+// 402 in ~150ms when its credits are dry, and a guaranteed-failing first hop on
+// a path that sits between a quote and a broadcast is latency for nothing.
+const DEFAULT_MODEL = (process.env.SNIPER_RISK_OFFICER_MODEL || '').trim() || null;
 
 let _active = 0;
 
@@ -273,30 +283,33 @@ async function askOpenRouter({ model, user }) {
 	}
 }
 
-// One review per proposed trade. OpenRouter is the primary route (it is where
-// the fleet's model choice lives); the platform's free-first chain is the
-// backstop so an OpenRouter outage degrades to a different reviewer rather than
-// to no reviewer, honestly labeled with who actually answered.
+// One review per proposed trade. A named model routes through OpenRouter first;
+// with no model named (the default) the platform chain answers directly. Either
+// way the chain is the backstop, so an OpenRouter outage degrades to a different
+// reviewer rather than to no reviewer, and `answeredBy` always records who
+// actually replied rather than who was asked.
 async function ask(user, model) {
 	const t0 = Date.now();
-	try {
-		const text = await askOpenRouter({ model, user });
-		const review = parseReview(text);
-		if (review) return { ...review, model, answeredBy: model, latencyMs: Date.now() - t0, degraded: false };
-		throw new Error('unparseable review');
-	} catch (err) {
-		log.warn('risk officer openrouter failed, free-chain fallback', { model, err: err?.message });
-		const res = await llmComplete({ system: SYSTEM_PROMPT, user, maxTokens: 300, timeoutMs: TIMEOUT_MS });
-		const review = parseReview(res?.text ?? res);
-		if (!review) return null;
-		return {
-			...review,
-			model,
-			answeredBy: res?.model || res?.provider || 'free-chain',
-			latencyMs: Date.now() - t0,
-			degraded: false,
-		};
+	if (model) {
+		try {
+			const text = await askOpenRouter({ model, user });
+			const review = parseReview(text);
+			if (review) return { ...review, model, answeredBy: model, latencyMs: Date.now() - t0, degraded: false };
+			throw new Error('unparseable review');
+		} catch (err) {
+			log.warn('risk officer openrouter failed, platform-chain fallback', { model, err: err?.message });
+		}
 	}
+	const res = await llmComplete({ system: SYSTEM_PROMPT, user, maxTokens: 300, timeoutMs: TIMEOUT_MS });
+	const review = parseReview(res?.text ?? res);
+	if (!review) return null;
+	return {
+		...review,
+		model: model || 'platform-chain',
+		answeredBy: res?.model || res?.provider || 'platform-chain',
+		latencyMs: Date.now() - t0,
+		degraded: false,
+	};
 }
 
 // Append-only review ledger. Fire-and-forget in every mode: the review's value
@@ -337,7 +350,7 @@ export async function reviewBuy({ cfg, strat, mint, posId, perTradeLamports, min
 		return passthrough;
 	}
 
-	const model = strat.risk_officer_model || DEFAULT_MODEL;
+	const model = (strat.risk_officer_model || DEFAULT_MODEL) || null;
 	const user = reviewBrief({
 		mint,
 		sizeSol: lamportsToSol(size),

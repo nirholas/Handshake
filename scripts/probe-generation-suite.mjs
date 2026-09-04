@@ -410,7 +410,10 @@ async function probeRetexture() {
 	}
 	const auth = { cookie };
 	const probe = await req('/api/studio/retexture-region', { headers: auth });
-	const ok = probe.status === 200 || probe.status === 405;
+	// A bare GET has no job token, so 400 "job token required" is the correct
+	// answer and proves the authed gateway is reachable. Only 401/403/5xx are
+	// failures for this leg.
+	const ok = probe.status === 200 || probe.status === 400 || probe.status === 405;
 	record('retexture (probe)', 'GET /api/studio/retexture-region', ok, ok ? `capability probe HTTP ${probe.status}` : `HTTP ${probe.status}: ${probe.text.slice(0, 140)}`);
 	const post = await req('/api/studio/retexture-region', {
 		method: 'POST',
