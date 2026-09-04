@@ -37,7 +37,7 @@ const preflight = (path, headers = {}) =>
 	});
 
 describe('cross-origin preflight on the public media routes', () => {
-	it('answers 204 with the route's own CORS headers', async () => {
+	it("answers 204 with the CORS headers the route already collected", async () => {
 		const res = await preflight('/avatars/cesium-man.glb');
 		expect(res.status).toBe(204);
 		expect(res.headers.get('access-control-allow-origin')).toBe('*');
