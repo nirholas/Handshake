@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+		  "date": "2026-09-04",
+		  "title": "A knock now holds the money until you actually get a reply",
+		  "summary": "Paying to reach someone used to send your money the instant the payment cleared, which meant an owner could take every knock and answer none, and you had no way to get it back. A new Solana program makes the payment conditional: it sits in a vault that only the knock itself controls, and exactly three things can happen to it. The owner answers inside the reply window and gets paid, the owner declines and you are refunded in full with no fee taken, or the window closes and anyone at all can trigger your refund. There is no admin key that can move a knock that is parked, the fee is capped at 10% in the program itself, and the fee you agreed to when you knocked cannot be raised on money that is already in escrow. Your message never touches the chain: only a fingerprint of it is stored, so either side can later prove what was sent without publishing it. Ten invariants covering every one of those promises run against the real compiled program on every test run.",
+		  "tags": [
+		    "feature",
+		    "security"
+		  ]
+		},
+		{
 			"date": "2026-09-03",
 			"title": "Twenty-one finished packages were built and never shipped; the publisher now finds them by itself",
 			"summary": "Twenty-one packages in this repo were written, tested and documented and then sat unpublished, because the publish script read a hand-maintained array that nobody remembered to edit. That array is gone: the publisher now discovers every package on disk, so a package ships by existing rather than by being added to a list. It also runs a preflight first and refuses to publish anything that would land broken (a scoped package that would go out private, a missing README or LICENSE, an entry point that is not actually in the tarball). The standalone-repo mirror had the same blind spot and only ever saw MCP servers; it now covers library packages too. Along the way the licensing was made consistent: 86 packages shipped a LICENSE file saying all rights reserved while their manifest and the repo both said Apache-2.0, and every one of them now says Apache-2.0 in all three places.",

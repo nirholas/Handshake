@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A knock now holds the money until you actually get a reply</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-04:A knock now holds the money until you actually get a reply</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Paying to reach someone used to send your money the instant the payment cleared, which meant an owner could take every knock and answer none, and you had no way to get it back. A new Solana program makes the payment conditional: it sits in a vault that only the knock itself controls, and exactly three things can happen to it. The owner answers inside the reply window and gets paid, the owner declines and you are refunded in full with no fee taken, or the window closes and anyone at all can trigger your refund. There is no admin key that can move a knock that is parked, the fee is capped at 10% in the program itself, and the fee you agreed to when you knocked cannot be raised on money that is already in escrow. Your message never touches the chain: only a fingerprint of it is stored, so either side can later prove what was sent without publishing it. Ten invariants covering every one of those promises run against the real compiled program on every test run.</description>
+		</item>
+		<item>
 			<title>Docs · Connect a home that is only on your network</title>
 			<link>https://three.ws/docs/home-relay</link>
 			<guid isPermaLink="false">2026-09-03:Docs · Connect a home that is only on your network</guid>

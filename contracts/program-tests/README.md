@@ -1,6 +1,6 @@
 # `program-tests`
 
-Invariant tests for the two three.ws Solana programs, run against their **real
+Invariant tests for the three three.ws Solana programs, run against their **real
 compiled bytecode** in [LiteSVM](https://github.com/LiteSVM/litesvm).
 
 Nothing in here re-implements program logic. The crate builds instructions,
@@ -13,6 +13,7 @@ program is wrong, not that a stub drifted.
 |---|---|---|---|
 | `skill_license` | [`../skill-license/src/lib.rs`](../skill-license/src/lib.rs) | 21 | `SL-1` .. `SL-8` |
 | `agent_invocation` | [`../agent-invocation/src/lib.rs`](../agent-invocation/src/lib.rs) | 11 | `AI-1` .. `AI-4` |
+| `knock_escrow` | [`../knock-escrow/src/lib.rs`](../knock-escrow/src/lib.rs) | 10 | `KE-1` .. `KE-10` |
 
 Invariants are defined in
 [`specs/ECONOMY_CONTRACT_INVARIANTS.md`](../../specs/ECONOMY_CONTRACT_INVARIANTS.md).
@@ -28,6 +29,7 @@ with the exact command to run if a `.so` is missing.
 ```bash
 cd contracts/skill-license    && cargo-build-sbf
 cd contracts/agent-invocation && cargo-build-sbf
+cd contracts/knock-escrow     && cargo-build-sbf
 cd contracts/program-tests    && cargo test
 ```
 

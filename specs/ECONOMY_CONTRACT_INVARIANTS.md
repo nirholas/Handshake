@@ -209,6 +209,33 @@ events.
 | AI-3 | `skill_name` is non-empty and at most 64 bytes; `parameters` is at most 512 bytes. Both bounds are enforced before the event is emitted. |
 | AI-4 | The program moves no funds and grants no capability. Its only effect is the emitted event, so a bug here can mislead an indexer but cannot cause a loss. |
 
+## knock_escrow (`KE-*`)
+
+[`contracts/knock-escrow/src/lib.rs`](../contracts/knock-escrow/src/lib.rs).
+Solana/Anchor program holding a knock's payment in escrow until the door's owner
+answers or refuses it, or the reply window lapses. It is the only Solana program
+in this set that custodies a stranger's money, so its invariants are written from
+the sender's side: what a person who has never met the owner is guaranteed after
+they pay. Each id below is proved by a positive and a negative test in
+[`contracts/program-tests/tests/knock_escrow.rs`](../contracts/program-tests/tests/knock_escrow.rs)
+against the real compiled bytecode. Three further properties the program enforces
+but that are structural rather than behavioral (no admin path can move a parked
+vault, message bodies never touch the chain, and price and window bounds) are
+documented in [`contracts/knock-escrow/README.md`](../contracts/knock-escrow/README.md).
+
+| Id | Invariant |
+|---|---|
+| KE-1 | An answer pays the owner exactly `amount - fee` and the treasury exactly `fee`, then closes the vault. No dust is ever stranded in a settled knock's vault. |
+| KE-2 | Only the door's owner may answer. No other signer, including the `Config` authority, can settle a knock in the owner's favor. |
+| KE-3 | An answer after `expires_at` is rejected, so money the sender is already owed back cannot be taken late. |
+| KE-4 | Once the window has closed, ANYONE may crank the refund, and every unit goes to the sender. The refund does not depend on the sender still being online or on the owner cooperating. |
+| KE-5 | Nobody may crank the refund while the window is open, so a sender cannot retract a knock the owner is still entitled to answer. |
+| KE-6 | A refusal refunds in full and charges no fee. Declining to read something is not a service and is never billed. |
+| KE-7 | A knock leaves `Pending` exactly once. `Answered`, `Refused`, and `Refunded` are terminal, so a settled knock can never be settled again. |
+| KE-8 | `fee_bps` can never exceed `MAX_FEE_BPS` (1000, ten percent), enforced in both `initialize` and `set_config`, so an authority cannot set a fee that takes every future answer. |
+| KE-9 | Shutting a door stops new knocks but does not touch knocks already in flight: those are still owed an answer or a refund. Closing up shop is not an escape from either. |
+| KE-10 | A `KnockRecord` snapshots the fee in force when it was made, so raising the fee cannot reprice money that is already parked. The new fee applies only to knocks created after it lands. |
+
 ---
 
 ## Cross-contract invariants (`X-*`)

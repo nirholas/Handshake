@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-09-04
+
+- **A knock now holds the money until you actually get a reply**: Paying to reach someone used to send your money the instant the payment cleared, which meant an owner could take every knock and answer none, and you had no way to get it back. A new Solana program makes the payment conditional: it sits in a vault that only the knock itself controls, and exactly three things can happen to it. The owner answers inside the reply window and gets paid, the owner declines and you are refunded in full with no fee taken, or the window closes and anyone at all can trigger your refund. There is no admin key that can move a knock that is parked, the fee is capped at 10% in the program itself, and the fee you agreed to when you knocked cannot be raised on money that is already in escrow. Your message never touches the chain: only a fingerprint of it is stored, so either side can later prove what was sent without publishing it. Ten invariants covering every one of those promises run against the real compiled program on every test run. `[feature, security]`
+
 ## 2026-09-03
 
 - **Docs · Connect a home that is only on your network** (`/docs/home-relay`): Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.
