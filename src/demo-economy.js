@@ -40,17 +40,6 @@ export function createScene(canvas) {
 	camera.position.set(0, 2.8, 8);
 	camera.lookAt(0, 1.2, 0);
 
-	// NOVA and ORACLE stand 7.6 world units apart, so a portrait viewport frames
-	// empty floor between two off-screen agents unless the camera pulls back.
-	// Dolly by the horizontal shortfall instead of widening the FOV, which keeps
-	// the perspective identical on phone and desktop.
-	function frameCamera(aspect) {
-		const halfV = Math.tan((camera.fov * Math.PI) / 360);
-		const needed = 4.6 / Math.max(halfV * Math.max(aspect, 0.2), 0.001);
-		camera.position.set(0, 2.8, Math.max(8, Math.min(needed, 20)));
-		camera.lookAt(0, 1.2, 0);
-	}
-
 	// ── Lights ──────────────────────────────────────────────────────────────
 	const ambient = new THREE.AmbientLight(0xffffff, 0.15);
 	scene.add(ambient);
@@ -91,17 +80,37 @@ export function createScene(canvas) {
 	// ── Payment beam (initially invisible) ──────────────────────────────────
 	const beam = createBeam(scene);
 
+	// ── Responsive staging ───────────────────────────────────────────────────
+	// NOVA and ORACLE stand 7.6 world units apart, framed for a landscape canvas.
+	// A phone in portrait cannot hold that spread: at the desktop camera both
+	// agents sit off-frame and the viewer gets an empty floor, and dollying far
+	// enough back to fit them shrinks the TV (the thing they actually paid for)
+	// to a smudge. So pull back a little, then draw the two agents in toward the
+	// screen until the composition fits the canvas it has.
+	function layout(aspect) {
+		const dist = aspect < 1 ? Math.min(12, 8 / Math.max(aspect, 0.35)) : 8;
+		camera.position.set(0, 2.8, dist);
+		camera.lookAt(0, 1.2, 0);
+		const halfWidth = dist * Math.tan((camera.fov * Math.PI) / 360) * aspect;
+		const spread = Math.min(1, Math.max(0.3, (halfWidth - 0.6) / Math.abs(NOVA_X)));
+		nova.group.position.x = NOVA_X * spread;
+		oracle.group.position.x = ORACLE_X * spread;
+		rimNova.position.x = NOVA_X * spread;
+		rimOracle.position.x = ORACLE_X * spread;
+		beam.setSpread(spread);
+	}
+
 	// ── Resize observer ──────────────────────────────────────────────────────
 	const ro = new ResizeObserver(() => {
 		const w = viewport.clientWidth, h = viewport.clientHeight;
 		if (!w || !h) return;
 		renderer.setSize(w, h, false);
 		camera.aspect = w / h;
-		frameCamera(camera.aspect);
+		layout(camera.aspect);
 		camera.updateProjectionMatrix();
 	});
 	ro.observe(viewport);
-	frameCamera(camera.aspect);
+	layout(camera.aspect);
 	camera.updateProjectionMatrix();
 
 	// ── Render loop ──────────────────────────────────────────────────────────
@@ -618,14 +627,19 @@ function createBeam(scene) {
 		transparent: true,
 		opacity: 0,
 	});
+	// The arc and its orbs live in one group so a narrow canvas can draw the two
+	// agents together without rebuilding the tube geometry every resize. Only the
+	// x axis compresses, and at a 0.015 tube radius that is not visible.
+	const group = new THREE.Group();
+	scene.add(group);
 	const mesh = new THREE.Mesh(geo, mat);
-	scene.add(mesh);
+	group.add(mesh);
 
 	// Travelling orbs along beam
 	const orbMat = new THREE.MeshBasicMaterial({ color: 0x4e8cff, transparent: true, opacity: 0 });
 	const orbs = Array.from({ length: 5 }, (_, i) => {
 		const o = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), orbMat.clone());
-		scene.add(o);
+		group.add(o);
 		return { mesh: o, phase: i / 5 };
 	});
 
@@ -649,6 +663,7 @@ function createBeam(scene) {
 
 	return {
 		tick,
+		setSpread(k) { group.scale.x = k; },
 		activate() { active = true; startT = currentT; mat.opacity = 0.5; orbs.forEach(o => o.mesh.material.opacity = 0.7); },
 		deactivate() { active = false; mat.opacity = 0; orbs.forEach(o => o.mesh.material.opacity = 0); },
 	};
