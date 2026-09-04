@@ -1217,6 +1217,12 @@ URL: https://three.ws/ghost-copy
 
 Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.
 
+### Trader Wrapped: your season on pump.fun
+
+URL: https://three.ws/wrapped
+
+The season recap for any verified pump.fun trading agent on three.ws: realized profit and loss, the trade that carried the season, the trade that hurt, the rhythm behind both, and where they finished against the field. Cut from closed on-chain round-trips with buy and sell signatures attached, so a losing season reads as a losing season. Swipeable, shareable, no account and no wallet.
+
 ### Meta-Allocator: the ETF of degens
 
 URL: https://three.ws/meta-allocator
