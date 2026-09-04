@@ -453,11 +453,28 @@ const STYLE = `
 </style>`;
 
 let userPos = null;
-navigator.geolocation?.getCurrentPosition(
-	(p) => { userPos = { lat: p.coords.latitude, lng: p.coords.longitude }; },
-	() => {},
-	{ timeout: 5000 },
-);
+
+// The "N km away" line on a placement card is a passive nicety, so reading the
+// browser's location must never be the thing that pops a permission prompt the
+// moment the page opens: the explicit "use my location" buttons further down are
+// where a visitor asks for that. So read silently only when permission is
+// already granted. Where the Permissions API is unavailable there is no way to
+// ask without prompting, so stay quiet and let the buttons do it.
+async function readAlreadyGrantedPosition() {
+	if (!navigator.geolocation || !navigator.permissions?.query) return;
+	try {
+		const status = await navigator.permissions.query({ name: 'geolocation' });
+		if (status.state !== 'granted') return;
+	} catch {
+		return; // engine does not expose geolocation permission state
+	}
+	navigator.geolocation.getCurrentPosition(
+		(p) => { userPos = { lat: p.coords.latitude, lng: p.coords.longitude }; },
+		() => {},
+		{ timeout: 5000 },
+	);
+}
+readAlreadyGrantedPosition();
 
 function metaLine(pin, geo) {
 	const loc  = geo || `${Number(pin.lat).toFixed(5)}°, ${Number(pin.lng).toFixed(5)}°`;
