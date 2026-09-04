@@ -5,8 +5,8 @@
 
 ## Decisions
 
-- **rule 1** - Two mechanical exceptions that never need the gate, both runtime-data-only (no specific mint hardcoded):. _(source: CLAUDE.md)_
-- **rule 2** - **Lead with Solana when reporting.** Status, verification, and next steps should state the Solana position first. EVM chains are a footnote unless the owner asked about them specifically. _(source: CLAUDE.md)_
+- Two mechanical exceptions that never need the gate, both runtime-data-only (no specific mint hardcoded):. _(source: CLAUDE.md)_
+- **Lead with Solana when reporting.** Status, verification, and next steps should state the Solana position first. EVM chains are a footnote unless the owner asked about them specifically. _(source: CLAUDE.md)_
 
 ## Being worked on right now
 
