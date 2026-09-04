@@ -43,9 +43,16 @@
  */
 
 /**
- * Sleep that also wakes the moment the tab returns to the foreground, so a
- * finished generation is visible as soon as the user looks at the tab again
- * rather than after the browser's clamped background timer fires.
+ * Sleep that also wakes the moment the tab returns to the foreground, or the
+ * moment the device regains connectivity.
+ *
+ * Two separate stalls, one primitive. Waking on `visibilitychange` means a
+ * finished generation is on screen as soon as the user looks at the tab again,
+ * rather than after the browser's clamped background timer fires. Waking on
+ * `online` matters on exactly the network this whole module exists for: a phone
+ * that loses its radio in a lift or a tunnel has already been pushed to a 20 s
+ * backoff by the time it comes back, so without this the user watches a
+ * "connection dropped" notice for most of a minute after their signal returned.
  *
  * @param {number} ms
  * @returns {Promise<void>}
@@ -58,6 +65,7 @@ export function sleepUntilVisibleOrElapsed(ms) {
 			settled = true;
 			clearTimeout(timer);
 			document.removeEventListener('visibilitychange', onVisibility);
+			window.removeEventListener('online', finish);
 			resolve();
 		};
 		const onVisibility = () => {
@@ -65,6 +73,7 @@ export function sleepUntilVisibleOrElapsed(ms) {
 		};
 		const timer = setTimeout(finish, ms);
 		document.addEventListener('visibilitychange', onVisibility);
+		window.addEventListener('online', finish);
 	});
 }
 

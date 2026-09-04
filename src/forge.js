@@ -1673,9 +1673,16 @@ async function pollUntilDone(jobId) {
 				if (err?.kind !== 'transport') throw err;
 				if (!offlineSince) offlineSince = runNow();
 				if (runNow() - offlineSince > POLL_TRANSPORT_GRACE_MS) {
-					throw new Error(
+					// The job is alive on the server and the inflight record is the
+					// only handle this browser has on it, so this branch must NOT be
+					// treated like a failed generation. `kind` says so: the catch in
+					// run() keeps the record instead of clearing it, which is what
+					// makes the "reopen /forge" instruction below actually true.
+					const e = new Error(
 						'Lost the connection to the generator. Your model is still being built and will keep going. Reopen /forge to pick it back up.',
 					);
+					e.kind = 'transport_lost';
+					throw e;
 				}
 				setLaneNote(PATCHY_NETWORK_NOTE);
 				backoffMs = nextBackoff(backoffMs, POLL_MAX_BACKOFF_MS);
@@ -2593,7 +2600,13 @@ async function run(cfg) {
 		// re-runs (which writes a fresh inflight record), so the old record is
 		// dead either way. The server-side finalizer still completes the row
 		// into the gallery if the lane actually finished after our timeout.
-		clearInflight();
+		//
+		// One exception: a connection we gave up waiting on. The generation is
+		// still running server-side and the inflight record is the only handle
+		// this browser has on it, so clearing it here is what used to make the
+		// error's own "reopen /forge to pick it back up" a lie. Keep it and the
+		// resume path in boot() picks the same job back up.
+		if (err?.kind !== 'transport_lost') clearInflight();
 		// This job is over on every branch below (a designed error state, a gate,
 		// or an automatic lane hop that starts a fresh timeline of its own), so the
 		// stage list stops here rather than sitting on a spinning row.
@@ -3195,6 +3208,59 @@ els.download.addEventListener('click', async (e) => {
 
 els.cinema?.addEventListener('click', () => setCinema(!cinemaOn));
 
+// ── Escape collapses the panel you just opened ───────────────────────────────
+// The result column stacks a lot of disclosures (Materials, Optimize, Split
+// into parts, Game-Ready, Embed, Stylize, and the art-direction details), each
+// owned by its own module with its own open/close logic. None of them listened
+// for Escape, so the only way back out of one was to find its trigger again.
+//
+// Rather than duplicate seven modules' state here, this watches the triggers
+// themselves: after a click inside the result panel, whatever now reports
+// aria-expanded="true" (or a <details open>) goes on a stack, and Escape pops
+// the top and re-clicks it, which runs that module's own close path. A panel
+// added later needs no wiring at all, and focus returns to the trigger so a
+// keyboard user is not dropped at the top of the document.
+const openPanels = [];
+
+function panelTriggerState(el) {
+	if (!el) return null;
+	const details = el.closest('details');
+	if (details && el.closest('summary')) return { el: details, open: !details.open };
+	const trigger = el.closest('[aria-expanded]');
+	if (!trigger) return null;
+	return { el: trigger, open: trigger.getAttribute('aria-expanded') === 'true' };
+}
+
+els.states.result.addEventListener('click', (e) => {
+	// Bubble phase on purpose: the owning module's handler has already run, so
+	// the attribute read here is the panel's new state, not its old one.
+	const state = panelTriggerState(e.target);
+	if (!state) return;
+	const at = openPanels.indexOf(state.el);
+	if (at !== -1) openPanels.splice(at, 1);
+	if (state.open) openPanels.push(state.el);
+});
+
+function collapseTopPanel() {
+	while (openPanels.length) {
+		const el = openPanels.pop();
+		// A panel closed by its own UI (or torn down on a new generation) is stale.
+		const stillOpen =
+			el.isConnected &&
+			(el.tagName === 'DETAILS' ? el.open : el.getAttribute('aria-expanded') === 'true');
+		if (!stillOpen) continue;
+		if (el.tagName === 'DETAILS') {
+			el.open = false;
+			el.querySelector('summary')?.focus();
+		} else {
+			el.click();
+			el.focus();
+		}
+		return true;
+	}
+	return false;
+}
+
 document.addEventListener('keydown', (e) => {
 	if (e.key === 'Escape') {
 		if (cinemaOn) {
@@ -3206,6 +3272,8 @@ document.addEventListener('keydown', (e) => {
 			els.cancel.click();
 			return;
 		}
+		// Nothing in flight: back out of the last result panel that was opened.
+		if (collapseTopPanel()) return;
 	}
 	if (e.metaKey || e.ctrlKey || e.altKey) return;
 	const active = document.activeElement;
