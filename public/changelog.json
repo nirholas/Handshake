@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T06:40:04.104Z",
+	"generated_at": "2026-09-04T07:00:38.198Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -99,6 +99,60 @@
 			"link": "/ibm/hello",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The IBM partnership page, hosted on IBM's own site, is live again in every sense",
+			"summary": "The partnership page is published once onto IBM's domain and then keeps itself current by quietly pulling the latest copy from three.ws. That pull was being refused by the browser, and so were the payment script and the translation script it loads, because three.ws was not telling other sites they were allowed to read them. The hosted page had quietly frozen on the version baked in at publish time: no language switcher, and the pay-per-call demo never armed. All three now answer any site that asks, the live copy carries its script and translation addresses with it instead of asking IBM's server for files only we have, and a new check runs the page from a stranger's domain so this cannot go unnoticed again.",
+			"link": "/ibm/hello",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The invitation link you just created stays on screen",
+			"summary": "Inviting somebody into your home hands you a link that works once. It used to vanish the instant the household list refreshed behind it, and since we keep only a fingerprint of that link and never the link itself, there was no way to get it back. It now stays put until you close the panel, whether or not the email went out.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The IRL placements desk can use your location again, and only when you ask it to",
+			"summary": "The page that pins your agents to real places offers to measure how far away each pin is and to drop a new one where you are standing. None of it could work: the page arrived with the browser location service switched off for it, so every attempt failed on the spot. Location is allowed on that page now. It also no longer reaches for your position the second the page opens: it reads it only when you have already granted permission, and otherwise waits for you to press one of the location buttons.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The Smart Money directory stops asking your browser for pictures it can never get",
+			"summary": "Every wallet in the copy-trading Smart Money list carried a portrait link pointing at an outside image host that serves nobody but its own site. Browsers blocked all of them, so the list drew the trader initials it was designed to fall back on while quietly recording a failed request for each row on screen. That unusable link is no longer sent, so the directory looks exactly as it did with none of the wasted traffic behind it.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Two paid endpoints now quote a price to anyone who asks, instead of an error",
+			"summary": "The 3D asset pipeline and pay-by-name resolution both checked your request for missing fields before they ever mentioned the price, so a caller who simply asked what they cost got a validation error back. Directories that index paid APIs ask exactly that way, with an empty request, and read an error as a service that sells nothing, which is why neither endpoint could be listed anywhere. Both now answer with the payment challenge and the real price first. The pipeline quotes the published example chain when the request names no stages, and anyone who pays and then sends an incomplete request still gets the same clear validation error, with nothing charged.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
