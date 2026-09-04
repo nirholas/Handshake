@@ -181,3 +181,132 @@ pub fn logs_have_anchor_error(logs: &[String], error_name: &str) -> bool {
     let needle = format!("Error Code: {error_name}.");
     logs.iter().any(|l| l.contains(&needle))
 }
+
+// ── SPL token helpers ───────────────────────────────────────────────────────
+//
+// LiteSVM boots with the real SPL Token and Associated Token Account programs,
+// so these build genuine instructions against them rather than writing account
+// bytes by hand. A test that fabricated a token account would prove nothing
+// about a program that CPIs into the token program.
+
+use litesvm::types::FailedTransactionMetadata;
+use solana_instruction::{AccountMeta, Instruction};
+use solana_keypair::Keypair;
+use solana_signer::Signer;
+use solana_system_interface::instruction as system_instruction;
+use solana_system_interface::program as system_program;
+use solana_transaction::Transaction;
+
+/// Rent-exempt size of an SPL `Mint`.
+const MINT_LEN: u64 = 82;
+
+/// Send one instruction and return its logs, or the failure's logs.
+pub fn send_ix(
+    svm: &mut LiteSVM,
+    ix: Instruction,
+    payer: &Keypair,
+    signers: &[&Keypair],
+) -> Result<Vec<String>, Vec<String>> {
+    svm.expire_blockhash();
+    let tx = Transaction::new_signed_with_payer(
+        &[ix],
+        Some(&payer.pubkey()),
+        signers,
+        svm.latest_blockhash(),
+    );
+    match svm.send_transaction(tx) {
+        Ok(meta) => Ok(meta.logs),
+        Err(FailedTransactionMetadata { meta, .. }) => Err(meta.logs),
+    }
+}
+
+/// Create and initialize a real SPL mint whose authority is `authority`.
+pub fn create_mint(svm: &mut LiteSVM, payer: &Keypair, authority: &Pubkey, decimals: u8) -> Pubkey {
+    let mint = Keypair::new();
+    let lamports = svm.minimum_balance_for_rent_exemption(MINT_LEN as usize);
+    let create = system_instruction::create_account(
+        &payer.pubkey(),
+        &mint.pubkey(),
+        lamports,
+        MINT_LEN,
+        &pk(TOKEN_PROGRAM_ID),
+    );
+    // InitializeMint2 (tag 20): decimals, mint authority, then a COption
+    // freeze authority which we leave as None.
+    let mut data = vec![20u8, decimals];
+    data.extend_from_slice(authority.as_ref());
+    data.push(0);
+    let init = Instruction {
+        program_id: pk(TOKEN_PROGRAM_ID),
+        accounts: vec![AccountMeta::new(mint.pubkey(), false)],
+        data,
+    };
+    svm.expire_blockhash();
+    let tx = Transaction::new_signed_with_payer(
+        &[create, init],
+        Some(&payer.pubkey()),
+        &[payer, &mint],
+        svm.latest_blockhash(),
+    );
+    svm.send_transaction(tx).expect("mint creation must succeed");
+    mint.pubkey()
+}
+
+/// Create the associated token account for `(owner, mint)` and return it.
+pub fn create_ata(svm: &mut LiteSVM, payer: &Keypair, owner: &Pubkey, mint: &Pubkey) -> Pubkey {
+    let ata = associated_token_address(owner, mint);
+    let ix = Instruction {
+        program_id: pk(ASSOCIATED_TOKEN_PROGRAM_ID),
+        accounts: vec![
+            AccountMeta::new(payer.pubkey(), true),
+            AccountMeta::new(ata, false),
+            AccountMeta::new_readonly(*owner, false),
+            AccountMeta::new_readonly(*mint, false),
+            AccountMeta::new_readonly(system_program::id(), false),
+            AccountMeta::new_readonly(pk(TOKEN_PROGRAM_ID), false),
+        ],
+        data: vec![0], // Create
+    };
+    send_ix(svm, ix, payer, &[payer]).expect("ATA creation must succeed");
+    ata
+}
+
+/// Mint `amount` to `dest`, signed by the mint authority.
+pub fn mint_to(
+    svm: &mut LiteSVM,
+    payer: &Keypair,
+    authority: &Keypair,
+    mint: &Pubkey,
+    dest: &Pubkey,
+    amount: u64,
+) {
+    let mut data = vec![7u8]; // MintTo
+    data.extend_from_slice(&amount.to_le_bytes());
+    let ix = Instruction {
+        program_id: pk(TOKEN_PROGRAM_ID),
+        accounts: vec![
+            AccountMeta::new(*mint, false),
+            AccountMeta::new(*dest, false),
+            AccountMeta::new_readonly(authority.pubkey(), true),
+        ],
+        data,
+    };
+    send_ix(svm, ix, payer, &[payer, authority]).expect("mint_to must succeed");
+}
+
+/// Token balance of an account, or 0 when the account no longer exists (which
+/// is what a closed vault looks like).
+pub fn token_balance(svm: &LiteSVM, account: &Pubkey) -> u64 {
+    match svm.get_account(account) {
+        Some(a) if a.data.len() >= 165 => decode_token_account(&a.data).amount,
+        _ => 0,
+    }
+}
+
+/// Push the VM's clock forward by `seconds`, so a test can cross an expiry
+/// boundary without sleeping.
+pub fn advance_clock(svm: &mut LiteSVM, seconds: i64) {
+    let mut clock = svm.get_sysvar::<Clock>();
+    clock.unix_timestamp += seconds;
+    svm.set_sysvar(&clock);
+}
