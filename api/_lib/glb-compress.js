@@ -91,27 +91,18 @@ export async function compressGlb(buf, { mode = 'meshopt', textures = false } = 
 	// dedup + prune first (drop duplicate/orphaned data), then weld to an indexed
 	// mesh (both codecs need shared vertices), then the codec-specific encode.
 	const steps = [dedup(), prune(), weld()];
-	// Textures BEFORE the codec: re-encoding an image is independent of vertex
-	// layout, and running it first means the codec pass writes its buffers once
-	// over already-final image data instead of being re-serialised afterwards.
-	if (textures) {
-		const { textureCompress } = await import('@gltf-transform/functions');
-		const sharpMod = await import('sharp');
-		steps.push(
-			textureCompress({
-				encoder: sharpMod.default ?? sharpMod,
-				targetFormat: 'webp',
-				quality: textures.quality ?? DELIVERY_TEXTURE_QUALITY,
-				resize: [textures.maxSize ?? DELIVERY_TEXTURE_MAX_PX, textures.maxSize ?? DELIVERY_TEXTURE_MAX_PX],
-			}),
-		);
-	}
 	if (mode === 'draco') {
 		steps.push(draco());
 	} else {
 		const { MeshoptEncoder } = await import('meshoptimizer');
 		steps.push(quantize(), meshopt({ encoder: MeshoptEncoder }));
 	}
+	// Textures BEFORE the codec: re-encoding an image is independent of vertex
+	// layout, so running it first means the codec pass serialises already-final
+	// image data once instead of being re-written afterwards.
+	let textureResult = null;
+	if (textures) textureResult = await recompressTextures(doc, textures);
+
 	await doc.transform(...steps);
 
 	const out = await io.writeBinary(doc);
@@ -129,8 +120,85 @@ export async function compressGlb(buf, { mode = 'meshopt', textures = false } = 
 		ratio: inputBytes > 0 ? Math.round((outputBytes / inputBytes) * 1000) / 1000 : 1,
 		grew: outputBytes >= inputBytes,
 		extensionsUsed,
-		textures: Boolean(textures),
+		textures: textureResult,
 	};
+}
+
+// Formats sharp can decode. Anything else (KTX2/Basis above all) is already a
+// GPU-compressed supercompressed texture and is left exactly as it is: handing
+// its bytes to sharp would throw, and re-encoding it to WebP would be a
+// downgrade, not a saving.
+const SHARP_DECODABLE_MIME = new Set([
+	'image/png',
+	'image/jpeg',
+	'image/webp',
+	'image/avif',
+	'image/tiff',
+	'image/gif',
+]);
+
+/**
+ * Re-encode a document's textures to WebP and cap their resolution, in place.
+ *
+ * This deliberately does NOT use @gltf-transform's `textureCompress({ resize })`.
+ * That helper derives the resize target from `ImageUtils.getSize()`, a minimal
+ * header parser, and real generated meshes carry PNGs it misreads: three of six
+ * production forge outputs sampled on 2026-09-04 reported a 65536x4292542531
+ * texture and made the whole transform throw `Expected positive integer for
+ * width but received 0`. sharp's own metadata is authoritative about bytes sharp
+ * is about to decode, so the dimensions are read from there instead.
+ *
+ * Every texture is handled independently inside its own try/catch: one image the
+ * encoder cannot read leaves that texture untouched rather than losing the whole
+ * compression pass (and with it the geometry win) for the mesh.
+ *
+ * @returns {Promise<{ converted: number, resized: number, skipped: number, savedBytes: number }>}
+ */
+async function recompressTextures(doc, { quality = DELIVERY_TEXTURE_QUALITY, maxSize = DELIVERY_TEXTURE_MAX_PX } = {}) {
+	const sharpMod = await import('sharp');
+	const sharp = sharpMod.default ?? sharpMod;
+	const { EXTTextureWebP } = await import('@gltf-transform/extensions');
+
+	const stats = { converted: 0, resized: 0, skipped: 0, savedBytes: 0 };
+	for (const texture of doc.getRoot().listTextures()) {
+		const src = texture.getImage();
+		const mime = texture.getMimeType();
+		if (!src?.byteLength || !SHARP_DECODABLE_MIME.has(mime)) {
+			stats.skipped++;
+			continue;
+		}
+		try {
+			let pipeline = sharp(Buffer.from(src.buffer, src.byteOffset, src.byteLength));
+			const meta = await pipeline.metadata();
+			const longEdge = Math.max(meta.width || 0, meta.height || 0);
+			const willResize = longEdge > maxSize;
+			if (willResize) {
+				pipeline = pipeline.resize({ width: maxSize, height: maxSize, fit: 'inside', withoutEnlargement: true });
+			}
+			const encoded = await pipeline.webp({ quality, effort: 4 }).toBuffer();
+			// An already-WebP texture that the re-encode did not shrink keeps its
+			// original bytes: a second lossy pass over the same image only loses
+			// detail. A PNG that "grows" as WebP still converts, because the GLB
+			// then carries one texture codec instead of two.
+			if (mime === 'image/webp' && encoded.byteLength >= src.byteLength) {
+				stats.skipped++;
+				continue;
+			}
+			stats.savedBytes += src.byteLength - encoded.byteLength;
+			texture.setImage(new Uint8Array(encoded)).setMimeType('image/webp');
+			const uri = texture.getURI();
+			if (uri) texture.setURI(uri.replace(/\.[A-Za-z0-9]+$/, '.webp'));
+			stats.converted++;
+			if (willResize) stats.resized++;
+		} catch (err) {
+			// Unreadable or exotic image: keep the original texture and the rest of
+			// the pass. Never fail a delivery over one bad skin.
+			console.warn('[glb-compress] texture skipped:', err?.message);
+			stats.skipped++;
+		}
+	}
+	if (stats.converted > 0) doc.createExtension(EXTTextureWebP).setRequired(true);
+	return stats;
 }
 
 // The preset the serve path uses. Geometry through meshopt (the viewer's loader
