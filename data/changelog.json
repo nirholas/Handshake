@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-04",
+			"title": "DeFi tables stop showing broken logos when a coin icon disappears",
+			"summary": "The protocol and chain logos on the fees, DeFi, DEX volumes, chain, protocol and exchange pages were loaded straight from a third-party icon host. When that host renamed or removed an icon, the row rendered a broken-image glyph and every reader's browser recorded a failed request. Those logos now come from three.ws itself: we fetch and resize them on our side, cache them, and hand back an empty answer for an icon that no longer exists, so the row shows the same neutral disc a protocol without a logo already gets. Pages load a little faster too, since a 24-pixel icon no longer arrives at full size, and your browser no longer talks to an outside host on every table paint.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/fees"
+		},
+		{
+			"date": "2026-09-04",
 			"title": "Cross-origin 3D loads no longer break on a header your site never sent",
 			"summary": "Embedding a three.ws avatar on your own site loads the model straight from us, and the site answers every origin. One case still failed: if your loader attached any extra header (a trace id, an auth token, anything a browser does not treat as standard), the browser first asked us for permission and we answered with a 404 page, so the model never loaded. That request is now answered properly, and the answer echoes exactly the headers you asked about. Alongside it, the media docs now spell out the three ways to read a model file and which one to pick: files under three.ws load directly, generated assets load directly from three.ws/cdn, and the /api/glb proxy is there for a URL whose host you cannot identify.",
 			"tags": [

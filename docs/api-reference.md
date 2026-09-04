@@ -6925,6 +6925,7 @@ GET /api/img?url=<https-or-ipfs-image-url>
 GET /api/img?url=<image-url>&w=480
 GET /api/img?meta=<token-metadata-json-url>
 GET /api/img?seed=<any-string>
+GET /api/img?url=<image-url>&fallback=none
 ```
 
 Same-origin delivery for remote artwork, so the browser only ever talks to
@@ -6947,6 +6948,19 @@ showcase requests `w=480` for a card that renders at roughly 240 px, which
 turns a 1 MB stored render into a 20-40 KB tile
 ([src/shared/image-url.js](../src/shared/image-url.js) builds the URL and
 leaves same-origin, `data:` and `blob:` sources untouched).
+
+`fallback=none` opts out of the placeholder: when every source fails the
+endpoint answers `204 No Content` with an empty body instead of the SVG. Use it
+on a surface that already draws its own "no image" state, which is what the DeFi
+logo tables (`/fees`, `/defi`, `/dex-volumes`, `/chain/:name`, `/protocol/:slug`,
+`/exchange/:id`) do: a protocol icon DeFiLlama has withdrawn should become the
+neutral disc those tables already render for a logo-less row, not token art from
+a different visual language. `204` rather than `404` because a retired upstream
+icon is an ordinary outcome, not an error: the browser logs nothing for a `204`,
+while the `<img>` still fires `error` with no bytes, so the designed fallback
+runs. Leave the flag off for artwork, which wants the placeholder.
+[src/shared/upstream-logo.js](../src/shared/upstream-logo.js) builds these URLs
+and installs the swap-to-disc handler.
 
 Real images are cached immutably (`max-age=86400, s-maxage=604800, immutable`):
 the same upstream URL at the same width is the same bytes forever, so route a
