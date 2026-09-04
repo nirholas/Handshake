@@ -2287,7 +2287,7 @@ function injectStyles() {
 			gap: 8px;
 		}
 		@media (max-width: 920px) { .dnx-dir-items { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-		@media (max-width: 560px) { .dnx-dir-items { grid-template-columns: 1fr; } }
+		@media (max-width: 560px) { .dnx-dir-items { grid-template-columns: minmax(0, 1fr); } }
 		.dnx-dir-item {
 			display: block; padding: 10px 12px;
 			border-radius: 10px; border: 1px solid var(--nxt-stroke);

@@ -3,6 +3,7 @@
 // Consolidates everything that doesn't fit in Account or Monetize:
 //   • Active sessions (list + revoke)
 //   • Notifications (list + mark-read)
+//   • Avatar storage mode (R2 vs IPFS, pin to IPFS)
 //   • Storage usage (avatar files, animation clips)
 //   • LLM usage (calls this month, tokens consumed, by model)
 //   • App preferences (dashboard prefs via /api/dashboard/prefs)
@@ -18,6 +19,10 @@
 //   GET  /api/usage/summary                 { llm: { calls_month, tokens_month, by_model } }
 //   GET  /api/dashboard/prefs               { prefs }
 //   PATCH /api/dashboard/prefs              body prefs patch
+//   GET  /api/avatars/mine                  { avatars: [{ storage, ... }] }
+//   POST /api/avatars/:id/pin-ipfs          pin the stored object, returns CID
+//   PUT  /api/avatars/:id/storage-mode      switch which source is primary
+//   GET  /api/version                       running build (About panel)
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, put, del, patch, esc, relTime, ApiError } from '../api.js';
@@ -50,6 +55,25 @@ function injectStyles() {
 		.set-switch[aria-checked="true"]::after{transform:translateY(-50%) translateX(16px);background:#000}
 		.set-switch:focus-visible{outline:none;box-shadow:0 0 0 3px var(--nxt-accent-soft)}
 		.set-theme-btn:focus-visible,.set-net-btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--nxt-accent-soft)}
+		.set-store-row{display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap;
+			border-bottom:1px solid var(--nxt-stroke)}
+		.set-store-row:last-child{border-bottom:0}
+		.set-store-thumb{flex:0 0 auto;width:44px;height:44px;border-radius:9px;object-fit:cover;
+			background:rgba(255,255,255,.04);border:1px solid var(--nxt-stroke)}
+		.set-store-meta{flex:1 1 200px;min-width:0}
+		.set-store-name{font-size:13.5px;color:var(--nxt-ink);font-weight:500;overflow:hidden;
+			text-overflow:ellipsis;white-space:nowrap}
+		.set-store-facts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;
+			font-size:12px;color:var(--nxt-ink-fade)}
+		.set-store-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+		.set-seg{display:inline-flex;border:1px solid var(--nxt-stroke-strong);border-radius:8px;overflow:hidden}
+		.set-seg-btn{padding:5px 12px;font-size:12px;font-weight:500;color:var(--nxt-ink-dim);
+			background:transparent;border:0;cursor:pointer;transition:background .16s ease,color .16s ease}
+		.set-seg-btn+.set-seg-btn{border-left:1px solid var(--nxt-stroke-strong)}
+		.set-seg-btn:hover:not([disabled]){background:rgba(255,255,255,.06);color:var(--nxt-ink)}
+		.set-seg-btn[aria-pressed="true"]{background:var(--nxt-accent);color:#000}
+		.set-seg-btn[disabled]{opacity:.4;cursor:not-allowed}
+		.set-seg-btn:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--nxt-accent-soft)}
 		@media (prefers-reduced-motion:reduce){.set-switch,.set-switch::after{transition:none}}
 	`;
 	document.head.appendChild(s);
@@ -87,14 +111,17 @@ async function loadContent(host) {
 
 	const retry = () => loadContent(host);
 
-	const [sessionsResp, notifResp, notifPrefsResp, summaryResp, usageResp, prefsResp] = await Promise.all([
-		safeGet('/api/auth/sessions'),
-		safeGet('/api/notifications?limit=20'),
-		safeGet('/api/notifications/preferences'),
-		safeGet('/api/billing/summary'),
-		safeGet('/api/usage/summary'),
-		safeGet('/api/dashboard/prefs'),
-	]);
+	const [sessionsResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp] =
+		await Promise.all([
+			safeGet('/api/auth/sessions'),
+			safeGet('/api/notifications?limit=20'),
+			safeGet('/api/notifications/preferences'),
+			safeGet('/api/avatars/mine?limit=24'),
+			safeGet('/api/billing/summary'),
+			safeGet('/api/usage/summary'),
+			safeGet('/api/dashboard/prefs'),
+			safeGet('/api/version'),
+		]);
 
 	const prefs = prefsResp.data?.prefs || prefsResp.data || {};
 
@@ -104,12 +131,13 @@ async function loadContent(host) {
 	host.appendChild(renderNotifications(notifResp, retry));
 	host.appendChild(renderNotificationPrefs(notifPrefsResp, retry));
 	host.appendChild(renderDefaultNetwork(prefs));
+	host.appendChild(renderAvatarStorage(avatarsResp, retry));
 	host.appendChild(renderStorage(summaryResp, retry));
 	host.appendChild(renderLlmUsage(usageResp, retry));
 	host.appendChild(renderVanityTools());
 	host.appendChild(renderPrefs(prefs));
 	host.appendChild(renderDataExport());
-	host.appendChild(renderAbout());
+	host.appendChild(renderAbout(versionResp));
 }
 
 // Returns { ok, data } so callers can tell a genuine fetch failure (show an
@@ -448,6 +476,164 @@ function renderNotificationPrefs(resp, onRetry) {
 	return panel;
 }
 
+// ── Avatar storage (R2 vs IPFS) ────────────────────────────────────────────
+// Every avatar is written to R2 on upload. Pinning one to IPFS gives it a CID
+// that outlives this platform, and the `primary` flag decides which of the two
+// copies a viewer resolves first. All three calls are real per-avatar records:
+//   GET  /api/avatars/mine             each row carries its flattened storage
+//   POST /api/avatars/:id/pin-ipfs     pins the stored object, returns the CID
+//   PUT  /api/avatars/:id/storage-mode switches which source is primary
+//
+// A deployment with no pinning provider answers the pin with `stub: true` and a
+// `stub:` pseudo-CID, which is a recorded content hash and not a pin. The row
+// says exactly that rather than showing a CID that resolves nowhere.
+
+const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
+
+function isRealCid(cid) {
+	return typeof cid === 'string' && cid.length > 0 && !cid.startsWith('stub:');
+}
+
+function shortCid(cid) {
+	return cid.length > 18 ? `${cid.slice(0, 10)}…${cid.slice(-6)}` : cid;
+}
+
+function renderAvatarStorage(resp, onRetry) {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+	panel.setAttribute('aria-label', 'Avatar storage');
+
+	const headHTML = `
+		<div style="margin-bottom:14px">
+			<div class="dn-panel-title">Avatar storage</div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Every avatar lives in three.ws storage (R2). Pin one to IPFS to give it a permanent content address, then choose which copy viewers load first.</div>
+		</div>`;
+
+	if (!resp.ok) {
+		panel.innerHTML = `${headHTML}<div data-slot="avstore-err"></div>`;
+		const errHost = panel.querySelector('[data-slot="avstore-err"]');
+		errHost.innerHTML = errorStateHTML({
+			title: "Couldn't load avatar storage",
+			body: 'We could not reach the avatar service. Try again in a moment.',
+		});
+		attachRetry(errHost, onRetry);
+		return panel;
+	}
+
+	const avatars = Array.isArray(resp.data?.avatars) ? resp.data.avatars : [];
+
+	if (!avatars.length) {
+		panel.innerHTML = `${headHTML}<div data-slot="avstore-empty"></div>`;
+		panel.querySelector('[data-slot="avstore-empty"]').innerHTML = emptyStateHTML({
+			icon: '',
+			title: 'No avatars yet',
+			body: 'Create your first avatar and its storage mode will show up here.',
+			actions: [{ label: 'Create an avatar', href: '/create', primary: true }],
+			compact: true,
+		});
+		return panel;
+	}
+
+	panel.innerHTML = `
+		${headHTML}
+		<div data-slot="avstore-list" style="display:flex;flex-direction:column"></div>
+		<div style="margin-top:12px;font-size:12px;color:var(--nxt-ink-fade)">
+			Showing your ${avatars.length} most recent avatar${avatars.length === 1 ? '' : 's'}.
+			<a href="/dashboard/library" style="color:var(--nxt-accent);margin-left:6px">Open your library →</a>
+		</div>
+	`;
+
+	const listHost = panel.querySelector('[data-slot="avstore-list"]');
+	for (const av of avatars) listHost.appendChild(avatarStorageRow(av));
+	return panel;
+}
+
+function avatarStorageRow(av) {
+	const row = document.createElement('div');
+	row.className = 'set-store-row';
+	const state = { ...(av.storage || { primary: 'r2', r2_present: true, ipfs_pinned: false, ipfs_cid: null }) };
+
+	function paint() {
+		const pinned = !!state.ipfs_pinned;
+		const real = isRealCid(state.ipfs_cid);
+		row.innerHTML = `
+			<img class="set-store-thumb" src="/api/avatars/${esc(av.id)}/thumb" width="44" height="44" loading="lazy"
+				alt="Preview of ${esc(av.name || 'avatar')}" />
+			<div class="set-store-meta">
+				<div class="set-store-name">${esc(av.name || 'Untitled avatar')}</div>
+				<div class="set-store-facts">
+					${av.size_bytes ? `${esc(fmtBytes(av.size_bytes))} · ` : ''}
+					<span class="dn-tag success">R2</span>
+					${pinned
+						? real
+							? `<a class="dn-tag" href="${esc(IPFS_GATEWAY + state.ipfs_cid)}" target="_blank" rel="noopener" title="${esc(state.ipfs_cid)}" style="text-decoration:none">IPFS ${esc(shortCid(state.ipfs_cid))} ↗</a>`
+							: `<span class="dn-tag warn" title="This deployment has no pinning provider, so a content hash was recorded instead of a real CID">Content hash only</span>`
+						: `<span class="dn-tag">Not on IPFS</span>`}
+				</div>
+			</div>
+			<div class="set-store-actions">
+				<div class="set-seg" role="group" aria-label="Primary source for ${esc(av.name || 'avatar')}">
+					<button type="button" class="set-seg-btn" data-primary="r2" aria-pressed="${state.primary !== 'ipfs'}">R2</button>
+					<button type="button" class="set-seg-btn" data-primary="ipfs" aria-pressed="${state.primary === 'ipfs'}"
+						${real ? '' : 'disabled title="Pin this avatar to IPFS first"'}>IPFS</button>
+				</div>
+				${real ? '' : `<button type="button" class="dn-btn" data-action="pin">Pin to IPFS</button>`}
+			</div>
+		`;
+		wire();
+	}
+
+	function wire() {
+		row.querySelector('[data-action="pin"]')?.addEventListener('click', async (e) => {
+			const btn = e.currentTarget;
+			btn.disabled = true;
+			btn.textContent = 'Pinning…';
+			try {
+				const out = await post(`/api/avatars/${encodeURIComponent(av.id)}/pin-ipfs`, {});
+				const mode = out?.storage_mode || {};
+				state.ipfs_pinned = !!mode.ipfs?.pinned;
+				state.ipfs_cid = mode.ipfs?.cid ?? null;
+				toast(out?.stub
+					? 'No pinning provider is configured, so a content hash was recorded instead of a CID'
+					: 'Pinned to IPFS');
+				paint();
+			} catch (err) {
+				toast(err?.message || 'Pin failed');
+				btn.disabled = false;
+				btn.textContent = 'Pin to IPFS';
+			}
+		});
+
+		row.querySelectorAll('[data-primary]').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				const next = btn.dataset.primary;
+				if (btn.disabled || next === state.primary) return;
+				const seg = row.querySelectorAll('[data-primary]');
+				seg.forEach((b) => { b.disabled = true; });
+				try {
+					// Re-read the full record before writing it back: the schema is
+					// whole-object and the server owns the attestation block, so a
+					// blind PUT of the flattened list row would be a lossy write.
+					const current = await get(`/api/avatars/${encodeURIComponent(av.id)}/storage-mode`);
+					const mode = current?.storage_mode;
+					if (!mode) throw new Error('storage mode unavailable');
+					await put(`/api/avatars/${encodeURIComponent(av.id)}/storage-mode`, { ...mode, primary: next });
+					state.primary = next;
+					toast(`Primary source set to ${next === 'ipfs' ? 'IPFS' : 'R2'}`);
+				} catch (err) {
+					toast(err?.message || 'Could not change the primary source');
+				} finally {
+					seg.forEach((b) => { b.disabled = false; });
+					paint();
+				}
+			});
+		});
+	}
+
+	paint();
+	return row;
+}
+
 // ── Storage ────────────────────────────────────────────────────────────────
 
 function renderStorage(resp, onRetry) {
@@ -611,7 +797,7 @@ function renderVanityTools() {
 		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
 			<div style="padding:16px;border:1px solid var(--nxt-stroke);border-radius:10px">
 				<div style="font-weight:600;margin-bottom:6px">Solana &amp; EVM wallets ✦</div>
-				<div style="font-size:13px;color:var(--nxt-ink-dim);margin-bottom:12px">Grind a Solana or EVM keypair whose address starts or ends with text you choose — right in the dashboard.</div>
+				<div style="font-size:13px;color:var(--nxt-ink-dim);margin-bottom:12px">Grind a Solana or EVM keypair whose address starts or ends with text you choose, right in the dashboard.</div>
 				<a class="dn-btn primary" href="/dashboard/wallet-grinder">Open grinder →</a>
 			</div>
 			<div style="padding:16px;border:1px solid var(--nxt-stroke);border-radius:10px">
@@ -699,7 +885,7 @@ function renderTheme() {
 				</button>
 			`).join('')}
 		</div>
-		<div style="margin-top:10px;font-size:12px;color:var(--nxt-ink-fade)">
+		<div data-slot="theme-hint" style="margin-top:10px;font-size:12px;color:var(--nxt-ink-fade)">
 			${stored === 'auto' ? 'Following your system preference.' : `Currently using ${stored} mode.`}
 			Dark is the brand default; the theme toggle also lives in the top nav.
 		</div>
@@ -729,10 +915,14 @@ function renderTheme() {
 				b.classList.toggle('primary', on);
 				b.setAttribute('aria-pressed', String(on));
 			});
-			const hint = panel.querySelector('div:last-child');
+			// Address the hint by slot: `div:last-child` matched the panel subtitle
+			// first (it is the last child of the header block), so every theme
+			// click used to overwrite "Choose your dashboard color scheme." while
+			// the real hint below kept reporting the previous theme.
+			const hint = panel.querySelector('[data-slot="theme-hint"]');
 			hint.textContent = theme === 'auto'
-				? 'Following your system preference.'
-				: `Set to ${theme} mode. The theme toggle also lives in the top nav.`;
+				? 'Following your system preference. The theme toggle also lives in the top nav.'
+				: `Currently using ${theme} mode. The theme toggle also lives in the top nav.`;
 			toast('Theme applied');
 		});
 	});
@@ -863,11 +1053,19 @@ function renderDataExport() {
 
 // ── About ─────────────────────────────────────────────────────────────────
 
-function renderAbout() {
+function renderAbout(versionResp) {
 	const panel = document.createElement('div');
 	panel.className = 'dn-panel';
 
-	const buildDate = new Date().toISOString().slice(0, 10);
+	// The running build, read from /api/version (server/build-info). This used
+	// to print `new Date()`, which made every visit claim the site was built
+	// today no matter which revision was serving it.
+	const build = versionResp?.ok ? versionResp.data || {} : null;
+	const buildLabel = build
+		? [build.version, build.commitShort].filter(Boolean).join(' · ') || 'unknown'
+		: 'Unavailable';
+	const buildTitle = build?.commit ? ` title="${esc(build.commit)}"` : '';
+	const builtAt = build?.builtAt || build?.commitTime || null;
 
 	panel.innerHTML = `
 		<div style="margin-bottom:14px">
@@ -880,9 +1078,9 @@ function renderAbout() {
 			<span style="color:var(--nxt-ink-fade)">Dashboard</span>
 			<span style="color:var(--nxt-ink)">dashboard-next</span>
 			<span style="color:var(--nxt-ink-fade)">Build</span>
-			<span style="color:var(--nxt-ink);font-family:${MONO};font-size:12px">${esc(buildDate)}</span>
+			<span style="color:var(--nxt-ink);font-family:${MONO};font-size:12px"${buildTitle}>${esc(buildLabel)}${builtAt ? ` <span style="color:var(--nxt-ink-fade)">(${esc(relTime(builtAt))})</span>` : ''}</span>
 			<span style="color:var(--nxt-ink-fade)">Language</span>
-			<span style="color:var(--nxt-ink)">English</span>
+			<span style="color:var(--nxt-ink)" data-slot="about-language">${esc(currentLanguageName())}</span>
 		</div>
 		<div style="display:flex;gap:10px;flex-wrap:wrap">
 			<a class="dn-btn" href="/features" style="text-decoration:none">
@@ -904,7 +1102,26 @@ function renderAbout() {
 		</div>
 	`;
 
+	// The runtime i18n layer swaps copy in place and fires i18n:change, so the
+	// row follows the live locale instead of freezing at first paint.
+	window.addEventListener('i18n:change', () => {
+		const slot = panel.querySelector('[data-slot="about-language"]');
+		if (slot) slot.textContent = currentLanguageName();
+	});
+
 	return panel;
+}
+
+/** The language the page is actually rendering in, named in that language.
+ *  src/i18n.js writes the active locale onto <html lang>, so that tag is the
+ *  single source of truth for both the runtime and this row. */
+function currentLanguageName() {
+	const code = document.documentElement.lang || 'en';
+	try {
+		return new Intl.DisplayNames([code], { type: 'language' }).of(code) || code;
+	} catch {
+		return code;
+	}
 }
 
 function prefToggle(key, label, description, checked) {
