@@ -54,6 +54,9 @@ const WINDOW: i64 = 60 * 60 * 24;
 const FEE_BPS: u16 = 250;
 
 /// Decoded `Door` (borsh, after the 8-byte discriminator).
+// Every field is decoded so the struct mirrors the on-chain layout; not every
+// test reads every one.
+#[allow(dead_code)]
 struct Door {
     price: u64,
     open: bool,
@@ -75,6 +78,9 @@ fn decode_door(data: &[u8]) -> Door {
 }
 
 /// Decoded `KnockRecord`.
+// Every field is decoded so the struct mirrors the on-chain layout; not every
+// test reads every one.
+#[allow(dead_code)]
 struct KnockRec {
     amount: u64,
     fee_bps: u16,
@@ -400,12 +406,18 @@ fn ke1_answer_splits_the_payment_and_empties_the_vault() {
     let k = h.knock_state(1);
     assert_eq!(k.state, STATE_ANSWERED);
     assert_eq!(
+        k.expires_at,
+        TEST_UNIX_TIMESTAMP + WINDOW,
+        "the deadline is the door's window from the moment of the knock"
+    );
+    assert_eq!(
         k.reply_hash,
         sha256(b"here is my reply"),
         "the reply is committed on-chain so either side can prove it"
     );
 
     let d = h.door_state();
+    assert_eq!(d.price, PRICE, "settling a knock does not move the door price");
     assert_eq!((d.knocks, d.answered, d.refunded), (1, 1, 0));
     assert_eq!(d.earned, PRICE - fee, "earned counts the payout, not the fee");
 }
