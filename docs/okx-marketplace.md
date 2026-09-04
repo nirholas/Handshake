@@ -230,7 +230,16 @@ unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
 - **Retried payments are safe.** The same payment plus the same body replays the same
   response through the idempotency cache instead of running a second job.
 - **Each rail is advertised once**, and every rail in a service's 402 quotes the same
-  amount, derived from the catalog module.
+  amount, derived from the catalog module. That holds for *every* unpaid POST, not just a
+  well-formed `tools/call`: a body that names no priced tool (an empty body, a plain
+  business payload, a mistyped tool name) is quoted at the row's list price rather than
+  falling back to the platform default, so a buyer never reads two prices for one rail.
+- **A bare `POST` is answered with the quotation, not a content-type error.** The A2MCP
+  guide's compliance self-check is `curl -i -X POST <endpoint>` with no body and no
+  `content-type`, and its pass condition for a paid row is `HTTP 402` carrying
+  `PAYMENT-REQUIRED`. Every paid row answers it that way. Unparseable bytes from a caller
+  that is already past the paywall get the JSON-RPC parse error (`-32700`), and nothing
+  settles because nothing ran.
 
 > **Not yet demonstrated end to end.** The X Layer rail reports `settleable: true` in
 > production, but no *funded* call has settled on-chain against these endpoints yet: the
