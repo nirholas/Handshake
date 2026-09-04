@@ -81,7 +81,7 @@
 	cursor: pointer; font-size: 13px; line-height: 1; transition: border-color 0.12s ease, color 0.12s ease;
 }
 .cc-buy-x:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); }
-.cc-buy-x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-buy-x:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 /* Buy / Sell direction toggle. */
 .cc-buy-tabs {
@@ -96,7 +96,7 @@
 }
 .cc-buy-tab:hover { color: var(--cc-text); }
 .cc-buy-tab.cc-on { background: rgba(255, 255, 255, 0.08); border-color: var(--cc-edge-hi); color: var(--cc-text); }
-.cc-buy-tab:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-buy-tab:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 .cc-buy-field { display: block; }
 .cc-buy-field-label { display: block; color: var(--cc-dim); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 7px; }
@@ -121,7 +121,7 @@
 	cursor: pointer; transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
 }
 .cc-buy-preset:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); }
-.cc-buy-preset:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-buy-preset:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-buy-preset.cc-on { background: rgba(255, 255, 255, 0.08); border-color: var(--cc-edge-hi); color: var(--cc-text); }
 
 /* Wallet balance / holdings line under the amount (USDC buys + all sells). */
@@ -160,7 +160,7 @@
 	font-variant-numeric: tabular-nums; cursor: pointer; transition: border-color 0.12s ease, color 0.12s ease;
 }
 .cc-buy-slip-btn:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); }
-.cc-buy-slip-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-buy-slip-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-buy-slip-btn.cc-on { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.06); }
 
 .cc-buy-wallet {
@@ -200,7 +200,7 @@
 .cc-buy-cta:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255, 255, 255, 0.55); }
 .cc-buy-cta:active:not(:disabled) { transform: translateY(1px); }
 .cc-buy-cta:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
-.cc-buy-cta:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-buy-cta:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 .cc-buy-status {
 	margin-top: 12px; font-size: 12.5px; line-height: 1.45; text-align: center;
@@ -210,7 +210,7 @@
 .cc-buy-status[data-kind="err"] { color: #d88a8a; }
 .cc-buy-status a { color: inherit; text-decoration: underline; }
 .cc-buy-link { background: none; border: none; padding: 0; color: var(--cc-text); text-decoration: underline; cursor: pointer; font: inherit; }
-.cc-buy-link:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-buy-link:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 .cc-buy-pumplink {
 	display: block; margin-top: 14px; text-align: center;
@@ -218,4 +218,4 @@
 	transition: color 0.12s ease;
 }
 .cc-buy-pumplink:hover { color: var(--cc-text); }
-.cc-buy-pumplink:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-buy-pumplink:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }

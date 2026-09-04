@@ -356,7 +356,7 @@ html.tfig-lb-open body {
 
 .tfig-lb-close:focus-visible,
 .tfig-lb-nav:focus-visible {
-	outline: 2px solid #fff;
+	outline: 2px solid var(--focus-ring-color);
 	outline-offset: 2px;
 }
 

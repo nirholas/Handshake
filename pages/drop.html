@@ -59,7 +59,7 @@
 		.errbox { border: 1px solid rgba(248,113,113,.4); background: rgba(248,113,113,.08); color: #fca5a5; }
 		.okbox.show, .warnbox.show, .errbox.show { display: block; }
 
-		.keybox { background: #0a0a0a; border: 1px solid rgba(255,176,32,.35); border-radius: 8px; padding: .8rem; margin-top: .8rem; }
+		.keybox { background: var(--bg-0); border: 1px solid rgba(255,176,32,.35); border-radius: 8px; padding: .8rem; margin-top: .8rem; }
 		.keybox code { display: block; word-break: break-all; font-family: ui-monospace, monospace; font-size: .78rem; color: #fcd34d; background: #111; padding: .5rem; border-radius: 6px; margin: .4rem 0; }
 
 		.statebox { text-align: center; padding: 1.6rem 1rem; }
@@ -80,7 +80,7 @@
 		button.ghost .spin { border-color: rgba(255,255,255,.2); border-top-color: #fff; }
 		@keyframes rot { to { transform: rotate(360deg); } }
 
-		#drop-toast.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120%); background: #1a1a1a; border: 1px solid var(--border); color: #fff; padding: .6rem 1rem; border-radius: 8px; font-size: .85rem; transition: transform .3s ease; z-index: 50; max-width: 90vw; }
+		#drop-toast.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120%); background: var(--bg-1); border: 1px solid var(--border); color: #fff; padding: .6rem 1rem; border-radius: 8px; font-size: .85rem; transition: transform .3s ease; z-index: 50; max-width: 90vw; }
 		#drop-toast.toast.show { transform: translateX(-50%) translateY(0); }
 	</style>
 

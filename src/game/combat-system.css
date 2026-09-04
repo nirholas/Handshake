@@ -55,7 +55,7 @@
 }
 .combat-attack-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
 .combat-attack-btn:active { transform: scale(0.96); }
-.combat-attack-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.combat-attack-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .combat-attack-glyph { font-size: 16px; }
 
 .combat-hitflash {

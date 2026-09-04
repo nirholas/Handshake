@@ -35,7 +35,7 @@
 			   excess was clipped rather than scrolled and the PnL/Score columns
 			   became unreachable under ~715px. min-width:0 hands the overflow back
 			   to .dm-table-wrap, which scrolls it properly. */
-			.dm-shell { max-width: 980px; width: 100%; min-width: 0; margin: 0 auto; padding: var(--space-lg) var(--space-md) var(--space-2xl); }
+			.dm-shell { max-width: 1120px; width: 100%; min-width: 0; margin: 0 auto; padding: var(--space-lg) var(--space-md) var(--space-2xl); }
 
 			.dm-hero { padding: var(--space-xl) 0 var(--space-md); display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-md); }
 			.dm-hero-main { flex: 1 1 380px; min-width: 0; }
@@ -72,10 +72,6 @@
 
 			/* Leader spotlight */
 			.dm-leader { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); padding: var(--space-md); }
-			@media (max-width: 420px) {
-				.dm-leader-avatar { width: 48px; height: 48px; }
-				.dm-leader-score { margin-left: 0; text-align: left; width: 100%; }
-			}
 			.dm-leader-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--surface-2); border: 1px solid var(--color-border); flex: none; }
 			.dm-leader-name { font: var(--weight-bold) var(--text-lg)/1.2 var(--font-display); color: var(--color-text-bright); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 			.dm-leader-name a { color: inherit; text-decoration: none; }
@@ -84,18 +80,36 @@
 			.dm-leader-score { margin-left: auto; text-align: right; flex: none; }
 			.dm-leader-score-num { font: var(--weight-bold) var(--text-xl)/1.1 var(--font-mono); color: var(--color-success); font-variant-numeric: tabular-nums; }
 			.dm-leader-score-label { font: var(--weight-medium) var(--text-2xs)/1.3 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-dim); }
+			/* Below ~420px the spotlight's three blocks cannot share a row without
+			   crushing the name to two characters, so the score drops beneath it. */
+			@media (max-width: 420px) {
+				.dm-leader-avatar { width: 48px; height: 48px; }
+				.dm-leader-score { margin-left: 0; text-align: left; width: 100%; }
+			}
 
 			/* Standings table */
-			.dm-table-wrap { overflow-x: auto; }
+			/* Scroll shadows: the two `local` layers ride with the content and mask
+			   the two fixed `scroll` layers, so an edge shadow shows up exactly when
+			   there is more table in that direction and never when the table fits. */
+			.dm-table-wrap {
+				overflow-x: auto;
+				background:
+					linear-gradient(to right, var(--surface-1) 40%, transparent) left center / 28px 100% no-repeat local,
+					linear-gradient(to left, var(--surface-1) 40%, transparent) right center / 28px 100% no-repeat local,
+					radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.45), transparent) left center / 14px 100% no-repeat scroll,
+					radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.45), transparent) right center / 14px 100% no-repeat scroll;
+			}
 			.dm-table { width: 100%; border-collapse: collapse; font: var(--weight-regular) var(--text-sm)/1.4 var(--font-body); }
 			.dm-table th {
-				text-align: right; padding: var(--space-xs) var(--space-md);
+				text-align: right; padding: var(--space-xs) var(--space-sm);
 				font: var(--weight-medium) var(--text-2xs)/1.3 var(--font-mono);
 				letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-dim);
 				border-bottom: 1px solid var(--color-border); white-space: nowrap;
 			}
 			.dm-table th:first-child, .dm-table th:nth-child(2) { text-align: left; }
-			.dm-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text); white-space: nowrap; }
+			.dm-table td { padding: var(--space-sm); border-bottom: 1px solid var(--color-border); text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text); white-space: nowrap; }
+			.dm-table th:first-child, .dm-table td:first-child { padding-left: var(--space-md); }
+			.dm-table th:last-child, .dm-table td:last-child { padding-right: var(--space-md); }
 			.dm-table tr:last-child td { border-bottom: 0; }
 			.dm-table td:first-child { text-align: left; color: var(--color-text-dim); width: 40px; }
 			.dm-table td:nth-child(2) { text-align: left; max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
@@ -187,7 +201,7 @@
 							<span class="dm-card-title dm-stale" id="dm-stale" role="status" hidden></span>
 							<span class="dm-card-title" id="dm-count"></span>
 						</div>
-						<div class="dm-table-wrap" id="dm-standings" aria-busy="true"><div class="dm-skeleton"></div></div>
+						<div class="dm-table-wrap" id="dm-standings" role="region" aria-label="Today's standings table" tabindex="0" aria-busy="true"><div class="dm-skeleton"></div></div>
 					</section>
 
 					<p class="dm-rules" id="dm-rules"></p>

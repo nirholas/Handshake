@@ -3,7 +3,7 @@
    global stylesheet (which this bespoke 3D page skips). */
 
 .th-root {
-	--th-accent: #c4b5fd;
+	--th-accent: var(--accent-violet);
 	--th-accent-fill: rgba(139, 92, 246, 0.16);
 	--th-accent-stroke: rgba(139, 92, 246, 0.34);
 	position: fixed;

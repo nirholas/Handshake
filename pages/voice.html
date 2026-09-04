@@ -59,7 +59,7 @@
 
 			/* ── Card base ──────────────────────────────── */
 			.vl-card {
-				background: #0a0a0a;
+				background: var(--bg-0);
 				border: 1px solid #1a1a1a;
 				border-radius: 16px;
 				overflow: hidden;
@@ -514,7 +514,7 @@
 				gap: 12px;
 			}
 			.vl-voice-card {
-				background: #0a0a0a;
+				background: var(--bg-0);
 				border: 1px solid #1a1a1a;
 				border-radius: 12px;
 				padding: 16px;
@@ -756,7 +756,7 @@
 				border-color: rgba(255,255,255,0.3);
 				color: #ffffff;
 			}
-			.vb-pill:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+			.vb-pill:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 			.vb-pill.active {
 				background: #ffffff;
 				border-color: #ffffff;
@@ -921,7 +921,7 @@
 			.vl-byok-row input:focus-visible,
 			.vb-filters input[type="search"]:focus-visible,
 			.vb-filters select:focus-visible {
-				outline: 2px solid #ffffff;
+				outline: 2px solid var(--focus-ring-color);
 				outline-offset: 2px;
 			}
 

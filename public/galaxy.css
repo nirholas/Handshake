@@ -675,7 +675,7 @@
 	height: 16px;
 	flex: none;
 	border-radius: 50%;
-	background: radial-gradient(circle at 35% 30%, #fff, #c4b5fd 45%, #6d28d9 100%);
+	background: radial-gradient(circle at 35% 30%, #fff, var(--accent-violet) 45%, #6d28d9 100%);
 	box-shadow: 0 0 12px rgba(196, 181, 253, 0.8), 0 0 4px #fff;
 	animation: gx-pulse 2.6s ease-in-out infinite;
 }
@@ -734,8 +734,8 @@
 	transition: background 0.2s, box-shadow 0.2s;
 }
 .gx-mc-live-dot.gx-mc-on {
-	background: #4ade80;
-	box-shadow: 0 0 10px #4ade80;
+	background: var(--success);
+	box-shadow: 0 0 10px var(--success);
 	animation: gx-pulse 1.8s ease-in-out infinite;
 }
 .gx-mc-live-dot.gx-mc-stale { background: var(--warn, #fbbf24); box-shadow: 0 0 8px var(--warn, #fbbf24); }
@@ -823,7 +823,7 @@
 	width: 14px;
 	height: 14px;
 	border-radius: 50%;
-	background: #c4b5fd;
+	background: var(--accent-violet);
 	box-shadow: 0 0 8px rgba(196, 181, 253, 0.7);
 	cursor: pointer;
 }
@@ -832,7 +832,7 @@
 	height: 14px;
 	border: 0;
 	border-radius: 50%;
-	background: #c4b5fd;
+	background: var(--accent-violet);
 	box-shadow: 0 0 8px rgba(196, 181, 253, 0.7);
 	cursor: pointer;
 }
@@ -920,9 +920,9 @@
 }
 .gx-mc-leg { display: inline-flex; align-items: center; gap: 6px; }
 .gx-mc-leg i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.gx-mc-leg[data-k="tip"] i { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+.gx-mc-leg[data-k="tip"] i { background: var(--success); box-shadow: 0 0 6px var(--success); }
 .gx-mc-leg[data-k="trade"] i { background: #4589ff; box-shadow: 0 0 6px #4589ff; }
-.gx-mc-leg[data-k="payment"] i { background: #c4b5fd; box-shadow: 0 0 6px #c4b5fd; }
+.gx-mc-leg[data-k="payment"] i { background: var(--accent-violet); box-shadow: 0 0 6px var(--accent-violet); }
 .gx-mc-leg[data-k="launch"] i { background: #ffd27a; box-shadow: 0 0 6px #ffd27a; }
 
 /* Flow-count chip on the agent inspect card. */

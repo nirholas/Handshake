@@ -434,7 +434,7 @@ body {
 }
 .dw-reader-classic {
 	font-size: 12.5px;
-	color: #c4b5fd;
+	color: var(--accent-violet);
 	text-decoration: none;
 	white-space: nowrap;
 }
@@ -467,7 +467,7 @@ body {
 	margin: 20px 0 8px;
 }
 .dw-reader-body a {
-	color: #c4b5fd;
+	color: var(--accent-violet);
 }
 .dw-reader-body a:hover {
 	color: #ede9fe;

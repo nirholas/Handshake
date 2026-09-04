@@ -112,3 +112,47 @@
 		animation: none;
 	}
 }
+
+/* Below 640px only three columns survive (rank, category, chains and the 7d
+   move all drop out), so the shared 540px table floor buys nothing but a
+   sideways scroll that parks the TVL and the 1d move off-screen. Let the table
+   shrink to the viewport and tighten the cells so all three read at 320px.
+   Mirrors the same override on /chains. */
+@media (max-width: 639px) {
+	#defi-table .cv-table {
+		min-width: 0;
+	}
+	#defi-table .cv-table th,
+	#defi-table .cv-table td {
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+	}
+	#defi-table .cv-table .name-cell .nm {
+		max-width: 8.5rem;
+	}
+}
+
+/* Phone widths: the protocol names are the longest strings in the table, and
+   at 320px they are what pushed the percentages off the edge. The logo steps
+   down with them so the name still has room to read. */
+@media (max-width: 479px) {
+	#defi-table .cv-table {
+		font-size: 0.8125rem;
+	}
+	#defi-table .cv-table th,
+	#defi-table .cv-table td {
+		padding-left: 0.375rem;
+		padding-right: 0.375rem;
+	}
+	#defi-table .cv-table .name-cell .nm {
+		max-width: 5.75rem;
+	}
+	#defi-table .cv-table .name-cell .inner {
+		gap: 0.375rem;
+	}
+	#defi-table .cv-table .name-cell img,
+	#defi-table .defi-logo-fallback {
+		width: 20px;
+		height: 20px;
+	}
+}

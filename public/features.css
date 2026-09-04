@@ -34,7 +34,7 @@
 .skip-link:focus,
 .skip-link:focus-visible {
 	top: 8px;
-	outline: 2px solid #ffffff;
+	outline: 2px solid var(--focus-ring-color);
 	outline-offset: 2px;
 }
 
@@ -42,7 +42,7 @@
 
 .features-page a:focus-visible,
 .features-page button:focus-visible {
-	outline: 2px solid #ffffff;
+	outline: 2px solid var(--focus-ring-color);
 	outline-offset: 2px;
 	border-radius: var(--radius-sm);
 }
@@ -1133,7 +1133,7 @@
 }
 
 .feat-goal-pill:focus-visible {
-	outline: 2px solid #fff;
+	outline: 2px solid var(--focus-ring-color);
 	outline-offset: 2px;
 }
 
@@ -1394,7 +1394,7 @@
 .feat-code-block {
 	width: 100%;
 	max-width: 400px;
-	background: #0a0a0a;
+	background: var(--bg-0);
 	border: 1px solid rgba(255,255,255,0.07);
 	border-radius: var(--radius-lg);
 	overflow: hidden;

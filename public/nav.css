@@ -487,7 +487,7 @@
 /* "new" tone — recently shipped. Distinct from "live" on purpose: a new
    surface is worth a look, a live one is worth watching. */
 .nav-pill-new {
-	background: rgba(139,92,246,0.16); color: #c4b5fd;
+	background: rgba(139,92,246,0.16); color: var(--accent-violet);
 	box-shadow: inset 0 0 0 1px rgba(139,92,246,0.3);
 }
 

@@ -799,7 +799,7 @@ a { color: inherit; }
    clean deck file. */
 @media print {
 	@page { size: 1280px 720px; margin: 0; }
-	html, body { overflow: visible; height: auto; background: #0a0a0a; }
+	html, body { overflow: visible; height: auto; background: var(--bg-0); }
 	.deck-top, .deck-controls, .kbd-hint, .deck-progress, .deck-bg, .deck-grid { display: none !important; }
 	.deck, .deck-stage { position: static; }
 	.slide {

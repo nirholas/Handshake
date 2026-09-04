@@ -362,10 +362,10 @@
 	min-height: 1em;
 }
 .gv-apply-status.is-ok {
-	color: #4ade80;
+	color: var(--success);
 }
 .gv-apply-status.is-err {
-	color: #f87171;
+	color: var(--danger);
 }
 .gv-apply-status a {
 	color: inherit;
@@ -790,10 +790,10 @@
  * atlas, so a colour means the same body part everywhere on the page. */
 
 :root {
-	--gv-r-head: #a78bfa;
+	--gv-r-head: var(--accent-violet-strong);
 	--gv-r-arms: #7dd3fc;
 	--gv-r-torso: #34d399;
-	--gv-r-root: #fbbf24;
+	--gv-r-root: var(--warn);
 	--gv-r-legs: #f472b6;
 	--gv-warn: #f59e0b;
 	--gv-ok: #34d399;

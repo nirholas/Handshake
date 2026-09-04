@@ -175,7 +175,7 @@
 .gn-trait-row { display: flex; justify-content: space-between; font-size: var(--text-xs); margin-bottom: 3px; }
 .gn-trait-row .gn-mut { color: #ffd479; font-size: var(--text-2xs); }
 .gn-bar { height: 6px; border-radius: 3px; background: var(--surface-3, #1c1f27); overflow: hidden; }
-.gn-bar > i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent, #7aa2ff), #a78bfa); transition: width 0.5s cubic-bezier(0.2,0.8,0.2,1); }
+.gn-bar > i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent, #7aa2ff), var(--accent-violet-strong)); transition: width 0.5s cubic-bezier(0.2,0.8,0.2,1); }
 
 /* skill chips */
 .gn-chips { display: flex; flex-wrap: wrap; gap: 6px; }

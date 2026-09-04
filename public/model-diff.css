@@ -508,7 +508,7 @@ button.dx-row[aria-pressed='true'] { background: var(--surface-3); }
 .dx-mark-add { color: var(--success); }
 .dx-mark-del { color: var(--danger); }
 .dx-mark-mod { color: var(--warn); }
-.dx-mark-ren { color: #c4b5fd; }
+.dx-mark-ren { color: var(--accent-violet); }
 .dx-mark-mov { color: #60a5fa; }
 
 .dx-row-name { font-family: var(--font-mono); font-size: var(--text-sm); word-break: break-word; }

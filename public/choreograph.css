@@ -16,7 +16,7 @@
 	--ch-accent: #7dd3fc;
 	--ch-accent-ink: #04141f;
 	--ch-muted: rgba(255, 255, 255, 0.6);
-	--ch-ok: #4ade80;
+	--ch-ok: var(--success);
 	--ch-err: #f87171;
 }
 :root[data-theme='light'] {

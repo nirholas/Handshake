@@ -1308,7 +1308,7 @@ body.market-page > header {
 }
 
 .market-bookmark.on {
-	color: #fbbf24;
+	color: var(--warn);
 }
 
 .market-tabs {
@@ -2855,7 +2855,7 @@ body.market-page > header {
 }
 
 .earn-val-pending {
-	color: #fbbf24;
+	color: var(--warn);
 }
 
 .earn-val-settled {
@@ -3183,7 +3183,7 @@ body.market-page > header {
 }
 
 .earn-status-pending {
-	color: #fbbf24;
+	color: var(--warn);
 	background: rgba(251, 191, 36, 0.12);
 }
 
@@ -3627,7 +3627,7 @@ body.market-page > header {
 .market-card-avatar .thumb {
 	position: relative;
 	overflow: hidden;
-	background: #0a0a0a;
+	background: var(--bg-0);
 }
 
 .market-card-avatar .thumb .mv-placeholder {
@@ -4471,11 +4471,11 @@ body.market-page > header {
 }
 .d-rating-summary .stars {
 	font-size: 18px;
-	color: #fbbf24;
+	color: var(--warn);
 	letter-spacing: 1px;
 }
 .d-rating-summary .stars .stars-filled {
-	color: #fbbf24;
+	color: var(--warn);
 }
 .d-rating-summary .count {
 	font-size: 13px;
@@ -4510,7 +4510,7 @@ body.market-page > header {
 }
 .breakdown-fill {
 	height: 100%;
-	background: #fbbf24;
+	background: var(--warn);
 	border-radius: var(--radius-sm);
 	transition: width 0.4s ease;
 }
@@ -4567,11 +4567,11 @@ body.market-page > header {
 }
 .review-star-picker .star-pick:hover,
 .review-star-picker .star-pick.hover {
-	color: #fbbf24;
+	color: var(--warn);
 	transform: scale(1.15);
 }
 .review-star-picker .star-pick.active {
-	color: #fbbf24;
+	color: var(--warn);
 }
 .review-star-picker .star-pick:focus-visible {
 	outline: 2px solid rgba(255, 255, 255, 0.5);
@@ -4637,7 +4637,7 @@ body.market-page > header {
 	color: var(--ink);
 }
 .review-mine-notice.editing { opacity: 0.5; }
-.review-mine-notice strong { color: #fbbf24; letter-spacing: 1px; }
+.review-mine-notice strong { color: var(--warn); letter-spacing: 1px; }
 .review-mine-actions {
 	display: flex;
 	gap: var(--space-xs);
@@ -4747,7 +4747,7 @@ body.market-page > header {
 	color: var(--ink-dim);
 }
 .review-stars {
-	color: #fbbf24;
+	color: var(--warn);
 	font-size: 14px;
 	letter-spacing: 1px;
 	flex-shrink: 0;
@@ -5307,7 +5307,7 @@ body.market-page > header {
 	outline: none;
 }
 .mkt-wallet-menu-item.danger {
-	color: #f87171;
+	color: var(--danger);
 }
 .mkt-wallet-menu-item.danger:hover,
 .mkt-wallet-menu-item.danger:focus-visible {

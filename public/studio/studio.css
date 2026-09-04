@@ -774,7 +774,7 @@ a:hover {
 .pending-banner {
 	background: rgba(245, 158, 11, 0.08);
 	border: 1px solid rgba(245, 158, 11, 0.3);
-	color: #fbbf24;
+	color: var(--warn);
 	padding: 0.6rem 0.7rem;
 	border-radius: var(--radius-sm);
 	font-size: 0.78rem;

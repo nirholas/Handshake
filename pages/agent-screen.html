@@ -1111,7 +1111,7 @@
 			.asc-forge-btn:hover { opacity: 0.9; }
 			.asc-forge-btn:active { transform: scale(0.95); }
 			.asc-forge-btn:disabled { cursor: not-allowed; }
-			.asc-forge-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			.asc-forge-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 			.asc-forge-btn-spin { display: none; width: 13px; height: 13px; border: 2px solid rgba(10,10,11,0.35); border-top-color: #0a0a0b; border-radius: 50%; animation: ws-spin 0.7s linear infinite; }
 			.asc-forge-btn.forging .asc-forge-btn-label { opacity: 0.6; }
 			.asc-forge-btn.forging .asc-forge-btn-spin { display: inline-block; }
@@ -1123,7 +1123,7 @@
 				transition: background 0.15s, border-color 0.15s, color 0.15s;
 			}
 			.asc-forge-view:hover, .asc-forge-use:hover { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.3); color: #fff; }
-			.asc-forge-view:focus-visible, .asc-forge-use:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			.asc-forge-view:focus-visible, .asc-forge-use:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 			.asc-forge-cam-note {
 				position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 6px 10px;
 				font-size: 0.7rem; font-weight: 600; line-height: 1.3; color: #fff;
@@ -1788,7 +1788,7 @@
 			}
 			.asc-stage-start:hover { filter: brightness(1.08); }
 			.asc-stage-start:active { transform: translateY(1px); }
-			.asc-stage-start:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			.asc-stage-start:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 			.asc-stage-start.live { background: rgba(255,255,255,0.08); color: #f4f4f5; border: 1px solid var(--asc-border); }
 			.asc-stage-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--screen-live); animation: asc-stage-pulse 1.6s infinite; }
 			.asc-stage-lead { border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; background: rgba(255,255,255,0.02); }
@@ -1816,7 +1816,7 @@
 			}
 			.asc-stage-ask-send:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.3); }
 			.asc-stage-ask-send:active { transform: translateY(1px); }
-			.asc-stage-ask-send:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			.asc-stage-ask-send:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 			.asc-stage-ask-status { font-size: 0.72rem; min-height: 1em; color: rgba(255,255,255,0.5); }
 			.asc-stage-ask-status.ok { color: #7fdca0; }
 			.asc-stage-ask-status.err { color: #f1808a; }
@@ -1991,7 +1991,7 @@
 				white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 			}
 			.asc-hud-three-chip {
-				font-weight: 800; color: #c4b5fd; letter-spacing: 0.01em;
+				font-weight: 800; color: var(--accent-violet); letter-spacing: 0.01em;
 			}
 			.asc-hud-row-logo { width: 15px; height: 15px; border-radius: 50%; flex: none; object-fit: cover; }
 			.asc-hud-row-logo--ph { background: rgba(255,255,255,0.08); }

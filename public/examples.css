@@ -446,7 +446,7 @@
 	width: 100%;
 	border: 1px solid var(--border, #26262e);
 	border-radius: 12px;
-	background: #0a0a0a;
+	background: var(--bg-0);
 	display: block;
 }
 

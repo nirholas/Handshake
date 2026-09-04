@@ -62,7 +62,7 @@
 	transition: border-color 0.12s ease, color 0.12s ease;
 }
 .kg-spin-close:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); }
-.kg-spin-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.kg-spin-close:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 /* ── The wheel itself ───────────────────────────────────────────────────── */
 .kg-spin-wheelwrap {
@@ -117,7 +117,7 @@
 .kg-spin-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255, 255, 255, 0.55); }
 .kg-spin-btn:active:not(:disabled) { transform: translateY(1px); }
 .kg-spin-btn:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
-.kg-spin-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.kg-spin-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 /* `.kg-spin-free` carries no rules on purpose: the free spin is the primary
    action, so it takes `.kg-spin-btn` above unchanged. The class stays as a hook
    for tests and future theming. Only the paid button overrides. */
@@ -144,7 +144,7 @@
 	background: none; border: none; padding: 0; margin-left: 4px;
 	color: var(--cc-text); text-decoration: underline; cursor: pointer; font: inherit;
 }
-.kg-spin-retry:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.kg-spin-retry:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 .kg-spin-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; justify-content: center; }
 .kg-spin-legend-h { color: var(--cc-faint); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
@@ -155,7 +155,7 @@
 	border-bottom: 1px solid rgba(255, 255, 255, 0.22); transition: color 0.15s ease, border-color 0.15s ease;
 }
 .kg-spin-paytable:hover { color: var(--cc-text); border-bottom-color: currentColor; }
-.kg-spin-paytable:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 2px; }
+.kg-spin-paytable:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 3px; border-radius: 2px; }
 
 /* ── Background-settle pill ─────────────────────────────────────────────────
    Shown after the player closes the modal while a paid spin is still settling:

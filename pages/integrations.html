@@ -51,7 +51,7 @@
 			--accent-ink: #000;
 			--green: var(--success);
 			--blue: #60a5fa;
-			--purple: #a78bfa;
+			--purple: var(--accent-violet-strong);
 			--amber: var(--warn);
 			--pink: #f472b6;
 			--radius: 12px;
@@ -505,11 +505,11 @@
 			border-radius: 100px;
 		}
 		.cat-badge.avatar     { background: rgba(96,165,250,0.14);  color: #93c5fd; }
-		.cat-badge.chat       { background: rgba(167,139,250,0.14); color: #c4b5fd; }
+		.cat-badge.chat       { background: rgba(167,139,250,0.14); color: var(--accent-violet); }
 		.cat-badge.companion  { background: rgba(74,222,128,0.12);  color: #86efac; }
 		.cat-badge.narrator   { background: rgba(251,191,36,0.12);  color: #fcd34d; }
 		.cat-badge.crypto     { background: rgba(244,114,182,0.12); color: #f9a8d4; }
-		.cat-badge.mcp        { background: rgba(167,139,250,0.10); color: #c4b5fd; }
+		.cat-badge.mcp        { background: rgba(167,139,250,0.10); color: var(--accent-violet); }
 
 		.diff-badge {
 			font-size: 10px;
@@ -608,7 +608,7 @@
 			white-space: pre;
 		}
 		pre.code-block .k { color: #60a5fa; }
-		pre.code-block .a { color: #c4b5fd; }
+		pre.code-block .a { color: var(--accent-violet); }
 		pre.code-block .s { color: #86efac; }
 		pre.code-block .c { color: #52525b; }
 		pre.code-block .p { color: var(--warn); }

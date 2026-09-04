@@ -1998,11 +1998,11 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 		color: var(--text-3); cursor: pointer; transition: color .15s ease, border-color .15s ease, background .15s ease, transform .15s ease;
 	}
 	#home-forge .hf-icon-mini svg { width: 16px; height: 16px; }
-	#home-forge .hf-icon-mini:hover { color: #c4b5fd; border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.1); transform: translateY(-1px); }
+	#home-forge .hf-icon-mini:hover { color: var(--accent-violet); border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.1); transform: translateY(-1px); }
 	#home-forge .hf-icon-mini:active { transform: translateY(0); }
 	#home-forge .hf-icon-mini:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
 	#home-forge .hf-icon-mini[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
-	#home-forge .hf-icon-mini.is-working { color: #c4b5fd; border-color: rgba(139, 92, 246, 0.5); }
+	#home-forge .hf-icon-mini.is-working { color: var(--accent-violet); border-color: rgba(139, 92, 246, 0.5); }
 	#home-forge .hf-icon-mini.is-working svg { animation: hf-spin 0.9s linear infinite; }
 	@keyframes hf-spin { to { transform: rotate(360deg); } }
 
@@ -2061,7 +2061,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	#home-forge .hfc-engine-btn:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
 	#home-forge .hfc-engine-btn[data-health="degraded"] { border-color: rgba(245, 196, 81, 0.4); }
 	#home-forge .hfc-engine-auto[aria-pressed="true"] { background: rgba(139, 92, 246, 0.14); border-color: rgba(139, 92, 246, 0.5); }
-	#home-forge .hfc-auto-pill { font-size: 8.5px; font-weight: 700; letter-spacing: 0.06em; color: #c4b5fd; }
+	#home-forge .hfc-auto-pill { font-size: 8.5px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent-violet); }
 	#home-forge .hfc-free-pill { font-size: 8.5px; font-weight: 700; letter-spacing: 0.06em; color: #6ee7a8; background: rgba(110, 231, 168, 0.14); padding: 1px 4px; border-radius: 4px; }
 	#home-forge .hfc-key { width: 12px; height: 12px; opacity: 0.7; }
 

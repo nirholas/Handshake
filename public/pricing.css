@@ -1301,7 +1301,7 @@
 }
 
 .pricing-three-discount {
-	color: #4ade80;
+	color: var(--success);
 	font-weight: 600;
 }
 
@@ -1441,7 +1441,7 @@
 	position: absolute;
 	top: -9px;
 	right: 10px;
-	background: #4ade80;
+	background: var(--success);
 	color: #05240f;
 	font-size: 10.5px;
 	font-weight: 700;
@@ -1573,7 +1573,7 @@
 	border-radius: 50%;
 	background: rgba(74, 222, 128, 0.14);
 	border: 1px solid rgba(74, 222, 128, 0.45);
-	color: #4ade80;
+	color: var(--success);
 	font-size: 24px;
 	font-weight: 700;
 }

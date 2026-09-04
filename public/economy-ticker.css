@@ -60,9 +60,9 @@
 	background: currentColor;
 	box-shadow: 0 0 8px currentColor;
 }
-.eco-status--live { color: #4ade80; }
+.eco-status--live { color: var(--success); }
 .eco-status--live .eco-dot { animation: eco-pulse 2s ease-in-out infinite; }
-.eco-status--stale { color: #fbbf24; }
+.eco-status--stale { color: var(--warn); }
 @keyframes eco-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) {
 	.eco-status--live .eco-dot { animation: none; }

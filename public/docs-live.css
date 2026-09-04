@@ -316,7 +316,7 @@
 
 .dlive-chip-warn,
 .dlive-chip-redirect {
-	color: #fbbf24;
+	color: var(--warn);
 	background: rgba(251, 191, 36, 0.13);
 	border-color: rgba(251, 191, 36, 0.32);
 }
@@ -328,7 +328,7 @@
 }
 
 .dlive-chip-err {
-	color: #f87171;
+	color: var(--danger);
 	background: rgba(248, 113, 113, 0.13);
 	border-color: rgba(248, 113, 113, 0.32);
 }
@@ -443,11 +443,11 @@
 }
 
 .dlive-line-warn {
-	color: #fbbf24;
+	color: var(--warn);
 }
 
 .dlive-line-error {
-	color: #f87171;
+	color: var(--danger);
 }
 
 .dlive-line-muted {

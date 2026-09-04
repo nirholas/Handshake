@@ -132,7 +132,7 @@
 .mem-badge[data-type='user'] { color: #93c5fd; background: rgba(59, 130, 246, 0.14); }
 .mem-badge[data-type='feedback'] { color: #fca5a5; background: rgba(239, 68, 68, 0.14); }
 .mem-badge[data-type='project'] { color: #86efac; background: rgba(34, 197, 94, 0.14); }
-.mem-badge[data-type='reference'] { color: #c4b5fd; background: rgba(139, 92, 246, 0.14); }
+.mem-badge[data-type='reference'] { color: var(--accent-violet); background: rgba(139, 92, 246, 0.14); }
 .mem-tier-tag {
 	font-size: 10px; font-weight: var(--weight-semibold, 600); padding: 1px 7px; border-radius: var(--radius-pill, 999px);
 	border: 1px solid var(--stroke);
@@ -140,7 +140,7 @@
 .mem-tier-tag[data-tier='working'] { color: var(--mem-working); border-color: rgba(139, 92, 246, 0.4); }
 .mem-tier-tag[data-tier='recall'] { color: var(--mem-recall); border-color: rgba(34, 211, 238, 0.4); }
 .mem-tier-tag[data-tier='archival'] { color: #94a3b8; border-color: rgba(100, 116, 139, 0.4); }
-.mem-pin-on { color: #fbbf24; font-size: 12px; }
+.mem-pin-on { color: var(--warn); font-size: 12px; }
 .mem-embed-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success, #4ade80); box-shadow: 0 0 6px rgba(74, 222, 128, 0.6); }
 .mem-embed-dot.pending { background: var(--ink-faint, #555); box-shadow: none; animation: mem-pulse 1.6s ease-in-out infinite; }
 @keyframes mem-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
@@ -247,7 +247,7 @@
 .mem-ctx-tokens { color: var(--ink-dim, #888); font-variant-numeric: tabular-nums; }
 .mem-ctx-bar { height: 8px; border-radius: var(--radius-pill); background: var(--surface-3, rgba(255, 255, 255, 0.08)); overflow: hidden; }
 .mem-ctx-fill { height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--mem-working), var(--mem-recall)); transition: width var(--duration-slow, 320ms) var(--ease-out); }
-.mem-ctx-budget.over .mem-ctx-fill { background: linear-gradient(90deg, #f59e0b, #f87171); }
+.mem-ctx-budget.over .mem-ctx-fill { background: linear-gradient(90deg, #f59e0b, var(--danger)); }
 .mem-ctx-warn { margin: 8px 0 0; font-size: var(--text-2xs, 0.6875rem); color: var(--warn, #fbbf24); }
 .mem-ctx-counts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .mem-count { padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--stroke); background: var(--surface-1); text-align: center; display: flex; flex-direction: column; gap: 2px; }
@@ -261,7 +261,7 @@
 .mem-search-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: var(--space-md); }
 .mem-search-head h3 { margin: 0; font-family: var(--font-display); font-size: var(--text-lg, 1.236rem); color: var(--ink-bright, #fff); }
 .mem-search-note { font-size: var(--text-2xs, 0.6875rem); color: var(--ink-faint, #666); }
-.mem-score { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-pill); background: rgba(139, 92, 246, 0.18); color: #c4b5fd; font-variant-numeric: tabular-nums; }
+.mem-score { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-pill); background: rgba(139, 92, 246, 0.18); color: var(--accent-violet); font-variant-numeric: tabular-nums; }
 .mem-score-lex { background: var(--surface-3); color: var(--ink-dim); }
 
 /* ── Merge bar ───────────────────────────────────────────────────────────── */

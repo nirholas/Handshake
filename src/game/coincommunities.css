@@ -412,7 +412,7 @@ html[data-bg="transparent"] #cc-lobby {
 }
 .cc-brand-logo svg { width: 26px; height: 26px; display: block; }
 .cc-brand-logo:hover { transform: translateY(-1px); }
-.cc-brand-logo:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-brand-logo:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-brand-title { font-size: 13px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
 .cc-brand-sub { color: var(--cc-dim); font-size: 12px; margin-top: 3px; letter-spacing: 0.02em; }
 .cc-hero-title {
@@ -1501,7 +1501,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-adventure:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--cc-edge-hi); transform: translateY(-1px); }
 .cc-adventure:active { transform: translateY(1px); }
-.cc-adventure:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-adventure:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-adventure span { display: flex; flex-direction: column; font-weight: 700; font-size: 13px; line-height: 1.2; letter-spacing: 0.02em; }
 /* Inline SVG mark: the grayscaled ⚔️ emoji collapsed into a bare ✕ glyph on
    most platforms, which read as a close button instead of "adventure". Selector
@@ -1527,7 +1527,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-buy-btn:hover { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255, 255, 255, 0.55); }
 .cc-buy-btn:active { transform: translateY(1px); }
-.cc-buy-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-buy-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-buy-btn-ico { font-size: 13px; line-height: 1; }
 .cc-buy-btn-text { white-space: nowrap; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
 
@@ -2298,7 +2298,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	position: relative; z-index: 1;
 	width: min(400px, 100%); padding: 32px 28px 26px;
 	display: flex; flex-direction: column; align-items: center; text-align: center;
-	background: #0a0a0a;
+	background: var(--bg-0);
 	border: 1px solid var(--cc-edge);
 	border-top-color: rgba(255, 255, 255, 0.26);
 	border-radius: var(--cc-radius);
@@ -2455,7 +2455,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-shop-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-shop-btn:active { transform: translateY(1px); }
-.cc-shop-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-shop-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-shop-btn-ico { font-size: 14px; line-height: 1; }
 
 /* "My Fits" wardrobe button (R23), mirrors the shop button. */
@@ -2471,7 +2471,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-wardrobe-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-wardrobe-btn:active { transform: translateY(1px); }
-.cc-wardrobe-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-wardrobe-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-wardrobe-btn-ico { font-size: 14px; line-height: 1; }
 @media (max-width: 480px) { .cc-wardrobe-btn-text { display: none; } }
 
@@ -2489,7 +2489,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-avatarbtn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-avatarbtn:active { transform: translateY(1px); }
-.cc-avatarbtn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-avatarbtn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-avatarbtn.is-active { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.1); }
 .cc-avatarbtn-ico { font-size: 14px; line-height: 1; }
 @media (max-width: 480px) { .cc-avatarbtn-text { display: none; } }
@@ -2506,7 +2506,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-jobs-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-jobs-btn:active { transform: translateY(1px); }
-.cc-jobs-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-jobs-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-jobs-btn-ico { font-size: 14px; line-height: 1; }
 @media (max-width: 480px) { .cc-jobs-btn-text { display: none; } }
 
@@ -2525,7 +2525,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-friends-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-friends-btn:active { transform: translateY(1px); }
-.cc-friends-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-friends-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-friends-btn.is-active { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.12); }
 .cc-friends-btn-ico { font-size: 14px; line-height: 1; }
 @media (max-width: 480px) { .cc-friends-btn-text { display: none; } }
@@ -2581,7 +2581,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	transition: border-color 0.14s ease, background 0.14s ease;
 }
 .cc-friends-panel-crew:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
-.cc-friends-panel-crew:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-friends-panel-crew:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-friends-panel-close {
 	flex: none; width: 30px; height: 30px;
 	display: inline-flex; align-items: center; justify-content: center;
@@ -2591,7 +2591,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	transition: border-color 0.14s ease, background 0.14s ease;
 }
 .cc-friends-panel-close:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
-.cc-friends-panel-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-friends-panel-close:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 /* The FriendsPanel renders its own scrolling list into this body. */
 .cc-friends-panel-body { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 
@@ -2636,7 +2636,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-friends-loaderr-retry:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
 .cc-friends-loaderr-retry:active { background: rgba(255, 255, 255, 0.14); }
-.cc-friends-loaderr-retry:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-friends-loaderr-retry:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-friends-panel-hint {
 	flex: none; padding: 8px 14px 12px;
 	color: var(--cc-dim, #8b93a3); font-size: 11px; letter-spacing: 0.02em;
@@ -2685,7 +2685,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-avsw-chip:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.07); transform: translateY(-1px); }
 .cc-avsw-chip:active { transform: translateY(1px); }
-.cc-avsw-chip:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-avsw-chip:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-avsw-chip.is-active { border-color: var(--cc-accent, #7ee787); background: rgba(255, 255, 255, 0.08); }
 .cc-avsw-chip.is-busy { opacity: 0.6; cursor: progress; }
 .cc-avsw-thumb {
@@ -2717,7 +2717,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	color: var(--cc-text); text-decoration: underline;
 }
 .cc-avsw-link:hover { color: #fff; }
-.cc-avsw-link:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-avsw-link:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 .cc-avsw-row { display: flex; gap: 8px; }
 .cc-avsw-paste-input {
@@ -2726,7 +2726,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	font-size: 13px; font-family: inherit;
 }
-.cc-avsw-paste-input:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.cc-avsw-paste-input:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 1px; }
 .cc-avsw-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .cc-avsw-btn {
 	appearance: none; -webkit-appearance: none; font-family: inherit;
@@ -2740,11 +2740,11 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-avsw-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-avsw-btn:active { transform: translateY(1px); }
-.cc-avsw-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-avsw-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-avsw-btn.is-busy { opacity: 0.6; cursor: progress; }
 .cc-avsw-upload { position: relative; }
 .cc-avsw-file { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-.cc-avsw-upload:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-avsw-upload:focus-within { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 /* Creator-only holders-gate button (R24), mirrors the shop button, accented. */
 .cc-gate-cfg-btn {
@@ -2759,7 +2759,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-gate-cfg-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-gate-cfg-btn:active { transform: translateY(1px); }
-.cc-gate-cfg-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-gate-cfg-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-gate-cfg-ico { font-size: 14px; line-height: 1; }
 
 /* Gate-config modal fields (reuses .cc-gate-overlay/.cc-gate-modal/.cc-gate-btn). */
@@ -2771,7 +2771,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	font-size: 15px; font-variant-numeric: tabular-nums;
 }
-.cc-gatecfg-input:focus-visible { outline: 2px solid #fff; outline-offset: 1px; border-color: var(--cc-edge-hi); }
+.cc-gatecfg-input:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 1px; border-color: var(--cc-edge-hi); }
 .cc-gatecfg-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--cc-dim); text-align: left; }
 .cc-gatecfg-err { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: #e7cccc; text-align: left; }
 
@@ -2818,7 +2818,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-shop-flex:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.07); }
 .cc-shop-flex:active { background: rgba(255, 255, 255, 0.02); }
-.cc-shop-flex:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-shop-flex:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-shop-close {
 	flex: none; width: 32px; height: 32px; display: grid; place-items: center;
 	background: none; border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
@@ -2826,7 +2826,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
 .cc-shop-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.05); }
-.cc-shop-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-shop-close:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 .cc-shop-filters {
 	display: flex; flex-wrap: wrap; gap: 7px; padding: 13px 18px;
@@ -2839,7 +2839,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	cursor: pointer; transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
 .cc-shop-chip:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); }
-.cc-shop-chip:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-shop-chip:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-shop-chip.cc-active {
 	color: var(--cc-ink); background: var(--cc-accent); border-color: var(--cc-accent);
 	box-shadow: var(--cc-glow);
@@ -2883,7 +2883,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	margin: 0; font: inherit; color: inherit; cursor: pointer;
 	width: 100%; display: block;
 }
-.cc-shop-thumb-btn:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+.cc-shop-thumb-btn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: -2px; }
 
 .cc-shop-thumb {
 	position: relative; aspect-ratio: 1 / 1; width: 100%;
@@ -2934,7 +2934,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-shop-buy:hover { transform: translateY(-1px); background: #fff; }
 .cc-shop-buy:active { transform: translateY(1px); }
-.cc-shop-buy:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-shop-buy:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 .cc-shop-buy:disabled { opacity: 0.55; cursor: progress; transform: none; }
 span.cc-shop-action.cc-owned { align-self: flex-start; }
 .cc-shop-badge {
@@ -2981,7 +2981,7 @@ span.cc-shop-action.cc-owned { align-self: flex-start; }
 }
 .cc-shop-retry:hover { transform: translateY(-1px); }
 .cc-shop-retry:active { transform: translateY(1px); }
-.cc-shop-retry:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-shop-retry:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
 	.cc-shop, .cc-shop-panel, .cc-shop-card, .cc-shop-preview-tag { transition: none; }

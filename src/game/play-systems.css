@@ -332,7 +332,7 @@
 	transition: transform 0.09s ease, background 0.12s ease, border-color 0.12s ease, box-shadow 0.14s ease;
 }
 .ps-cos-card[role="button"]:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--cc-edge); transform: translateY(-2px); }
-.ps-cos-card[role="button"]:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.ps-cos-card[role="button"]:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 1px; }
 .ps-cos-card.is-equipped { border-color: #fff; background: rgba(255, 255, 255, 0.14); box-shadow: var(--cc-glow); cursor: default; }
 .ps-cos-card.is-locked { opacity: 0.5; cursor: default; }
 .ps-cos-card.is-locked:hover { transform: none; }
@@ -401,7 +401,7 @@
 }
 .ps-cos-hint a { color: var(--cc-text); text-decoration: none; border-bottom: 1px solid var(--cc-edge); white-space: nowrap; }
 .ps-cos-hint a:hover { border-bottom-color: currentColor; }
-.ps-cos-hint a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 2px; }
+.ps-cos-hint a:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 3px; border-radius: 2px; }
 .ps-cos-state {
 	display: flex;
 	flex-direction: column;

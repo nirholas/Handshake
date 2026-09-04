@@ -839,10 +839,10 @@
 .tb-risk-calm .tb-risk-label { color: #34d399; }
 .tb-risk-balanced .tb-risk-fill { background: linear-gradient(90deg, #38bdf8, #6366f1); }
 .tb-risk-balanced .tb-risk-label { color: #60a5fa; }
-.tb-risk-warm .tb-risk-fill { background: linear-gradient(90deg, #fbbf24, #f97316); }
-.tb-risk-warm .tb-risk-label { color: #fbbf24; }
+.tb-risk-warm .tb-risk-fill { background: linear-gradient(90deg, var(--warn), #f97316); }
+.tb-risk-warm .tb-risk-label { color: var(--warn); }
 .tb-risk-hot .tb-risk-fill { background: linear-gradient(90deg, #f97316, #ef4444); }
-.tb-risk-hot .tb-risk-label { color: #f87171; }
+.tb-risk-hot .tb-risk-label { color: var(--danger); }
 
 /* — Keyboard hints on action buttons — */
 .tb-kbd {
@@ -862,7 +862,7 @@
 .tb-dist-grad { background: #34d399; }
 .tb-dist-pump { background: #60a5fa; }
 .tb-dist-flat { background: #94a3b8; }
-.tb-dist-rug { background: #f87171; }
+.tb-dist-rug { background: var(--danger); }
 .tb-dist-legend { display: flex; flex-wrap: wrap; gap: 12px; }
 .tb-dist-key { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-2xs, 0.6875rem); color: var(--ink-dim, #999); }
 .tb-dist-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
