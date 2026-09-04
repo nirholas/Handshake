@@ -133,6 +133,16 @@ const REQUIRED = [
 		why: 'api/fact-check-benchmark.js renders it; api/cron/fact-check-benchmark.js runs it',
 	},
 	{ path: 'public', kind: 'dir', why: 'static assets served by the container' },
+	{
+		path: 'services/home-relay/src/token.js',
+		kind: 'file',
+		why: 'api/_lib/home/relay.js imports it; without it /api/healthz 500s ERR_MODULE_NOT_FOUND',
+	},
+	{
+		path: 'services/home-satellite/src/token.js',
+		kind: 'file',
+		why: 'api/home/satellite.js imports it; same ERR_MODULE_NOT_FOUND shape',
+	},
 ];
 
 // ── gitignore-syntax matcher ─────────────────────────────────────────────────

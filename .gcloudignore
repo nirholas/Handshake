@@ -51,6 +51,15 @@
 !/walk-sdk/
 !/tour-sdk/
 !/agents/
+# services/ (644K, no node_modules) holds the long-running side services, and two
+# api/** handlers import straight out of it: api/_lib/home/relay.js pulls
+# services/home-relay/src/token.js and api/home/satellite.js pulls
+# services/home-satellite/src/token.js. It was never re-included, so revision
+# 00412 answered /api/healthz (and every home relay route) with
+# ERR_MODULE_NOT_FOUND on 2026-09-04, found in live Cloud Run stderr. Exact same
+# failure shape as the agents/ entry above, which is why check-gcloudignore.mjs
+# now asserts both token modules land in the upload.
+!/services/
 # .agents/skills (2.2 MB, 210 files) is the skill catalog workers/okx-chat-bot's
 # Dockerfile copies with `COPY .agents/skills ./.agents/skills`, so the AI
 # subsession answering marketplace buyers boots knowing the task/chat lifecycle
