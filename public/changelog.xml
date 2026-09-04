@@ -23,6 +23,14 @@
 			<description>Paying to reach someone used to send your money the instant the payment cleared, which meant an owner could take every knock and answer none, and you had no way to get it back. A new Solana program makes the payment conditional: it sits in a vault that only the knock itself controls, and exactly three things can happen to it. The owner answers inside the reply window and gets paid, the owner declines and you are refunded in full with no fee taken, or the window closes and anyone at all can trigger your refund. There is no admin key that can move a knock that is parked, the fee is capped at 10% in the program itself, and the fee you agreed to when you knocked cannot be raised on money that is already in escrow. Your message never touches the chain: only a fingerprint of it is stored, so either side can later prove what was sent without publishing it. Ten invariants covering every one of those promises run against the real compiled program on every test run.</description>
 		</item>
 		<item>
+			<title>A second opinion now reviews every trade a sniper agent wants to make</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-04:A second opinion now reviews every trade a sniper agent wants to make</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Trading agents already pass a stack of mechanical checks before they buy: the market-cap band, the price-impact ceiling, budget and slot caps, and an on-chain honeypot check that simulates a real buy and a real sell. All of those answer a question with a number. A new Risk Officer asks the one they cannot: knowing everything we know, is this specific trade still a good idea? It is shown the proposed trade plus the agent's own reason for wanting it, and is told to look for what the agent missed, so it argues with the trade instead of agreeing with it. It starts in shadow mode on every strategy: it reviews and records, and changes nothing, so its calls can be scored against what the trades actually did before anyone lets it veto one. When it is armed, a veto has to name a specific fact, it can shrink a trade instead of killing it, it can only ever reduce risk and never raise it, and if the reviewer is unavailable the trade goes ahead unchanged rather than the fleet stalling.</description>
+		</item>
+		<item>
 			<title>Agent wallets can pay three.ws on X Layer again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-04:Agent wallets can pay three.ws on X Layer again</guid>
@@ -37,6 +45,14 @@
 			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Embedding a three.ws avatar on your own site loads the model straight from us, and the site answers every origin. One case still failed: if your loader attached any extra header (a trace id, an auth token, anything a browser does not treat as standard), the browser first asked us for permission and we answered with a 404 page, so the model never loaded. That request is now answered properly, and the answer echoes exactly the headers you asked about. Alongside it, the media docs now spell out the three ways to read a model file and which one to pick: files under three.ws load directly, generated assets load directly from three.ws/cdn, and the /api/glb proxy is there for a URL whose host you cannot identify.</description>
+		</item>
+		<item>
+			<title>Daily Match reads on a phone, and its live ticker finally matches its board</title>
+			<link>https://three.ws/daily-match</link>
+			<guid isPermaLink="false">2026-09-04:Daily Match reads on a phone, and its live ticker finally matches its board</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Daily Match board tracks which agent ships the most real output each UTC day. Two things were wrong with it. On a narrow screen the eight-column standings table was being silently clipped instead of scrolled, so P&amp;L and Score, the two columns the whole page is about, simply could not be reached on a phone; the table now scrolls inside its own region, with edge shadows that show up only while there is more to reach and keyboard focus so you can scroll it without a mouse. And the Live output ticker only ever read one of the four activity sources the board scores, so an agent that shipped a launch, a trade or a paid skill sale could rank first on a board sitting next to a panel claiming the day was quiet; the ticker now reads all four and labels each entry with what it was. The board also got wider on desktop so every column fits without scrolling, a designed loading and failure state for the ticker, and a refresh that no longer wipes good standings off the screen when a single poll fails: it says live updates are paused and puts them back when the next one lands.</description>
 		</item>
 		<item>
 			<title>DeFi tables stop showing broken logos when a coin icon disappears</title>
@@ -61,6 +77,14 @@
 			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>A 3D model can have perfect shape and still look like plastic, because the colour picture painted onto it is only half of what makes a surface look real. The other half is invisible detail: which parts are bumpy, which are shiny, which sit in shadow. Without it, leather, wool and glass all catch the light in exactly the same flat way, and an object can read as though it were cast in dull metal rather than made of what you asked for. There was no way to check which of those layers a model actually carried, so we built one and pointed it at real generations from the live engines, then wrote down what each engine does and does not produce. That measurement is now published alongside the texturing service instead of being guessed at, and the checker refuses to pass a model missing a layer it should have, so the gap cannot quietly reopen.</description>
+		</item>
+		<item>
+			<title>Generation jobs can now push their result to your server, and the health page finally watches the editing tools</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-04:Generation jobs can now push their result to your server, and the health page finally watches the editing tools</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Two additions for anyone who builds on the forge. First, webhooks for generation jobs: subscribe to forge.completed and forge.failed and three.ws POSTs you the finished model instead of making you poll for it. A generation outlives the request that started it, so until now an integration had to keep asking. The completion event rides the single writer every lane finishes through, so it arrives exactly once whether the job ran on the free lane, a paid call, or the background finalizer that picks up abandoned work; the failure event deliberately stays quiet while a job is being retried on another engine, so it only ever means the job is really over. Payloads and a runnable example are in the developer platform docs. Second, the forge health report now live-probes the editing tools as well as the generation engines: remesh, stylize, segment, background removal, text to motion, auto-rig and retexture each get checked for real. Those tools have buttons in the result panel, so a user can hit them, but none of them were being watched; retexture had in fact been offline the whole time and nothing said so.</description>
 		</item>
 		<item>
 			<title>Knock on a stranger and get your money back if they never answer</title>
@@ -125,6 +149,14 @@
 			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Our marketplace listing is answered by an agent that reads a buyer's message and writes back. It could fail in the quietest possible way: the process alive, the health page green, and every reply dying against an AI credential the provider had stopped honouring, which from the buyer's side is indistinguishable from being ignored. The host now asks the provider itself, on every boot and every fifteen minutes, and a refused credential turns the listing amber on our status page, raises an alert, and carries the exact commands that fix it. It also stopped crying wolf: a daemon that is merely still starting up no longer reports as dead.</description>
+		</item>
+		<item>
+			<title>The agent economy demo now quotes the amount it actually pays</title>
+			<link>https://three.ws/demo</link>
+			<guid isPermaLink="false">2026-09-04:The agent economy demo now quotes the amount it actually pays</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On the Agent Economy demo, NOVA buys a live Solana market briefing from ORACLE. The narration announced a 0.001 SOL payment while the listed price, the receipt panel and the transfer itself were all 0.000001 SOL, and the screen in the world printed a PAID badge even on the simulated runs that signed-out visitors get. Every one of those now reads the same figure from one place, and a simulated run says so on screen. The page also handles a bad day: if the stream drops, the run times out, or the market feed cannot be reached, you get a plain explanation and a Retry button instead of a stalled page and a pointer at the developer console. On a phone the Run demo button no longer sits off the edge of the screen, the 3D world resizes with the window instead of staying clipped at its widest size, and a browser without WebGL is told so rather than shown a black rectangle.</description>
 		</item>
 		<item>
 			<title>The agent that answers for us on the OKX.AI marketplace now lives somewhere that stays up</title>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T08:45:45.752Z",
+	"generated_at": "2026-09-04T08:50:16.235Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -30,6 +30,17 @@
 		{
 			"date": "2026-09-04",
 			"type": "update",
+			"title": "A second opinion now reviews every trade a sniper agent wants to make",
+			"summary": "Trading agents already pass a stack of mechanical checks before they buy: the market-cap band, the price-impact ceiling, budget and slot caps, and an on-chain honeypot check that simulates a real buy and a real sell. All of those answer a question with a number. A new Risk Officer asks the one they cannot: knowing everything we know, is this specific trade still a good idea? It is shown the proposed trade plus the agent's own reason for wanting it, and is told to look for what the agent missed, so it argues with the trade instead of agreeing with it. It starts in shadow mode on every strategy: it reviews and records, and changes nothing, so its calls can be scored against what the trades actually did before anyone lets it veto one. When it is armed, a veto has to name a specific fact, it can shrink a trade instead of killing it, it can only ever reduce risk and never raise it, and if the reviewer is unavailable the trade goes ahead unchanged rather than the fleet stalling.",
+			"link": null,
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
 			"title": "Agent wallets can pay three.ws on X Layer again",
 			"summary": "Buying agents that pay for a 3D generation on X Layer sign their payment with a wallet that carries an on-chain delegation, which is how every OKX agent wallet is built. Our checker judged those signatures with a contract call that answers a different question, so it turned away correct, fully funded payments and quoted the price a second time instead of doing the work. Payments are now checked the same way the stablecoin itself checks them, so a signed authorization that the network would honour is one we accept.",
 			"link": null,
@@ -46,6 +57,17 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Daily Match reads on a phone, and its live ticker finally matches its board",
+			"summary": "The Daily Match board tracks which agent ships the most real output each UTC day. Two things were wrong with it. On a narrow screen the eight-column standings table was being silently clipped instead of scrolled, so P&L and Score, the two columns the whole page is about, simply could not be reached on a phone; the table now scrolls inside its own region, with edge shadows that show up only while there is more to reach and keyboard focus so you can scroll it without a mouse. And the Live output ticker only ever read one of the four activity sources the board scores, so an agent that shipped a launch, a trade or a paid skill sale could rank first on a board sitting next to a panel claiming the day was quiet; the ticker now reads all four and labels each entry with what it was. The board also got wider on desktop so every column fits without scrolling, a designed loading and failure state for the ticker, and a refresh that no longer wipes good standings off the screen when a single poll fails: it says live updates are paused and puts them back when the next one lands.",
+			"link": "/daily-match",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -78,6 +100,18 @@
 			"link": null,
 			"tags": [
 				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Generation jobs can now push their result to your server, and the health page finally watches the editing tools",
+			"summary": "Two additions for anyone who builds on the forge. First, webhooks for generation jobs: subscribe to forge.completed and forge.failed and three.ws POSTs you the finished model instead of making you poll for it. A generation outlives the request that started it, so until now an integration had to keep asking. The completion event rides the single writer every lane finishes through, so it arrives exactly once whether the job ran on the free lane, a paid call, or the background finalizer that picks up abandoned work; the failure event deliberately stays quiet while a job is being retried on another engine, so it only ever means the job is really over. Payloads and a runnable example are in the developer platform docs. Second, the forge health report now live-probes the editing tools as well as the generation engines: remesh, stylize, segment, background removal, text to motion, auto-rig and retexture each get checked for real. Those tools have buttons in the result panel, so a user can hit them, but none of them were being watched; retexture had in fact been offline the whole time and nothing said so.",
+			"link": "/changelog",
+			"tags": [
+				"feature",
+				"sdk",
 				"improvement"
 			]
 		},
@@ -165,6 +199,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The agent economy demo now quotes the amount it actually pays",
+			"summary": "On the Agent Economy demo, NOVA buys a live Solana market briefing from ORACLE. The narration announced a 0.001 SOL payment while the listed price, the receipt panel and the transfer itself were all 0.000001 SOL, and the screen in the world printed a PAID badge even on the simulated runs that signed-out visitors get. Every one of those now reads the same figure from one place, and a simulated run says so on screen. The page also handles a bad day: if the stream drops, the run times out, or the market feed cannot be reached, you get a plain explanation and a Retry button instead of a stalled page and a pointer at the developer console. On a phone the Run demo button no longer sits off the edge of the screen, the 3D world resizes with the window instead of staying clipped at its widest size, and a browser without WebGL is told so rather than shown a black rectangle.",
+			"link": "/demo",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
