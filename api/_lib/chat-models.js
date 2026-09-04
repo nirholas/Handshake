@@ -76,10 +76,10 @@ export const MODEL_CATALOG = {
 	// _lib/openrouter-free.js resolves models from OpenRouter's live list at
 	// request time. When one of these starts failing, check that module's live
 	// list first rather than assuming a provider outage.
-	'openai/gpt-oss-20b:free':                    { provider: 'openrouter', tools: true },
-	'nvidia/nemotron-3-super-120b-a12b:free':     { provider: 'openrouter', tools: true },
 	'google/gemma-4-31b-it:free':                 { provider: 'openrouter', tools: true },
-	'inclusionai/ling-3.0-tiny:free':             { provider: 'openrouter', tools: true },
+	'nvidia/nemotron-3-super-120b-a12b:free':     { provider: 'openrouter', tools: true },
+	'inclusionai/ling-3.0-flash-fin:free':        { provider: 'openrouter', tools: true },
+	'minimax/minimax-m2.7:free':                  { provider: 'openrouter', tools: true },
 
 	// ── OpenRouter paid Claude mirrors: the no-ANTHROPIC_API_KEY escape hatch ──
 	// api/chat.js and _lib/llm.js reach Anthropic ONLY through api.anthropic.com,
@@ -288,14 +288,18 @@ export function usableModels(models, { requireTools = false, allowGated = false 
 }
 
 /**
- * Default OpenRouter free model: tool-capable GPT-OSS 20B, the surviving member
- * of the GPT-OSS family after the 120B free endpoint was retired. Used as the
+ * Default OpenRouter free model: tool-capable Gemma 4 31B Instruct. Used as the
  * platform default wherever a free OpenRouter model is requested.
  *
- * (Previously Llama 3.3 70B, which OpenRouter retired along with every other id
- * this file used to name — see the free-tier block above.)
+ * Every previous holder of this constant was retired out from under it (Llama
+ * 3.3 70B, then GPT-OSS 120B, then GPT-OSS 20B on 2026-09-04, whose 404 body
+ * says the slug is "unavailable for free" and names the paid one instead). A
+ * retired id 404s the whole OpenRouter rung, and providerChain builds one rung
+ * PER KEY off this constant, so a single dead id took five of the chain's
+ * twelve rungs out at once while Vertex was down for billing. When it happens
+ * again, /api/cron/free-model-audit names the dead id and its every reference.
  */
-export const DEFAULT_FREE_MODEL = 'openai/gpt-oss-20b:free';
+export const DEFAULT_FREE_MODEL = 'google/gemma-4-31b-it:free';
 
 /** Default per-provider model when the caller doesn't name one. */
 export const PROVIDER_MODEL_DEFAULTS = {
@@ -347,8 +351,8 @@ export const DEFAULT_PROVIDER_ORDER = ['groq', 'openrouter', 'nvidia', 'sambanov
 export const OPENROUTER_SIBLINGS = [
 	DEFAULT_FREE_MODEL,
 	'nvidia/nemotron-3-super-120b-a12b:free',
-	'google/gemma-4-31b-it:free',
-	'inclusionai/ling-3.0-tiny:free',
+	'inclusionai/ling-3.0-flash-fin:free',
+	'minimax/minimax-m2.7:free',
 ];
 
 /**
