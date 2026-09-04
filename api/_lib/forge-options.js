@@ -8,6 +8,10 @@
 //   • output_format    — glb (default) or a compressed variant (draco / meshopt)
 //   • texture_size     — bake textures at a specific resolution
 //   • target_polycount — explicit geometry budget on poly-aware backends
+//   • derive_pbr       — the ONE exception to "off by default": the material
+//     completion pass (glb-pbr-derive.js) runs on every delivered mesh, because
+//     an albedo-only material is a defect rather than a preference. Send
+//     `derive_pbr: false` to receive the lane's own materials untouched.
 //
 // normalizeForgeOptions() validates and clamps; an explicitly-present but invalid
 // value is reported in `errors` so the endpoint can answer 400 with an actionable
@@ -41,6 +45,7 @@ function compressionFor(format) {
  *   compression: 'none' | 'draco' | 'meshopt',
  *   textureSize: number | null,
  *   targetPolycount: number | null,
+ *   derivePbr: boolean,          // material completion pass — true unless opted out
  *   hasOptions: boolean,         // true iff any non-default option was supplied
  *   errors: Array<{ field: string, message: string }>,
  * }}
@@ -108,8 +113,20 @@ export function normalizeForgeOptions(body) {
 		}
 	}
 
+	// derive_pbr — opt-OUT. Anything other than an explicit boolean false leaves
+	// the completion pass on; a non-boolean value is reported rather than
+	// silently coerced, so `derive_pbr: "no"` never reads as true.
+	let derivePbr = true;
+	if (b.derive_pbr !== undefined && b.derive_pbr !== null) {
+		if (typeof b.derive_pbr !== 'boolean') {
+			errors.push({ field: 'derive_pbr', message: 'derive_pbr must be true or false.' });
+		} else {
+			derivePbr = b.derive_pbr;
+		}
+	}
+
 	const hasOptions =
-		seed !== null || outputFormat !== 'glb' || textureSize !== null || targetPolycount !== null;
+		seed !== null || outputFormat !== 'glb' || textureSize !== null || targetPolycount !== null || !derivePbr;
 
 	return {
 		seed,
@@ -117,6 +134,7 @@ export function normalizeForgeOptions(body) {
 		compression: compressionFor(outputFormat),
 		textureSize,
 		targetPolycount,
+		derivePbr,
 		hasOptions,
 		errors,
 	};
@@ -148,5 +166,6 @@ export function summarizeForgeOptions(opts) {
 		output_format: opts.outputFormat,
 		texture_size: opts.textureSize,
 		target_polycount: opts.targetPolycount,
+		derive_pbr: opts.derivePbr !== false,
 	};
 }

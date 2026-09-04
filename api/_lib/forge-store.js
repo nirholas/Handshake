@@ -394,18 +394,20 @@ async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, com
 	let quality = null;
 	let compression = null;
 	let cleaned = null;
-	if (computeQuality || compress || cleanup) {
-		const scored = await scoreAndCompress(buf, { computeQuality, compress, cleanup });
+	let pbr = null;
+	if (computeQuality || compress || cleanup || derivePbr) {
+		const scored = await scoreAndCompress(buf, { computeQuality, compress, cleanup, derivePbr, prompt, tier, materialClass });
 		buf = scored.buf;
 		quality = scored.quality;
 		compression = scored.compression;
 		cleaned = scored.cleaned;
+		pbr = scored.pbr;
 	}
 	await putObject({ key, body: buf, contentType, metadata: { source: 'forge' } });
 	// `buffer` is the bytes actually stored, post-cleanup and post-compression, so
 	// a caller that hashes or grades them is describing the asset users receive
 	// rather than the provider's original, and does it without a second fetch.
-	return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned, buffer: buf };
+	return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned, pbr, buffer: buf };
 }
 
 function imageExtFor(url) {
@@ -464,7 +466,15 @@ function gradeDeliveredMesh({ buffer, creationId, sourceUrl }) {
 //              every forge mesh is raw marching-cubes output that benefits, and
 //              it's best-effort (any failure ships the original bytes). Pass
 //              false to deliver the provider geometry untouched.
-export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true }) {
+//   derivePbr - complete the material set (glb-pbr-derive.js): a derived normal
+//              map, a packed occlusion/roughness/metallic map, the material
+//              class's measured factors and its real-world extension layer. On
+//              by default, because every reconstruction lane bakes an albedo
+//              and stops (the free TRELLIS lanes ship no materials at all, so
+//              glTF's default fully-metallic material renders them as rough
+//              metal). Best-effort like the rest of the chain; pass false to
+//              deliver the lane's own materials untouched.
+export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true }) {
 	if (!forgeStoreEnabled() || !replicateJobId || !glbUrl) return null;
 	const existing = await findByJob({ replicateJobId, clientKey });
 	if (!existing) return null;
@@ -477,6 +487,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			quality: null,
 			compression: null,
 			cleaned: null,
+			pbr: null,
 		};
 	}
 
@@ -490,6 +501,12 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			computeQuality: quality,
 			compress,
 			cleanup,
+			derivePbr,
+			// The row carries the words the material classifier reads and the tier
+			// that sets the derived maps' resolution, so no caller has to thread
+			// either through the poll path.
+			prompt: existing.prompt || '',
+			tier: existing.tier || '',
 		});
 
 		// Reference image is part of the training pair but never blocks the mesh.
@@ -551,6 +568,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			quality: glb.quality ?? null,
 			compression: glb.compression ?? null,
 			cleaned: glb.cleaned ?? null,
+			pbr: glb.pbr ?? null,
 		};
 	} catch (err) {
 		// A 404/410 means the provider's ephemeral asset (e.g. a HuggingFace Space's
