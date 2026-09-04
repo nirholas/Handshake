@@ -618,6 +618,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 			glbUrl: submitted.resultGlbUrl,
 			quality: true,
 			compress: opts?.compression && opts.compression !== 'none' ? opts.compression : null,
+			derivePbr: opts?.derivePbr !== false,
 		});
 
 		// One auto-retry on a flagged low-quality/degenerate output (CLAUDE.md: no
@@ -655,6 +656,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 						glbUrl: retry.resultGlbUrl,
 						quality: true,
 						compress: opts?.compression && opts.compression !== 'none' ? opts.compression : null,
+						derivePbr: opts?.derivePbr !== false,
 					});
 					if (retryDurable) {
 						durable = retryDurable;
@@ -694,6 +696,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 					replicateJobId: rj, clientKey, userId: await sessionUserIdFromReq(req),
 					glbUrl: r.resultGlbUrl, quality: true,
 					compress: opts?.compression && opts.compression !== 'none' ? opts.compression : null,
+					derivePbr: opts?.derivePbr !== false,
 				});
 				return rd ? { glbUrl: rd.glbUrl, durable: rd } : null;
 			},
@@ -889,6 +892,7 @@ async function runHfImageLane({
 		glbUrl: resultGlbUrl,
 		quality: true,
 		compress: wantCompress,
+		derivePbr: opts?.derivePbr !== false,
 	});
 
 	// One auto-retry on a flagged low-quality/degenerate output. Only attempted
@@ -932,6 +936,7 @@ async function runHfImageLane({
 						glbUrl: retryFinished.resultGlbUrl,
 						quality: true,
 						compress: wantCompress,
+						derivePbr: opts?.derivePbr !== false,
 					});
 					if (retryDurable) {
 						durable = retryDurable;
@@ -981,6 +986,7 @@ async function runHfImageLane({
 				const rd = await materializeCreation({
 					replicateJobId: rj, clientKey, userId: await sessionUserIdFromReq(req),
 					glbUrl: rf.resultGlbUrl, quality: true, compress: wantCompress,
+					derivePbr: opts?.derivePbr !== false,
 				});
 				return rd ? { glbUrl: rd.glbUrl, durable: rd } : null;
 			} finally {
@@ -1655,6 +1661,7 @@ async function startJob(req, res) {
 					glbUrl: submitted.resultGlbUrl,
 					quality: true,
 					compress: opts.compression !== 'none' ? opts.compression : null,
+					derivePbr: opts.derivePbr !== false,
 				});
 				return json(res, 200, {
 					job_id: null,
@@ -2879,6 +2886,7 @@ async function pollJob(req, res, jobId) {
 			glbUrl: result.resultGlbUrl,
 			quality: true,
 			compress: boundOpts?.compression || null,
+			derivePbr: boundOpts?.derivePbr !== false,
 		});
 		// Populate the result cache this job was bound to at submit time (text→3D,
 		// non-high-tier, platform-keyed lanes only: see forgeResultCacheKey). A

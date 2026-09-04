@@ -24,6 +24,16 @@ const EVENT_TYPES = [
 	'agent.created',
 	'agent.updated',
 	'agent.deleted',
+	// Generation jobs. A forge job is asynchronous and can outlive the browser
+	// that started it (see docs/forge-background-generation.md), so an
+	// integrator who submits over the API has no way to learn the outcome
+	// except by polling. These two events close that: they fire from the two
+	// universal terminal writers in forge-store.js (materializeCreation and
+	// markFailed), which every lane flows through, so a job that finishes on
+	// the free browser lane, the x402 paid lane or the unattended finalizer
+	// all deliver the same event exactly once.
+	'forge.completed',
+	'forge.failed',
 ];
 
 export { EVENT_TYPES };
