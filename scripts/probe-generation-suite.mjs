@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // @ts-check
 /**
- * scripts/probe-generation-suite.mjs — run every generation-suite flow against a
+ * scripts/probe-generation-suite.mjs: run every generation-suite flow against a
  * live deployment and report what actually produced an artifact.
  *
  * A catalog entry saying `configured: true` only means an env var exists. This
@@ -20,6 +20,7 @@
  */
 
 import { writeFileSync } from 'node:fs';
+import { deflateSync } from 'node:zlib';
 
 const args = process.argv.slice(2);
 function flag(name, fallback = null) {
@@ -121,11 +122,11 @@ function inspectGlb(buf) {
 }
 
 // Poll a job endpoint that answers { status: queued|running|done|failed }.
-async function pollJob(pollPath, { budgetMs = 420_000, intervalMs = 6_000, jobKey = 'job' } = {}) {
+async function pollJob(pollPath, { budgetMs = 420_000, intervalMs = 6_000, jobKey = 'job', headers = {} } = {}) {
 	const deadline = Date.now() + budgetMs;
 	let last = null;
 	while (Date.now() < deadline) {
-		const r = await req(pollPath, { timeoutMs: 30_000 });
+		const r = await req(pollPath, { timeoutMs: 30_000, headers });
 		last = r;
 		const status = String(r.json?.status || '').toLowerCase();
 		log(`poll ${jobKey}: ${r.status} ${status || r.text.slice(0, 90)}`);
@@ -135,6 +136,74 @@ async function pollJob(pollPath, { budgetMs = 420_000, intervalMs = 6_000, jobKe
 		await new Promise((r2) => setTimeout(r2, intervalMs));
 	}
 	return last || { status: 0, json: null, text: 'poll budget exhausted' };
+}
+
+// Mint a real session from the QA account documented in CLAUDE.md's self-unblock
+// playbook, so authed surfaces are probed as a signed-in user rather than only
+// asserting that they challenge. Returns a cookie header, or null when the
+// credentials are absent.
+let qaCookieCache;
+async function qaSession() {
+	if (qaCookieCache !== undefined) return qaCookieCache;
+	const email = process.env.AUDIT_EMAIL;
+	const password = process.env.AUDIT_PASSWORD;
+	if (!email || !password) {
+		qaCookieCache = null;
+		return null;
+	}
+	try {
+		const res = await fetch(`${BASE}/api/auth/login`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'user-agent': UA },
+			body: JSON.stringify({ email, password }),
+			signal: AbortSignal.timeout(30_000),
+		});
+		const setCookie = res.headers.getSetCookie?.() || [];
+		const cookie = setCookie.map((c) => c.split(';')[0]).join('; ');
+		qaCookieCache = res.ok && cookie ? cookie : null;
+		if (!qaCookieCache) log(`QA login failed: HTTP ${res.status}`);
+	} catch (err) {
+		log(`QA login error: ${err?.message}`);
+		qaCookieCache = null;
+	}
+	return qaCookieCache;
+}
+
+// A fully-white 8x8 PNG: the Magic Brush mask that selects the whole surface.
+// Built here rather than committed as a fixture so the probe stays one file.
+function solidMaskPng() {
+	const crc = (buf) => {
+		let c = ~0;
+		for (const b of buf) {
+			c ^= b;
+			for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
+		}
+		return ~c >>> 0;
+	};
+	const chunk = (type, data) => {
+		const len = Buffer.alloc(4);
+		len.writeUInt32BE(data.length);
+		const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+		const cs = Buffer.alloc(4);
+		cs.writeUInt32BE(crc(body));
+		return Buffer.concat([len, body, cs]);
+	};
+	const size = 8;
+	const ihdr = Buffer.alloc(13);
+	ihdr.writeUInt32BE(size, 0);
+	ihdr.writeUInt32BE(size, 4);
+	ihdr[8] = 8; // bit depth
+	ihdr[9] = 0; // greyscale
+	const raw = Buffer.concat(
+		Array.from({ length: size }, () => Buffer.concat([Buffer.from([0]), Buffer.alloc(size, 0xff)])),
+	);
+	const png = Buffer.concat([
+		Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+		chunk('IHDR', ihdr),
+		chunk('IDAT', deflateSync(raw)),
+		chunk('IEND', Buffer.alloc(0)),
+	]);
+	return png.toString('base64');
 }
 
 const results = [];
@@ -216,8 +285,9 @@ async function probeTextTo3d() {
 		return record('text-to-3d', 'POST /api/forge', false, `HTTP ${post.status}: ${post.text.slice(0, 200)}`);
 	}
 	let glbUrl = post.json?.glb_url || post.json?.glbUrl;
-	if (!glbUrl && post.json?.poll_url) {
-		const done = await pollJob(post.json.poll_url, { jobKey: 'text-to-3d', budgetMs: 480_000 });
+	const pollPath = post.json?.poll_url || (post.json?.job_id ? `/api/forge?job=${encodeURIComponent(post.json.job_id)}` : null);
+	if (!glbUrl && pollPath) {
+		const done = await pollJob(pollPath, { jobKey: 'text-to-3d', budgetMs: 600_000 });
 		glbUrl = done.json?.glb_url || done.json?.glbUrl;
 		if (!glbUrl) {
 			return record('text-to-3d', 'POST /api/forge', false, `job ${done.json?.status || done.status}: ${done.json?.error || done.text.slice(0, 160)}`);
@@ -257,8 +327,9 @@ async function probeImageTo3d() {
 		return record('image-to-3d', 'POST /api/forge', false, `HTTP ${post.status}: ${post.text.slice(0, 200)}`);
 	}
 	let glbUrl = post.json?.glb_url || post.json?.glbUrl;
-	if (!glbUrl && post.json?.poll_url) {
-		const done = await pollJob(post.json.poll_url, { jobKey: 'image-to-3d', budgetMs: 480_000 });
+	const pollPath = post.json?.poll_url || (post.json?.job_id ? `/api/forge?job=${encodeURIComponent(post.json.job_id)}` : null);
+	if (!glbUrl && pollPath) {
+		const done = await pollJob(pollPath, { jobKey: 'image-to-3d', budgetMs: 600_000 });
 		glbUrl = done.json?.glb_url || done.json?.glbUrl;
 	}
 	if (!glbUrl) return record('image-to-3d', 'POST /api/forge', false, `no glb_url: ${post.text.slice(0, 200)}`);
@@ -277,7 +348,7 @@ async function probeRig() {
 	if (!selected('rig')) return;
 	const post = await req('/api/forge?action=rig', {
 		method: 'POST',
-		body: { mesh_url: REF_MESH },
+		body: { glb_url: REF_MESH },
 		timeoutMs: 60_000,
 	});
 	if (post.status !== 202 && post.status !== 200) {
@@ -330,26 +401,41 @@ async function probeMotion() {
 
 async function probeRetexture() {
 	if (!selected('retexture')) return;
-	const probe = await req('/api/studio/retexture-region');
+	// Magic Brush is a signed-in surface. Without a session the only thing a probe
+	// can prove is that the gateway challenges correctly, which is not the bar
+	// this table sets, so mint a real session from the QA account first.
+	const cookie = await qaSession();
+	if (!cookie) {
+		return record('retexture', 'POST /api/studio/retexture-region', false, 'no QA session: set AUDIT_EMAIL/AUDIT_PASSWORD (npm run audit:web:provision)');
+	}
+	const auth = { cookie };
+	const probe = await req('/api/studio/retexture-region', { headers: auth });
 	const ok = probe.status === 200 || probe.status === 405;
 	record('retexture (probe)', 'GET /api/studio/retexture-region', ok, ok ? `capability probe HTTP ${probe.status}` : `HTTP ${probe.status}: ${probe.text.slice(0, 140)}`);
 	const post = await req('/api/studio/retexture-region', {
 		method: 'POST',
-		body: { mesh_url: REF_MESH, prompt: 'weathered bronze with green patina' },
+		headers: auth,
+		body: {
+			mesh_url: REF_MESH,
+			prompt: 'weathered bronze with green patina',
+			mask_b64: solidMaskPng(),
+			texture_size: 1024,
+		},
 		timeoutMs: 90_000,
 	});
 	if (post.status === 503) return record('retexture', 'POST /api/studio/retexture-region', false, `unconfigured: ${post.json?.message || post.text.slice(0, 140)}`);
 	if (post.status !== 202 && post.status !== 200) {
-		return record('retexture', 'POST /api/studio/retexture-region', false, `HTTP ${post.status}: ${post.text.slice(0, 180)}`);
+		return record('retexture', 'POST /api/studio/retexture-region', false, `HTTP ${post.status}: ${post.text.slice(0, 200)}`);
 	}
-	const jobId = post.json?.job_id;
-	if (!jobId) return record('retexture', 'POST /api/studio/retexture-region', Boolean(post.json?.result_url), post.text.slice(0, 160));
-	const done = await pollJob(`/api/studio/retexture-region?job=${encodeURIComponent(jobId)}`, { jobKey: 'retexture' });
+	const jobToken = post.json?.job || post.json?.job_id;
+	if (!jobToken) return record('retexture', 'POST /api/studio/retexture-region', Boolean(post.json?.result_url), post.text.slice(0, 160));
+	const done = await pollJob(`/api/studio/retexture-region?job=${encodeURIComponent(jobToken)}`, { jobKey: 'retexture', headers: auth });
 	const url = done.json?.result_url;
 	if (!url) return record('retexture', 'POST /api/studio/retexture-region', false, `job ${done.json?.status || done.status}: ${done.json?.error || done.text.slice(0, 160)}`);
-	const s = await sniff(url);
-	const glb = s.ok ? inspectGlb(s.buf) : null;
-	record('retexture', 'POST /api/studio/retexture-region', Boolean(glb && glb.images > 0), glb ? `${glb.images} texture image(s), ${glb.materials} materials` : `not a mesh: ${s.detail}`, { artifact: url });
+	const s2 = await sniff(url);
+	const glb = s2.ok ? inspectGlb(s2.buf) : null;
+	const textured = Boolean(glb ? glb.images > 0 : s2.kind === 'png' || s2.kind === 'webp' || s2.kind === 'jpeg');
+	record('retexture', 'POST /api/studio/retexture-region', textured, glb ? `${glb.images} texture image(s), ${glb.materials} materials` : `${s2.bytes} B ${s2.kind}`, { artifact: url });
 }
 
 async function probeX402() {

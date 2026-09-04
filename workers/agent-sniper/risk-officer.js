@@ -1,4 +1,4 @@
-// agent-sniper — adversarial pre-trade Risk Officer.
+// agent-sniper: adversarial pre-trade Risk Officer.
 //
 // The executor already enforces a stack of MECHANICAL gates before any buy is
 // broadcast: Mayhem exclusion, the market-cap band, throttle/concurrency/budget
@@ -20,17 +20,17 @@
 // default. Three levels, per strategy (`agent_sniper_strategies.risk_officer_level`)
 // with an env default (`SNIPER_RISK_OFFICER`):
 //
-//   'shadow'  (default) — the review runs and is recorded, and NOTHING changes.
+//   'shadow'  (default): the review runs and is recorded, and NOTHING changes.
 //                         Fire-and-forget, so it adds zero latency to the buy
 //                         path. This is how the owner gets the evidence to arm
 //                         it: `sniper_risk_reviews` accumulates the vetoes it
 //                         WOULD have cast against the positions that actually
 //                         opened, and their realized P&L answers whether the
 //                         officer was right.
-//   'enforce'           — awaited before the broadcast. A 'block' severity kills
+//   'enforce'           : awaited before the broadcast. A 'block' severity kills
 //                         the buy; a smaller `size_adjustment` shrinks it. Never
 //                         upsizes: an adversarial reviewer may only reduce risk.
-//   'off'               — never called.
+//   'off'               : never called.
 //
 // FAIL OPEN, unlike the firewall. The firewall proves a coin is not a honeypot,
 // so an unavailable firewall must block ('couldn't prove it's safe' is not
@@ -69,7 +69,7 @@ const SYSTEM_PROMPT = [
 	'Veto (severity "block") ONLY for concrete, nameable danger: a creator with a rug',
 	'history, extreme holder concentration, price impact that eats the edge, a failed',
 	'or warned safety check, or a breach of the mandate. Default to NOT vetoing on a',
-	'thin-but-clean setup — the agent already skipped the obvious junk, and a reviewer',
+	'thin-but-clean setup, the agent already skipped the obvious junk, and a reviewer',
 	'that blocks everything is the same as no reviewer at all.',
 	'',
 	'Prefer a smaller size over a full veto when the concern is size-shaped rather',
@@ -102,7 +102,13 @@ function lamportsToSol(l) {
  */
 export function resolveRiskOfficerLevel(strat, envDefault = process.env.SNIPER_RISK_OFFICER) {
 	const perStrategy = String(strat?.risk_officer_level || '').trim().toLowerCase();
-	if (RISK_OFFICER_LEVELS.includes(perStrategy)) return perStrategy;
+	if (perStrategy) {
+		// A value IS set on the row. If it is not one we recognise (hand-edited row,
+		// a level from a newer deploy) it degrades to 'shadow' and stops here — it
+		// must NOT fall through to an env default that might be 'enforce', because
+		// then a typo in a strategy would silently arm the thing nobody armed.
+		return RISK_OFFICER_LEVELS.includes(perStrategy) ? perStrategy : 'shadow';
+	}
 	const env = String(envDefault || '').trim().toLowerCase();
 	if (RISK_OFFICER_LEVELS.includes(env)) return env;
 	return 'shadow';
@@ -110,7 +116,7 @@ export function resolveRiskOfficerLevel(strat, envDefault = process.env.SNIPER_R
 
 /**
  * Parse the model's answer into a normalized review, or null when it is not
- * usable. Null always fails open — an unparseable review never blocks a trade.
+ * usable. Null always fails open: an unparseable review never blocks a trade.
  *
  * Tolerates the two things models actually do wrong here: wrapping the JSON in
  * a ```json fence, and emitting `veto: true` with `severity: "caution"` (or the
@@ -157,7 +163,7 @@ export function parseReview(text) {
 }
 
 /**
- * Turn a review into the trade's actual outcome. PURE — the executor calls this
+ * Turn a review into the trade's actual outcome. PURE: the executor calls this
  * and acts on the result, and the tests call it with no network or DB.
  *
  * Contract:
@@ -165,7 +171,7 @@ export function parseReview(text) {
  *   • A missing/degraded review is always a no-op (fail open).
  *   • 'block' aborts. 'caution' never aborts on its own.
  *   • A size adjustment may only SHRINK the trade, and never below the network's
- *     minimum tradeable size — a suggestion under that floor clamps up to the
+ *     minimum tradeable size: a suggestion under that floor clamps up to the
  *     floor rather than aborting, because the officer asked for less risk, not
  *     for no trade.
  */
@@ -194,7 +200,7 @@ export function applyReview({ review, level, perTradeLamports, minTradeLamports 
 }
 
 /**
- * The brief. Only facts the caller actually has — an omitted field is omitted,
+ * The brief. Only facts the caller actually has: an omitted field is omitted,
  * never guessed, because a fabricated holder count is exactly the kind of thing
  * an adversarial reviewer would (correctly) veto on.
  */
@@ -223,7 +229,7 @@ export function reviewBrief({ mint, sizeSol, budgetLeftSol, slotsLeft, priceImpa
 		`PROPOSED: BUY ${Number(sizeSol).toFixed(4)} SOL of ${mint.symbol || mint.mint.slice(0, 6)}.`,
 		agentReason ? `AGENT'S REASON: "${String(agentReason).slice(0, 400)}"` : 'AGENT\'S REASON: (rule-based entry, no stated thesis)',
 		'',
-		'FACTS (on-chain / feed data — do not invent any others):',
+		'FACTS (on-chain / feed data, do not invent any others):',
 		...lines.map((l) => `- ${l}`),
 		'',
 		'MANDATE REMAINING:',

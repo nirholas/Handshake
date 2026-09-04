@@ -381,7 +381,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 
 			// 6. quote + price-impact circuit breaker. Priced through a helper so the
 			//    trade can be re-quoted at a smaller size if the risk officer (6c)
-			//    cuts it — the impact we RECORD must describe the trade we actually
+			//    cuts it; the impact we RECORD must describe the trade we actually
 			//    send, not the larger one that was refused.
 			const quoteFor = async (size) => {
 				if (ammEntry) {
@@ -472,7 +472,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 				}
 			}
 
-			// 6c. adversarial Risk Officer — the independent second opinion. Every
+			// 6c. adversarial Risk Officer: the independent second opinion. Every
 			// gate above answers a question with a number; this one is handed the
 			// proposed trade plus the agent's own thesis and told to find what the
 			// agent missed. Runs LAST so it sees the real price impact and the real

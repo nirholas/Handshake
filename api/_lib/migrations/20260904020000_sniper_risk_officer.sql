@@ -11,7 +11,7 @@
 --
 -- This migration adds:
 --
---   1. agent_sniper_strategies.risk_officer_level — per-strategy enforcement.
+--   1. agent_sniper_strategies.risk_officer_level: per-strategy enforcement.
 --      'shadow' (default): the review runs and is recorded, and changes nothing.
 --      'enforce':          a 'block' severity aborts the buy; a smaller
 --                          size_adjustment shrinks it.
@@ -20,12 +20,12 @@
 --      buys with real SOL, so arming it is an owner decision, not a deploy-time
 --      default, and shadow rows are the evidence that decision needs.
 --
---   2. agent_sniper_strategies.risk_officer_model — optional per-strategy model
+--   2. agent_sniper_strategies.risk_officer_model: optional per-strategy model
 --      override. Left null, the officer uses SNIPER_RISK_OFFICER_MODEL, which
 --      deliberately differs from the buy-side judge's model so the second
 --      opinion is not an echo of the first.
 --
---   3. sniper_risk_reviews — append-only ledger of every review, enforced or
+--   3. sniper_risk_reviews: append-only ledger of every review, enforced or
 --      not. A shadow row records the veto that WOULD have been cast against a
 --      position that actually opened, so the position's realized P&L later says
 --      whether the officer was right.

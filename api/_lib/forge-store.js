@@ -21,7 +21,7 @@ import { putObject, publicUrl, deleteObject, keyFromPublicUrl, objectStorageConf
 import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { scoreGlbQuality } from './glb-quality.js';
-import { compressGlb } from './glb-compress.js';
+import { compressGlb, deliveryCompressionOptions } from './glb-compress.js';
 import { classifyModelCategory } from './forge-classify.js';
 import { cleanupGlb } from './glb-cleanup.js';
 import { derivePbrChannels } from './glb-pbr-derive.js';
@@ -273,7 +273,7 @@ const COPY_TIMEOUT_MS = 120_000;
 
 // Score, clean, derive PBR channels for, and (optionally) compress a freshly
 // downloaded GLB before it lands in the bucket. Every step is pure, local, and
-// best-effort: a failure never blocks delivery — it just means the response
+// best-effort: a failure never blocks delivery; it just means the response
 // carries no quality signal, or ships the un-cleaned / uncompressed bytes.
 // `compress` is one of COMPRESSION_MODES ('draco' | 'meshopt') or falsy to
 // skip. `cleanup` runs the codec-independent geometry cleanup (glb-cleanup.js)
@@ -448,6 +448,61 @@ function gradeDeliveredMesh({ buffer, creationId, sourceUrl }) {
 		.catch((err) => console.warn('[forge-store] simulation-readiness grading failed:', err?.message));
 }
 
+// The web-delivery variant of a finished mesh: meshopt geometry plus WebP
+// textures capped at 2048 px (api/_lib/glb-compress.js). On the six production
+// forge outputs sampled on 2026-09-04 it cut 1.25-3.34 MB down to 0.11-0.67 MB,
+// which on a phone over slow 4G is the difference between a mesh that arrives in
+// seconds and one that does not arrive at all.
+//
+// Two deliberate choices:
+//
+//  1. It is a SECOND object, never a replacement. `glb_url` keeps exactly the
+//     bytes the caller's `output_format` asked for, so the download action hands
+//     back the full-resolution original and a third-party consumer with a bare
+//     GLTFLoader is never handed an EXT_meshopt_compression file it cannot
+//     decode. Our own viewers ask for `web_glb_url` and fall back on a decode
+//     failure.
+//  2. It runs AFTER the row is flipped to 'done', fire-and-forget, exactly like
+//     gradeDeliveredMesh above. The pass costs 2-6 s of CPU; the person waiting
+//     on their generation must never wait on it, and must never lose a finished
+//     model because a compression bug or an instance recycle killed the request.
+//     A row whose variant never lands simply keeps `web_glb_url` null, and every
+//     reader treats null as "serve glb_url".
+//
+// Skips meshes already small enough that the pass cannot pay for itself.
+const WEB_VARIANT_MIN_BYTES = 512 * 1024;
+// Below this the variant is not worth a second object: keep storage honest.
+const WEB_VARIANT_MIN_GAIN = 0.9;
+
+export function buildWebVariant({ buffer, creationId, keyPrefix, clientKey }) {
+	if (!buffer?.length || buffer.length < WEB_VARIANT_MIN_BYTES) return Promise.resolve(null);
+	const key = `${keyPrefix}.web.glb`;
+	return Promise.resolve()
+		.then(() => compressGlb(buffer, deliveryCompressionOptions()))
+		.then(async (result) => {
+			if (result.grew || result.outputBytes > buffer.length * WEB_VARIANT_MIN_GAIN) return null;
+			await putObject({
+				key,
+				body: result.buffer,
+				contentType: 'model/gltf-binary',
+				metadata: { source: 'forge-web-variant' },
+			});
+			await sql`
+				update forge_creations
+				set web_glb_key = ${key},
+					web_glb_url = ${publicUrl(key)},
+					web_size_bytes = ${result.outputBytes},
+					updated_at = now()
+				where id = ${creationId}${clientKey ? sql` and client_key = ${clientKey}` : sql``}
+			`;
+			return { key, url: publicUrl(key), bytes: result.outputBytes };
+		})
+		.catch((err) => {
+			console.warn('[forge-store] web delivery variant failed:', err?.message);
+			return null;
+		});
+}
+
 // Copy a finished generation into durable storage and flip the row to 'done'.
 // Copies the mesh (required) and the reference image (best-effort). Returns the
 // durable { id, glbUrl, previewImageUrl, quality, compression } or null on any
@@ -554,6 +609,9 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 		});
 		// Every delivered mesh gets a physics grade, cached by content hash.
 		gradeDeliveredMesh({ buffer: glb.buffer, creationId: existing.id, sourceUrl: glb.publicUrl });
+		// …and a phone-sized delivery variant. See buildWebVariant for why this is
+		// a second object and why it runs after the row is already 'done'.
+		buildWebVariant({ buffer: glb.buffer, creationId: existing.id, keyPrefix, clientKey });
 		// A finished, signed-in creation is a qualifying streak action + the
 		// trigger for the "first creation" badge. Fire-and-forget — never blocks
 		// delivery of the model itself.

@@ -51,7 +51,7 @@ export async function bindJobToOptions(jobHandle, opts, { redis } = {}) {
 
 /**
  * Resolve the post-generation choices bound to a job handle, or null when none
- * were bound (the common case — no options requested, or Redis unavailable).
+ * were bound (the common case: no options requested, or Redis unavailable).
  */
 export async function optionsForJob(jobHandle, { redis } = {}) {
 	const r = client(redis);

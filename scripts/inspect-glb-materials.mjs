@@ -26,6 +26,7 @@
 
 import { readFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { Buffer } from 'node:buffer';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -35,7 +36,7 @@ import sharp from 'sharp';
 // The five texture slots glTF 2.0 defines on a metallic-roughness material, in
 // the order a reader cares about them: what colour is it, what shape is the
 // surface, how does it reflect, where is it occluded, does it glow.
-const CHANNELS = Object.freeze([
+export const CHANNELS = Object.freeze([
 	{ key: 'baseColor', label: 'baseColor', get: (m) => m.getBaseColorTexture() },
 	{ key: 'normal', label: 'normal', get: (m) => m.getNormalTexture() },
 	{ key: 'metallicRoughness', label: 'metallicRoughness', get: (m) => m.getMetallicRoughnessTexture() },
@@ -113,7 +114,7 @@ function resolutionOf(info) {
  * style choice, and a non-zero metalness with no metallicRoughness map means
  * every texel reflects identically.
  */
-function expectedGaps(material, channels) {
+export function expectedGaps(material, channels) {
 	const gaps = [];
 	if (!channels.baseColor?.present) return gaps; // untextured material: nothing implied
 	if (!channels.normal?.present) gaps.push('normal');
@@ -122,7 +123,7 @@ function expectedGaps(material, channels) {
 	return gaps;
 }
 
-async function inspectOne({ source, label }) {
+export async function inspectOne({ source, label }) {
 	const bytes = await loadBytes(source);
 	const io = new NodeIO()
 		.registerExtensions(ALL_EXTENSIONS)
@@ -148,7 +149,7 @@ async function inspectOne({ source, label }) {
 	}
 
 	// A primitive with no material takes glTF's default material, whose
-	// metallicFactor and roughnessFactor are both 1.0 — it renders as rough bare
+	// metallicFactor and roughnessFactor are both 1.0, so it renders as rough bare
 	// metal. Counting these separately matters because such a model reports
 	// "0 materials" rather than "1 broken material".
 	let unmaterialed = 0;
@@ -200,7 +201,7 @@ function printReport(report) {
 }
 
 /** The markdown lane table that ships in workers/texture/README.md. */
-function printMatrix(reports) {
+export function printMatrix(reports) {
 	const header = ['Lane / model', ...CHANNELS.map((c) => c.label), 'Extensions'];
 	const rows = reports.map((r) => {
 		// One row per model, collapsing its materials: a channel counts as
@@ -270,7 +271,13 @@ async function main() {
 	if (args.strict && gapped.length > 0) process.exit(1);
 }
 
-main().catch((err) => {
-	console.error(err);
-	process.exit(2);
-});
+// Only run the CLI when this file is executed directly; importing it from a
+// test or another script must stay side-effect free.
+const invokedDirectly =
+	process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (invokedDirectly) {
+	main().catch((err) => {
+		console.error(err);
+		process.exit(2);
+	});
+}
