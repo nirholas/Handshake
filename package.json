@@ -332,6 +332,7 @@
 		"load:viewers": "node scripts/viewer-load-test.mjs",
 		"audit:mobile-touch": "node scripts/mobile-touch-audit.mjs",
 		"audit:overlays": "node scripts/audit-overlays.mjs",
+		"audit:ibm-hosted": "node scripts/audit-ibm-hosted-page.mjs",
 		"test:pages": "node scripts/test-pages.mjs",
 		"verify:ibm": "node scripts/verify-ibm-pages.mjs",
 		"verify:zauth": "node scripts/verify-zauth-runtime.mjs",

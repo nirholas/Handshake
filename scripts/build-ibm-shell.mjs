@@ -86,8 +86,17 @@ function boot() {
   function descFromInert(n) {
     return { src: n.getAttribute('data-ibm-src') || '', type: n.getAttribute('data-ibm-type') || '', code: n.textContent || '' };
   }
+  // The live document is authored to run same-origin on three.ws, so its own
+  // scripts are named root-relative ('/x402.js'). Here the page is somebody
+  // else's domain, where that resolves against THEIR origin and 404s, so the
+  // fetched document gets the same rewrite the baked copy got at build time.
+  // On three.ws itself the rewrite is a no-op: the origin it prepends is the
+  // one the page is already served from.
+  function abs(src) {
+    return src.charAt(0) === '/' && src.charAt(1) !== '/' ? ${JSON.stringify(SITE_ORIGIN)} + src : src;
+  }
   function descFromLive(n) {
-    return { src: n.getAttribute('src') || '', type: (n.getAttribute('type') || '').toLowerCase(), code: n.textContent || '' };
+    return { src: abs(n.getAttribute('src') || ''), type: (n.getAttribute('type') || '').toLowerCase(), code: n.textContent || '' };
   }
   // Run a list of script descriptors in order. src scripts are awaited so anything
   // that depends on x402.js / agent-3d.js (earlier in the page) sees it loaded.
@@ -165,7 +174,29 @@ function boot() {
 `.trim();
 }
 
+// Only <script src> is rewritten to our origin, at bake time and again in the
+// boot script's live path. Every other asset the live page names is either
+// absolute already or ships alongside the published file ('./fonts/…'). A
+// root-relative value in any other attribute would therefore resolve against
+// the publisher's domain and 404 there while working perfectly on three.ws,
+// which is the kind of break nobody sees until a partner reports it. Refuse to
+// bake one: either make the reference absolute, or teach absolutize() about the
+// attribute in both places.
+const ROOT_RELATIVE_ATTR = /\s(href|data-src|poster|action|srcset)="\/(?!\/)/gi;
+
+function assertNoUnhandledRootRelative(live) {
+	const found = [...live.matchAll(ROOT_RELATIVE_ATTR)].map((m) => m[1].toLowerCase());
+	if (!found.length) return;
+	const attrs = [...new Set(found)].join(', ');
+	throw new Error(
+		`hello.live.html: root-relative ${attrs} would resolve against the publisher's own domain ` +
+			'on the hosted copy. Use an absolute https://three.ws URL, or extend absolutize() in ' +
+			'this script and abs() in boot() to cover the attribute.',
+	);
+}
+
 function generate(live) {
+	assertNoUnhandledRootRelative(live);
 	const headEnd = live.indexOf('</head>');
 	const bodyOpen = live.indexOf('<body');
 	const bodyClose = live.lastIndexOf('</body>');

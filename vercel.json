@@ -256,6 +256,14 @@
 			"continue": true
 		},
 		{
+			"src": "/locales/(.+)\\.json",
+			"headers": {
+				"access-control-allow-origin": "*",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"continue": true
+		},
+		{
 			"src": "/cdn/(.+)",
 			"dest": "/api/cdn-object?key=$1"
 		},

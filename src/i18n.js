@@ -16,7 +16,23 @@
 // and run without a DOM.
 
 const STORAGE_KEY = 'twx_lang';
-const LOCALES_BASE = '/locales';
+
+// The catalogs live wherever this module was served from, which is not always
+// the page's own origin: /i18n.js is published onto partner pages (the IBM
+// partnership page hosts a copy on its own domain and loads this script from
+// three.ws), where a root-relative fetch would resolve against THEIR origin and
+// 404. Deriving the base from import.meta.url keeps the data with the code.
+// Same-origin pages, which is every page on three.ws itself, get '' and the
+// exact root-relative URLs they always had.
+const ASSET_ORIGIN = (() => {
+	try {
+		const origin = new URL(import.meta.url).origin;
+		return typeof location !== 'undefined' && origin !== location.origin ? origin : '';
+	} catch {
+		return '';
+	}
+})();
+const LOCALES_BASE = `${ASSET_ORIGIN}/locales`;
 
 const hasDOM = typeof document !== 'undefined';
 
@@ -255,7 +271,9 @@ function mergeCatalog(target, slice) {
 async function fetchSlice(code, names) {
 	if (!names.length) return {};
 	try {
-		return await fetchJSON(`/api/locale?code=${encodeURIComponent(code)}&ns=${names.join(',')}`);
+		return await fetchJSON(
+			`${ASSET_ORIGIN}/api/locale?code=${encodeURIComponent(code)}&ns=${names.join(',')}`,
+		);
 	} catch {
 		try {
 			return await fetchJSON(`${LOCALES_BASE}/${code}.json`);
