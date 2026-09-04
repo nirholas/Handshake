@@ -1196,6 +1196,27 @@
 				"kind": "live",
 				"reason": "Serves pages/ibm/ from a throwaway origin and lets it talk to a real three.ws over the network, because the thing under test is the browser enforcing cross-origin rules against live response headers. Any stub or proxy would answer for three.ws and satisfy CORS on the browser behalf, blinding the audit to the only failure it exists to catch."
 			}
+		},
+		{
+			"id": "check-model-viewer-version",
+			"script": "scripts/check-model-viewer-version.mjs",
+			"npm": "check:model-viewer",
+			"title": "One <model-viewer> build across the whole tree",
+			"protects": "Every model-viewer URL in tracked source names the same version, no version is served under two different integrity hashes, and the vendored copy under pages/ibm/vendor/ hashes to the build the rest of the tree points at.",
+			"why": "model-viewer registers itself as a custom element, so a second customElements.define for it in one document throws and the later surface renders nothing at all. A three.ws embed pasted onto a page that already carries another three.ws surface is exactly that document, so a split pin is a blank viewer for somebody else, on their site, with nothing failing on ours. It had already drifted: eight of eighty-one references sat a major version behind, two of them still carrying SRI hashes for the older build, which is the shape a half-finished bump leaves. Delivery legitimately differs per surface (a top-level document pins SRI, a server-interpolated embed cannot, the Vite pages walk a CDN failover chain); the version never does.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A model-viewer reference bumped to a version the rest of the tree does not use.",
+				"violation": {
+					"write": {
+						"pages/guard-proof-model-viewer.html": "<!doctype html>\n<script type=\"module\" src=\"https://ajax.googleapis.com/ajax/libs/model-viewer/9.9.9/model-viewer.min.js\"></script>\n"
+					}
+				},
+				"expect": "9.9.9"
+			}
 		}
 	],
 	"exempt": [

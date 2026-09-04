@@ -94,6 +94,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | No unbounded outbound call | `npm run check:fetch-timeouts` | Every fetch to a third-party host carries a deadline, so one stalled upstream cannot hold a request until the platform kills it. |
 | Hard rules, diff scoped | `npm run check:rules` | The CLAUDE.md hard rules on the lines you changed. |
 | The guard registry | `npm run audit:guards` | Every guard is registered and every stage claim is true. |
+| One `<model-viewer>` build | `npm run check:model-viewer` | Every `<model-viewer>` reference in tracked source names one version, no version is served under two integrity hashes, and the vendored copy matches. |
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
 | Credential material | `npm run check:secrets` | No dotenv file, private key, keystore, or downloaded cloud credential becomes a tracked file, and no added line carries a provider-issued key. |
 | iOS app icon | `npm run check:ios-icons` | The committed iOS icon and launch images are exactly what the current brand mark produces, and the icon carries no alpha channel. |
