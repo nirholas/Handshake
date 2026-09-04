@@ -253,14 +253,17 @@ async function mainInProcess(claims, fixture, { publish } = {}) {
 	}
 
 	const score = scoreResults(results);
-	refuseIfDegraded(score);
-	const report = buildReport({ score, endpoint, fixture, claimCount: claims.length });
 	// Per-claim detail for diagnosis (not published; scratch aid for whoever is
-	// tuning the chain). Written next to nothing public.
+	// tuning the chain). Written next to nothing public, and written BEFORE the
+	// degradation guard: a refused run is exactly the run someone needs the
+	// per-source stances for, and refuseIfDegraded exits the process, so writing
+	// this after it threw away the evidence for every diagnosis it demanded.
 	if (process.env.FACT_CHECK_DETAIL_FILE) {
 		await mkdir(dirname(process.env.FACT_CHECK_DETAIL_FILE), { recursive: true });
 		await writeFile(process.env.FACT_CHECK_DETAIL_FILE, JSON.stringify(details, null, 2) + '\n');
 	}
+	refuseIfDegraded(score);
+	const report = buildReport({ score, endpoint, fixture, claimCount: claims.length });
 	console.log(`\nOverall accuracy: ${score.accuracy_pct}%  (${score.correct}/${score.total}, ${score.errors} errors)`);
 	await writeReport(report, { publish });
 }
