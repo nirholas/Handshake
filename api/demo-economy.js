@@ -74,13 +74,20 @@ async function fetchMarketBriefing() {
 	}
 }
 
+// One source of truth for the transfer amount. The listed price, the narration
+// and the payment panel all read from it, so the page can never advertise one
+// figure and settle another (it advertised 0.001 SOL while sending 0.000001).
+const DEMO_LAMPORTS = 1000; // 0.000001 SOL, ~$0.0002, trivially cheap
+const DEMO_AMOUNT_SOL = (DEMO_LAMPORTS / 1e9).toFixed(6);
+const DEMO_AMOUNT_USD = '~$0.0002';
+
 // The service NOVA actually buys from ORACLE: three.ws's own live Solana market
 // briefing, delivered by fetchMarketBriefing() below. This is the real product
 // the demo transacts (not a fabricated listing), so it is always present.
 const THREEWS_BRIEFING_SERVICE = {
 	name: 'Solana market briefing (live)',
 	resource: 'https://three.ws/api/demo-economy',
-	price: '0.001 SOL',
+	price: `${DEMO_AMOUNT_SOL} SOL`,
 	network: 'solana',
 };
 
@@ -153,7 +160,6 @@ export default wrap(async (req, res) => {
 	res.flushHeaders?.();
 
 	const pace = 900; // ms between narration beats
-	const DEMO_LAMPORTS = 1000; // 0.000001 SOL, ~$0.0002, trivially cheap
 
 	try {
 		// ── Step 1: Agents ready ─────────────────────────────────────────────
@@ -194,7 +200,7 @@ export default wrap(async (req, res) => {
 		sseWrite(res, 'step', {
 			id: 'payment_init',
 			label: 'Initiating payment',
-			detail: 'NOVA is sending 0.001 SOL to ORACLE on Solana mainnet',
+			detail: `NOVA is sending ${DEMO_AMOUNT_SOL} SOL to ORACLE on Solana mainnet`,
 			icon: '💸',
 		});
 		await sleep(pace * 0.5);
@@ -260,7 +266,7 @@ export default wrap(async (req, res) => {
 						signature: sig,
 						explorer_url: explorerTxUrl(sig, cfg.network),
 						amount_sol: (DEMO_LAMPORTS / LAMPORTS_PER_SOL).toFixed(6),
-						amount_usd: '~$0.0002',
+						amount_usd: DEMO_AMOUNT_USD,
 						sender,
 						recipient,
 						balance_before: (balBefore / LAMPORTS_PER_SOL).toFixed(6),
@@ -282,8 +288,8 @@ export default wrap(async (req, res) => {
 				reason: simReason,
 				signature: null,
 				explorer_url: null,
-				amount_sol: (DEMO_LAMPORTS / 1e9).toFixed(6),
-				amount_usd: '~$0.0002',
+				amount_sol: DEMO_AMOUNT_SOL,
+				amount_usd: DEMO_AMOUNT_USD,
 			};
 			sseWrite(res, 'wallet', {
 				configured: false,
