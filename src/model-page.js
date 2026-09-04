@@ -137,13 +137,24 @@ function patchMeta() {
 
 // ── viewer hero ──────────────────────────────────────────────────────────────
 
+// The mesh the VIEWER should download, which is not the mesh the user downloads.
+// `web_glb_url` is the delivery variant written by api/_lib/forge-store.js
+// (meshopt geometry + WebP textures, 80-94% smaller on real production output);
+// `glb_url` stays the full-resolution original and is what every download link
+// and every third-party API consumer gets. Null variant means "there is only the
+// original", which is the honest state for a creation made before this landed or
+// one already small enough that a second object would not pay for itself.
+export function viewerSrc(creation) {
+	return creation?.web_glb_url || creation?.glb_url || '';
+}
+
 function renderViewer() {
 	const host = $('mp-viewer');
 	const c = state.creation;
 	if (!host) return;
 	const poster = c.preview_image_url ? ` poster="${esc(c.preview_image_url)}"` : '';
 	host.innerHTML = `
-		<model-viewer src="${esc(c.glb_url)}"${poster}
+		<model-viewer src="${esc(viewerSrc(c))}"${poster}
 			alt="${esc(titleFromPrompt(c.prompt))}"
 			camera-controls auto-rotate auto-rotate-delay="1500" rotation-per-second="18deg"
 			interaction-prompt="when-focused" shadow-intensity="0.5" exposure="0.95"
@@ -158,6 +169,21 @@ function renderViewer() {
 		if (!document.fullscreenElement) (mv || host).requestFullscreen?.().catch(() => {});
 		else document.exitFullscreen?.();
 	});
+	// Decoder fallback. The delivery variant needs EXT_meshopt_compression and
+	// EXT_texture_webp; both are supported everywhere model-viewer 4 runs, but a
+	// browser with WASM disabled, a blocked decoder script, or a corrupt object
+	// would otherwise leave the visitor staring at a poster forever. One retry
+	// against the untouched original turns that into a slower load instead of a
+	// dead page, and it can only fire once (the flag is on the element).
+	const mv = host.querySelector('model-viewer');
+	if (mv && c.web_glb_url && c.glb_url && c.web_glb_url !== c.glb_url) {
+		mv.addEventListener('error', () => {
+			if (mv.dataset.fellBack) return;
+			mv.dataset.fellBack = '1';
+			log.warn('delivery variant failed to decode, falling back to the original mesh');
+			mv.setAttribute('src', c.glb_url);
+		});
+	}
 }
 
 // ── info column ──────────────────────────────────────────────────────────────
