@@ -11,7 +11,12 @@
 import { knockApi } from './api.js';
 
 const els = {};
-let state = { door: null, handle: null, url: null, totals: null, blocks: [], knocks: [], loadingMore: false };
+let state = {
+	door: null, handle: null, url: null, totals: null, blocks: [], knocks: [], loadingMore: false,
+	// The escrowed lane's two halves: what we store (escrow) and what the chain
+	// says (chainDoor). They can disagree, and the panel exists to say so.
+	escrow: null, chainDoor: null,
+};
 
 document.addEventListener('DOMContentLoaded', () => {
 	for (const id of [
@@ -21,6 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		'share-url', 'copy-share', 'share-block', 'endpoint-url', 'copy-endpoint',
 		'stat-pending', 'stat-total', 'stat-earned', 'inbox', 'inbox-empty', 'inbox-loading',
 		'load-more', 'blocks', 'blocks-empty', 'no-handle', 'inbox-section', 'blocks-section',
+		'stat-escrowed', 'stat-escrowed-card', 'escrow-panel', 'escrow-enabled', 'escrow-window',
+		'escrow-fields', 'escrow-address', 'chain-state', 'chain-dot', 'chain-text',
+		'chain-actions', 'open-chain-door', 'chain-explorer',
 	]) {
 		els[id] = document.getElementById(id);
 	}
@@ -135,11 +143,145 @@ function applyOwner(data) {
 		els['copy-endpoint'].dataset.copy = data.endpoint;
 	}
 
-	els['stat-pending'].textContent = String(data.totals.pending);
-	els['stat-total'].textContent = String(data.totals.total);
-	els['stat-earned'].textContent = data.totals.earned;
-
+	renderTotals(data.totals);
+	renderEscrow(data.escrow, door);
 	renderBlocks(data.blocks || []);
+}
+
+function renderTotals(totals) {
+	els['stat-pending'].textContent = String(totals.pending);
+	els['stat-total'].textContent = String(totals.total);
+	els['stat-earned'].textContent = totals.earned;
+	// Only shown once there is escrowed money to show. A permanent $0.00 tile
+	// for a lane this owner does not use is furniture, not information.
+	const escrowed = Number(totals.escrowed_pending || 0) > 0;
+	els['stat-escrowed-card'].hidden = !escrowed;
+	els['stat-escrowed'].textContent = totals.escrowed || '$0.00';
+}
+
+/**
+ * The escrowed lane's own panel.
+ *
+ * Two things live here that nothing else in these settings does. The toggle is
+ * an ordinary saved field, but the on-chain door beside it is not ours to
+ * write: only this owner's wallet can open, reprice or shut it, so the panel
+ * reads the chain and tells them what is actually true rather than what they
+ * asked for.
+ */
+function renderEscrow(escrow, door) {
+	state.escrow = escrow || null;
+	if (!escrow) {
+		els['escrow-panel'].hidden = true;
+		return;
+	}
+	els['escrow-panel'].hidden = false;
+	els['escrow-enabled'].checked = Boolean(escrow.enabled);
+	els['escrow-window'].value = String(escrow.window_hours);
+	els['escrow-window'].min = String(escrow.min_window_hours);
+	els['escrow-window'].max = String(escrow.max_window_hours);
+	els['escrow-fields'].hidden = !escrow.enabled;
+	els['escrow-address'].hidden = !escrow.door || !escrow.enabled;
+	els['escrow-address'].textContent = escrow.door ? `Your on-chain door: ${escrow.door}` : '';
+	if (escrow.enabled) refreshChainState(door);
+	else els['chain-actions'].hidden = true;
+}
+
+/** What the chain says about this owner's door, in their own words. */
+async function refreshChainState(door) {
+	const escrow = state.escrow;
+	if (!escrow) return;
+	if (!escrow.door) {
+		return setChainState('warn', 'Add your Solana wallet above and save. It is half of your door\'s on-chain address.');
+	}
+
+	setChainState(null, 'Checking your on-chain door');
+	els['chain-explorer'].hidden = false;
+	els['chain-explorer'].href = `https://solscan.io/account/${escrow.door}`;
+
+	try {
+		const { connection, readDoor } = await import('./escrow-checkout.js');
+		const onChain = await readDoor(await connection(), escrow.door);
+		state.chainDoor = onChain;
+
+		if (!onChain) {
+			els['chain-actions'].hidden = false;
+			els['open-chain-door'].textContent = 'Open my door on-chain';
+			return setChainState(
+				'warn',
+				'Not opened yet. Until you open it, an escrowed knock has nowhere to land and senders see the normal lane.',
+			);
+		}
+
+		const wanted = String(door.price_atomics);
+		const wantedWindow = Number(escrow.window_hours) * 3600;
+		const drifted = String(onChain.price) !== wanted || onChain.replyWindow !== wantedWindow || !onChain.open;
+		els['chain-actions'].hidden = !drifted;
+		els['open-chain-door'].textContent = 'Update it on-chain';
+
+		if (!onChain.open) {
+			return setChainState('warn', 'Shut on-chain. Escrowed knocks are refused until you reopen it.');
+		}
+		if (drifted) {
+			return setChainState(
+				'warn',
+				`On-chain it charges ${formatAtomics(onChain.price)} and answers within ${Math.round(onChain.replyWindow / 3600)}h. That is what a sender agrees to, so bring it in line with the settings above.`,
+			);
+		}
+		return setChainState(
+			'live',
+			`Open on-chain: ${formatAtomics(onChain.price)} per knock, ${Math.round(onChain.replyWindow / 3600)}h to answer. ${onChain.knocks} knock(s), ${onChain.answered} answered.`,
+		);
+	} catch (err) {
+		setChainState('warn', `Could not read your on-chain door just now: ${err.message}`);
+	}
+}
+
+function setChainState(tone, text) {
+	els['chain-dot'].className = `dot${tone ? ` is-${tone}` : ''}`;
+	els['chain-text'].textContent = text;
+}
+
+/** USDC atomics as a human amount, matching what the API formats elsewhere. */
+function formatAtomics(atomics) {
+	const value = Number(BigInt(atomics)) / 1e6;
+	return `$${value.toFixed(value < 0.01 ? 4 : 2)}`;
+}
+
+/**
+ * Open or update the on-chain door from the owner's own wallet.
+ *
+ * three.ws cannot do this for them and should not be able to: the account is
+ * derived from their wallet, and only their signature can create or change it.
+ */
+async function openChainDoor() {
+	const escrow = state.escrow;
+	if (!escrow) return;
+	const btn = els['open-chain-door'];
+	const label = btn.textContent;
+	btn.disabled = true;
+	try {
+		const { openDoorOnChain } = await import('./escrow-checkout.js');
+		const { USDC_MINT } = await import('./escrow-program.js');
+		const price = BigInt(state.door.price_atomics);
+		if (price <= 0n) {
+			showSettingsError('Set a price above zero before opening an escrowed door: the program will not hold nothing.');
+			return;
+		}
+		await openDoorOnChain({
+			handle: state.handle,
+			priceAtomics: price,
+			replyWindowSeconds: Number(els['escrow-window'].value || 24) * 3600,
+			mint: USDC_MINT,
+			onStatus: (status) => { btn.textContent = `${status}…`; },
+		});
+		showSettingsError('');
+		await refreshChainState(state.door);
+	} catch (err) {
+		showSettingsError(err?.message || 'That did not go through.');
+	} finally {
+		btn.disabled = false;
+		btn.textContent = label;
+	}
 }
 
 function renderBlocks(blocks) {
@@ -188,6 +330,8 @@ async function saveSettings() {
 		max_chars: Number(els['door-max'].value) || 600,
 		daily_cap: Number(els['door-cap'].value) || 25,
 		listed: els['door-listed'].checked,
+		escrow_enabled: els['escrow-enabled'].checked,
+		escrow_window_hours: Number(els['escrow-window'].value) || 24,
 	};
 	els.save.disabled = true;
 	els.save.textContent = 'Saving…';
@@ -221,11 +365,7 @@ async function loadInbox({ append = false } = {}) {
 		els['inbox-loading'].hidden = true;
 		els['load-more'].hidden = !data.has_more;
 		renderInbox();
-		if (data.totals) {
-			els['stat-pending'].textContent = String(data.totals.pending);
-			els['stat-total'].textContent = String(data.totals.total);
-			els['stat-earned'].textContent = data.totals.earned;
-		}
+		if (data.totals) renderTotals(data.totals);
 	} catch (err) {
 		els['inbox-loading'].hidden = true;
 		els['inbox-empty'].hidden = false;
@@ -291,11 +431,20 @@ function knockRow(knock) {
 		body.appendChild(reply);
 	}
 
+	if (knock.escrow) body.appendChild(escrowLine(knock.escrow));
+
 	const actions = document.createElement('div');
 	actions.className = 'knock-actions';
 	if (knock.status !== 'replied') {
-		const replyBtn = button('Reply', () => openReply(li, knock));
-		actions.appendChild(replyBtn);
+		const payable = knock.escrow?.state === 'pending' && !knock.escrow.expired;
+		actions.appendChild(button(payable ? 'Reply and get paid' : 'Reply', () => openReply(li, knock)));
+	}
+	if (knock.escrow?.state === 'pending' && !knock.escrow.expired) {
+		// Declining is a real answer, and the one the sender is owed a refund
+		// for. It is offered next to the reply rather than buried, because a
+		// door that will not answer should say so while the money can still go
+		// back cleanly instead of waiting out the clock.
+		actions.appendChild(button('Refuse and refund', () => onRefuse(knock), 'danger'));
 	}
 	if (knock.status === 'pending') {
 		actions.appendChild(button('Mark read', () => act(knock.id, { status: 'read' })));
@@ -307,6 +456,88 @@ function knockRow(knock) {
 
 	li.append(head, body, actions);
 	return li;
+}
+
+/**
+ * The on-chain half of one knock, said plainly.
+ *
+ * An escrowed knock is not money in the owner's pocket, and the inbox has to
+ * stop implying that it is. Pending says what answering is worth and by when;
+ * expired says the money is already owed back, which is the single most
+ * important thing an owner can know before spending time on a reply.
+ */
+function escrowLine(escrow) {
+	const el = document.createElement('div');
+	el.className = `knock-escrow is-${escrow.state}${escrow.expired && escrow.state === 'pending' ? ' is-expired' : ''}`;
+	if (escrow.state !== 'pending') {
+		el.textContent =
+			escrow.state === 'answered'
+				? 'Escrow released to you.'
+				: escrow.state === 'refused'
+					? 'You declined this. The sender was refunded in full.'
+					: 'The window closed and the sender took their payment back.';
+		return el;
+	}
+	el.textContent = escrow.expired
+		? 'Escrowed, but the window has closed. This is owed back to the sender now; a reply is still welcome, it just will not pay.'
+		: `Escrowed on-chain. Answer within ${remaining(escrow.expires_in_seconds)} to be paid.`;
+	return el;
+}
+
+function remaining(seconds) {
+	const s = Math.max(0, Number(seconds) || 0);
+	if (s >= 86400) return `${Math.floor(s / 86400)}d ${Math.floor((s % 86400) / 3600)}h`;
+	if (s >= 3600) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+	return `${Math.max(1, Math.floor(s / 60))}m`;
+}
+
+/**
+ * Release an escrowed knock's payment by answering it on-chain.
+ *
+ * The reply is already saved by the time this runs, so a wallet the owner
+ * cancels costs them the payout and nothing else: the sender still gets their
+ * answer, and the escrow refunds itself when the window closes. That ordering
+ * is deliberate. The alternative loses a written reply to a wallet prompt.
+ */
+async function collectEscrow(knock, setStatus) {
+	const { answerKnock } = await import('./escrow-checkout.js');
+	await answerKnock({
+		knockAddress: knock.escrow.knock,
+		reply: knock.pendingReply,
+		onStatus: setStatus,
+	});
+	await syncEscrowRow(knock.escrow.knock);
+}
+
+/** Decline an escrowed knock and hand every unit back. Owner-signed, no fee. */
+async function onRefuse(knock) {
+	try {
+		const { refuseKnock } = await import('./escrow-checkout.js');
+		await refuseKnock({ knockAddress: knock.escrow.knock });
+		await act(knock.id, { status: 'dismissed' });
+		await syncEscrowRow(knock.escrow.knock);
+	} catch (err) {
+		showSettingsError(err?.message || 'That refusal did not go through.');
+	}
+}
+
+/**
+ * Ask the server to re-read one escrow and update its cached state.
+ *
+ * Best effort on purpose: the chain is authoritative either way, and a failed
+ * sync means a stale label on a row, not a lost settlement.
+ */
+async function syncEscrowRow(escrowKnock) {
+	try {
+		const { state } = await knockApi.syncEscrow(escrowKnock);
+		state.escrowSyncedAt = Date.now();
+		const data = await knockApi.inbox({ limit: Math.max(20, state.knocks?.length || 20) });
+		state.knocks = data.knocks;
+		renderInbox();
+		if (data.totals) renderTotals(data.totals);
+	} catch {
+		// The row's label stays as it was. Nothing on-chain depends on it.
+	}
 }
 
 function button(label, onClick, tone = null) {
@@ -362,9 +593,7 @@ async function act(id, patch) {
 async function refreshTotals() {
 	try {
 		const data = await knockApi.inbox({ limit: 1 });
-		els['stat-pending'].textContent = String(data.totals.pending);
-		els['stat-total'].textContent = String(data.totals.total);
-		els['stat-earned'].textContent = data.totals.earned;
+		renderTotals(data.totals);
 	} catch {
 		// The list on screen is already correct; a stale counter is not worth
 		// an error banner.
@@ -394,12 +623,26 @@ function bind() {
 	els['door-open']?.addEventListener('change', hintPayout);
 	els['door-price']?.addEventListener('input', hintPayout);
 	els['door-solana']?.addEventListener('input', hintPayout);
+	els['escrow-enabled']?.addEventListener('change', () => {
+		els['escrow-fields'].hidden = !els['escrow-enabled'].checked;
+		els['chain-actions'].hidden = !els['escrow-enabled'].checked;
+		hintPayout();
+	});
+	els['open-chain-door']?.addEventListener('click', openChainDoor);
 }
 
 function hintPayout() {
 	const priced = (els['door-price'].value.trim() || '0') !== '0';
-	const needsWallet = els['door-open'].checked && priced && !els['door-solana'].value.trim() && !els['door-base'].value.trim();
-	showSettingsError(needsWallet ? 'A priced door needs the wallet that should receive the USDC.' : '');
+	const solana = els['door-solana'].value.trim();
+	const needsWallet = els['door-open'].checked && priced && !solana && !els['door-base'].value.trim();
+	if (needsWallet) return showSettingsError('A priced door needs the wallet that should receive the USDC.');
+	// The escrowed lane needs Solana specifically: it is where an answer pays
+	// out AND half of what derives the door's on-chain address, so a Base-only
+	// door cannot run it. Saying so here beats a rejected save.
+	if (els['escrow-enabled']?.checked && !solana) {
+		return showSettingsError('Escrowed knocks need your Solana address: it is where an answer pays out, and half of your on-chain door address.');
+	}
+	showSettingsError('');
 }
 
 async function copy(btn) {

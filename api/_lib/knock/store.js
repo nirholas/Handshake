@@ -66,6 +66,14 @@ export async function publicDoorByHandle(handle) {
 		       d.open, d.price_atomics::text as price_atomics, d.headline, d.greeting,
 		       d.max_chars, d.daily_cap, d.listed,
 		       d.escrow_enabled, d.escrow_window_hours,
+		       -- The owner's Solana address, and ONLY when they turned the
+		       -- escrowed lane on. It is half of their on-chain door address,
+		       -- which a stranger has to derive before they can escrow
+		       -- anything. api/knock/door.js ships the derived address rather
+		       -- than this one, so a payout address still never appears in a
+		       -- public body; the account it points at is public because the
+		       -- owner opted into publishing it.
+		       case when d.escrow_enabled then d.pay_to_solana end as escrow_owner,
 		       d.pay_to_solana is not null as has_solana_payout,
 		       d.pay_to_base is not null as has_base_payout
 		from users u
@@ -200,7 +208,8 @@ export async function listInbox(userId, { limit = 30, before = null, status = nu
 	return sql`
 		select id, sender_name, sender_url, sender_kind, payer_wallet, network, tx_hash,
 		       amount_atomics::text as amount_atomics, asset, subject, message, status,
-		       reply_text, read_at, replied_at, created_at
+		       reply_text, read_at, replied_at, created_at,
+		       escrow_knock, escrow_expires_at, escrow_state
 		from knock_messages
 		where recipient_user_id = ${userId}
 		${statusClause}
@@ -214,10 +223,20 @@ export async function inboxTotals(userId) {
 	const [row] = await sql`
 		select count(*) filter (where status = 'pending')::int as pending,
 		       count(*)::int as total,
-		       coalesce(sum(amount_atomics), 0)::text as earned_atomics
+		       -- An escrowed knock is not earned until it is answered. Counting
+		       -- one that is still pending would show the owner money they
+		       -- cannot spend and might never be paid, and counting a refunded
+		       -- one would show them money that went back to the sender.
+		       coalesce(sum(amount_atomics) filter (
+		           where escrow_state is null or escrow_state = 'answered'
+		       ), 0)::text as earned_atomics,
+		       coalesce(sum(amount_atomics) filter (
+		           where escrow_state = 'pending'
+		       ), 0)::text as escrowed_atomics,
+		       count(*) filter (where escrow_state = 'pending')::int as escrowed_pending
 		from knock_messages where recipient_user_id = ${userId}
 	`;
-	return row || { pending: 0, total: 0, earned_atomics: '0' };
+	return row || { pending: 0, total: 0, earned_atomics: '0', escrowed_atomics: '0', escrowed_pending: 0 };
 }
 
 export async function updateKnock(userId, id, { status = null, reply = null }) {

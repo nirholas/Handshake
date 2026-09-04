@@ -12,7 +12,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
-import { KNOCK_ESCROW_PROGRAM_ID } from '../_lib/knock/escrow.js';
+import { KNOCK_ESCROW_PROGRAM_ID, doorId, doorPda } from '../_lib/knock/escrow.js';
 import { formatUsdc, normalizeHandle } from '../_lib/knock/policy.js';
 import { publicDoorByHandle } from '../_lib/knock/store.js';
 
@@ -77,11 +77,18 @@ export function publicShape(row) {
  * entire reason to pick this lane over paying up front.
  */
 function escrowShape(row) {
-	if (!row.escrow_enabled) return null;
+	if (!row.escrow_enabled || !row.escrow_owner) return null;
 	return {
 		endpoint: `${env.APP_ORIGIN}/api/knock/escrowed`,
 		program: KNOCK_ESCROW_PROGRAM_ID,
 		network: 'solana',
+		// The door's on-chain address. A sender needs it to escrow, and reading
+		// the account at it tells them the price, the mint and the window the
+		// PROGRAM will enforce, which is the only version of those numbers that
+		// can take their money. The owner's own address is not shipped here;
+		// this is derived from it, and the account it names carries whatever
+		// the owner chose to publish on-chain.
+		door: doorPda(row.escrow_owner, doorId(row.username)).toBase58(),
 		window_hours: Number(row.escrow_window_hours ?? 24),
 		guarantee:
 			'Your payment is held on-chain and pays out only if this door answers you. If it refuses, or the window closes, every unit comes back to you and anyone can trigger that refund.',

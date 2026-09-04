@@ -59,7 +59,14 @@ export const knockApi = {
 	door: (handle) => open(`/api/knock/door?handle=${encodeURIComponent(handle)}`),
 	directory: (limit = 60) => open(`/api/knock/directory?limit=${limit}`),
 	send: (body) => open('/api/knock/send', { method: 'POST', body }),
+	// The escrowed lane. Called only AFTER the sender's own wallet has parked
+	// the payment on-chain: this endpoint reads that escrow and delivers, it
+	// never takes money, so calling it without one simply answers 402.
+	escrowed: (body) => open('/api/knock/escrowed', { method: 'POST', body }),
 	receipt: (url) => open(url.replace(/^https?:\/\/[^/]+/, '')),
+	// Copy one escrow's on-chain state into the row that caches it. Open to
+	// anybody because it can only ever write what the program already recorded.
+	syncEscrow: (knock) => open('/api/knock/escrow-sync', { method: 'POST', body: { knock } }),
 
 	// Owner
 	settings: () => authed('/api/knock/settings', { allowAnonymous: true }),

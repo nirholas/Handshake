@@ -90,7 +90,35 @@
 			.foot-note{color:var(--dim);font-size:12px;text-align:center;margin-top:26px;line-height:1.6;}
 			.foot-note a{color:var(--muted);text-decoration:underline;text-underline-offset:2px;}
 			.foot-note a:hover{color:var(--blue);}
-			@media(max-width:560px){.row{grid-template-columns:1fr;}.who{flex-wrap:wrap;}.price{margin-left:0;width:100%;text-align:left;}}
+			.lanes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+			.lane{position:relative;display:grid;gap:3px;padding:12px 13px;border:1px solid var(--line-2);border-radius:11px;background:var(--bg-2);cursor:pointer;transition:border-color .15s,background .15s;font-weight:400;color:var(--text);}
+			.lane:hover{border-color:var(--blue);}
+			.lane:has(input:checked){border-color:var(--blue);background:rgba(59,130,246,.08);}
+			.lane:has(input:focus-visible){outline:2px solid var(--blue);outline-offset:2px;}
+			.lane input{position:absolute;opacity:0;pointer-events:none;}
+			.lane-title{font-size:13.5px;font-weight:650;letter-spacing:-0.01em;}
+			.lane-note{font-size:11.5px;color:var(--muted);line-height:1.45;}
+			.lane-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);}
+			.guarantee{margin-top:12px;padding:11px 13px;border:1px solid rgba(34,197,94,.3);background:rgba(34,197,94,.07);border-radius:10px;font-size:12.5px;line-height:1.6;color:var(--muted);}
+			.guarantee strong{color:var(--text);font-weight:650;}
+			.escrow-status{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:9px;}
+			.escrow-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);}
+			.escrow-row strong{color:var(--text);font-variant-numeric:tabular-nums;font-weight:650;}
+			.escrow-bar{height:5px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);overflow:hidden;}
+			.escrow-bar span{display:block;height:100%;background:var(--green);width:100%;transition:width 1s linear;}
+			.escrow-bar.is-late span{background:var(--amber);}
+			.escrow-note{font-size:12px;color:var(--dim);line-height:1.55;}
+			dialog.confirm{border:1px solid var(--line-2);background:var(--card);color:var(--text);border-radius:var(--radius);padding:0;max-width:420px;width:calc(100% - 32px);}
+			dialog.confirm::backdrop{background:rgba(0,0,0,.6);}
+			dialog.confirm form{padding:20px;display:grid;gap:14px;}
+			dialog.confirm h2{font-size:16px;font-weight:700;}
+			dialog.confirm dl{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:13px;margin:0;}
+			dialog.confirm dt{color:var(--muted);}
+			dialog.confirm dd{margin:0;text-align:right;font-weight:600;word-break:break-all;}
+			dialog.confirm dd.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:400;color:var(--muted);}
+			.confirm-note{font-size:12px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:12px;}
+			.confirm-actions{display:flex;gap:8px;justify-content:flex-end;}
+			@media(max-width:560px){.row{grid-template-columns:1fr;}.who{flex-wrap:wrap;}.price{margin-left:0;width:100%;text-align:left;}.lanes{grid-template-columns:1fr;}}
 			@media(prefers-reduced-motion:reduce){.skeleton{animation:none;}}
 		</style>
 	</head>
@@ -126,6 +154,20 @@
 				<p class="greeting" id="greeting" hidden></p>
 				<p class="price-note" id="price-note"></p>
 
+				<div class="lanes" id="lanes" role="radiogroup" aria-label="How to pay" hidden>
+					<label class="lane">
+						<input type="radio" name="lane" value="pay" checked />
+						<span class="lane-title">Pay now</span>
+						<span class="lane-note" id="lane-pay-note"></span>
+					</label>
+					<label class="lane">
+						<input type="radio" name="lane" value="escrow" />
+						<span class="lane-title">Escrow <span class="lane-tag">refundable</span></span>
+						<span class="lane-note" id="lane-escrow-note"></span>
+					</label>
+				</div>
+				<p class="guarantee" id="guarantee" hidden></p>
+
 				<form id="form" novalidate>
 					<div class="row">
 						<label>Who are you
@@ -151,6 +193,18 @@
 					<p id="sent-line"></p>
 					<code class="receipt" id="receipt-url" hidden></code>
 					<div class="reply-box" id="reply-box" hidden></div>
+
+					<div class="escrow-status" id="escrow-status" hidden>
+						<div class="escrow-row"><span>Held in escrow</span><strong id="escrow-amount"></strong></div>
+						<div class="escrow-row"><span id="escrow-clock-label">Answer due in</span><strong id="escrow-clock"></strong></div>
+						<div class="escrow-bar" id="escrow-bar"><span id="escrow-bar-fill"></span></div>
+						<p class="escrow-note" id="escrow-note"></p>
+						<div class="sent-actions">
+							<a class="btn btn-sm" id="escrow-explorer" target="_blank" rel="noopener noreferrer">View the escrow</a>
+							<button type="button" class="btn btn-sm" id="reclaim" hidden>Take my payment back</button>
+						</div>
+					</div>
+
 					<div class="sent-actions">
 						<button type="button" class="btn btn-sm" id="copy-receipt" hidden>Copy receipt link</button>
 						<button type="button" class="btn btn-sm" id="check-reply" hidden>Check for a reply</button>
@@ -176,6 +230,13 @@
 						</div>
 						<pre id="curl-snippet"></pre>
 					</div>
+					<div id="escrow-block" hidden>
+						<div class="snip-head">
+							<h3>Escrowed lane (refunded if unanswered)</h3>
+							<button type="button" class="btn btn-sm" data-copy-target="escrow-snippet">Copy</button>
+						</div>
+						<pre id="escrow-snippet"></pre>
+					</div>
 					<div>
 						<div class="snip-head">
 							<h3>SDK</h3>
@@ -198,6 +259,18 @@
 				<a href="/docs/knock">How it works</a> &middot; <a href="/knock">Open your own door</a>
 			</p>
 		</main>
+
+		<dialog class="confirm" id="confirm-escrow" aria-labelledby="confirm-title">
+			<form method="dialog">
+				<h2 id="confirm-title">Confirm what you are signing</h2>
+				<dl id="confirm-terms"></dl>
+				<p class="confirm-note" id="confirm-note"></p>
+				<div class="confirm-actions">
+					<button class="btn" value="cancel">Cancel</button>
+					<button class="btn btn-primary" value="ok" id="confirm-ok">Escrow and knock</button>
+				</div>
+			</form>
+		</dialog>
 
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>

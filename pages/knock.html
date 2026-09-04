@@ -117,7 +117,18 @@
 			.how div{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;}
 			.how b{display:block;font-size:13.5px;margin-bottom:5px;}
 			.how p{color:var(--muted);font-size:12.5px;line-height:1.6;}
-			@media(max-width:700px){.fields{grid-template-columns:1fr;}.stats{grid-template-columns:1fr;}.hero h1{font-size:26px;}}
+			.escrow-panel{margin-top:18px;padding:16px;border:1px solid var(--line-2);border-radius:12px;background:var(--bg-2);display:grid;gap:12px;}
+			.escrow-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+			.escrow-head h3{font-size:14px;font-weight:700;letter-spacing:-0.01em;}
+			.escrow-head p{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:4px;max-width:52ch;}
+			.escrow-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+			.chain-state{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--card);line-height:1.55;}
+			.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;}
+			.dot.is-live{background:var(--green);}
+			.dot.is-warn{background:var(--amber);}
+			.chain-actions{display:flex;gap:8px;flex-wrap:wrap;}
+			.escrow-address{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--dim);word-break:break-all;}
+			@media(max-width:700px){.fields{grid-template-columns:1fr;}.stats{grid-template-columns:1fr;}.hero h1{font-size:26px;}.escrow-grid{grid-template-columns:1fr;}}
 			@media(prefers-reduced-motion:reduce){.skeleton{animation:none;}.door-card:hover{transform:none;}}
 		</style>
 	</head>
@@ -170,6 +181,7 @@
 						<div class="stat"><b id="stat-pending">0</b><span>Waiting</span></div>
 						<div class="stat"><b id="stat-total">0</b><span>All time</span></div>
 						<div class="stat"><b id="stat-earned">$0.00</b><span>Earned</span></div>
+						<div class="stat" id="stat-escrowed-card" hidden><b id="stat-escrowed">$0.00</b><span>In escrow</span></div>
 					</div>
 
 					<div class="fields">
@@ -203,6 +215,31 @@
 							<input type="number" id="door-max" min="40" max="2000" />
 							<span class="hint">Characters. Long enough to be useful, short enough to read.</span>
 						</label>
+					</div>
+
+					<div class="escrow-panel" id="escrow-panel">
+						<div class="escrow-head">
+							<div>
+								<h3>Escrowed knocks</h3>
+								<p id="escrow-pitch">Let a stranger pay into an on-chain vault instead of paying you directly. You are paid by answering; if you decline, or the window closes, every unit goes back to them. Nobody can move it, including us.</p>
+							</div>
+							<label class="toggle"><input type="checkbox" id="escrow-enabled" /> Take escrowed knocks</label>
+						</div>
+						<div class="escrow-grid" id="escrow-fields" hidden>
+							<label>Answer within
+								<input type="number" id="escrow-window" min="1" max="720" />
+								<span class="hint">Hours. After this the sender can take their payment back, and anybody can trigger it for them.</span>
+							</label>
+							<div class="chain-state" id="chain-state">
+								<span class="dot" id="chain-dot"></span>
+								<span id="chain-text">Checking your on-chain door</span>
+							</div>
+						</div>
+						<div class="chain-actions" id="chain-actions" hidden>
+							<button type="button" class="btn btn-sm btn-primary" id="open-chain-door">Open my door on-chain</button>
+							<a class="btn btn-sm" id="chain-explorer" target="_blank" rel="noopener noreferrer" hidden>View it</a>
+						</div>
+						<code class="escrow-address" id="escrow-address" hidden></code>
 					</div>
 
 					<div class="error" id="settings-error" hidden></div>

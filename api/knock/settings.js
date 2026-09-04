@@ -15,6 +15,7 @@ import { parse } from '../_lib/validate.js';
 import { env } from '../_lib/env.js';
 import { formatUsdc, parsePrice } from '../_lib/knock/policy.js';
 import { getDoor, updateDoor, inboxTotals, listBlocks, addBlock, removeBlock } from '../_lib/knock/store.js';
+import { KNOCK_ESCROW_PROGRAM_ID, doorId, doorPda } from '../_lib/knock/escrow.js';
 import { sql } from '../_lib/db.js';
 
 const patchBody = z.object({
@@ -126,12 +127,45 @@ async function ownerView(user) {
 		// what the settings page tells them to do first.
 		url: handle ? `${env.APP_ORIGIN}/knock/${handle}` : null,
 		endpoint: handle ? `${env.APP_ORIGIN}/api/x402/knock?to=${handle}` : null,
+		// Everything the owner needs to run the escrowed lane from their own
+		// wallet. The door address is derived, not stored, so it is correct the
+		// instant they set a Solana address and cannot drift from what a
+		// stranger's client derives for the same handle.
+		escrow: escrowView(door, handle),
 		totals: {
 			pending: totals.pending,
 			total: totals.total,
 			earned_atomics: totals.earned_atomics,
 			earned: formatUsdc(totals.earned_atomics),
+			escrowed_atomics: totals.escrowed_atomics ?? '0',
+			escrowed: formatUsdc(totals.escrowed_atomics ?? '0'),
+			escrowed_pending: totals.escrowed_pending ?? 0,
 		},
 		blocks,
+	};
+}
+
+/**
+ * The owner's view of their on-chain door.
+ *
+ * `door` is the address they open, reprice and shut through their own wallet;
+ * three.ws cannot do any of it for them, which is the point. It is null until
+ * they set a Solana address, because the address is half of what derives it.
+ *
+ * The window band mirrors the program's own constants, so the settings UI can
+ * refuse an out-of-range value before a wallet is ever opened.
+ */
+function escrowView(door, handle) {
+	const owner = door.pay_to_solana || null;
+	return {
+		enabled: Boolean(door.escrow_enabled),
+		window_hours: Number(door.escrow_window_hours ?? 24),
+		min_window_hours: 1,
+		max_window_hours: 720,
+		program: KNOCK_ESCROW_PROGRAM_ID,
+		network: 'solana',
+		owner,
+		door: owner && handle ? doorPda(owner, doorId(handle)).toBase58() : null,
+		endpoint: handle ? `${env.APP_ORIGIN}/api/knock/escrowed` : null,
 	};
 }
