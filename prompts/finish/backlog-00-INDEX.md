@@ -40,7 +40,7 @@ observable health, so 01 to 03 come first.
 
 | # | Work order | Blocked on | Owner action needed |
 |---|---|---|---|
-| 01 | [x402 settle: clear `fee_runway_exhausted`](backlog-01-x402-settle-runway.md) | capital, and nothing else (every code and config line shipped 2026-09-02) | SOL to the economy master; the config levers are already applied |
+| 01 | [x402 settle: clear `fee_runway_exhausted`](backlog-01-x402-settle-runway.md) | capital and the deploy (three more code defects found and fixed 2026-09-04, incl. a thin top-up that funded the wrong wallet) | SOL to the economy master, and the deploy that carries the ordering fix; the config levers are already applied |
 | 05 | [R2 bucket CORS: verify, then fix at the origin](backlog-05-r2-bucket-cors.md) | one credential | mint an R2 admin token |
 | 07 | [BNB testnet: deploy the two finished contracts](backlog-07-bnb-testnet-deploys.md) | one funded EOA | send tBNB to `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (faucet is reCAPTCHA-gated) |
 | 08 | [OKX chat bot: move off the codespace](backlog-08-okx-chat-bot-always-on.md) | nothing | one email OTP login |
