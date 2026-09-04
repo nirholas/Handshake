@@ -485,15 +485,24 @@
 
 	// The cookie session is the source of truth: one fetch confirms it. On
 	// success applyData() starts the badge poll; a 401 drops to the signed-out
-	// state and leaves polling off. The auth hint just suppresses a guaranteed
-	// 401 for visibly-anonymous visitors who've never signed in.
+	// state and leaves polling off.
+	//
+	// Without a hint the session still has to be verified (the hint goes missing
+	// for real sessions after a storage clear), but asking the inbox directly
+	// spends a request every anonymous visitor is guaranteed to lose, and the
+	// browser logs the 401 in their console on every page of the site before any
+	// handler here can run. /api/auth/me answers 200 with { user: null } for an
+	// anonymous caller, so it settles the same question without the failure:
+	// only a confirmed session goes on to load the inbox.
 	if (authHint()) {
 		fetchList();
 	} else {
 		signedOut = true;
 		loaded = true;
 		updateBadge();
-		// Still verify via cookie in case the hint is stale/missing for a real session.
-		fetchList();
+		fetch('/api/auth/me', { headers: { accept: 'application/json' }, credentials: 'include' })
+			.then(function (r) { return r.ok ? r.json() : null; })
+			.then(function (data) { if (data && data.user) fetchList(); })
+			.catch(function () {});
 	}
 })();
