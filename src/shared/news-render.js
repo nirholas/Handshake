@@ -145,7 +145,10 @@ function pumpResolveQueue() {
 async function resolveMedia(el, link) {
 	try {
 		const res = await fetch(`/api/news/image?url=${encodeURIComponent(link)}`);
-		if (!res.ok) return; // no preview exists — the tile IS the design
+		// 204 is the resolver saying this article has no picture, which is an
+		// ordinary answer for about a fifth of the feed: the fallback tile IS the
+		// design. Any other non-ok status is a genuine miss and ends the same way.
+		if (res.status === 204 || !res.ok) return;
 		const blob = await res.blob();
 		if (!blob.type.startsWith('image/')) return;
 		const tile = el.querySelector('.nw-fallback');

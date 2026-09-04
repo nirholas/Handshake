@@ -14,8 +14,13 @@
 //      scheme allowlist, DNS + private-IP blocklist, byte cap, timeout),
 //      extracts its og:image / twitter:image, and 302s to /api/img — which
 //      serves the bytes same-origin, immune to hotlink-referrer blocks.
-//   4. If the page has no usable preview image, answers 404 (negatively
-//      cached) and the card keeps its designed fallback tile.
+//   4. If the page has no usable preview image, answers 204 No Content
+//      (negatively cached) and the card keeps its designed fallback tile. 204
+//      rather than 404 because "this article has no picture" is an ordinary,
+//      expected outcome for a fifth of the feed: a 404 makes the browser log a
+//      failed resource in every reader's console for a case the design already
+//      handles. A link we never served is still a 404, because that IS an
+//      error.
 //
 // Both outcomes are cached: in-process per article link, and at the CDN via
 // cache-control on the redirect/404 — one resolution per article, ever.
@@ -87,11 +92,12 @@ export default wrap(async (req, res) => {
 
 	const image = article.image || (await resolvePreviewImage(article));
 	if (!image) {
-		return json(
-			res, 404,
-			{ error: 'no_preview_image', error_description: 'the publisher page carries no preview image' },
-			{ 'cache-control': 'public, max-age=1800, s-maxage=3600' },
-		);
+		// No body: 204 is the whole answer, and it stays cacheable so an
+		// imageless article costs one resolution rather than one per render.
+		res.statusCode = 204;
+		res.setHeader('cache-control', 'public, max-age=1800, s-maxage=3600');
+		res.end();
+		return;
 	}
 
 	res.statusCode = 302;
