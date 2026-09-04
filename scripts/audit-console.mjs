@@ -316,7 +316,7 @@ async function checkRouteOnce(context, base, route) {
 		// ERR_ABORTED on a script/style usually follows a 4xx/5xx already recorded
 		// by the response handler — don't double-count.
 		if (errorText.includes('ERR_ABORTED')) return;
-		failedAssets.push(`${req.method()} ${rt} ${u.replace(base, '')} — ${errorText}`);
+		failedAssets.push(`${req.method()} ${rt} ${u.replace(base, '')}: ${errorText}`);
 	});
 
 	page.on('response', (res) => {
@@ -568,7 +568,7 @@ if (wantReport) {
 	mkdirSync(outDir, { recursive: true });
 	const outFile = join(outDir, `console-sweep-${date}.md`);
 	const lines = [];
-	lines.push(`# Console Sweep — ${date}`);
+	lines.push(`# Console Sweep: ${date}`);
 	lines.push('');
 	lines.push(
 		`Headless Chromium (Playwright) over ${rows.length} HTML routes from \`data/pages.json\` at ${viewportKeys.map((k) => VIEWPORTS[k].label).join(' and ')}. ` +
@@ -576,7 +576,7 @@ if (wantReport) {
 			`Environment noise (Vite HMR-proxy wss handshake, third-party telemetry, auth-gated \`/api\` 4xx, dev-origin CDN CORS) is filtered.`,
 	);
 	lines.push('');
-	lines.push(`**Result:** ${failing.length === 0 ? '✅ all routes clean' : `❌ ${failing.length} route(s) with errors`} — ${grandErrors} total error(s).`);
+	lines.push(`**Result:** ${failing.length === 0 ? '✅ all routes clean' : `❌ ${failing.length} route(s) with errors`}. ${grandErrors} total error(s).`);
 	lines.push('');
 	lines.push('## Per-route');
 	lines.push('');
