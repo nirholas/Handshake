@@ -76,21 +76,30 @@ holding 0.49 SOL, of which 0.35 SOL belongs to customers**. One of those custome
 agents is confirmed independently by production: it hit the withdraw path and
 `agent_custody_events` recorded `wallet_key_retired` against it.
 
-| Agent | Agent id | Address | SOL on chain (2026-09-02) | Owner |
+Both funded customer wallets are now named. The keyed audit was run against
+production on 2026-09-04 (`node scripts/audit-custodial-key-health.mjs --json`,
+read-only, key pulled from Secret Manager and never written to disk), which
+resolved the second one this table previously left blank.
+
+| Agent | Agent id | Address | SOL on chain (2026-09-04) | Owner |
 |---|---|---|---|---|
 | My First Agent | `5e05f68f-eead-4ef9-b6b4-fc85ea73bbe9` | `GemVS5fT958FKRe5fpgizohUYUKE8cUDueEdmB1bmXnm` | 0.250001 | `sol-240f8dec53dc5d72@wallet.local` (wallet-auth customer) |
+| Swarm Treasury (test) | `a20829e1-6dd7-4495-9141-8f5d69be86a9` | `HPL1LfuTdYDwtzJDzsnrmR2ngrrQwLTQyxJszCC4DHsN` | 0.100001 | `sol-4ac625e9b4d3ff8e@wallet.local` (wallet-auth customer) |
 
-The remaining customer balance (about 0.10 SOL) belongs to a second customer
-agent that has not attempted a withdrawal, so production has never named it in a
-log. Run the audit with the production key to print it:
+Customer total: **0.350002 SOL**, across exactly **two** accounts. That is the
+whole support obligation: two people, two destinations, one decision.
 
-```bash
-node scripts/audit-custodial-key-health.mjs --json \
-  | jq '.top_stranded[] | select(.platform == false)'
-```
+The 2026-09-04 sweep covered 735 custodial wallets and found 9 undecryptable (up
+one from the 8 measured 2026-08-09, because the sealed set grows only when an old
+record is newly touched, never because a new wallet is written under a dead key).
+Seven of the nine are customer wallets, but five of those hold nothing: only the
+two above carry a balance. The platform's own two are unchanged at 0.142875505
+SOL. `stranded_unread` is empty, so nothing is unaccounted for.
 
-That command is the only step in this brief that needs the key, and it is
-read-only.
+Re-running the audit needs `WALLET_ENCRYPTION_KEY` from the `three-ws-api`
+service (`node scripts/read-service-env.mjs '^WALLET_ENCRYPTION_KEY$' --raw`).
+That is the only step in this brief that needs the key, and it is read-only. The
+decision below does not wait on it: the table above is the measurement.
 
 ### What the customer sees today
 
