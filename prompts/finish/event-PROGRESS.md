@@ -590,3 +590,81 @@ Also: the wheel probe matched "emote wheel" before the Wheel of Fortune and sile
 **Remains.** Nothing in this order. Not deployed: pushes and production deploys are owner-gated, and the world-server change needs the multiplayer service redeployed for the handshake to take effect in production (the client half is inert until then, by design).
 
 **Not mine.** The full `vitest run` has 12 failures across 10 files, none in /play; `tests/cron-scheduler-sync.test.js` (documented cron count vs `vercel.json`) and `tests/api/x402-discovery-parity.test.js` sit on peers' in-flight work, and the latter passes in isolation. Every file I touched was swept into other agents' commits by their `git add -A` runs before I could stage it, which is why the SHAs above are mostly not mine; content verified intact at HEAD in each case.
+
+## 2026-09-04 · Order 02, follow-on pass: three defects inside the friends panel, and the harness bug that made every budget a fiction
+
+Run against HEAD after the 2026-09-02 closing entry above, on a box holding load 48 to 90 on
+16 cores all session. That entry and this one are complementary, not duplicates: it fixed the
+join-snapshot handshake and the friends *drawer* (chunk load, cancel on Escape); these are
+three separate defects in the panel *inside* that drawer, plus one in the harness itself.
+
+**The harness was reporting budgets it never used.** `waitFor` called
+`page.waitForFunction(pred, { timeout: left })`, but the signature is
+`waitForFunction(fn, arg, options)`, so the options object was the predicate's ARGUMENT and
+Playwright silently fell back to its 30s default. Every computed budget was fiction and the
+load scaling added on 2026-09-02 was inert. The desktop run printed the contradiction in one
+line: `LOADER NEVER CLEARED: Timeout 30000ms exceeded (after 30.0s of a 240s budget)`. Options
+now go in the third slot. `8052120c4`. The same mistake is live in three other scripts
+(`scripts/verify-ibm-pages.mjs:252`, `scripts/x402-modal-e2e.mjs:101,110`,
+`scripts/verify-sign-mirror.mjs:151`); left alone deliberately, because in two of them the
+accidental 30s is LONGER than the intended timeout and "fixing" it tightens someone else's
+verification without their say-so.
+
+**The friends panel printed a literal `null` on every open.** `render()` ended with
+`root.append(tabs, error ? banner : null, tabBody)`. `ParentNode.append()` takes
+`(Node or DOMString)`, so a null argument is stringified, not skipped. Confirmed directly in
+Chromium: `append(span, null, b)` yields `<span></span>null<b></b>`. Present on both `/play`
+and `/walk`, every open, whenever there was no error, which is the normal case.
+
+**An unreachable friends API said "No friends yet".** `friends.js` sets `loadError = 'network'`
+with `loaded = true`; `render()` branched only on `!loaded` and `'signin'`, so a failed read
+fell through to the empty state and told the player their graph was empty when we had merely
+failed to look. The file's own header claimed that state was designed. It now shows a
+retryable error, and if an earlier read succeeded it keeps that roster up and marks it stale
+rather than discarding a list the player can still act on.
+
+**Recovery was invisible.** After a failed read, a successful retry set `loadError = null` but
+only emitted when the graph *signature* changed, so recovering to an identical roster left the
+error card up forever. Recovery now counts as a state change. `2ec4ef743`.
+
+Reproduced and re-verified in a real browser on `/play` in the $THREE world with `/api/friends`
+aborted at the route. Before: `FriendsRequestsAdd` `null` `🫂No friends yet Search to add
+someone…`. After: `📡Could not reach your friends list. The connection dropped on the way.
+Nothing was lost, it just needs another go. [Try again]`. Servers 200 at both ends of both runs.
+
+**Server console.** `WalkRoom` still used the deprecated `room.send(client, type, payload)` at
+two call sites (the King of the Totem join sync, and the tag handover), so every ordinary join
+printed `DEPRECATION WARNING: use client.send(...)` onto the exact log a sweep reads to tell a
+real join failure from a healthy one. Both now call `client.send(...)`; the wire message is
+unchanged. Verified on the restarted server: 2 joins, 0 deprecation warnings. `938db1055`. The
+tag test stubbed the old `room.send` and so recorded nothing after the change; the recorder now
+lives on each fake client, assertions unchanged. `51efcaba4`.
+
+**Three runs captured** (desktop with `TAB_CHECK`, 375, 320), each bracketed by server-liveness
+checks that returned 200/200 at start and end. Lobby halves clean and consistent at all three
+widths: 21 cards, 0 skeletons, 7 presets, 0 focus stops without a ring, 0 refusing focus, 0
+touch targets under 40px, 0 network failures, CLS 0.0059 / 0.01 / 0.02, Escape closing the
+create and gallery modals at every width, and 25 Tab presses reaching 24 distinct controls with
+no trap. Logs in the session scratchpad under `runs/`.
+
+**Measured and deliberately not fixed.** `div.cc-label.npc-name` crossing a screen edge (at 375
+and at 320) is a nameplate tracking an NPC that is itself at the edge; clamping it would detach
+it from its subject. The residual `game:king` / `floor:beat` warnings trace to joins that never
+completed (`seat reservation expired`, status pill never reaching `online`), so the client's
+whole `onMessage` block never ran; that is this box, and `db189da99` / `d344945ee` are the real
+cure.
+
+**Remains, and why this prompt file stays on disk.** The order's first definition-of-done line
+is "three clean harness runs captured on a quiet box". Load never fell below 46 in this session
+and two of the three world halves ran against a client that never reached `online`, so that
+line did not pass for me and the order's own rule is "never delete this file on a partial". The
+lobby halves are sound at all three widths; the world half wants one re-run on a quiet box.
+
+**Not mine.** `npm run test:core`: 28,586 passed, 3 files failed. `tests/walkroom-tag.test.js`
+was mine and is fixed above. `tests/multiplayer-server-boot.test.js` passes in isolation (13
+tests) and failed only under parallel resource contention. `tests/audit-guards.test.js` is a
+peer's: `scripts/audit-ibm-hosted-page.mjs` landed in `cbf83b2a0` without a `data/guards.json`
+row. Vite was killed once mid-session when another agent's i18n build wrote a large temp tree
+into `scripts/.tmp-i18n-build/out/` and flooded the watcher; restarting it standalone rather
+than under `dev:walk-all` (which kills both servers when either exits) is what let the later
+runs finish.
