@@ -113,12 +113,9 @@
 	--shadow-3: 0 8px 32px rgba(0, 0, 0, 0.50), 0 1px 4px rgba(0, 0, 0, 0.20);
 
 	/* --- Skeleton ----------------------------------------------------------
-	 * Shared loading-shimmer treatment. Replaces hardcoded placeholder greys
-	 * (#2b2b2b / #3b3b3b) site-wide; monochrome so it reads on any dark surface.
+	 * The shimmer primitives moved to tokens.css (QB-07) so nav-only pages
+	 * resolve them too and they flip with the light theme. Consume the vars.
 	 */
-	--skeleton-base:   rgba(255, 255, 255, 0.04);
-	--skeleton-sheen:  rgba(255, 255, 255, 0.08);
-	--skeleton-radius: var(--radius-md);
 
 	/* --- Cards -------------------------------------------------------------
 	 * Glass-surface container with hover border lift and tasteful shadow.
@@ -160,7 +157,7 @@
 
 	/* Devnet / testnet badge (amber) */
 	--badge-devnet-bg:     rgba(251, 191, 36, 0.12);
-	--badge-devnet-fg:     #fbbf24;
+	--badge-devnet-fg:     var(--warn);
 	--badge-devnet-border: rgba(251, 191, 36, 0.32);
 
 	/* Informational / "New" badge (neutral) */
