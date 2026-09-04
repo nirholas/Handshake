@@ -1972,7 +1972,12 @@ function updateRefineButton() {
 	}
 }
 
-function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
+// `glbUrl` is what the VIEWER loads and `downloadUrl` is what the Download
+// button hands over. They differ for a re-opened creation that has a delivery
+// variant (api/_lib/forge-store.js): the viewer takes the phone-sized meshopt +
+// WebP build, the download always takes the full-resolution original. For a
+// fresh generation there is only one URL and they are the same.
+function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null } = {}) {
 	stopElapsed();
 	// Every entry into the result state starts with no directed-prompt reveal:
 	// only a fresh generation whose response carried one re-opens it (run()
@@ -2032,7 +2037,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 		els.materialize.href = `/materialize${handle}`;
 		els.materialize.hidden = false;
 	}
-	els.download.href = glbUrl;
+	els.download.href = downloadUrl || glbUrl;
 	els.download.setAttribute(
 		'download',
 		`${
@@ -2296,14 +2301,19 @@ function removeCreationFromGallery(id, cell) {
 function openCreation(c, { scroll = true } = {}) {
 	currentCreationId = c.id;
 	lastJob = { prompt: c.prompt || '', imageUrls: [] };
-	showResult(c.glb_url, c.prompt || 'Forged model', {
-		views_used: c.views_used,
-		multiview: c.multiview,
-		backend: c.backend,
-		tier: c.tier,
-		path: c.path,
-		creatorUsername: c.creatorUsername || null,
-	});
+	showResult(
+		c.web_glb_url || c.glb_url,
+		c.prompt || 'Forged model',
+		{
+			views_used: c.views_used,
+			multiview: c.multiview,
+			backend: c.backend,
+			tier: c.tier,
+			path: c.path,
+			creatorUsername: c.creatorUsername || null,
+		},
+		{ downloadUrl: c.glb_url },
+	);
 	if (els.verdict) {
 		for (const b of els.verdict.querySelectorAll('button')) {
 			b.setAttribute('aria-pressed', String(b.dataset.outcome === c.outcome));

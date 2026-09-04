@@ -316,6 +316,7 @@
 		"build:extension:prod": "node scripts/build-extension-icons.mjs && node scripts/build-extension.mjs --prod",
 		"optimize:glb": "node scripts/optimize-glb.mjs",
 		"compress:glbs": "node scripts/compress-glbs.mjs",
+		"vendor:meshopt": "node scripts/vendor-meshopt-decoder.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",
 		"fetch:mixamo-catalog": "node scripts/fetch-mixamo-catalog.mjs",
 		"mixamo:catalog": "node scripts/mixamo-all.mjs --catalog",
