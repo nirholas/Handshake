@@ -5,6 +5,26 @@
 			"code": "en",
 			"name": "English",
 			"dir": "ltr"
+		},
+		{
+			"code": "fr",
+			"name": "Français",
+			"dir": "ltr"
+		},
+		{
+			"code": "sr",
+			"name": "Српски",
+			"dir": "ltr"
+		},
+		{
+			"code": "sq",
+			"name": "Shqip",
+			"dir": "ltr"
+		},
+		{
+			"code": "bs",
+			"name": "Bosanski",
+			"dir": "ltr"
 		}
 	]
 }

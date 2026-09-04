@@ -4148,6 +4148,7 @@
 		"meta_title": "Détenteurs de $THREE · Tableau de bord · three.ws"
 	},
 	"dashboard_next_index": {
+		"meta_description": "Your three.ws dashboard overview: 3D agents and avatars, widget views and chat activity, earnings and payments, API keys, MCP servers, monetization, and billing, all in one place.",
 		"meta_title": "Aperçu · Tableau de bord · three.ws"
 	},
 	"dashboard_next_irl_placements": {
@@ -4172,6 +4173,7 @@
 		"meta_title": "Parrainages · Tableau de bord · three.ws"
 	},
 	"dashboard_next_settings": {
+		"meta_description": "Your three.ws dashboard settings: avatar storage modes (R2 vs IPFS), active sessions, your notification inbox, per-category notification channels for in-app, push, email and Telegram, plus appearance and dashboard preferences.",
 		"meta_title": "Paramètres · Tableau de bord · three.ws"
 	},
 	"dashboard_next_sniper": {
