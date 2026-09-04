@@ -20,7 +20,7 @@ import {
 describe('OpenRouter is free only on its :free routes', () => {
 	it('prices a :free model at 0 on every key rung', () => {
 		for (const provider of ['openrouter', 'openrouter#2', 'openrouter#3']) {
-			expect(costMicroUsd({ provider, model: 'openai/gpt-oss-20b:free', input: 100_000, output: 50_000 })).toBe(0);
+			expect(costMicroUsd({ provider, model: 'google/gemma-4-31b-it:free', input: 100_000, output: 50_000 })).toBe(0);
 		}
 	});
 
@@ -52,11 +52,11 @@ describe('OpenRouter is free only on its :free routes', () => {
 	});
 
 	it('classifies lanes: :free is free, a mirror is not', () => {
-		expect(isFreeLane('openrouter', 'openai/gpt-oss-20b:free')).toBe(true);
-		expect(isFreeLane('openrouter#2', 'openai/gpt-oss-20b:free')).toBe(true);
+		expect(isFreeLane('openrouter', 'google/gemma-4-31b-it:free')).toBe(true);
+		expect(isFreeLane('openrouter#2', 'google/gemma-4-31b-it:free')).toBe(true);
 		expect(isFreeLane('openrouter', 'anthropic/claude-sonnet-5')).toBe(false);
 		expect(isFreeLane('openrouter', 'ibm-granite/granite-4.1-8b')).toBe(false);
-		expect(isOpenRouterFreeModel('openai/gpt-oss-20b:free')).toBe(true);
+		expect(isOpenRouterFreeModel('google/gemma-4-31b-it:free')).toBe(true);
 		expect(isOpenRouterFreeModel('anthropic/claude-opus-5')).toBe(false);
 		expect(openRouterBaseId('anthropic/claude-opus-5')).toBe('claude-opus-5');
 		expect(openRouterBaseId('grok-4.5')).toBe('grok-4.5');
@@ -113,6 +113,6 @@ describe('a provider-reported cost outranks the table', () => {
 	});
 
 	it('a reported 0 on a free route is a real zero, not unknown', () => {
-		expect(costMicroUsd({ provider: 'openrouter', model: 'openai/gpt-oss-20b:free', input: 10, output: 10, reportedCostUsd: 0 })).toBe(0);
+		expect(costMicroUsd({ provider: 'openrouter', model: 'google/gemma-4-31b-it:free', input: 10, output: 10, reportedCostUsd: 0 })).toBe(0);
 	});
 });

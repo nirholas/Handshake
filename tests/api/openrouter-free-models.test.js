@@ -23,7 +23,7 @@ const LIVE = {
 		{ id: 'paid/model', context_length: 999999, supported_parameters: ['tools'] },
 		{ id: 'zz/no-tools:free', context_length: 900000, supported_parameters: [] },
 		{ id: 'google/gemma-4-31b-it:free', context_length: 262144, supported_parameters: ['tools'] },
-		{ id: 'openai/gpt-oss-20b:free', context_length: 131072, supported_parameters: ['tools'] },
+		{ id: 'google/gemma-4-31b-it:free', context_length: 131072, supported_parameters: ['tools'] },
 	],
 };
 
@@ -47,7 +47,7 @@ afterEach(() => {
 
 describe('isFreeModelId', () => {
 	it('accepts only :free ids', () => {
-		expect(isFreeModelId('openai/gpt-oss-20b:free')).toBe(true);
+		expect(isFreeModelId('google/gemma-4-31b-it:free')).toBe(true);
 		expect(isFreeModelId('openai/gpt-oss-120b')).toBe(false);
 		expect(isFreeModelId(null)).toBe(false);
 		expect(isFreeModelId(undefined)).toBe(false);
@@ -63,10 +63,10 @@ describe('rankFreeModels', () => {
 	it('prefers the gpt-oss family, then gemma, among tool-capable models', () => {
 		const ranked = rankFreeModels([
 			{ id: 'google/gemma-4-31b-it:free', context_length: 262144, supported_parameters: ['tools'] },
-			{ id: 'openai/gpt-oss-20b:free', context_length: 131072, supported_parameters: ['tools'] },
+			{ id: 'google/gemma-4-31b-it:free', context_length: 131072, supported_parameters: ['tools'] },
 		]);
 		expect(ranked.map((m) => m.id)).toEqual([
-			'openai/gpt-oss-20b:free',
+			'google/gemma-4-31b-it:free',
 			'google/gemma-4-31b-it:free',
 		]);
 	});
@@ -133,7 +133,7 @@ describe('isLiveFreeModel', () => {
 
 	it('accepts an id OpenRouter is serving', async () => {
 		vi.stubGlobal('fetch', mockFetch(LIVE));
-		expect(await isLiveFreeModel('openai/gpt-oss-20b:free')).toBe(true);
+		expect(await isLiveFreeModel('google/gemma-4-31b-it:free')).toBe(true);
 	});
 
 	it('does not declare a model dead during our own outage', async () => {
@@ -150,12 +150,12 @@ describe('isLiveFreeModel', () => {
 describe('pickDefaultFreeModel', () => {
 	it('returns the best-ranked live model', async () => {
 		vi.stubGlobal('fetch', mockFetch(LIVE));
-		expect(await pickDefaultFreeModel()).toBe('openai/gpt-oss-20b:free');
+		expect(await pickDefaultFreeModel()).toBe('google/gemma-4-31b-it:free');
 	});
 
 	it('skips excluded ids so a failed model is not retried', async () => {
 		vi.stubGlobal('fetch', mockFetch(LIVE));
-		expect(await pickDefaultFreeModel({ exclude: ['openai/gpt-oss-20b:free'] })).toBe(
+		expect(await pickDefaultFreeModel({ exclude: ['google/gemma-4-31b-it:free'] })).toBe(
 			'google/gemma-4-31b-it:free',
 		);
 	});

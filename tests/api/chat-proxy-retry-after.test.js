@@ -97,7 +97,7 @@ function quotaCapped(resetEpochMs, { retryAfterHeader = null } = {}) {
 async function send(upstream) {
 	fetchMock.mockResolvedValue(upstream);
 	const res = makeRes();
-	await handler(makeReq({ model: 'openai/gpt-oss-20b:free', messages: [] }), res);
+	await handler(makeReq({ model: 'google/gemma-4-31b-it:free', messages: [] }), res);
 	return res;
 }
 

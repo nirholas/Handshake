@@ -59,8 +59,8 @@ vi.mock('../../api/_lib/env.js', () => ({
 }));
 
 vi.mock('../../api/_lib/openrouter-free.js', () => ({
-	isLiveFreeModel: async (id) => id === 'openai/gpt-oss-20b:free',
-	pickDefaultFreeModel: async () => 'openai/gpt-oss-20b:free',
+	isLiveFreeModel: async (id) => id === 'google/gemma-4-31b-it:free',
+	pickDefaultFreeModel: async () => 'google/gemma-4-31b-it:free',
 }));
 
 vi.mock('../../api/_lib/sentry.js', () => ({ captureException: vi.fn() }));
@@ -118,7 +118,7 @@ const VALID = {
 	name: 'three.ws chat',
 	accent_color: '#6366f1',
 	tagline: 'Chat with any AI model',
-	default_model: 'openai/gpt-oss-20b:free',
+	default_model: 'google/gemma-4-31b-it:free',
 };
 
 beforeEach(() => {
@@ -130,7 +130,7 @@ beforeEach(() => {
 		logo_url: null,
 		accent_color: '#000000',
 		tagline: 'seeded tagline',
-		default_model: 'openai/gpt-oss-20b:free',
+		default_model: 'google/gemma-4-31b-it:free',
 		agent_id: null,
 		system_prompt: 'seeded prompt',
 		admin_key: ADMIN_KEY,
@@ -219,6 +219,6 @@ describe('GET /api/chat/config', () => {
 		store.default_model = 'google/gemini-2.0-flash-exp:free';
 		const res = makeRes();
 		await handler(makeReq({ method: 'GET' }), res);
-		expect(JSON.parse(res.body).data.default_model).toBe('openai/gpt-oss-20b:free');
+		expect(JSON.parse(res.body).data.default_model).toBe('google/gemma-4-31b-it:free');
 	});
 });

@@ -27,7 +27,7 @@ describe('llm-pricing — paid Granite lane', () => {
 
 describe('llm-pricing — free lanes stay zero', () => {
 	it('free OpenRouter models are still $0', () => {
-		expect(costMicroUsd({ provider: 'openrouter', model: 'openai/gpt-oss-20b:free', input: M, output: M })).toBe(0);
+		expect(costMicroUsd({ provider: 'openrouter', model: 'google/gemma-4-31b-it:free', input: M, output: M })).toBe(0);
 	});
 
 	it('the free Gemini tier is still $0 (invariant not broken by the paid override)', () => {

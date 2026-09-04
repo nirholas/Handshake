@@ -55,8 +55,8 @@ describe('genuinely free lanes may report $0', () => {
 	for (const [provider, model] of [
 		['groq', 'llama-3.3-70b-versatile'],
 		['groq#instant', 'llama-3.1-8b-instant'],
-		['openrouter', 'openai/gpt-oss-20b:free'],
-		['openrouter#3', 'openai/gpt-oss-20b:free'],
+		['openrouter', 'google/gemma-4-31b-it:free'],
+		['openrouter#3', 'google/gemma-4-31b-it:free'],
 		['nvidia', 'meta/llama-3.3-70b-instruct'],
 		['ovh', 'Meta-Llama-3_3-70B-Instruct'],
 		['pollinations', 'openai-fast'],

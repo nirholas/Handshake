@@ -59,7 +59,7 @@ describe('a /brain turn on a paid mirror is priced, not zeroed', () => {
 	});
 
 	it('still prices the free default route at zero', () => {
-		expect(costMicroUsd({ provider: 'openrouter', model: 'openai/gpt-oss-20b:free', input: 2_000, output: 800 })).toBe(0);
+		expect(costMicroUsd({ provider: 'openrouter', model: 'google/gemma-4-31b-it:free', input: 2_000, output: 800 })).toBe(0);
 	});
 
 	it('prices the credits-funded Vertex Gemini anchor rather than treating it as free', () => {

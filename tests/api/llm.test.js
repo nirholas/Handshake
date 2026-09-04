@@ -107,7 +107,9 @@ describe('llmComplete — free platform providers', () => {
 		const out = await llm.llmComplete({ system: 's', user: 'u' });
 		expect(out.provider).toBe('openrouter');
 		expect(out.text).toBe('from openrouter');
-		expect(calls.map((c) => c.url.includes(GROQ_HOST) ? 'groq' : 'or')).toEqual(['groq', 'or']);
+		// Groq contributes TWO rungs (per-model token buckets: qwen3.8-27b, then
+		// gpt-oss-120b), so a host-level 500 costs two attempts before OpenRouter.
+		expect(calls.map((c) => c.url.includes(GROQ_HOST) ? 'groq' : 'or')).toEqual(['groq', 'groq', 'or']);
 	});
 
 	it('falls back to NVIDIA NIM when Groq and OpenRouter both fail', async () => {
@@ -198,8 +200,8 @@ describe('llmComplete — multiple OpenRouter keys', () => {
 		// model). The primary key's :free rung 402s here, so the chain rotates to the
 		// fallback key's :free model.
 		expect(calls).toEqual([
-			{ auth: 'Bearer or-primary', model: 'openai/gpt-oss-20b:free' },
-			{ auth: 'Bearer or-fallback', model: 'openai/gpt-oss-20b:free' },
+			{ auth: 'Bearer or-primary', model: 'google/gemma-4-31b-it:free' },
+			{ auth: 'Bearer or-fallback', model: 'google/gemma-4-31b-it:free' },
 		]);
 	});
 
@@ -590,7 +592,8 @@ describe('llmComplete — failure modes', () => {
 		const out = await llm.llmComplete({ system: 's', user: 'u' });
 		expect(out.provider).toBe('openrouter');
 		expect(out.text).toBe('openrouter rescues');
-		expect(calls.map((c) => (c.url.includes(GROQ_HOST) ? 'groq' : 'or'))).toEqual(['groq', 'or']);
+		// Both Groq rungs serve the HTML error page before OpenRouter rescues.
+		expect(calls.map((c) => (c.url.includes(GROQ_HOST) ? 'groq' : 'or'))).toEqual(['groq', 'groq', 'or']);
 	});
 
 	it('surfaces upstream_bad_body as the last error when every provider returns an unparseable 200', async () => {
@@ -624,7 +627,8 @@ describe('llmComplete — failure modes', () => {
 		const out = await llm.llmComplete({ system: 's', user: 'u' });
 		expect(out.provider).toBe('openrouter');
 		expect(out.text).toBe('a real answer');
-		expect(calls.map((c) => (c.url.includes(GROQ_HOST) ? 'groq' : 'or'))).toEqual(['groq', 'or']);
+		// Both Groq rungs return the empty completion before OpenRouter serves.
+		expect(calls.map((c) => (c.url.includes(GROQ_HOST) ? 'groq' : 'or'))).toEqual(['groq', 'groq', 'or']);
 	});
 
 	// When EVERY provider only yields empty text, returning that empty-but-valid

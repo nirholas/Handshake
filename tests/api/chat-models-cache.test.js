@@ -12,7 +12,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 // reference on purpose, exactly like the real one, so a mutating handler shows
 // up here as a changed array.
 const cachedModels = [
-	{ id: 'openai/gpt-oss-20b:free', name: 'gpt-oss-20b (free)' },
+	{ id: 'google/gemma-4-31b-it:free', name: 'gpt-oss-20b (free)' },
 	{ id: 'google/gemma-4-31b-it:free', name: 'Gemma 4 31B (free)' },
 ];
 
@@ -69,7 +69,7 @@ async function get() {
 beforeEach(() => {
 	cachedModels.length = 0;
 	cachedModels.push(
-		{ id: 'openai/gpt-oss-20b:free', name: 'gpt-oss-20b (free)' },
+		{ id: 'google/gemma-4-31b-it:free', name: 'gpt-oss-20b (free)' },
 		{ id: 'google/gemma-4-31b-it:free', name: 'Gemma 4 31B (free)' },
 	);
 });
@@ -80,7 +80,7 @@ describe('GET /api/chat/models', () => {
 		expect(res.statusCode).toBe(200);
 		expect(data.filter((m) => m.id === 'three-ws/agent')).toHaveLength(1);
 		expect(data.map((m) => m.id)).toEqual([
-			'openai/gpt-oss-20b:free',
+			'google/gemma-4-31b-it:free',
 			'google/gemma-4-31b-it:free',
 			'three-ws/agent',
 		]);
@@ -88,7 +88,7 @@ describe('GET /api/chat/models', () => {
 
 	it('never becomes the default: the agent entry is last, never first', async () => {
 		const { data } = await get();
-		expect(data[0].id).toBe('openai/gpt-oss-20b:free');
+		expect(data[0].id).toBe('google/gemma-4-31b-it:free');
 		expect(data.at(-1).id).toBe('three-ws/agent');
 	});
 
@@ -98,7 +98,7 @@ describe('GET /api/chat/models', () => {
 		await get();
 		// The cache still holds only the two real free models it started with.
 		expect(cachedModels.map((m) => m.id)).toEqual([
-			'openai/gpt-oss-20b:free',
+			'google/gemma-4-31b-it:free',
 			'google/gemma-4-31b-it:free',
 		]);
 	});

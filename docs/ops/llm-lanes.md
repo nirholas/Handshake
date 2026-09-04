@@ -19,21 +19,22 @@ production are routinely dead and a chain that depends on them fails:
 
 | # | Rung | Key | Cost to us | State |
 |---|---|---|---|---|
-| 1 | Groq `llama-3.3-70b-versatile` | `GROQ_API_KEY` | free | **serving** (200, ~1.0s, 2026-08-02) |
+| 1 | Groq `qwen/qwen3.8-27b` | `GROQ_API_KEY` | free | **serving** (200, ~0.4s, 2026-09-04). Capped at 8,000 tokens/MINUTE, which is ~3 fact-check stance calls: a burst falls past it while it is perfectly healthy. |
+| 1b | Groq `openai/gpt-oss-120b` | `GROQ_API_KEY` | free | **serving** (200, ~1.4s, 2026-09-04). Added 2026-09-04. Same key, separate 8,000 tok/min bucket, because Groq meters per model id. |
 | 2 | Cerebras `llama-3.3-70b` | `CEREBRAS_API_KEY` | free | not configured in prod |
-| 3 | OpenRouter `:free` routes, one rung per key | `OPENROUTER_API_KEY`, `OPENROUTER_FALLBACK_KEYS` | free | **serving** on the fallback keys (2026-08-02) |
-| 4 | NVIDIA NIM `meta/llama-3.3-70b-instruct` | `NVIDIA_API_KEY` | free | 429 (rate limited at probe time, 2026-08-02) |
+| 3 | OpenRouter `:free` routes, one rung per key | `OPENROUTER_API_KEY`, `OPENROUTER_FALLBACK_KEYS` | free | **model id was dead 2026-09-04**: `openai/gpt-oss-20b:free` was retired and 404'd all five rungs at once (fixed, now `google/gemma-4-31b-it:free`). The account is separately capped at 1,000 free-model requests/DAY across every key (they share one owner), and was at 0 remaining when measured. |
+| 4 | NVIDIA NIM `nvidia/nemotron-3-super-120b-a12b` | `NVIDIA_API_KEY` | free | **serving** (200, 1.8s-10.5s on a full-size prompt, 2026-09-04). Carried the whole platform on 2026-09-04 when Groq was token-capped, OpenRouter was dead, and both paid anchors were on billing holds. |
 | 5 | SambaNova `Meta-Llama-3.3-70B-Instruct` | `SAMBANOVA_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
 | 6 | Mistral `mistral-small-latest` (Experiment tier) | `MISTRAL_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
 | 7 | Z.AI `glm-4.7-flash` | `ZAI_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
 | 8 | Cloudflare Workers AI `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_AI_API_TOKEN` | free | added 2026-08-05; skipped when either is unset |
 | 9 | OVH AI Endpoints `Meta-Llama-3_3-70B-Instruct` | none (keyless) | free | **serving** (200, ~1.2s, 2026-08-02) |
 | 10 | Gemini Flash-Lite (AI Studio) | `GEMINI_API_KEY` | free | not configured in prod |
-| 11 | **Vertex Gemini Flash** | GCP service account | GCP credits | **serving**, the reliability anchor |
+| 11 | **Vertex Gemini Flash** | GCP service account | GCP credits | **dead**: 403 `Lightning dunning decision is deny for project` since 2026-08-27, re-measured 2026-09-04. A billing hold on the whole GCP project, not IAM. This is the chain's designed anchor, so while it is down the free rungs above it are load-bearing rather than best-effort. |
 | 12 | Pollinations `openai-fast` | none (keyless) | free | **serving** (200, ~3.7s, 2026-08-02) |
 | 13 | LLM7.io `gemini-3.1-flash-lite` | `LLM7_API_KEY` | free | **dead without a key**: llm7.io retired the anonymous tier it was added on, and every unauthenticated call answers 401 `invalid_api_key` (measured 2026-09-02, the `unused` token its docs used to accept included). Key-gated since, so a deployment without the key skips it. Free key at https://dash.llm7.io/#/api-keys |
 | 14 | SiliconFlow `Qwen/Qwen3-8B` | `SILICONFLOW_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
-| 15 | Groq `llama-3.1-8b-instant` | `GROQ_API_KEY` | free | serving (separate per-model quota) |
+| 15 | Groq `openai/gpt-oss-20b` | `GROQ_API_KEY` | free | serving (a third separate per-model quota) |
 | 16 | Vertex Claude | GCP service account + `VERTEX_CLAUDE_ENABLED=1` | GCP credits | **off and unentitled** (see below) |
 | 17 | Anthropic first-party | `ANTHROPIC_API_KEY` | paid | **absent** (no key anywhere) |
 | 18 | OpenRouter Claude mirror | `OPENROUTER_CLAUDE_MIRROR_MODEL` | paid | off by default (see below) |

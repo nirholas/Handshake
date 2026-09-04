@@ -250,7 +250,7 @@ describe('anthropic-proxy (api/llm/anthropic.js): model fallback anchor', () => 
 	it('appends the anchor model as the final fallback when a GCP project is set', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		setAllProviderKeys();
-		const chain = modelFallbackChain('openai/gpt-oss-20b:free');
+		const chain = modelFallbackChain('google/gemma-4-31b-it:free');
 		expect(chain[chain.length - 1]).toBe('google/gemini-2.5-flash');
 		// Paid Anthropic stays ahead of it; the anchor is strictly last resort.
 		expect(chain.indexOf('claude-haiku-4-5-20251001')).toBeLessThan(
@@ -272,7 +272,7 @@ describe('anthropic-proxy (api/llm/anthropic.js): model fallback anchor', () => 
 	});
 
 	it('without a GCP project the anchor neither resolves nor joins the chain', () => {
-		const chain = modelFallbackChain('openai/gpt-oss-20b:free');
+		const chain = modelFallbackChain('google/gemma-4-31b-it:free');
 		expect(chain).not.toContain('google/gemini-2.5-flash');
 		expect(resolveModelRoute('google/gemini-2.5-flash')).toBeNull();
 	});

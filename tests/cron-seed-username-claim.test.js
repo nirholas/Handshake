@@ -51,8 +51,8 @@ test('candidates never repeat a name the caller reported as taken', () => {
 // free-model-audit: the verdict that pages ops, and the one that must not.
 test('a hardcoded id missing from the live list is reported dead', () => {
 	const result = diffFreeModels(
-		['openai/gpt-oss-20b:free', 'inclusionai/ling-3.0-flash:free'],
-		['openai/gpt-oss-20b:free', 'google/gemma-4-31b-it:free'],
+		['google/gemma-4-31b-it:free', 'inclusionai/ling-3.0-flash:free'],
+		['google/gemma-4-31b-it:free', 'meta-llama/llama-3.3-70b-instruct:free'],
 	);
 	expect(result.status).toBe('dead_rungs');
 	expect(result.dead).toEqual(['inclusionai/ling-3.0-flash:free']);
@@ -63,7 +63,7 @@ test('a hardcoded id missing from the live list is reported dead', () => {
 // live list, and calling every model dead on our own outage would page ops with
 // a false alarm and invite a pointless catalog rewrite.
 test('an empty live list is unknown, never a dead verdict', () => {
-	const result = diffFreeModels(['openai/gpt-oss-20b:free'], []);
+	const result = diffFreeModels(['google/gemma-4-31b-it:free'], []);
 	expect(result.status).toBe('unknown');
 	expect(result.dead).toEqual([]);
 	expect(result.checked).toBe(1);

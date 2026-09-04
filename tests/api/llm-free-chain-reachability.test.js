@@ -166,8 +166,14 @@ describe('free chain: every rung is reachable through a transport-level failure'
 				expect(idx, `unexpected fetch: ${u} (${requested})`).toBeGreaterThanOrEqual(0);
 				tried.push(FREE_CHAIN[idx].provider);
 				// A rung above the target dies at the transport level. Alternate the
-				// two shapes so both a dropped socket and an abort are covered.
-				if (idx < i) throw transportFailure(idx % 2 === 0 ? 'reset' : 'abort');
+				// two shapes so both a dropped socket and an abort are covered, but
+				// never abort a rung that SHARES the target's host. llmComplete treats
+				// an abort as a host stall and then skips every later rung on that
+				// host, which is deliberate (three Groq rungs must not each burn the
+				// budget while api.groq.com is hanging) and would make this case
+				// measure the stall guard instead of chain reachability.
+				const sameHost = FREE_CHAIN[idx].host === rung.host;
+				if (idx < i) throw transportFailure(!sameHost && idx % 2 === 1 ? 'abort' : 'reset');
 				return okOpenAiShape(`served by ${FREE_CHAIN[idx].provider}`, rung.model);
 			});
 

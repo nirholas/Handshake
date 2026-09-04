@@ -169,13 +169,13 @@ describe('providerChain ordering under the four flag combinations', () => {
 	// vertex-gemini reliability rung after the free lanes, plus groq#instant as
 	// the free-tier capability step-down — both precede the paid backstops.
 	it('off/off: no vertex-CLAUDE lane; free lanes → vertex-gemini → step-down → paid tail', () => {
-		expect(names()).toEqual(['groq', 'ovh', 'vertex-gemini', 'pollinations', 'groq#instant', 'anthropic']);
+		expect(names()).toEqual(['groq', 'groq#120b', 'ovh', 'vertex-gemini', 'pollinations', 'groq#instant', 'anthropic']);
 	});
 
 	it('enabled/off: vertex claude is a paid backstop AHEAD of first-party anthropic, behind free lanes', () => {
 		process.env.VERTEX_CLAUDE_ENABLED = '1';
 		const n = names();
-		expect(n).toEqual(['groq', 'ovh', 'vertex-gemini', 'pollinations', 'groq#instant', 'vertex-anthropic', 'anthropic']);
+		expect(n).toEqual(['groq', 'groq#120b', 'ovh', 'vertex-gemini', 'pollinations', 'groq#instant', 'vertex-anthropic', 'anthropic']);
 		expect(n.indexOf('groq')).toBeLessThan(n.indexOf('vertex-anthropic'));
 		expect(n.indexOf('vertex-anthropic')).toBeLessThan(n.indexOf('anthropic'));
 	});
@@ -192,7 +192,7 @@ describe('providerChain ordering under the four flag combinations', () => {
 
 	it('primary flag alone (enabled unset) adds no vertex-claude lane', () => {
 		process.env.VERTEX_CLAUDE_PRIMARY = '1';
-		expect(names()).toEqual(['groq', 'ovh', 'vertex-gemini', 'pollinations', 'groq#instant', 'anthropic']);
+		expect(names()).toEqual(['groq', 'groq#120b', 'ovh', 'vertex-gemini', 'pollinations', 'groq#instant', 'anthropic']);
 	});
 
 	it('a caller BYOK key still leads even when vertex is primary', () => {
@@ -214,7 +214,7 @@ describe('providerChain free-tier resilience rungs', () => {
 	it('the OpenRouter host-key rung uses the :free model — never the paid tier', () => {
 		const chain = providerChain();
 		const or = chain.find((p) => p.name === 'openrouter');
-		expect(or.model).toBe('openai/gpt-oss-20b:free');
+		expect(or.model).toBe('google/gemma-4-31b-it:free');
 		// The host key must never bill a paid OpenRouter model: no paid rung, and no
 		// separate openrouter:free rung (the single rung is already :free).
 		expect(chain.some((p) => p.model === 'meta-llama/llama-3.3-70b-instruct')).toBe(false);

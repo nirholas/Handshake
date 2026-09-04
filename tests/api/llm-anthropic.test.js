@@ -253,7 +253,7 @@ const DEFAULT_POLICY = {
 		proxy_url: null,
 		monthly_quota: 1000,
 		rate_limit_per_min: 10,
-		model: 'openai/gpt-oss-20b:free',
+		model: 'google/gemma-4-31b-it:free',
 	},
 	storage: { primary: 'r2', pinned_ipfs: false, onchain_attested: false },
 };
@@ -531,24 +531,24 @@ describe('/api/llm/anthropic: paid-model clamp', () => {
 	});
 
 	it('caller-supplied free model overrides the policy default', async () => {
-		policyState.policy.brain.model = 'openai/gpt-oss-20b:free';
+		policyState.policy.brain.model = 'google/gemma-4-31b-it:free';
 		await invoke({ body: { ...VALID_BODY, model: 'llama-3.3-70b-versatile' } });
 		const sentBody = JSON.parse(fetchState.calls[0].init.body);
 		expect(sentBody.model).toBe('llama-3.3-70b-versatile');
 	});
 
 	it('clamps a caller-requested paid model back to the policy model', async () => {
-		policyState.policy.brain.model = 'openai/gpt-oss-20b:free';
+		policyState.policy.brain.model = 'google/gemma-4-31b-it:free';
 		await invoke({ body: { ...VALID_BODY, model: 'claude-opus-5' } });
 		const sentBody = JSON.parse(fetchState.calls[0].init.body);
-		expect(sentBody.model).toBe('openai/gpt-oss-20b:free');
+		expect(sentBody.model).toBe('google/gemma-4-31b-it:free');
 	});
 
 	it('clamps a paid model on the free default policy too', async () => {
 		delete policyState.policy.brain.model;
 		await invoke({ body: { ...VALID_BODY, model: 'grok-4.5' } });
 		const sentBody = JSON.parse(fetchState.calls[0].init.body);
-		expect(sentBody.model).toBe('openai/gpt-oss-20b:free');
+		expect(sentBody.model).toBe('google/gemma-4-31b-it:free');
 	});
 });
 
@@ -642,7 +642,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 			body: {
 				...VALID_BODY,
 				system: SYSTEM,
-				model: 'openai/gpt-oss-20b:free',
+				model: 'google/gemma-4-31b-it:free',
 			},
 		});
 		const call = fetchState.calls[0];
@@ -665,7 +665,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 		// it walks the chain and serves from the next configured lane.
 		delete process.env.OPENROUTER_API_KEY;
 		const { status } = await invoke({
-			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
+			body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free' },
 		});
 		expect(status).toBe(200);
 		// Every attempted call skipped the unkeyed OpenRouter lane.
@@ -690,7 +690,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 			});
 		};
 		const { status } = await invoke({
-			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
+			body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free' },
 		});
 		expect(status).toBe(200);
 		expect(fetchState.calls.length).toBeGreaterThan(1);
@@ -704,7 +704,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 		delete process.env.ANTHROPIC_API_KEY;
 		try {
 			const { status, body } = await invoke({
-				body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
+				body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free' },
 			});
 			expect(status).toBe(503);
 			expect(body.error).toBe('provider_unavailable');
@@ -725,7 +725,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		try {
 			const { status, body } = await invoke({
-				body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
+				body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free' },
 			});
 			expect(status).toBe(200);
 			const call = fetchState.calls[0];
@@ -746,7 +746,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 		await invoke({
 			body: {
 				system: SYSTEM,
-				model: 'openai/gpt-oss-20b:free',
+				model: 'google/gemma-4-31b-it:free',
 				max_tokens: 256,
 				temperature: 0.4,
 				messages: [
@@ -784,7 +784,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 			},
 		});
 		const sent = JSON.parse(fetchState.calls[0].init.body);
-		expect(sent.model).toBe('openai/gpt-oss-20b:free');
+		expect(sent.model).toBe('google/gemma-4-31b-it:free');
 		expect(sent.max_tokens).toBe(256);
 		expect(sent.temperature).toBe(0.4);
 		// System collapses into the first message.
@@ -862,7 +862,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 				usage: { prompt_tokens: 4, completion_tokens: 5 },
 			});
 		const { body } = await invoke({
-			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
+			body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free' },
 		});
 		expect(body.content).toEqual([
 			{ type: 'tool_use', id: 'call_1', name: 'getTime', input: { tz: 'UTC' } },
@@ -872,7 +872,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 
 	it('debits OpenAI-shape token usage (prompt + completion) onto the agent', async () => {
 		await invoke({
-			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
+			body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free' },
 		});
 		const monthKey = new Date().toISOString().slice(0, 7);
 		expect(redisStore.get(`llm:tokens:agent-1:${monthKey}`)).toBe(16);
@@ -880,7 +880,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 
 	it('records usage with the upstream provider tag', async () => {
 		await invoke({
-			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
+			body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free' },
 		});
 		expect(usageEvents[0]).toMatchObject({
 			kind: 'llm',
@@ -902,7 +902,7 @@ describe('/api/llm/anthropic: fallback chain integrity', () => {
 		process.env.GROQ_API_KEY = 'gsk-test';
 		process.env.NVIDIA_API_KEY = 'nv-test';
 		process.env.SAMBANOVA_API_KEY = 'sn-test';
-		const chain = modelFallbackChain('openai/gpt-oss-20b:free');
+		const chain = modelFallbackChain('google/gemma-4-31b-it:free');
 		expect(chain.length).toBeGreaterThan(1);
 		for (const rung of chain) {
 			expect(resolveModelRoute(rung), `rung "${rung}" is not routable`).toBeTruthy();
@@ -910,7 +910,7 @@ describe('/api/llm/anthropic: fallback chain integrity', () => {
 	});
 
 	it('keeps the paid Anthropic rung last among the keyed lanes', () => {
-		const chain = modelFallbackChain('openai/gpt-oss-20b:free');
+		const chain = modelFallbackChain('google/gemma-4-31b-it:free');
 		expect(chain[chain.length - 1]).toBe('claude-haiku-4-5-20251001');
 	});
 });
@@ -947,14 +947,14 @@ describe('/api/llm/anthropic: streaming, OpenAI-shape lanes', () => {
 
 	it('asks OpenAI-compatible providers for streaming usage', async () => {
 		fetchState.response = () => upstreamSse(['data: [DONE]\n\n']);
-		await invoke({ body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true } });
+		await invoke({ body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free', stream: true } });
 		const sent = JSON.parse(fetchState.calls[0].init.body);
 		expect(sent.stream).toBe(true);
 		expect(sent.stream_options).toEqual({ include_usage: true });
 	});
 
 	it('does not send stream_options on a non-streaming request', async () => {
-		await invoke({ body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' } });
+		await invoke({ body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free' } });
 		const sent = JSON.parse(fetchState.calls[0].init.body);
 		expect(sent.stream_options).toBeUndefined();
 	});
@@ -969,7 +969,7 @@ describe('/api/llm/anthropic: streaming, OpenAI-shape lanes', () => {
 				'data: [DONE]\n\n',
 			]);
 		const { res } = await invoke({
-			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true },
+			body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free', stream: true },
 		});
 		expect(res.headers['content-type']).toBe('text/event-stream');
 		expect(res.headers['x-llm-transport']).toBe('openrouter');
@@ -1004,7 +1004,7 @@ describe('/api/llm/anthropic: streaming, OpenAI-shape lanes', () => {
 				'data: [DONE]\n\n',
 			]);
 		const { res } = await invoke({
-			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true },
+			body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free', stream: true },
 		});
 		expect(res.body).toContain('"type":"tool_use","id":"call_1","name":"getTime"');
 		expect(res.body).toContain('"input_json_delta","partial_json":"{\\"tz\\":"');
@@ -1023,7 +1023,7 @@ describe('/api/llm/anthropic: streaming, OpenAI-shape lanes', () => {
 				'data: [DONE]\n\n',
 			]);
 		const { res } = await invoke({
-			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true },
+			body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free', stream: true },
 		});
 		expect(res.body).toContain('"name":"getTime"');
 		expect(res.body).not.toContain('"name":"get"');
@@ -1038,7 +1038,7 @@ describe('/api/llm/anthropic: streaming, OpenAI-shape lanes', () => {
 				'data: [DONE]\n\n',
 			]);
 		const { res } = await invoke({
-			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true },
+			body: { ...VALID_BODY, model: 'google/gemma-4-31b-it:free', stream: true },
 		});
 		expect(res.body).toContain('"type":"tool_use"');
 		expect(res.body).toContain('"name":"getTime"');
