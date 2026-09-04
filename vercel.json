@@ -6470,6 +6470,10 @@
 		{
 			"path": "/api/cron/home-relay-sweep",
 			"schedule": "17 * * * *"
+		},
+		{
+			"path": "/api/cron/forge-web-variants",
+			"schedule": "*/10 * * * *"
 		}
 	]
 }

@@ -10,10 +10,18 @@
 // 'creations' category has email enabled (the default: an unattended finish
 // is precisely the moment email earns its keep). All best-effort: a delivery
 // failure never touches the creation row.
+//
+// Developer webhooks are the one channel that does NOT follow the attended /
+// unattended split. `forge.completed` fires from materializeCreation, the
+// universal completion writer, so an API integrator learns every outcome
+// whether or not a browser was watching; only `forge.failed` lives here,
+// because this is the sole place that distinguishes a terminal failure from a
+// failover that is still running. See docs/api-reference.md.
 
 import { sql } from './db.js';
 import { insertNotification, emailAllowedForType } from './notify.js';
 import { sendForgeCompleteEmail } from './email.js';
+import { dispatchWebhooks } from './webhook-dispatch.js';
 
 // Real, sendable email for a user. Skips missing addresses and the synthetic
 // `…@privy.local` placeholders minted for wallet-only Privy accounts.
@@ -52,8 +60,26 @@ async function deliverComplete({ userId, creationId, prompt, previewImageUrl }) 
 	}
 }
 
-export function notifyForgeFailed({ userId, prompt, error }) {
+export function notifyForgeFailed({ userId, creationId = null, prompt, error, backend = null, tier = null }) {
 	if (!userId) return Promise.resolve();
+	// The `forge.failed` webhook fires from here rather than from markFailed,
+	// because markFailed also runs on the failover path: a row that failed on one
+	// lane and was redispatched to another is marked failed and immediately
+	// superseded, and telling an integrator that job died while it is still
+	// running would be a lie. The finalizer calls this function only when nothing
+	// is left to try, which is exactly the terminal signal a subscriber wants.
+	dispatchWebhooks({
+		userId,
+		eventType: 'forge.failed',
+		data: {
+			id: creationId,
+			status: 'failed',
+			prompt: prompt || null,
+			error: error ? String(error).slice(0, 200) : null,
+			backend,
+			tier,
+		},
+	}).catch(() => {});
 	// Bell + push only: a failure email for a free generation would be noise.
 	return insertNotification(userId, 'forge_failed', {
 		prompt: prompt || null,

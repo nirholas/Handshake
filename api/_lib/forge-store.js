@@ -28,6 +28,7 @@ import { derivePbrChannels } from './glb-pbr-derive.js';
 import { fetchUpstream } from './upstream-fetch.js';
 import { gradeSimReadiness } from './sim-readiness.js';
 import { putGrade } from './sim-readiness-store.js';
+import { dispatchWebhooks } from './webhook-dispatch.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -618,6 +619,28 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 		if (existing.user_id) {
 			recordDailyActivity(existing.user_id).catch(() => {});
 			maybeAwardFirstCreation(existing.user_id).catch(() => {});
+			// A generation submitted over the API outlives the request that started
+			// it, so an integrator's only completion signal is polling unless we push
+			// one. This is the single writer every lane finishes through, and the
+			// early return above makes it idempotent, so the event fires exactly once
+			// per job. Fire-and-forget, like every other side effect here: a slow or
+			// dead developer endpoint must never delay delivery of the model.
+			dispatchWebhooks({
+				userId: existing.user_id,
+				eventType: 'forge.completed',
+				data: {
+					id: existing.id,
+					status: 'done',
+					prompt: existing.prompt || null,
+					glb_url: glb.publicUrl,
+					preview_image_url: preview.url,
+					backend: existing.backend || null,
+					tier: existing.tier || null,
+					path: existing.path || null,
+					size_bytes: glb.bytes,
+					latency_ms: latencyMs,
+				},
+			}).catch(() => {});
 		}
 		return {
 			id: existing.id,

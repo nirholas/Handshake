@@ -334,7 +334,7 @@ export default wrapCron(async (req, res) => {
 				});
 				out.failed++;
 				if (row.user_id) {
-					notifyForgeFailed({ userId: row.user_id, prompt: row.prompt, error: status.error });
+					notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: status.error, backend: row.backend, tier: row.tier });
 				}
 				continue;
 			}
@@ -445,7 +445,7 @@ export default wrapCron(async (req, res) => {
 					});
 					out.failed++;
 					if (row.user_id) {
-						notifyForgeFailed({ userId: row.user_id, prompt: row.prompt, error: status.error });
+						notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: status.error, backend: row.backend, tier: row.tier });
 					}
 					continue;
 				}
@@ -463,7 +463,7 @@ export default wrapCron(async (req, res) => {
 			});
 			out.timed_out++;
 			if (row.user_id) {
-				notifyForgeFailed({ userId: row.user_id, prompt: row.prompt, error: 'generation timed out' });
+				notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: 'generation timed out', backend: row.backend, tier: row.tier });
 			}
 		} else if (envelope) {
 			out.still_running++;
