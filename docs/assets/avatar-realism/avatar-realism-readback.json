@@ -1,0 +1,49 @@
+{
+	"src": "/avatars/realistic-male.glb",
+	"base": "http://localhost:3000",
+	"capturedAt": "2026-09-04T08:47:10.761Z",
+	"shots": [
+		{
+			"breakpoint": "320",
+			"viewport": "320x640",
+			"file": "docs/assets/avatar-realism/avatar-realism-320.png",
+			"readback": {
+				"meshes": 0,
+				"classes": {}
+			},
+			"consoleErrors": [
+				"WebSocket connection to 'wss://ominous-couscous-qvj6p6jp4q39j59-3000.app.github.dev/?token=hjnn-0f3Ljcx' failed: Error during WebSocket handshake: Unexpected response code: 404",
+				"[vite] failed to connect to websocket (Error: WebSocket closed without opened.). ",
+				"WebSocket closed without opened."
+			]
+		},
+		{
+			"breakpoint": "768",
+			"viewport": "768x1024",
+			"file": "docs/assets/avatar-realism/avatar-realism-768.png",
+			"readback": {
+				"meshes": 0,
+				"classes": {}
+			},
+			"consoleErrors": [
+				"WebSocket connection to 'wss://ominous-couscous-qvj6p6jp4q39j59-3000.app.github.dev/?token=hjnn-0f3Ljcx' failed: Error during WebSocket handshake: Unexpected response code: 404",
+				"[vite] failed to connect to websocket (Error: WebSocket closed without opened.). ",
+				"WebSocket closed without opened."
+			]
+		},
+		{
+			"breakpoint": "1440",
+			"viewport": "1440x900",
+			"file": "docs/assets/avatar-realism/avatar-realism-1440.png",
+			"readback": {
+				"meshes": 0,
+				"classes": {}
+			},
+			"consoleErrors": [
+				"WebSocket connection to 'wss://ominous-couscous-qvj6p6jp4q39j59-3000.app.github.dev/?token=hjnn-0f3Ljcx' failed: Error during WebSocket handshake: Unexpected response code: 404",
+				"[vite] failed to connect to websocket (Error: WebSocket closed without opened.). ",
+				"WebSocket closed without opened."
+			]
+		}
+	]
+}

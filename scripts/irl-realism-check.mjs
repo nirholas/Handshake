@@ -21,6 +21,12 @@
  *   node scripts/irl-realism-check.mjs --base=http://localhost:3000
  *   node scripts/irl-realism-check.mjs --only=prod
  *   node scripts/irl-realism-check.mjs --out=/path/to/dir
+ *   node scripts/irl-realism-check.mjs --only=prod \
+ *     --avatar=https://.../athlete.glb --slug=athlete
+ *
+ * --avatar places a SPECIFIC avatar on the surface (the ?avatar= the share and
+ * AR links carry) instead of the page's default body, and --slug keeps that
+ * run's screenshots and JSON from overwriting another avatar's.
  *
  * Exit code is 0 when an avatar rendered on at least one target (the realism
  * pass being absent is a reported finding, not a script failure), 1 otherwise.
@@ -47,6 +53,13 @@ const DEV_BASE = args.base || 'http://localhost:3000';
 // SwiftShader capture of a full-screen WebGL canvas is CPU-bound and slow.
 const SHOT_TIMEOUT = Number(args.shotTimeout || 120_000);
 const PROD_BASE = args.prod || 'https://three.ws';
+// A specific avatar to place on the surface, and the filename discriminator that
+// keeps one avatar's evidence from overwriting the next one's. Empty slug keeps
+// the historic filenames, so an existing invocation is unaffected.
+const AVATAR = typeof args.avatar === 'string' && args.avatar !== 'true' ? args.avatar : null;
+const SLUG = typeof args.slug === 'string' && args.slug !== 'true' ? args.slug.replace(/[^a-z0-9-]+/gi, '-') : '';
+const suffix = (name) => `${SLUG ? `-${SLUG}` : ''}${name === 'production' ? '-prod' : ''}`;
+const irlUrl = (base) => (AVATAR ? `${base}/irl?avatar=${encodeURIComponent(AVATAR)}` : `${base}/irl`);
 
 // The classifier the realism module uses, mirrored here purely as a READ-ONLY
 // probe so the checker can name which meshes the module would claim. It never
@@ -270,7 +283,7 @@ async function runTarget({ name, url, canImportModule, browser }) {
 		result.avatarRendered = result.readback.skinnedMeshes > 0;
 		result.summary = summarize(result.readback);
 
-		const shot = path.join(OUT_DIR, `irl-avatar${name === 'production' ? '-prod' : ''}.png`);
+		const shot = path.join(OUT_DIR, `irl-avatar${suffix(name)}.png`);
 		await page.screenshot({ path: shot, timeout: SHOT_TIMEOUT });
 		result.screenshots.push(shot);
 
@@ -290,7 +303,7 @@ async function runTarget({ name, url, canImportModule, browser }) {
 				})(),
 			}));
 			result.cameraAr = arOn;
-			const arShot = path.join(OUT_DIR, `irl-avatar-ar${name === 'production' ? '-prod' : ''}.png`);
+			const arShot = path.join(OUT_DIR, `irl-avatar-ar${suffix(name)}.png`);
 			await page.screenshot({ path: arShot, timeout: SHOT_TIMEOUT });
 			result.screenshots.push(arShot);
 		} catch (e) {
@@ -317,7 +330,7 @@ async function runTarget({ name, url, canImportModule, browser }) {
 			result.afterModule = applied;
 			result.afterSummary = summarize(applied.readback);
 			await page.waitForTimeout(600);
-			const afterShot = path.join(OUT_DIR, 'irl-avatar-realism-applied.png');
+			const afterShot = path.join(OUT_DIR, `irl-avatar-realism-applied${SLUG ? `-${SLUG}` : ''}.png`);
 			await page.screenshot({ path: afterShot, timeout: SHOT_TIMEOUT });
 			result.screenshots.push(afterShot);
 		}
@@ -392,8 +405,8 @@ async function main() {
 	});
 
 	const targets = [];
-	if (ONLY !== 'prod') targets.push({ name: 'dev', url: `${DEV_BASE}/irl`, canImportModule: true });
-	if (ONLY !== 'dev') targets.push({ name: 'production', url: `${PROD_BASE}/irl`, canImportModule: false });
+	if (ONLY !== 'prod') targets.push({ name: 'dev', url: irlUrl(DEV_BASE), canImportModule: true });
+	if (ONLY !== 'dev') targets.push({ name: 'production', url: irlUrl(PROD_BASE), canImportModule: false });
 
 	const results = [];
 	for (const t of targets) {
@@ -404,7 +417,7 @@ async function main() {
 
 	const text = report(results);
 	process.stdout.write(text + '\n');
-	await writeFile(path.join(OUT_DIR, 'irl-realism-check.json'), JSON.stringify(results, null, 2));
+	await writeFile(path.join(OUT_DIR, `irl-realism-check${SLUG ? `-${SLUG}` : ''}.json`), JSON.stringify(results, null, 2));
 
 	const anyAvatar = results.some((r) => r.avatarRendered);
 	process.exitCode = anyAvatar ? 0 : 1;

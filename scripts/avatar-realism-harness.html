@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Avatar realism harness</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				background: #101216;
+			}
+			#stage {
+				position: absolute;
+				inset: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="stage"></div>
+		<script type="module">
+			/*
+			 * Loads a GLB through the REAL production Viewer (src/viewer.js), the
+			 * same class pages/a-embed.html and pages/agent-embed.html ship, so the
+			 * skin/eye/hair realism pass in setContent() runs exactly as it does for
+			 * a user. Driven by scripts/avatar-realism-shots.mjs; the model comes
+			 * from ?src=<url>.
+			 */
+			import { Viewer } from '/src/viewer.js';
+
+			const params = new URL(location.href).searchParams;
+			const src = params.get('src');
+			if (!src) throw new Error('avatar-realism-harness: pass ?src=<glb url>');
+
+			const viewer = new Viewer(document.getElementById('stage'), {
+				kiosk: true,
+				model: '',
+				preset: '',
+				cameraPosition: null,
+			});
+			window.__qb04_viewer = viewer;
+
+			await viewer.load(src, '', new Map());
+			// The realism pass runs inside setContent(), which load() awaits, so the
+			// scene is finished by the time this flag lands.
+			document.body.dataset.ready = 'true';
+		</script>
+	</body>
+</html>

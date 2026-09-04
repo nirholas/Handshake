@@ -66,9 +66,20 @@ function loadDotEnv() {
 }
 
 // ---------------------------------------------------------------------------
-// The six cases. Every persona is SYNTHETIC — a described archetype, never a
-// real named individual. Cases (e) and (f) stand in for the prompt spec's two
-// CC0 reference-photo cases: see audit.md for why the photo leg was substituted.
+// The cases. Every TEXT persona is SYNTHETIC: a described archetype, never a
+// real named individual.
+//
+// Cases (g) and (h) are the photo leg: a real photograph goes in, so the
+// image-to-3D lane reconstructs from actual camera pixels instead of a
+// synthesized lookalike. Both are Library of Congress plates on Wikimedia
+// Commons, public domain, and both subjects are UNIDENTIFIED. That pairing is
+// deliberate: a modern CC0 portrait on Commons is almost always a NAMED living
+// person, and building a 3D likeness of one from a scraped photo is exactly
+// what "photo input implies consent by upload" rules out. Monochrome period
+// plates cap what the colour half of the score can say, so the photo leg is
+// read for face structure, silhouette, hands and clothing geometry, and the
+// per-case notes say so.
+//
 // `watch` feeds the judge's per-subject failure-mode checklist, matching the
 // shape data/quality-bench/prompts.json uses.
 // ---------------------------------------------------------------------------
@@ -154,6 +165,44 @@ const CASES = [
 			'back, wearing a fitted dark leotard and a loose wrap skirt with bare feet, standing tall in a poised neutral ' +
 			'stance with one arm raised slightly to the side and both hands open, fingers separated and clearly visible.',
 		watch: HUMAN_WATCH.concat(['the raised arm fused to the head or torso', 'wrap skirt fused into the legs as one solid block']),
+	},
+	{
+		id: 'g',
+		label: 'Photo: unidentified young man (LOC plate)',
+		subjectClass: 'person',
+		stylized: false,
+		// https://commons.wikimedia.org/wiki/File:Unidentified_young_man,_full-length_studio_portrait,_standing_in_front_of_painted_backdrop,_facing_front,_wearing_military_uniform)_-_Jno._Holyland,_Metropolitan_Gallery,_250_Pennsylvania_LCCN2005677261.jpg
+		imageUrls: [
+			'https://upload.wikimedia.org/wikipedia/commons/0/09/Unidentified_young_man%2C_full-length_studio_portrait%2C_standing_in_front_of_painted_backdrop%2C_facing_front%2C_wearing_military_uniform%29_-_Jno._Holyland%2C_Metropolitan_Gallery%2C_250_Pennsylvania_LCCN2005677261.jpg',
+		],
+		credit: 'Library of Congress via Wikimedia Commons, public domain, subject unidentified',
+		prompt:
+			'A single standing man photographed full length in a studio, front facing, in a dark high-collar ' +
+			'button-front uniform jacket and dark trousers with dark leather boots, arms at his sides.',
+		watch: HUMAN_WATCH.concat([
+			'the painted studio backdrop, column or chair reconstructed as geometry fused to the figure',
+			'the face reduced to a smooth blank where the plate carries real facial structure',
+		]),
+	},
+	{
+		id: 'h',
+		label: 'Photo: unidentified man in embroidered dress (LOC plate)',
+		subjectClass: 'person',
+		stylized: false,
+		// https://commons.wikimedia.org/wiki/File:Kurdish_chief,_full-length_portrait,_standing,_facing_front_LCCN2003677090.tif
+		imageUrls: [
+			'https://upload.wikimedia.org/wikipedia/commons/7/72/Kurdish_chief%2C_full-length_portrait%2C_standing%2C_facing_front_LCCN2003677090.tif',
+		],
+		credit: 'Library of Congress via Wikimedia Commons, public domain, subject unidentified',
+		prompt:
+			'A single standing man photographed full length in a studio, front facing, wearing a heavily ' +
+			'embroidered open jacket over a striped shirt, a wrapped sash, loose light trousers and a wrapped ' +
+			'head covering, one arm resting on a branch railing.',
+		watch: HUMAN_WATCH.concat([
+			'studio foliage and the branch railing reconstructed as geometry fused to the figure',
+			'the embroidered jacket flattened to painted colour with no fabric relief',
+			'the wrapped head covering fused into the skull as one solid mass',
+		]),
 	},
 ];
 
@@ -465,9 +514,18 @@ async function runCase(args, data, testCase) {
 		stylized: testCase.stylized,
 		variants: {},
 	});
+	// The photo leg carries its source plate and credit into the evidence record
+	// so a reader of audit-data.json can see exactly which pixels went in.
+	const photoCase = Array.isArray(testCase.imageUrls) && testCase.imageUrls.length > 0;
+	if (photoCase) {
+		rec.imageUrls = testCase.imageUrls;
+		rec.credit = testCase.credit || null;
+	}
 
 	// 1. Director pass (shared by both variants so tier is the only difference).
-	if (!rec.directed && !args.skipGenerate) {
+	// Photo cases skip it outright: the reconstructor conditions on the caller's
+	// own photograph, so there is no reference image for a rewrite to steer.
+	if (!photoCase && !rec.directed && !args.skipGenerate) {
 		const { avatarDirectorFor } = await import('../api/_lib/forge-director-prompts.js');
 		const directed = await directPrompt(args.baseUrl, avatarDirectorFor('person'), testCase.prompt);
 		rec.directed = directed.text || null;
@@ -485,11 +543,9 @@ async function runCase(args, data, testCase) {
 		if (!vrec.glbUrl && !args.skipGenerate) {
 			const started = Date.now();
 			try {
-				const job = await generate(args.baseUrl, {
-					prompt: forgePrompt,
-					aspect_ratio: '1:1',
-					tier: variant.tier,
-				});
+				const job = await generate(args.baseUrl, photoCase
+					? { image_urls: testCase.imageUrls, tier: variant.tier }
+					: { prompt: forgePrompt, aspect_ratio: '1:1', tier: variant.tier });
 				vrec.glbUrl = job.glb_url;
 				vrec.backend = job.backend ?? null;
 				vrec.tierServed = job.tier ?? null;
