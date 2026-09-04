@@ -11,7 +11,13 @@
 // `directed_prompt` field on the /api/forge response. It is never reconstructed
 // client-side and never approximated: no field, no panel. Copy takes it to the
 // clipboard; "Use as my prompt" drops it into the composer so the next run can
-// build on it (the user still presses Generate).
+// build on it (the user still presses Generate); "Try a variation" is the
+// one-click version of that same round trip, firing the generation itself so
+// the loop from "see the brief" to "see another take on it" is a single click.
+// Nothing about the brief is mutated for the variation: the director and the
+// reference painter are stochastic, so the same brief genuinely resolves
+// differently each run, and inventing a fake "variation" suffix would change
+// what was asked for while claiming it did not.
 //
 // Decoupled like the other result-panel modules: src/forge.js dispatches
 // `forge:directed-prompt` with { prompt, directedPrompt, model } (or a null
@@ -23,6 +29,7 @@ const textEl = document.getElementById('forge-directed-text');
 const modelEl = document.getElementById('forge-directed-model');
 const copyBtn = document.getElementById('forge-directed-copy');
 const useBtn = document.getElementById('forge-directed-use');
+const varyBtn = document.getElementById('forge-directed-vary');
 const statusEl = document.getElementById('forge-directed-status');
 
 if (panel && rawEl && textEl && copyBtn && useBtn) {
@@ -82,6 +89,29 @@ if (panel && rawEl && textEl && copyBtn && useBtn) {
 			sel?.addRange(range);
 			say('Selected the prompt: press Ctrl/Cmd+C to copy');
 		}
+	});
+
+	// One click from the brief to another take on it. forge.js owns submission,
+	// so this goes through the same `forge:run-prompt` contract the "More like
+	// this" panel uses: it fills the text composer and generates, and it is a
+	// no-op while a generation is already in flight.
+	varyBtn?.addEventListener('click', () => {
+		if (!current) return;
+		// forge.js drops the event while a run is in flight, so read the same busy
+		// flag it guards on rather than claiming a generation that never started.
+		const generate = document.getElementById('generate');
+		if (generate?.dataset.busy === '1') {
+			say('A generation is already running. It finishes first.');
+			return;
+		}
+		// Same cap the composer enforces, so the run uses exactly the text a user
+		// would have been able to paste in by hand.
+		const box = document.getElementById('prompt');
+		const max = Number(box?.getAttribute('maxlength')) || 1000;
+		document.dispatchEvent(
+			new CustomEvent('forge:run-prompt', { detail: { prompt: current.slice(0, max) } }),
+		);
+		say('Forging another take on this brief');
 	});
 
 	useBtn.addEventListener('click', () => {
