@@ -26,7 +26,7 @@
  */
 
 import { chromium } from 'playwright';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const args = Object.fromEntries(
@@ -43,8 +43,10 @@ const BASE = args.base || 'http://localhost:3000';
 const OUT_DIR = path.resolve(args.out || 'docs/assets/material-presets');
 const SHAPE = args.shape === 'knot' ? 'knot' : 'sphere';
 // A 2K EXR decoded and PMREM-filtered under SwiftShader is slow; the sheet also
-// renders 20 full-quality frames after that.
-const READY_TIMEOUT = Number(args.timeout || 180_000);
+// renders every preset at full quality after that. Footprint Court is the 2K
+// one and needs most of this budget on a CPU rasterizer, so the default is
+// sized for the slowest environment rather than the fastest.
+const READY_TIMEOUT = Number(args.timeout || 480_000);
 
 // Mirrors src/environments.js. Kept as ids only: the harness page imports the
 // real module, so this list just drives which pages to open and what to call
