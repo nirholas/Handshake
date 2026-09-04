@@ -40,7 +40,7 @@ reject a library.
 ## 2. Web AR + GLB→USDZ (iOS Quick Look), for roadmap 04, 10
 | Capability | Repo / npm | License | Status | Note |
 |---|---|---|---|---|
-| Viewer + AR launcher | google/model-viewer | ✅ Apache-2.0 | **[wired]** | Loaded as a CDN script tag, **not** as an npm dependency: `@google/model-viewer` is absent from `package.json` on purpose. Used by `src/account.js` (off-screen thumbnail capture), `src/worlds-lobby.js`, `src/cosmos.js`, `src/forge-optimize.js`, and vendored at `pages/ibm/vendor/model-viewer.min.js`. Version drift is real here: live pages load 3.5.0 and 4.0.0 from three different CDNs. Match the neighboring page rather than introducing a fourth. |
+| Viewer + AR launcher | google/model-viewer | ✅ Apache-2.0 | **[wired]** | Loaded as a CDN script tag, **not** as an npm dependency: `@google/model-viewer` is absent from `package.json` on purpose. Used by `src/account.js` (off-screen thumbnail capture), `src/worlds-lobby.js`, `src/cosmos.js`, `src/forge-optimize.js`, and vendored at `pages/ibm/vendor/model-viewer.min.js`. The version drift this file recorded is closed: every reference pins 4.0.0, and `npm run check:model-viewer` fails the build if one drifts off. Surfaces still differ in DELIVERY (SRI'd tag, server-interpolated embed, runtime CDN failover chain); `api/_lib/model-viewer-cdn.js` explains each rung. Never introduce a second version: two builds in one document make the later `customElements.define` throw. |
 | USDZ export | three `USDZExporter` | ✅ MIT | **[wired]** | `src/usdz-pipeline.js` and `src/forge-export.js`. Note the documented limitation in `usdz-pipeline.js`: the three.js exporter does not carry skinning, so animated USDZ takes the separate path in `src/usdz-animated.js`. |
 | USDZ high-fidelity fallback | google/usd_from_gltf (Docker) | ✅ Apache-2.0 (archived 2024) | **[open]** | Native Pixar USD. On Cloud Run this is a normal sidecar service now rather than an exotic one, but the in-process exporter still covers the shipped cases. Reach for it only when fidelity genuinely demands it. |
 
@@ -87,7 +87,7 @@ reject a library.
 | Material/IBL base | `three` (`MeshPhysicalMaterial`, `PMREMGenerator`, `HDRLoader`) | ✅ MIT | **[wired]** | Already the stack. |
 | Polish | pmndrs `postprocessing` | ✅ Zlib | **[wired]** | Roughly ten call sites. Bloom, tonemapping. |
 | Accurate preview | gkjohnson/three-gpu-pathtracer | ✅ MIT | **[wired]** | One call site. Path-traced final-frame preview; keep it lazy-loaded. |
-| Editor GUI | `lil-gui` | ✅ MIT | **[dep-only]** | Declared in `package.json` at `^0.21.0` and imported by nothing in the repo. Either use it for the PBR panel this section anticipated, or drop the dependency. Do not add `tweakpane` alongside it. |
+| Editor GUI | `lil-gui` | ✅ MIT | **[open]** | **No longer a dependency.** It sat in `package.json` at `^0.21.0` with zero import sites; dropped 2026-09-04 rather than left as ballast. Still the right pick if the PBR panel this section anticipated gets built: re-add it deliberately, and do not add `tweakpane` alongside it. |
 | AI re-texture | TRELLIS via Replicate/fal | ✅ MIT | **[open]** | The only fully permissive commercial option here. Gate behind $THREE / x402. |
 | ⛔ AVOID | TEXTure, Text2Tex, Paint3D, Hunyuan3D-Paint | non-commercial/capped | | Research-only or territory/MAU-restricted. |
 
@@ -137,9 +137,24 @@ reject a library.
 
 ## Open items this audit surfaced
 
-1. `lil-gui` is a dependency nobody imports (§7). Use it or drop it.
-2. model-viewer is loaded at two major versions from three CDNs across live pages (§2). Worth converging.
-3. The headless renderers pin three.js at 0.176.0 while the app runs 0.184.0. That is deliberate for now (a bump changes every OG card and needs visual verification), but the pin is a single constant in `api/_lib/three-cdn.js` when someone takes it on.
+1. ~~`lil-gui` is a dependency nobody imports (§7).~~ **Closed 2026-09-04:** dropped from
+   `package.json` and the lockfile. See the §7 row before re-adding it.
+2. ~~model-viewer is loaded at two major versions from three CDNs across live pages (§2).~~
+   **Closed 2026-09-04:** the ten references still on 3.5.0 moved to 4.0.0: three pages
+   (`gallery-picker`, `worlds`, `daily`), five static embed surfaces (`public/demos/usdz-ar`,
+   `public/demos/gallery-picker`, `public/ar-forge.html`, `public/agenc/embed.js`,
+   `public/spatial-mcp/`), `infra/lambda/forge/page.mjs`, and `docs/spatial-mcp.md`, plus
+   the shared embed pin in `api/_lib/model-viewer-cdn.js` and every comment describing the
+   old split. Each SRI hash
+   moved with its URL (both were internally consistent before, and are verified against
+   the served bytes now). `scripts/check-model-viewer-version.mjs`
+   (`npm run check:model-viewer`, in `npm run gate`) now fails on a mixed version, on one
+   version served with two integrity hashes, and on the vendored `pages/ibm/vendor/` copy
+   falling off the pin. The three CDN HOSTS stay: they are a deliberate failover chain, not
+   drift.
+3. The headless renderers pin three.js at 0.176.0 while the app runs 0.184.0. **Still open,
+   still deliberate** (a bump changes every OG card and needs visual verification), but the
+   pin is a single constant in `api/_lib/three-cdn.js` when someone takes it on.
 
 ## How this file was verified
 

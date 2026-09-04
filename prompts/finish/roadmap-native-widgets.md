@@ -1,9 +1,12 @@
 # RM-WIDGETS: Native widgets, the agent on the home screen and the desktop
 
-**Status 2026-09-03: all four tasks are built. This file stays only because two
-Definition of done lines cannot be closed by writing code**, and the campaign's
-rule is to leave a work order in place until every line of it passes. Read
-"What remains", not the history above it.
+**Status 2026-09-04: all four tasks are built, and the endpoints, the Apple
+hand-off and the Windows manifest are re-verified live. This file stays because
+two Definition of done lines cannot be closed from this machine** (one needs a
+Windows 11 machine, one needs an Apple Developer account), and the campaign's
+rule is to leave a work order in place until every line of it passes. The
+Windows worker also carries a 2026-09-04 fix that has to ship before the board
+check is worth running. Read "What remains", not the history above it.
 
 **How to run this:** paste this whole file into a fresh Claude Code chat opened in
 `/workspaces/three.ws`. Also read `prompts/finish/roadmap-00-README.md` and `CLAUDE.md`.
@@ -37,6 +40,19 @@ Neither line is code, and neither can be closed from this machine.
    with `Win + W`, **Add widgets**, pick **Agent glance**, confirm it populates
    with the signed-in account's real card, refreshes, and that its click targets
    land on the right routes. Owner, or anyone with a Windows 11 machine.
+
+   **Do that check against a deploy that carries 2026-09-04's worker fix, not
+   against what is live now.** Reading the board's contract against the
+   [Microsoft widget docs](https://learn.microsoft.com/en-us/microsoft-edge/progressive-web-apps/how-to/widgets)
+   found three defects that would each have failed this check on its own, none
+   of them visible from Linux: `msAcTemplate` is the URL of the Adaptive Card
+   and the worker has to fetch it, but the worker was sending the host that URL
+   as a string where the card belonged, so a pinned slot had nothing to draw;
+   nothing ever registered the periodic sync, so the advertised 15 minute
+   refresh was never scheduled; and a slot pinned before the worker activated
+   stayed empty until the board next resumed it. All three are fixed in
+   `public/glance-sw.js` and pinned by `tests/glance-sw.test.js`, and the fix
+   reaches the board only on the next production deploy.
 2. **Signing and shipping the two Apple binaries.** An Apple Developer account
    is the blocker for both halves, not just the App Store one: the Mac app needs
    a Developer ID certificate and the iOS extension needs App Store signing.
@@ -45,10 +61,11 @@ Neither line is code, and neither can be closed from this machine.
    account exists, `apple/README.md` is the whole build recipe, and the emulator
    or device pass is the same five checks the Android widget went through.
 
-A deploy also has to carry the `?platform=` parameter that points an unlinked
-Apple widget at the Apple hand-off rather than the Android one. It is committed
-and gated only on the next production deploy, which is owner-approved like every
-other.
+The `?platform=` parameter that points an unlinked Apple widget at the Apple
+hand-off rather than the Android one has since shipped: verified live
+2026-09-04, `mine?platform=ios` and `platform=macos` answer
+`linkUrl=https://three.ws/glance?link=apple` and everything else answers
+`link=android`.
 
 ## Retire this prompt when those two lines pass
 

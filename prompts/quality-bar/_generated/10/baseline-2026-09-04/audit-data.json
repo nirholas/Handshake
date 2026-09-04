@@ -13,7 +13,58 @@
 				"before": {
 					"id": "before",
 					"tierRequested": "standard",
-					"views": {}
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/9e5ba691-57cf-41f3-9d55-90dd61b15a6e.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/44131cdf-fae1-4851-917c-658f4db54e75.jpg",
+					"creationId": "9e5ba691-57cf-41f3-9d55-90dd61b15a6e",
+					"generationMs": 504193,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/18b68632-8bce-4fd5-9126-01838b0abc47.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/aa12332d-2c25-4a5f-9991-84078ca12457.jpg",
+					"creationId": "18b68632-8bce-4fd5-9126-01838b0abc47",
+					"generationMs": 119740,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/e08d6d25-4b7c-4a69-bfd8-fb0a64687fb8.glb",
+					"rigMs": 16510,
+					"meanScore": null,
+					"dimMeans": null
 				}
 			},
 			"directed": null,
@@ -53,6 +104,35 @@
 					"error": null,
 					"meanScore": null,
 					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ec76c664-9f66-47bf-a60e-7ee6a78eea7c.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/d00e165b-394e-4d1c-975f-a99da3ef6575.jpg",
+					"creationId": "ec76c664-9f66-47bf-a60e-7ee6a78eea7c",
+					"generationMs": 123680,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/24bb8043-6475-4df0-a28c-c1e9f5ee3a0f.glb",
+					"rigMs": 15173,
+					"meanScore": null,
+					"dimMeans": null
 				}
 			},
 			"directed": null,
@@ -69,9 +149,105 @@
 				"before": {
 					"id": "before",
 					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/bd5f6005-b62a-4b5e-a06b-3bf0c83258d2.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/bd989e61-f3db-4227-b8b2-f1105e9a3ccd.jpg",
+					"creationId": "bd5f6005-b62a-4b5e-a06b-3bf0c83258d2",
+					"generationMs": 401743,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/5256ee8b-ee95-4a35-94e7-36ebeec4bb35.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/7db49a37-9867-47d2-873e-f14304f50120.jpg",
+					"creationId": "5256ee8b-ee95-4a35-94e7-36ebeec4bb35",
+					"generationMs": 136313,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/efebb3ca-f5b0-4341-a925-a26bef9b390a.glb",
+					"rigMs": 15241,
+					"meanScore": null,
+					"dimMeans": null
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"d": {
+			"id": "d",
+			"label": "Businessperson",
+			"prompt": "A synthetic persona, not a real person: a businessman in his forties, average build, short dark hair, clean-shaven, wearing a navy two-piece wool suit over a white shirt with an open collar and polished black leather shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
 					"views": {}
 				}
 			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"e": {
+			"id": "e",
+			"label": "Construction worker in workwear",
+			"prompt": "A synthetic persona, not a real person: a construction worker in his fifties, stocky build, weathered face, wearing a yellow high-visibility vest with reflective bands over a grey long-sleeve shirt, heavy canvas work trousers, a white hard hat and scuffed steel-toe boots, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {}
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"f": {
+			"id": "f",
+			"label": "Dancer mid-pose",
+			"prompt": "A synthetic persona, not a real person: a contemporary dancer in her thirties, tall athletic build, hair tied back, wearing a fitted dark leotard and a loose wrap skirt with bare feet, standing tall in a poised neutral stance with one arm raised slightly to the side and both hands open, fingers separated and clearly visible.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {},
 			"directed": null,
 			"directedVia": null,
 			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
