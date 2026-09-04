@@ -153,7 +153,7 @@
 			}
 			.market-card-avatar .thumb {
 				aspect-ratio: 1 / 1;
-				background: #0d0d0d center/cover no-repeat;
+				background: var(--stage-lift) center/cover no-repeat;
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -274,7 +274,7 @@
 						rgba(255, 255, 255, 0.04),
 						transparent 50%
 					),
-					linear-gradient(180deg, #0e0e0e, #0a0a0a);
+					linear-gradient(180deg, var(--stage-lift), var(--stage));
 				border: 1px solid #1f1f1f;
 				border-radius: 20px;
 				position: relative;
@@ -287,8 +287,8 @@
 				overflow: hidden;
 				background:
 					radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.05), transparent 70%),
-					linear-gradient(180deg, #050505, #0d0d0d);
-				border: 1px solid #1a1a1a;
+					linear-gradient(180deg, var(--stage-deep), var(--stage-lift));
+				border: 1px solid var(--stroke);
 				min-height: 240px;
 			}
 			.market-hero-stage model-viewer {
@@ -317,7 +317,7 @@
 				background:
 					radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.14), transparent 65%),
 					radial-gradient(circle at 50% 90%, rgba(255, 255, 255, 0.05), transparent 70%),
-					linear-gradient(180deg, #0a0a0a, #000000);
+					linear-gradient(180deg, var(--stage), var(--stage-black));
 				color: rgba(244, 244, 245, 0.85);
 				font-family: var(--font-display);
 				pointer-events: none;
@@ -561,7 +561,7 @@
 				background:
 					radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.12), transparent 65%),
 					radial-gradient(circle at 50% 95%, rgba(255, 255, 255, 0.05), transparent 70%),
-					linear-gradient(180deg, #0a0a0a, #000000);
+					linear-gradient(180deg, var(--stage), var(--stage-black));
 				pointer-events: none;
 				transition: opacity 0.4s ease;
 			}
@@ -591,16 +591,16 @@
 				}
 			}
 			.market-skeleton {
-				background: linear-gradient(90deg, #111 0%, #1a1a1a 50%, #111 100%);
+				background: linear-gradient(90deg, var(--skeleton-base) 0%, var(--skeleton-sheen) 50%, var(--skeleton-base) 100%);
 				background-size: 200% 100%;
 				border-radius: 14px;
-				border: 1px solid #1a1a1a;
+				border: 1px solid var(--stroke);
 				min-height: 240px;
 				animation: mk-skeleton-pulse 1.4s ease-in-out infinite;
 			}
 			.market-card-skeleton {
 				background: #0c0c0c;
-				border: 1px solid #1a1a1a;
+				border: 1px solid var(--stroke);
 				border-radius: 14px;
 				display: flex;
 				flex-direction: column;
@@ -608,7 +608,7 @@
 			}
 			.market-card-skeleton .sk-thumb {
 				aspect-ratio: 1 / 1;
-				background: linear-gradient(90deg, #111 0%, #1a1a1a 50%, #111 100%);
+				background: linear-gradient(90deg, var(--skeleton-base) 0%, var(--skeleton-sheen) 50%, var(--skeleton-base) 100%);
 				background-size: 200% 100%;
 				animation: mk-skeleton-pulse 1.4s ease-in-out infinite;
 			}
@@ -616,7 +616,7 @@
 				height: 12px;
 				margin: 12px 14px 0;
 				border-radius: 4px;
-				background: linear-gradient(90deg, #111 0%, #1a1a1a 50%, #111 100%);
+				background: linear-gradient(90deg, var(--skeleton-base) 0%, var(--skeleton-sheen) 50%, var(--skeleton-base) 100%);
 				background-size: 200% 100%;
 				animation: mk-skeleton-pulse 1.4s ease-in-out infinite;
 			}
@@ -905,7 +905,7 @@
 
 			/* ── Onchain card variants ────────────────────────────────────── */
 			.market-card-avatar.onchain {
-				background: linear-gradient(180deg, #0d0d0d, #0a0a0a);
+				background: linear-gradient(180deg, var(--stage-lift), var(--stage));
 			}
 			.market-card-avatar.onchain .avatar-pill.onchain {
 				background: rgba(255, 255, 255, 0.08);
@@ -1134,7 +1134,7 @@
 				opacity: 1;
 			}
 			.avatar-modal {
-				background: #0d0d0d;
+				background: var(--stage-lift);
 				border: 1px solid #1f1f1f;
 				border-radius: 18px;
 				width: min(960px, 100%);
@@ -1147,7 +1147,7 @@
 			.avatar-modal-stage {
 				background:
 					radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.06), transparent 70%),
-					linear-gradient(180deg, #050505, #0a0a0a);
+					linear-gradient(180deg, var(--stage-deep), var(--stage));
 				min-height: 480px;
 				position: relative;
 			}
@@ -2668,7 +2668,7 @@
 				position: relative;
 				background:
 					radial-gradient(circle at 50% 60%, rgba(255, 255, 255, 0.05), transparent 70%),
-					linear-gradient(180deg, #050505, #0a0a0a);
+					linear-gradient(180deg, var(--stage-deep), var(--stage));
 				border: 1px solid var(--stroke);
 				border-radius: 18px;
 				min-height: 420px;
@@ -2716,7 +2716,7 @@
 						rgba(255, 255, 255, 0.05),
 						transparent 60%
 					),
-					linear-gradient(180deg, #0e0e0e, #0a0a0a);
+					linear-gradient(180deg, var(--stage-lift), var(--stage));
 				border: 1px solid #1f1f1f;
 				border-radius: 18px;
 				margin-top: 4px;

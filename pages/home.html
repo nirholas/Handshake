@@ -1974,7 +1974,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 		padding: 9px 18px; cursor: pointer;
 		transition: background 0.16s, transform 0.12s, box-shadow 0.2s;
 	}
-	#home-forge .hf-forge-btn:hover { background: #e8e8e8; box-shadow: 0 0 24px -6px rgba(139, 92, 246, 0.55); }
+	#home-forge .hf-forge-btn:hover { background: var(--ink); box-shadow: 0 0 24px -6px rgba(139, 92, 246, 0.55); }
 	#home-forge .hf-forge-btn:active { transform: translateY(1px); }
 	#home-forge .hf-forge-btn:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
 	#home-forge .hf-forge-btn[disabled] { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
@@ -2094,7 +2094,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	#home-forge .hf-btn:active { transform: translateY(1px); }
 	#home-forge .hf-btn:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
 	#home-forge .hf-btn--bright { background: var(--text); border-color: var(--text); color: #0a0a0c; font-weight: 600; }
-	#home-forge .hf-btn--bright:hover { background: #e8e8e8; color: #0a0a0c; }
+	#home-forge .hf-btn--bright:hover { background: var(--ink); color: var(--bg-0); }
 	#home-forge .hf-btn svg { width: 14px; height: 14px; flex: none; }
 	/* Accent action — the primary "where does this go next" CTA in the bar. */
 	#home-forge .hf-btn--accent { color: var(--text); border-color: rgba(139, 92, 246, 0.55); background: rgba(139, 92, 246, 0.12); }

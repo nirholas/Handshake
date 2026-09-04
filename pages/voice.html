@@ -26,7 +26,7 @@
 			*, *::before, *::after { box-sizing: border-box; }
 			body {
 				background: #000000;
-				color: #e8e8e8;
+				color: var(--ink);
 				font: 14px/1.5 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
 				margin: 0;
 				min-height: 100vh;
@@ -50,7 +50,7 @@
 				color: #ffffff;
 			}
 			.vl-header p {
-				color: #888888;
+				color: var(--ink-dim);
 				font-size: 15px;
 				margin: 0;
 				max-width: 56ch;
@@ -60,7 +60,7 @@
 			/* ── Card base ──────────────────────────────── */
 			.vl-card {
 				background: var(--bg-0);
-				border: 1px solid #1a1a1a;
+				border: 1px solid var(--stroke);
 				border-radius: 16px;
 				overflow: hidden;
 			}
@@ -69,7 +69,7 @@
 				align-items: center;
 				justify-content: space-between;
 				padding: 16px 20px 14px;
-				border-bottom: 1px solid #1a1a1a;
+				border-bottom: 1px solid var(--stroke);
 			}
 			.vl-card-title {
 				font-family: var(--font-display);
@@ -77,7 +77,7 @@
 				font-weight: 600;
 				letter-spacing: 0.04em;
 				text-transform: uppercase;
-				color: #888888;
+				color: var(--ink-dim);
 			}
 			.vl-card-body {
 				padding: 20px;
@@ -91,7 +91,7 @@
 				position: relative;
 				height: 200px;
 				background: #070707;
-				border-bottom: 1px solid #1a1a1a;
+				border-bottom: 1px solid var(--stroke);
 				overflow: hidden;
 			}
 			.vl-wave-wrap canvas {
@@ -111,7 +111,7 @@
 			}
 			.vl-timer {
 				font: 700 28px/1 'Space Grotesk', ui-monospace, monospace;
-				color: #e8e8e8;
+				color: var(--ink);
 				letter-spacing: 0.02em;
 				opacity: 0;
 				transition: opacity 0.2s;
@@ -203,7 +203,7 @@
 				justify-content: center;
 				gap: 12px;
 				padding: 20px;
-				border-bottom: 1px solid #1a1a1a;
+				border-bottom: 1px solid var(--stroke);
 			}
 			.vl-btn {
 				display: inline-flex;
@@ -223,8 +223,8 @@
 			.vl-btn:not(:disabled):active { transform: translateY(0); }
 
 			.vl-btn-record {
-				background: #e8e8e8;
-				color: #0a0a0a;
+				background: var(--ink);
+				color: var(--bg-0);
 				padding: 14px 28px;
 				font-size: 15px;
 				border-radius: 999px;
@@ -293,7 +293,7 @@
 			/* ── Script prompts ─────────────────────────── */
 			.vl-scripts {
 				padding: 16px 20px;
-				border-bottom: 1px solid #1a1a1a;
+				border-bottom: 1px solid var(--stroke);
 				display: none;
 			}
 			.vl-recorder[data-state="recording"] .vl-scripts,
@@ -385,7 +385,7 @@
 				background: #070707;
 				border: 1px solid #212121;
 				border-radius: 9px;
-				color: #e8e8e8;
+				color: var(--ink);
 				font: inherit;
 				font-size: 14px;
 				outline: none;
@@ -423,7 +423,7 @@
 			@keyframes vl-spin { to { transform: rotate(360deg); } }
 			.vl-cloning-text {
 				font-size: 14px;
-				color: #888888;
+				color: var(--ink-dim);
 			}
 
 			/* Done state */
@@ -504,7 +504,7 @@
 				font-family: var(--font-display);
 				font-size: 18px;
 				font-weight: 600;
-				color: #e8e8e8;
+				color: var(--ink);
 			}
 
 			/* ── Voice library grid ─────────────────────── */
@@ -515,7 +515,7 @@
 			}
 			.vl-voice-card {
 				background: var(--bg-0);
-				border: 1px solid #1a1a1a;
+				border: 1px solid var(--stroke);
 				border-radius: 12px;
 				padding: 16px;
 				display: flex;
@@ -527,7 +527,7 @@
 			.vl-voice-name {
 				font-weight: 600;
 				font-size: 14px;
-				color: #e8e8e8;
+				color: var(--ink);
 			}
 			.vl-voice-meta {
 				font-size: 11.5px;
@@ -555,12 +555,12 @@
 				padding: 32px 20px;
 				color: #808080;
 				font-size: 14px;
-				border: 1px dashed #1a1a1a;
+				border: 1px dashed var(--stroke);
 				border-radius: 12px;
 			}
 			.vl-empty-title {
 				font-weight: 600;
-				color: #888888;
+				color: var(--ink-dim);
 				margin-bottom: 4px;
 			}
 			.vl-empty-actions {
@@ -597,7 +597,7 @@
 				background: #070707;
 				border: 1px solid #212121;
 				border-radius: 9px;
-				color: #e8e8e8;
+				color: var(--ink);
 				font: inherit;
 				font-size: 14px;
 				cursor: pointer;
@@ -611,7 +611,7 @@
 				background: #070707;
 				border: 1px solid #212121;
 				border-radius: 10px;
-				color: #e8e8e8;
+				color: var(--ink);
 				font: inherit;
 				font-size: 14px;
 				line-height: 1.55;
@@ -628,8 +628,8 @@
 			}
 			.vl-pg-sample {
 				background: rgba(255,255,255,0.04);
-				border: 1px solid #1a1a1a;
-				color: #888888;
+				border: 1px solid var(--stroke);
+				color: var(--ink-dim);
 				padding: 6px 12px;
 				border-radius: 999px;
 				font: 500 12px system-ui, sans-serif;
@@ -664,7 +664,7 @@
 				line-height: 1.6;
 				color: #999999;
 			}
-			.vl-byok-copy a { color: #e8e8e8; text-decoration: underline; text-underline-offset: 2px; }
+			.vl-byok-copy a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
 			.vl-byok-copy a:hover { color: #ffffff; }
 			.vl-byok-row {
 				display: flex;
@@ -680,7 +680,7 @@
 				background: #070707;
 				border: 1px solid #212121;
 				border-radius: 9px;
-				color: #e8e8e8;
+				color: var(--ink);
 				font: inherit;
 				font-size: 14px;
 				outline: none;
@@ -713,7 +713,7 @@
 				background: #070707;
 				border: 1px solid #212121;
 				border-radius: 9px;
-				color: #e8e8e8;
+				color: var(--ink);
 				font: inherit;
 				font-size: 14px;
 				outline: none;
@@ -725,7 +725,7 @@
 				background: #070707;
 				border: 1px solid #212121;
 				border-radius: 9px;
-				color: #e8e8e8;
+				color: var(--ink);
 				font: inherit;
 				font-size: 14px;
 				cursor: pointer;
@@ -743,7 +743,7 @@
 				align-items: center;
 				gap: 6px;
 				background: rgba(255,255,255,0.04);
-				border: 1px solid #1a1a1a;
+				border: 1px solid var(--stroke);
 				color: #999999;
 				padding: 7px 12px;
 				border-radius: 999px;
@@ -807,7 +807,7 @@
 			}
 			.vb-card {
 				background: #070707;
-				border: 1px solid #1a1a1a;
+				border: 1px solid var(--stroke);
 				border-radius: 12px;
 				padding: 14px;
 				display: flex;
@@ -828,7 +828,7 @@
 				margin: 0;
 				font-size: 14px;
 				font-weight: 600;
-				color: #e8e8e8;
+				color: var(--ink);
 				line-height: 1.3;
 				word-break: break-word;
 			}
@@ -838,7 +838,7 @@
 				font-weight: 600;
 				letter-spacing: 0.03em;
 				text-transform: uppercase;
-				color: #888888;
+				color: var(--ink-dim);
 				border: 1px solid #222222;
 				border-radius: 5px;
 				padding: 2px 6px;
@@ -866,7 +866,7 @@
 			.vb-skeleton {
 				height: 132px;
 				cursor: default;
-				background: linear-gradient(90deg, #0a0a0a 25%, #111111 50%, #0a0a0a 75%);
+				background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-sheen) 50%, var(--skeleton-base) 75%);
 				background-size: 200% 100%;
 				animation: vb-shimmer 1.4s ease-in-out infinite;
 			}
@@ -890,7 +890,7 @@
 				background: #070707;
 				border: 1px solid #212121;
 				border-radius: 9px;
-				color: #e8e8e8;
+				color: var(--ink);
 				font: inherit;
 				font-size: 14px;
 				outline: none;

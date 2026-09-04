@@ -178,8 +178,21 @@
 	     accent-soft chip fill (low alpha)
 	     stroke      chip border
 	     hi          vanity-highlighted address glyphs (pure white) */
-	--wallet-accent:        #c4b5fd;
-	--wallet-accent-strong: #a78bfa;
+	/* Violet accent pair (QB-07). The pale violet that marks identity, agent and
+	   on-chain surfaces was only ever named for the wallet, so every OTHER surface
+	   reaching for the same hue hardcoded it: payments, integrations, gestures,
+	   genome and galaxy among them. Those copies never flipped for the light
+	   theme, where the pale rung measures 1.7:1 and the text is unreadable.
+	   Naming the pair at platform level gives them a destination; the --wallet-*
+	   names below are now thin aliases of it (the sanctioned --nxt-* / --nv-*
+	   pattern), so wallet UI is unchanged.
+	     accent-violet         default violet ink / chip text
+	     accent-violet-strong  emphasized fill, vanity glyphs, chart series */
+	--accent-violet:        #c4b5fd;
+	--accent-violet-strong: #a78bfa;
+
+	--wallet-accent:        var(--accent-violet);
+	--wallet-accent-strong: var(--accent-violet-strong);
 	--wallet-accent-soft:   rgba(139, 92, 246, 0.10);
 	--wallet-accent-fill:   rgba(139, 92, 246, 0.15);
 	--wallet-stroke:        rgba(139, 92, 246, 0.30);
@@ -240,6 +253,29 @@
 	--blur-sm: 8px;
 	--blur-md: 16px;
 	--blur-lg: 28px;
+
+	/* Skeleton (QB-07). The loading-shimmer primitives. They used to live in
+	   style.css, so a page that only injects the shared nav (nav.css imports this
+	   sheet, not style.css) could not resolve them and hand-rolled its own grey
+	   gradient instead; those literals then stayed dark on the light theme. Here
+	   they resolve on every token-covered page and flip with the theme.
+	   Monochrome on purpose so a skeleton reads on any surface tier. */
+	--skeleton-base:   rgba(255, 255, 255, 0.04);
+	--skeleton-sheen:  rgba(255, 255, 255, 0.08);
+	--skeleton-radius: var(--radius-md);
+
+	/* Stage (QB-07). The backdrop a 3D viewport, avatar thumbnail or model modal
+	   renders against. Like the scrim family it is deliberately theme-INVARIANT:
+	   a rendered model reads against a dark studio ground in either theme, and
+	   flipping it white would blow out every light-coloured avatar. It replaces a
+	   six-value near-black ramp (#000, #050505, #0a0a0a, #0d0d0d, #0e0e0e,
+	   #242424) that had drifted across three pages. Use it ONLY behind media; a
+	   normal panel is --bg-0 / --bg-1 and must flip. */
+	--stage-black: #000000;
+	--stage-deep:  #050505;
+	--stage:       #0a0a0a;
+	--stage-lift:  #0d0d0d;
+	--stage-glow:  #242424;
 
 	/* Motion (B01) — one duration ladder + named easings. Compose as
 	   `transition: <prop> var(--duration-fast) var(--ease-standard);`
@@ -481,6 +517,11 @@
 	   composite correctly on a light canvas, so they stay put. */
 	--wallet-accent:        #6d28d9;
 	--wallet-accent-strong: #5b21b6;
+
+	/* Skeleton on light. A white-tint shimmer is invisible on a white canvas, so
+	   the ramp inverts to a dark tint at the same two alphas. */
+	--skeleton-base:   rgba(15, 18, 28, 0.06);
+	--skeleton-sheen:  rgba(15, 18, 28, 0.11);
 }
 
 @media (prefers-reduced-motion: reduce) {

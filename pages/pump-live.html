@@ -24,7 +24,7 @@
 <style>
   :root {
     --green: #00ff41;
-    --dark-grey: #1a1a1a;
+    --dark-grey: var(--bg-1);
     --medium-grey: #2a2a2a;
     --light-grey: #3a3a3a;
     --text-color: #e0e0e0;
@@ -167,7 +167,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .token-symbol { color: #888; font-size: 12px; }
+  .token-symbol { color: var(--ink-dim); font-size: 12px; }
   .token-mcap { margin-top: 4px; font-size: 14px; color: var(--green); }
   .token-meta { margin-top: 2px; font-size: 11px; color: #777; }
   .token-links { margin-top: 8px; font-size: 11px; display: flex; gap: 10px; align-items: center; }
@@ -254,7 +254,7 @@
   .sk-line.w40 { width: 40%; }
   .sk-line.w55 { width: 55%; }
   .sk-avatar, .sk-line {
-    background: linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%);
+    background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-sheen) 50%, var(--skeleton-base) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.4s ease-in-out infinite;
   }
@@ -300,7 +300,7 @@
   .feed-error p .fe-attempts { color: #ff8a8a; font-variant-numeric: tabular-nums; }
   .feed-error button {
     background: var(--green);
-    color: #0a0a0a;
+    color: var(--bg-0);
     border: none;
     border-radius: 6px;
     padding: 10px 22px;

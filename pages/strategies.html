@@ -39,15 +39,15 @@
 			.sp-sub { max-width: 640px; margin: 0 auto; font-size: var(--text-md, .95rem); line-height: 1.6; color: #aaa; }
 			.sp-sub b { color: #fff; }
 			.sp-safety { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: var(--space-md, 18px); }
-			.sp-safety span { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-2xs, .68rem); color: #888; }
+			.sp-safety span { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-2xs, .68rem); color: var(--ink-dim); }
 			.sp-safety b { color: #ccc; }
 			.sp-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: var(--space-lg, 24px) 0 var(--space-md, 16px); }
 			.sp-seg { display: inline-flex; gap: 4px; background: rgba(255,255,255,.03); padding: 4px; border-radius: var(--radius-pill, 999px); border: 1px solid rgba(255,255,255,.1); }
-			.sp-seg button { font: inherit; font-size: var(--text-2xs, .68rem); padding: 6px 14px; border-radius: 999px; border: none; background: transparent; color: #888; cursor: pointer; transition: background .15s, color .15s; }
-			.sp-seg button[aria-pressed="true"] { background: #fff; color: #0a0a0a; font-weight: 700; }
+			.sp-seg button { font: inherit; font-size: var(--text-2xs, .68rem); padding: 6px 14px; border-radius: 999px; border: none; background: transparent; color: var(--ink-dim); cursor: pointer; transition: background .15s, color .15s; }
+			.sp-seg button[aria-pressed="true"] { background: var(--accent); color: var(--bg-0); font-weight: 700; }
 			.sp-seg button:focus-visible { outline: 2px solid rgba(255,255,255,.6); outline-offset: 2px; }
 			.sp-spacer { flex: 1 1 auto; }
-			.sp-new { font: inherit; font-size: var(--text-2xs, .72rem); font-weight: 700; padding: 9px 16px; border-radius: var(--radius-pill, 999px); border: none; background: #fff; color: #0a0a0a; cursor: pointer; transition: background .15s; }
+			.sp-new { font: inherit; font-size: var(--text-2xs, .72rem); font-weight: 700; padding: 9px 16px; border-radius: var(--radius-pill, 999px); border: none; background: var(--accent); color: var(--bg-0); cursor: pointer; transition: background .15s; }
 			.sp-new:hover { background: #d4d4d4; }
 			.sp-new:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
 			.sp-search { flex: 1 1 180px; min-width: 140px; font: inherit; font-size: var(--text-sm, .82rem); padding: 8px 12px; border-radius: var(--radius-pill, 999px); border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.03); color: #fff; }
@@ -60,26 +60,26 @@
 			.sp-card-name { flex: 1 1 auto; min-width: 0; font-family: var(--font-display, inherit); font-size: var(--text-md, 1rem); font-weight: 700; color: #fff; }
 			.sp-badge { flex: 0 0 auto; font-size: var(--text-2xs, .58rem); text-transform: uppercase; letter-spacing: .05em; padding: 3px 8px; border-radius: 999px; font-family: var(--font-mono, monospace); }
 			.sp-badge.proven { color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3); }
-			.sp-badge.unproven { color: #888; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.12); }
+			.sp-badge.unproven { color: var(--ink-dim); background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.12); }
 			.sp-desc { font-size: var(--text-xs, .74rem); color: #aaa; line-height: 1.45; min-height: 1.4em; }
-			.sp-rules { font-size: var(--text-2xs, .66rem); color: #888; font-family: var(--font-mono, monospace); line-height: 1.5; }
-			.sp-stats { display: flex; gap: 12px; flex-wrap: wrap; font-family: var(--font-mono, monospace); font-size: var(--text-2xs, .68rem); color: #888; padding-top: 4px; border-top: 1px solid rgba(255,255,255,.06); }
-			.sp-stats .pos { color: #e8e8e8; }
+			.sp-rules { font-size: var(--text-2xs, .66rem); color: var(--ink-dim); font-family: var(--font-mono, monospace); line-height: 1.5; }
+			.sp-stats { display: flex; gap: 12px; flex-wrap: wrap; font-family: var(--font-mono, monospace); font-size: var(--text-2xs, .68rem); color: var(--ink-dim); padding-top: 4px; border-top: 1px solid rgba(255,255,255,.06); }
+			.sp-stats .pos { color: var(--ink); }
 			.sp-stats .neg { color: #666; }
 			.sp-meta { display: flex; align-items: center; gap: 8px; font-size: var(--text-2xs, .64rem); color: #666; }
 			.sp-meta a { color: #aaa; text-decoration: none; }
 			.sp-meta a:hover { color: #fff; }
 			.sp-actions { display: flex; gap: 6px; margin-top: 2px; }
-			.sp-btn { flex: 1; font: inherit; font-size: var(--text-2xs, .7rem); padding: 8px 10px; border-radius: var(--radius-sm, 8px); border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: #e8e8e8; cursor: pointer; transition: border-color .16s, color .16s, background .16s; white-space: nowrap; }
+			.sp-btn { flex: 1; font: inherit; font-size: var(--text-2xs, .7rem); padding: 8px 10px; border-radius: var(--radius-sm, 8px); border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: var(--ink); cursor: pointer; transition: border-color .16s, color .16s, background .16s; white-space: nowrap; }
 			.sp-btn:hover { border-color: rgba(255,255,255,.35); color: #fff; }
 			.sp-btn:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
-			.sp-btn-primary { background: #fff; color: #0a0a0a; border-color: transparent; font-weight: 700; }
+			.sp-btn-primary { background: var(--accent); color: var(--bg-0); border-color: transparent; font-weight: 700; }
 			.sp-btn-primary:hover { background: #d4d4d4; }
 			.sp-sk { height: 168px; border-radius: var(--radius-lg, 14px); background: linear-gradient(90deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.05) 50%, rgba(255,255,255,.03) 75%); background-size: 200% 100%; animation: sp-sh 1.3s infinite; }
 			@keyframes sp-sh { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-			.sp-empty { grid-column: 1 / -1; text-align: center; padding: var(--space-xl, 42px) var(--space-md, 16px); color: #888; font-size: var(--text-sm, .82rem); line-height: 1.6; }
+			.sp-empty { grid-column: 1 / -1; text-align: center; padding: var(--space-xl, 42px) var(--space-md, 16px); color: var(--ink-dim); font-size: var(--text-sm, .82rem); line-height: 1.6; }
 			.sp-empty strong { display: block; color: #fff; font-family: var(--font-display, inherit); margin-bottom: 6px; }
-			.sp-rank { position: absolute; top: -8px; left: -8px; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono, monospace); font-size: var(--text-2xs, .66rem); font-weight: 700; background: #fff; color: #0a0a0a; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+			.sp-rank { position: absolute; top: -8px; left: -8px; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono, monospace); font-size: var(--text-2xs, .66rem); font-weight: 700; background: var(--accent); color: var(--bg-0); box-shadow: 0 2px 8px rgba(0,0,0,.4); }
 			.sp-card { position: relative; }
 		</style>
 	

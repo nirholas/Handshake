@@ -65,7 +65,7 @@
 
 		<style>
 			:root {
-				--bg: #0a0a0a;
+				--bg: var(--bg-0);
 				--panel: rgba(17, 17, 17, 0.72);
 				--border: rgba(255, 255, 255, 0.08);
 				--text: #fafafa;
@@ -91,7 +91,7 @@
 				position: fixed;
 				inset: 0;
 				background:
-					radial-gradient(80% 60% at 50% 30%, #242424 0%, #0a0a0a 70%) #0a0a0a;
+					radial-gradient(80% 60% at 50% 30%, var(--stage-glow) 0%, var(--stage) 70%) var(--stage);
 			}
 
 			#walk-camera-feed {
@@ -393,7 +393,7 @@
 				background: var(--text-2);
 			}
 			#walk-online[data-status="online"] .dot {
-				background: #e8e8e8;
+				background: var(--ink);
 				box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 			}
 			#walk-online[data-status="connecting"] .dot,

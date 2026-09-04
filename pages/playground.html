@@ -25,7 +25,7 @@
 		<script defer src="/footer-newsletter.js"></script>
 		<style>
 			:root {
-				--bg: #0a0a0a;
+				--bg: var(--bg-0);
 				--panel: #111;
 				--panel-2: #161616;
 				--border: #1f1f1f;
@@ -35,7 +35,7 @@
 				--text-3: #52525b;
 				--accent: #ffffff;
 				--accent-dim: rgba(255, 255, 255, 0.1);
-				--success: #e8e8e8;
+				--success: var(--ink);
 				--err: var(--danger);
 			}
 
@@ -489,7 +489,7 @@
 			.pg-btn.accent {
 				background: var(--accent);
 				border-color: var(--accent);
-				color: #0a0a0a;
+				color: var(--bg-0);
 				font-weight: 600;
 			}
 			.pg-btn.accent:hover {

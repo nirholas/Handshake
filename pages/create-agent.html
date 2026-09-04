@@ -54,12 +54,12 @@
 				--accent: #ffffff;
 				--accent-ink: #000000;
 				--bg: #000000;
-				--panel: #0a0a0a;
+				--panel: var(--bg-0);
 				--panel-2: #101010;
-				--border: #1a1a1a;
+				--border: var(--stroke);
 				--border-strong: #2a2a2a;
-				--text: #e8e8e8;
-				--muted: #888888;
+				--text: var(--ink);
+				--muted: var(--ink-dim);
 				/* 0.55, not 0.45: on the #000 bg 0.45 composites to ~4.0:1, under the
 				   4.5:1 axe AA floor; 0.55 measures ~5.8:1. */
 				--faint: rgba(255, 255, 255, 0.55);
@@ -1048,7 +1048,7 @@
 				width: 16px;
 				height: 16px;
 				border-radius: 50%;
-				background: #888;
+				background: var(--ink-dim);
 				transition:
 					transform 0.18s,
 					background 0.18s;

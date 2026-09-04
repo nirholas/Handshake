@@ -15,7 +15,7 @@
 	<style>
 		* { box-sizing: border-box; }
 		:root {
-			--fg: #f0f0f0; --muted: #888; --dim: #666; --border: rgba(255,255,255,0.08);
+			--fg: var(--ink); --muted: var(--ink-dim); --dim: var(--ink-faint); --border: rgba(255,255,255,0.08);
 			--card-bg: #0e0e10; --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
 			--radius: 12px;
 		}
@@ -45,7 +45,7 @@
 		.note { font-size: .8rem; color: var(--muted); margin: .4rem 0 0; }
 
 		button.primary, a.primary { appearance: none; font: inherit; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; background: #fff; color: #000; border: 1px solid #fff; padding: .55rem 1.1rem; transition: transform .1s, background .15s; }
-		button.primary:hover, a.primary:hover { transform: translateY(-1px); background: #e8e8e8; }
+		button.primary:hover, a.primary:hover { transform: translateY(-1px); background: var(--ink); }
 		button.primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 		button.ghost, a.ghost { appearance: none; font: inherit; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,.12); padding: .5rem .9rem; transition: border-color .15s; }
 		button.ghost:hover, a.ghost:hover { border-color: rgba(255,255,255,.3); }
@@ -67,7 +67,7 @@
 		.statebox h3 { font-family: var(--font-display); margin: 0 0 .5rem; font-size: 1.15rem; }
 		.statebox p { color: var(--muted); font-size: .88rem; margin: 0 0 1rem; }
 		.statebox.claimed .se-glyph { color: var(--success); }
-		.statebox.expired .se-glyph, .statebox.reclaimed .se-glyph { color: #888; }
+		.statebox.expired .se-glyph, .statebox.reclaimed .se-glyph { color: var(--ink-dim); }
 		.statebox.error .se-glyph { color: var(--danger); }
 
 		.skel-gift { padding: 1.6rem .5rem; text-align: center; }
