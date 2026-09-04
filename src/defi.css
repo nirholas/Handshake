@@ -11,9 +11,13 @@
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-/* Rows here are informational, not navigable — reset the shared table's
-   pointer cursor so nothing signals a click target that doesn't exist. */
-#defi-table .cv-table tbody tr {
+/* Rows open the protocol detail page through the name cell's anchor, so the
+   whole row is the click target. A row without a slug has nowhere to go: drop
+   the shared table's pointer there rather than signal a target that isn't. */
+#defi-table .cv-table tbody tr[data-href] {
+	cursor: pointer;
+}
+#defi-table .cv-table tbody tr:not([data-href]) {
 	cursor: default;
 }
 
@@ -74,19 +78,4 @@
 	border-radius: 50%;
 	background: var(--cv-surface-3);
 	flex-shrink: 0;
-}
-
-/* The empty-state reset button reads as a link, matching cv-empty's anchors. */
-.defi-reset {
-	appearance: none;
-	border: 0;
-	background: transparent;
-	color: var(--cv-accent);
-	font: inherit;
-	cursor: pointer;
-	padding: 0;
-}
-.defi-reset:hover {
-	color: var(--cv-accent-hover);
-	text-decoration: underline;
 }

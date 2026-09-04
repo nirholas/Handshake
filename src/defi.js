@@ -9,6 +9,16 @@ import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
 
 const $ = (id) => document.getElementById(id);
 
+// A press that travels further than this is a drag, not a click on a row.
+const DRAG_SLOP_PX = 6;
+
+// True while the visitor is holding a text selection, so row-click navigation
+// can stand down and let them copy.
+function isSelecting() {
+	const sel = typeof getSelection === 'function' ? getSelection() : null;
+	return !!sel && !sel.isCollapsed && String(sel).trim().length > 0;
+}
+
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
 	if (!res.ok) {
@@ -16,7 +26,11 @@ async function getJson(url) {
 		err.status = res.status;
 		throw err;
 	}
-	return res.json();
+	const body = await res.json();
+	// The API flags a payload it served from its last-good copy after an
+	// upstream failure. Carry it through so the page can say the figures are
+	// cached rather than present them as live.
+	return { body, stale: res.headers.get('x-three-stale') === '1' };
 }
 
 // ── Stat cards ────────────────────────────────────────────────────────────
@@ -97,14 +111,24 @@ function populateCategories() {
 		byCat.set(p.category, (byCat.get(p.category) || 0) + (p.tvl || 0));
 	}
 	const cats = [...byCat.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);
+	// A refresh can return data that no longer carries the category the visitor
+	// picked. Keep it in the list rather than silently dropping their filter to
+	// a blank select that disagrees with the empty table below it; the empty
+	// state's "Show all categories" is the way back out.
+	if (state.category !== '__all' && !cats.includes(state.category)) cats.push(state.category);
 	sel.innerHTML =
 		'<option value="__all">All categories</option>' +
 		cats.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
 	sel.value = state.category;
-	sel.addEventListener('change', () => {
-		state.category = sel.value;
-		renderTable();
-	});
+	// A retry re-enters load() and repopulates these options; bind the listener
+	// once so a second run does not stack a duplicate handler on the select.
+	if (!sel.dataset.wired) {
+		sel.dataset.wired = '1';
+		sel.addEventListener('change', () => {
+			state.category = sel.value;
+			renderTable();
+		});
+	}
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────
@@ -129,6 +153,7 @@ const state = {
 	category: '__all',
 	loading: true,
 	error: false,
+	stale: false,
 };
 
 // Upstream logos are proxied same-origin so a retired icon answers 204 instead
@@ -199,14 +224,23 @@ function renderTable() {
 	}
 	if (state.error) {
 		el.innerHTML =
-			'<div class="cv-empty">DeFi data is temporarily unavailable. <a href="/defi">Try again</a> shortly.</div>';
+			'<div class="cv-empty">DeFi TVL data is temporarily unavailable. The upstream provider did not answer. <button type="button" class="cv-linkbtn" data-act="retry">Try again</button>.</div>';
+		el.querySelector('[data-act="retry"]')?.addEventListener('click', () => load());
+		return;
+	}
+	// An upstream that answers with nothing is a different state from a category
+	// the visitor narrowed down to zero rows, and each needs its own way out.
+	if (!state.protocols.length) {
+		el.innerHTML =
+			'<div class="cv-empty">No protocol TVL is being reported right now. <button type="button" class="cv-linkbtn" data-act="retry">Refresh</button> to check again.</div>';
+		el.querySelector('[data-act="retry"]')?.addEventListener('click', () => load());
 		return;
 	}
 
 	const rows = visibleProtocols();
 	if (!rows.length) {
-		el.innerHTML = `<div class="cv-empty">No protocols in “${esc(state.category)}”. <button type="button" class="defi-reset">Show all categories</button></div>`;
-		el.querySelector('.defi-reset')?.addEventListener('click', () => {
+		el.innerHTML = `<div class="cv-empty">No protocols in “${esc(state.category)}”. <button type="button" class="cv-linkbtn" data-act="reset">Show all categories</button></div>`;
+		el.querySelector('[data-act="reset"]')?.addEventListener('click', () => {
 			state.category = '__all';
 			const sel = $('defi-category');
 			if (sel) sel.value = '__all';
@@ -218,24 +252,27 @@ function renderTable() {
 	const head = COLUMNS.map((col) => {
 		const active = col.key === state.sortKey;
 		const arrow = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
-		return `<th scope="col" tabindex="0" data-key="${col.key}" class="${col.left ? 'left' : ''} ${col.hide || ''}"${active ? ` aria-sort="${state.sortDir === 'asc' ? 'ascending' : 'descending'}"` : ''}>${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
+		const sort = active ? (state.sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+		return `<th scope="col" tabindex="0" data-key="${col.key}" aria-sort="${sort}" class="${col.left ? 'left' : ''} ${col.hide || ''}">${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
 	}).join('');
 
 	const body = rows
 		.map((p) => {
-			// Whole row opens the internal /protocol/:slug detail page when we have
-			// a DeFiLlama slug; keyboard-accessible.
-			const nav = p.slug
-				? ` data-href="/protocol/${encodeURIComponent(p.slug)}" tabindex="0" role="link" aria-label="Open ${esc(p.name)} protocol detail"`
-				: '';
-			return `
-			<tr${nav}>
-				<td class="rank hide-sm cv-mono">${p.__rank}</td>
-				<td class="left name-cell"><span class="inner">
+			// The protocol name is a real anchor, so /protocol/:slug is crawlable,
+			// middle-clickable, and reachable by keyboard as a link. The row keeps
+			// data-href purely as a click convenience, which is why the <tr> stays
+			// a plain table row instead of claiming role="link" and putting all
+			// hundred rows in the tab order.
+			const href = p.slug ? `/protocol/${encodeURIComponent(p.slug)}` : '';
+			const inner = `<span class="inner">
 					${logoImg(p.logo)}
 					<span class="nm">${esc(p.name)}</span>
 					${p.symbol ? `<span class="sym">${esc(p.symbol)}</span>` : ''}
-				</span></td>
+				</span>`;
+			return `
+			<tr${href ? ` data-href="${esc(href)}"` : ''}>
+				<td class="rank hide-sm cv-mono">${p.__rank}</td>
+				<td class="left name-cell">${href ? `<a href="${esc(href)}">${inner}</a>` : inner}</td>
 				<td class="left dim hide-md">${p.category ? esc(p.category) : '—'}</td>
 				${chainsCell(p.chains)}
 				<td class="price">${esc(formatUsd(p.tvl))}</td>
@@ -267,6 +304,9 @@ function renderTable() {
 				state.sortDir = key === 'name' || key === 'category' ? 'asc' : 'desc';
 			}
 			renderTable();
+			// The header this came from is a fresh node after the re-render, so
+			// keyboard users would otherwise be dropped back to the document.
+			$('defi-table')?.querySelector(`th[data-key="${key}"]`)?.focus();
 		};
 		th.addEventListener('click', activate);
 		th.addEventListener('keydown', (e) => {
@@ -277,15 +317,26 @@ function renderTable() {
 		});
 	});
 
-	// Row → /protocol/:slug navigation (header clicks sort, never navigate).
+	// Clicking anywhere in the row follows the name cell's link. The anchor
+	// handles its own click (and the whole keyboard path), so bail out on it
+	// rather than navigating twice.
 	el.querySelectorAll('tr[data-href]').forEach((tr) => {
-		const go = () => location.assign(tr.dataset.href);
-		tr.addEventListener('click', go);
-		tr.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				e.preventDefault();
-				go();
-			}
+		// Where the press started, so a drag that merely ends inside the row is
+		// not mistaken for a click on it.
+		let downX = 0;
+		let downY = 0;
+		tr.addEventListener('pointerdown', (e) => {
+			downX = e.clientX;
+			downY = e.clientY;
+		});
+		tr.addEventListener('click', (e) => {
+			if (e.target.closest('a')) return;
+			// Copying a TVL figure or a protocol name means dragging across a
+			// cell, and that drag ends in a click on the row. Navigating would
+			// throw the selection away before the visitor can copy it.
+			if (isSelecting()) return;
+			if (Math.hypot(e.clientX - downX, e.clientY - downY) > DRAG_SLOP_PX) return;
+			location.assign(tr.dataset.href);
 		});
 	});
 }
@@ -293,25 +344,42 @@ function renderTable() {
 // ── Boot ──────────────────────────────────────────────────────────────────
 
 async function load() {
+	// A retry re-enters here from the error state, so reset to loading before
+	// painting or the skeleton would be replaced by the stale error message.
+	state.loading = true;
+	state.error = false;
 	statsSkeleton();
 	renderTable();
 	try {
-		const data = await getJson('/api/defi/protocols');
+		const { body: data, stale } = await getJson('/api/defi/protocols');
 		state.protocols = Array.isArray(data.protocols) ? data.protocols : [];
 		state.total_tvl = data.total_tvl || 0;
 		state.protocol_count = data.protocol_count || state.protocols.length;
 		state.updated_at = data.updated_at || Date.now();
+		state.stale = stale;
 		state.loading = false;
 		state.error = false;
-		renderStats();
 		populateCategories();
+		// An empty payload has no totals worth showing: a "$0.00" card would read
+		// as a claim that DeFi TVL is zero rather than as missing data.
+		if (state.protocols.length) {
+			renderStats();
+			const when = new Date(state.updated_at).toLocaleTimeString('en-US');
+			$('defi-updated').textContent = state.stale
+				? `Top ${state.protocols.length} protocols by TVL · Data: DeFiLlama · cached copy from ${when}, upstream is not answering`
+				: `Top ${state.protocols.length} protocols by TVL · Data: DeFiLlama · updated ${when}`;
+		} else {
+			$('defi-stats').innerHTML = '';
+			$('defi-updated').textContent = '';
+		}
 		renderTable();
-		$('defi-updated').textContent =
-			`Top ${state.protocols.length} protocols by TVL · Data: DeFiLlama · updated ${new Date(state.updated_at).toLocaleTimeString('en-US')}`;
 	} catch {
 		state.loading = false;
 		state.error = true;
+		state.protocols = [];
+		state.stale = false;
 		$('defi-stats').innerHTML = '';
+		$('defi-updated').textContent = 'Data: DeFiLlama';
 		renderTable();
 	}
 }
