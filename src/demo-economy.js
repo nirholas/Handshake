@@ -21,7 +21,13 @@ const ORACLE_X = 3.8;
 export function createScene(canvas) {
 	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-	renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+	// `false` keeps three.js from writing inline px width/height onto the canvas.
+	// With inline sizes the canvas stops obeying its `width:100%` CSS, so it can
+	// never shrink again: the ResizeObserver below watches an element whose size
+	// three.js just pinned, so it never fires and the scene stays clipped at its
+	// widest observed size on every narrower viewport.
+	const viewport = canvas.parentElement || canvas;
+	renderer.setSize(viewport.clientWidth, viewport.clientHeight, false);
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 0.95;
 	renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -30,9 +36,20 @@ export function createScene(canvas) {
 	scene.background = new THREE.Color(0x05070d);
 	scene.fog = new THREE.FogExp2(0x05070d, 0.08);
 
-	const camera = new THREE.PerspectiveCamera(48, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+	const camera = new THREE.PerspectiveCamera(48, viewport.clientWidth / viewport.clientHeight, 0.1, 100);
 	camera.position.set(0, 2.8, 8);
 	camera.lookAt(0, 1.2, 0);
+
+	// NOVA and ORACLE stand 7.6 world units apart, so a portrait viewport frames
+	// empty floor between two off-screen agents unless the camera pulls back.
+	// Dolly by the horizontal shortfall instead of widening the FOV, which keeps
+	// the perspective identical on phone and desktop.
+	function frameCamera(aspect) {
+		const halfV = Math.tan((camera.fov * Math.PI) / 360);
+		const needed = 4.6 / Math.max(halfV * Math.max(aspect, 0.2), 0.001);
+		camera.position.set(0, 2.8, Math.max(8, Math.min(needed, 20)));
+		camera.lookAt(0, 1.2, 0);
+	}
 
 	// ── Lights ──────────────────────────────────────────────────────────────
 	const ambient = new THREE.AmbientLight(0xffffff, 0.15);
@@ -76,15 +93,22 @@ export function createScene(canvas) {
 
 	// ── Resize observer ──────────────────────────────────────────────────────
 	const ro = new ResizeObserver(() => {
-		const w = canvas.clientWidth, h = canvas.clientHeight;
-		renderer.setSize(w, h);
+		const w = viewport.clientWidth, h = viewport.clientHeight;
+		if (!w || !h) return;
+		renderer.setSize(w, h, false);
 		camera.aspect = w / h;
+		frameCamera(camera.aspect);
 		camera.updateProjectionMatrix();
 	});
-	ro.observe(canvas);
+	ro.observe(viewport);
+	frameCamera(camera.aspect);
+	camera.updateProjectionMatrix();
 
 	// ── Render loop ──────────────────────────────────────────────────────────
-	let raf;
+	// Paused while the tab is hidden: this scene redraws a full canvas texture
+	// every frame, and there is no reason to burn a background tab's GPU on a TV
+	// nobody is looking at.
+	let raf = 0;
 	let t = 0;
 	function tick() {
 		raf = requestAnimationFrame(tick);
@@ -97,7 +121,16 @@ export function createScene(canvas) {
 
 		renderer.render(scene, camera);
 	}
-	tick();
+	function start() {
+		if (!raf) tick();
+	}
+	function stop() {
+		cancelAnimationFrame(raf);
+		raf = 0;
+	}
+	const onVisibility = () => (document.hidden ? stop() : start());
+	document.addEventListener('visibilitychange', onVisibility);
+	start();
 
 	return {
 		nova,
@@ -105,7 +138,8 @@ export function createScene(canvas) {
 		tv,
 		beam,
 		dispose() {
-			cancelAnimationFrame(raf);
+			stop();
+			document.removeEventListener('visibilitychange', onVisibility);
 			ro.disconnect();
 			renderer.dispose();
 		},
@@ -241,6 +275,10 @@ function createTV(scene) {
 	let phase = 'idle'; // idle | browsing | paying | content
 	let briefing = null;
 	let services = null;
+	// The settled transfer, as reported by the SSE `payment` event. The TV used
+	// to print a hardcoded "PAID 0.001 SOL" badge, which contradicted both the
+	// real amount and the simulated runs that move no funds at all.
+	let payment = null;
 	let scrollY = 0;
 	let animT = 0;
 
@@ -257,7 +295,7 @@ function createTV(scene) {
 		if (phase === 'idle') drawIdle(ctx, CW, CH, t);
 		else if (phase === 'browsing') drawBazaar(ctx, CW, CH, services, t);
 		else if (phase === 'paying') drawPaying(ctx, CW, CH, t);
-		else if (phase === 'content') drawContent(ctx, CW, CH, briefing, t);
+		else if (phase === 'content') drawContent(ctx, CW, CH, briefing, payment, t);
 
 		texture.needsUpdate = true;
 	}
@@ -272,6 +310,7 @@ function createTV(scene) {
 		setPhase(p) { phase = p; },
 		setServices(s) { services = s; },
 		setBriefing(b) { briefing = b; },
+		setPayment(p) { payment = p; },
 	};
 }
 
@@ -421,8 +460,12 @@ function drawPaying(ctx, W, H, t) {
 	ctx.restore();
 }
 
-function drawContent(ctx, W, H, briefing, t) {
+function drawContent(ctx, W, H, briefing, payment, t) {
 	if (!briefing) return;
+	if (briefing.type === 'market_unavailable' || !briefing.headline) {
+		drawMarketUnavailable(ctx, W, H, t);
+		return;
+	}
 	ctx.save();
 
 	// Scanlines
@@ -443,20 +486,31 @@ function drawContent(ctx, W, H, briefing, t) {
 	ctx.textAlign = 'left';
 	ctx.fillText('ORACLE · LIVE MARKET BRIEFING', 50, 38);
 
-	ctx.fillStyle = 'rgba(255,255,255,0.4)';
+	// Timestamp, and whether this is a fresh read or the last-known-good copy the
+	// API serves when the upstream market feed is throttled.
+	const stale = briefing.stale === true;
+	const stamp = stale ? briefing.as_of || briefing.fetchedAt : briefing.fetchedAt;
+	const ts = stamp ? new Date(stamp).toLocaleTimeString() : '';
+	ctx.fillStyle = stale ? 'rgba(240,160,48,0.75)' : 'rgba(255,255,255,0.4)';
 	ctx.font = '22px -apple-system,system-ui,sans-serif';
-	const ts = briefing.fetchedAt ? new Date(briefing.fetchedAt).toLocaleTimeString() : '';
 	ctx.textAlign = 'right';
-	ctx.fillText(`fetched ${ts}`, W - 50, 38);
+	ctx.fillText(ts ? (stale ? `cached ${ts}` : `fetched ${ts}`) : '', W - 50, 38);
 
-	// Paid badge
-	ctx.fillStyle = 'rgba(34,209,122,0.2)';
-	roundRect(ctx, W - 230, 54, 180, 36, 10);
-	ctx.fill();
-	ctx.fillStyle = '#22d17a';
+	// Settlement badge, driven by the real payment event. A simulated run says so
+	// rather than claiming an on-chain payment that never happened.
+	const simulated = payment?.simulated === true;
+	const amount = payment?.amount_sol ? `${payment.amount_sol} SOL` : '';
+	const badge = simulated
+		? `SIMULATED · ${amount || 'no funds moved'}`
+		: `✓ PAID · ${amount || 'on-chain'}`;
 	ctx.font = 'bold 22px -apple-system,system-ui,sans-serif';
+	const badgeW = Math.max(180, ctx.measureText(badge).width + 34);
+	ctx.fillStyle = simulated ? 'rgba(240,160,48,0.2)' : 'rgba(34,209,122,0.2)';
+	roundRect(ctx, W - 50 - badgeW, 54, badgeW, 36, 10);
+	ctx.fill();
+	ctx.fillStyle = simulated ? '#f0a030' : '#22d17a';
 	ctx.textAlign = 'center';
-	ctx.fillText('✓ PAID · 0.001 SOL', W - 140, 78);
+	ctx.fillText(badge, W - 50 - badgeW / 2, 78);
 
 	// Headline
 	ctx.textAlign = 'left';
@@ -519,6 +573,29 @@ function drawContent(ctx, W, H, briefing, t) {
 	ctx.fillStyle = `rgba(0,0,0,${0.08 + Math.sin(t * 0.7) * 0.03})`;
 	ctx.fillRect(0, 0, W, H);
 
+	ctx.restore();
+}
+
+// The market feed is a live third party. When it does not answer, the API says
+// so explicitly instead of inventing prices, and the TV has to render that
+// answer as a designed screen rather than an empty briefing frame.
+function drawMarketUnavailable(ctx, W, H, t) {
+	ctx.save();
+	for (let y = 0; y < H; y += 3) {
+		ctx.fillStyle = 'rgba(240,160,48,0.014)';
+		ctx.fillRect(0, y, W, 1);
+	}
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.fillStyle = 'rgba(240,160,48,0.85)';
+	ctx.font = 'bold 44px -apple-system,system-ui,sans-serif';
+	ctx.fillText('Market feed unavailable', W / 2, H / 2 - 46);
+	ctx.fillStyle = 'rgba(255,255,255,0.45)';
+	ctx.font = '28px -apple-system,system-ui,sans-serif';
+	ctx.fillText('ORACLE could not reach live Solana market data.', W / 2, H / 2 + 10);
+	ctx.fillText('Run the demo again in a moment.', W / 2, H / 2 + 54);
+	ctx.fillStyle = `rgba(240,160,48,${0.35 + 0.25 * Math.sin(t * 2)})`;
+	ctx.fillRect(W / 2 - 40, H / 2 + 104, 80, 3);
 	ctx.restore();
 }
 

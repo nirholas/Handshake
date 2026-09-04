@@ -103,6 +103,19 @@
 		/* ── Canvas ── */
 		#canvas-wrap { grid-area: canvas; position: relative; overflow: hidden; }
 		#scene { width: 100%; height: 100%; display: block; }
+		/* WebGL can be unavailable (old GPU, blocklisted driver, hardened browser).
+		   The narrated economy still runs in the sidebar, so say what is missing
+		   instead of leaving a black rectangle. */
+		#scene-fallback {
+			display: none;
+			position: absolute; inset: 0;
+			flex-direction: column; align-items: center; justify-content: center;
+			gap: 8px; padding: 24px; text-align: center;
+			background: radial-gradient(circle at 50% 40%, rgba(78,140,255,0.08), transparent 60%), #05070d;
+		}
+		#scene-fallback.show { display: flex; }
+		#scene-fallback .sf-title { font-size: 15px; font-weight: 700; }
+		#scene-fallback .sf-body { font-size: 12px; color: var(--muted); max-width: 42ch; line-height: 1.6; }
 
 		/* ── Sidebar ── */
 		#sidebar {
@@ -141,6 +154,22 @@
 			padding: 2px 6px; border-radius: 4px;
 			color: #f0a030; background: rgba(240,160,48,0.12); border: 1px solid rgba(240,160,48,0.28);
 		}
+
+		/* Run error: actionable, never a bare "see console" */
+		#run-error { display: none; padding: 12px 14px; border-bottom: 1px solid rgba(255,99,99,0.28); background: rgba(255,99,99,0.06); }
+		#run-error.show { display: block; }
+		#run-error .re-title { font-size: 12px; font-weight: 700; color: #ff8a8a; }
+		#run-error .re-body { font-size: 11px; color: var(--muted); margin: 4px 0 9px; line-height: 1.5; }
+		#retry-btn {
+			display: inline-flex; align-items: center;
+			padding: 6px 12px; border-radius: 8px; cursor: pointer;
+			background: rgba(255,99,99,0.12); color: #ff8a8a;
+			border: 1px solid rgba(255,99,99,0.35);
+			font: 700 11px -apple-system,system-ui,sans-serif;
+			transition: background .15s, border-color .15s;
+		}
+		#retry-btn:hover { background: rgba(255,99,99,0.2); border-color: rgba(255,99,99,0.55); }
+		#retry-btn:focus-visible { outline: 2px solid #ff8a8a; outline-offset: 2px; }
 
 		/* Activity log */
 		#steps-wrap { flex: 1; overflow-y: auto; }
@@ -182,6 +211,30 @@
 		#sheet-toggle:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); }
 		#sheet-toggle:focus-visible { outline: 2px solid var(--nova); outline-offset: 2px; }
 
+		/* Narrow viewports: the topbar carried five items and pushed "Run demo"
+		   off-screen at 320px, making the page's only action unreachable. Drop the
+		   decorative pieces (the agent pills repeat in the Wallets panel, the tech
+		   chips and mode line repeat in the Transaction panel) so the brand, the
+		   sheet toggle and the primary button always fit. */
+		@media (max-width: 560px) {
+			#topbar { padding: 0 10px; gap: 8px; }
+			.pills { display: none; }
+			.brand a { font-size: 14px; }
+			.brand .page { font-size: 12px; }
+			#run-btn { padding: 8px 12px; font-size: 12px; }
+			#sheet-toggle { padding: 6px 10px; font-size: 11px; }
+			#botbar { padding: 0 12px; gap: 8px; }
+			#botbar .bot-sep, #botline, .chips { display: none; }
+			#status { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		}
+		@media (max-width: 430px) {
+			.brand .sep { display: none; }
+			.brand .page {
+				position: absolute; width: 1px; height: 1px;
+				overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+			}
+		}
+
 		@media (max-width: 680px) {
 			#root { grid-template-columns: 1fr; grid-template-areas: "top" "canvas" "bot"; }
 			/* The payment proof is the point of the demo — keep it reachable on
@@ -213,7 +266,7 @@
 		<div class="brand">
 			<a href="/" data-i18n="demo_economy.three_ws">three.ws</a>
 			<span class="sep">/</span>
-			<span class="page" data-i18n="demo_economy.agent_economy">Agent Economy</span>
+			<h1 class="page" data-i18n="demo_economy.agent_economy">Agent Economy</h1>
 		</div>
 		<div class="pills">
 			<span class="pill nova" data-i18n-html="demo_economy.nova_payer"><span class="dot"></span>NOVA · payer</span>
@@ -227,7 +280,13 @@
 		<button id="run-btn" type="button" data-i18n-html="demo_economy.run_demo"><span id="run-label">Run demo</span></button>
 	</header>
 
-	<div id="canvas-wrap"><canvas id="scene"></canvas></div>
+	<div id="canvas-wrap">
+		<canvas id="scene" role="img" aria-label="3D scene: the agents NOVA and ORACLE either side of a screen that shows the x402 bazaar, the payment, and the delivered market briefing" data-i18n-attr="aria-label:demo_economy.scene_arialabel"></canvas>
+		<div id="scene-fallback">
+			<div class="sf-title" data-i18n="demo_economy.scene_unavailable">3D scene unavailable</div>
+			<p class="sf-body" data-i18n="demo_economy.scene_unavailable_body">This browser could not start WebGL, so the world is not rendering. The demo still runs: press Run demo and follow the payment and the market briefing in the panel beside it.</p>
+		</div>
+	</div>
 
 	<aside id="sidebar">
 		<div class="sb-block">
@@ -261,13 +320,19 @@
 			</div>
 		</div>
 
+		<div id="run-error" role="alert">
+			<div class="re-title" data-i18n="demo_economy.demo_could_not_run">Demo could not run</div>
+			<p class="re-body" id="re-body"></p>
+			<button id="retry-btn" type="button" data-i18n="demo_economy.retry">Retry</button>
+		</div>
+
 		<div class="sb-label" style="padding:10px 14px 4px">Activity</div>
-		<div id="steps-wrap"><div id="steps"></div></div>
+		<div id="steps-wrap"><div id="steps" role="log" aria-live="polite" aria-relevant="additions"></div></div>
 	</aside>
 
 	<footer id="botbar">
-		<span id="status" data-i18n="demo_economy.ready_click_run_demo">Ready — click Run demo</span>
-		<span style="color:var(--muted)">·</span>
+		<span id="status" aria-live="polite" data-i18n="demo_economy.ready_click_run_demo">Ready. Click Run demo</span>
+		<span class="bot-sep" style="color:var(--muted)">·</span>
 		<span id="botline" style="color:var(--muted)" data-i18n="demo_economy.real_solana_infrastructure_x402_protocol">Real Solana infrastructure · x402 protocol</span>
 		<div class="chips">
 			<span class="chip" data-i18n="demo_economy.x402">x402</span>
@@ -304,7 +369,12 @@ let world = null;
 try {
 	world = createScene(canvas);
 } catch (err) {
-	console.error('Scene failed:', err);
+	// WebGL unavailable or the context was refused. The narrated economy is the
+	// substance of this page and it does not need the renderer, so surface the
+	// missing piece and keep the run path working.
+	document.getElementById('scene-fallback').classList.add('show');
+	canvas.style.display = 'none';
+	console.warn('3D scene unavailable:', err?.message || err);
 }
 
 // ── Utilities ──────────────────────────────────────────────────────────────
@@ -330,6 +400,25 @@ function updateWallet(side, { name, address, balance_sol }) {
 	if (balance_sol != null) balEl.textContent = balance_sol + ' SOL';
 }
 
+// ── Error surface ──────────────────────────────────────────────────────────
+// A run can fail for reasons the visitor can act on (offline, a blocked
+// EventSource, an upstream blip), so name the cause and offer the retry rather
+// than pointing at the developer console.
+const errorCard = document.getElementById('run-error');
+const errorBody = document.getElementById('re-body');
+const retryBtn = document.getElementById('retry-btn');
+
+function showError(message) {
+	errorBody.textContent = message;
+	errorCard.classList.add('show');
+	openSheetOnMobile();
+}
+
+function clearError() {
+	errorCard.classList.remove('show');
+	errorBody.textContent = '';
+}
+
 // ── Demo runner ────────────────────────────────────────────────────────────
 let running = false;
 
@@ -341,6 +430,7 @@ function runDemo() {
 	runLabel.textContent = 'Running…';
 	stepsEl.innerHTML = '';
 	statusEl.textContent = 'Starting demo…';
+	clearError();
 	bazaarOk = true;
 	botLineEl.textContent = 'Real Solana infrastructure · x402 protocol';
 
@@ -352,13 +442,17 @@ function runDemo() {
 	world?.nova?.setState('idle');
 	world?.oracle?.setState('idle');
 	world?.tv?.setPhase('idle');
+	world?.tv?.setPayment(null);
+	world?.tv?.setBriefing(null);
 	world?.beam?.deactivate();
 
 	const es = new EventSource('/api/demo-economy');
 	let settled = false;
+	let timeoutId = 0;
 
 	function finish() {
 		if (settled) return; settled = true;
+		clearTimeout(timeoutId);
 		es.close();
 		runBtn.disabled = false;
 		runBtn.querySelector('.spinner')?.remove();
@@ -417,6 +511,7 @@ function runDemo() {
 		} else {
 			sigEl.innerHTML = `<span style="color:var(--muted)">no on-chain tx — simulated</span>`;
 		}
+		world?.tv?.setPayment(d);
 		updateBotLine(d.simulated);
 		openSheetOnMobile();
 	});
@@ -428,20 +523,39 @@ function runDemo() {
 	});
 
 	es.addEventListener('done', () => finish());
+
+	// EventSource delivers BOTH a server-sent `error` event (which carries data)
+	// and its own transport failure under the same event name, so branch on
+	// whether a payload came with it.
 	es.addEventListener('error', e => {
-		try { addStep('❌', 'Error', JSON.parse(e.data).message); } catch {}
-		statusEl.textContent = 'Error — see console';
+		if (settled) return;
+		let serverMessage = null;
+		try { serverMessage = JSON.parse(e.data).message; } catch {}
+		if (serverMessage) {
+			addStep('⚠️', 'Run failed', serverMessage);
+			statusEl.textContent = 'Run failed';
+			showError(serverMessage + ' Nothing was paid. Retry when you are ready.');
+		} else {
+			statusEl.textContent = 'Connection lost';
+			showError(navigator.onLine === false
+				? 'You appear to be offline. The demo streams live from three.ws, so reconnect and retry.'
+				: 'The connection to the demo stream dropped before it finished. No payment was made. Retry to start a fresh run.');
+		}
 		finish();
 	});
-	es.onerror = () => {
-		if (!settled) { statusEl.textContent = 'Connection lost'; finish(); }
-	};
 
-	// Hard timeout
-	setTimeout(finish, 35000);
+	// Hard timeout: a stream that stalls mid-run leaves the button spinning
+	// forever otherwise.
+	timeoutId = setTimeout(() => {
+		if (settled) return;
+		statusEl.textContent = 'Run timed out';
+		showError('The run did not finish within 35 seconds. No payment was made. Retry to start a fresh run.');
+		finish();
+	}, 35000);
 }
 
 runBtn.addEventListener('click', runDemo);
+retryBtn.addEventListener('click', runDemo);
 
 // Mobile sheet — surface the payment proof instead of hiding it on small screens.
 const sheetToggle = document.getElementById('sheet-toggle');
