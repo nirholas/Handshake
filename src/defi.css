@@ -79,3 +79,36 @@
 	background: var(--cv-surface-3);
 	flex-shrink: 0;
 }
+
+/* Toolbar refresh. The figures move all day and the server caches them for
+   five minutes, so the page needs a way to ask for new ones short of a full
+   reload. The icon spins for exactly as long as the request is in flight. */
+.defi-refresh {
+	background: transparent;
+	font-family: inherit;
+	font-size: 0.875rem;
+	cursor: pointer;
+}
+.defi-refresh[disabled] {
+	cursor: progress;
+	color: var(--cv-text-3);
+}
+.defi-refresh-icon {
+	width: 0.875rem;
+	height: 0.875rem;
+	flex-shrink: 0;
+}
+.defi-refresh[aria-busy='true'] .defi-refresh-icon {
+	animation: defi-spin 0.9s linear infinite;
+	transform-origin: 50% 50%;
+}
+@keyframes defi-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.defi-refresh[aria-busy='true'] .defi-refresh-icon {
+		animation: none;
+	}
+}

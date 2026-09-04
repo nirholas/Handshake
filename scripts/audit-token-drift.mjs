@@ -37,6 +37,15 @@ const TOKEN_HEXES = [
 	{ hex: '#4ade80', token: '--success' },
 	{ hex: '#f87171', token: '--danger' },
 	{ hex: '#fbbf24', token: '--warn' },
+	// QB-07: the base palette. Each of these is a light-theme bug, not just a
+	// style nit — a hardcoded #0a0a0a panel or #e8e8e8 label keeps its dark
+	// value when [data-theme='light'] remaps the token, so the surface renders
+	// dark-on-dark (or light-on-light) for anyone using the light theme.
+	{ hex: '#0a0a0a', token: '--bg-0' },
+	{ hex: '#1a1a1a', token: '--bg-1' },
+	{ hex: '#e8e8e8', token: '--ink' },
+	{ hex: '#888888', token: '--ink-dim' },
+	{ hex: '#888', token: '--ink-dim' },
 ];
 
 /** A page that redefines a status token is a sanctioned theme layer — skip it
@@ -44,6 +53,20 @@ const TOKEN_HEXES = [
 const LOCAL_DEF = (css, token) => new RegExp(`${token}\\s*:`).test(css);
 
 const STYLE_BLOCK = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+
+/** A hex inside a `var(--token, #hex)` fallback is not drift — the var resolves
+ * first and flips with the theme; the literal only shows if the sheet is missing.
+ * Comments are prose. Strip both before counting so the ratchet measures only
+ * literals that actually paint. Loops because fallbacks nest. */
+function stripNonAuthoritative(css) {
+	let out = css.replace(/\/\*[\s\S]*?\*\//g, '');
+	for (let i = 0; i < 8; i++) {
+		const next = out.replace(/var\(\s*--[a-z0-9-]+\s*,[^()]*\)/gi, 'var(--token)');
+		if (next === out) break;
+		out = next;
+	}
+	return out;
+}
 
 function collectPages(dir) {
 	const out = [];
@@ -65,6 +88,7 @@ function countDrift() {
 		let css = '';
 		for (const m of html.matchAll(STYLE_BLOCK)) css += m[1];
 		if (!css) continue;
+		css = stripNonAuthoritative(css);
 		let n = 0;
 		for (const { hex, token } of TOKEN_HEXES) {
 			if (LOCAL_DEF(css, token)) continue;
