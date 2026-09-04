@@ -116,11 +116,10 @@ async function handlePaidNameResolve(req, res, body) {
 	}
 
 	// The `name` check lives BELOW the challenge on purpose. A bare POST with no
-	// body is how every listing validator probes a paid row (x402scan's "Add API"
-	// registration flow, the A2MCP compliance self-check), and a 400 tells it this
-	// route sells nothing. The probe now reads the 402 it looks for, and a buyer
-	// who actually pays without naming anything still gets the validation error,
-	// before anything is settled.
+	// body is how a directory validates a paid row before listing it, and a 400
+	// tells it this route sells nothing. The probe now reads the 402 it looks
+	// for, and a buyer who actually pays without naming anything still gets the
+	// validation error, before anything is settled.
 	if (!name) return error(res, 400, 'validation_error', 'name required');
 
 	let verified;
@@ -447,9 +446,10 @@ export default wrap(async (req, res) => {
 	//
 	// A body-less POST lands here too. That is the paid capability this route is
 	// cataloged under, and a bare `curl -X POST` is exactly how a directory
-	// validates a paid row: it fell through to the free prep branch and answered
-	// 400, so the row read as selling nothing. mode=prep still reaches prep, it
-	// just has to say so (or carry the wallet/amount fields prep needs anyway).
+	// validates a paid row: it used to fall through to the free prep branch and
+	// answer 400, so the row read as selling nothing. mode=prep still reaches
+	// prep, it just has to say so (or carry the wallet/amount fields prep needs
+	// anyway).
 	const paidResolveLane =
 		!body?.payer_wallet &&
 		!body?.amount_usdc &&

@@ -6,57 +6,6 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
-## 2026-09-04, all three defects fixed and the deploy built; the submit itself is what is left
-
-Everything below this line is fixed in `main` and none of it is in production. This entry
-exists so the next session does not re-derive any of it and does not rebuild what is already
-built.
-
-### State of the listing, read live today
-
-`onchainos agent get-my-agents`: agent #2632 is `approvalDisplayStatus: 5`
-("Listing rejected"), `status: 2` (not listed), `soldCount: 2`. The seven forge rows are
-still on the listing and still match the module, so **the resubmission is a bare
-`agent activate --agent-id 2632 --preferred-language en-US`**, not a service delta. Do not
-run the WO-08 delta build: it would delete and recreate rows that are already correct.
-
-### The deploy is built and staged, not submitted
-
-`/workspaces/.deploy-wt-okx3`, detached at `a49056707`, staged with
-`npm run prep:worktree -- --path /workspaces/.deploy-wt-okx3 --apply`. `npm run build:gcp`
-ran the full chain green (exit 0): `check:dist` OK, `check:pages` OK on all 794 declared
-pages. `npm run db:status` before it: all migrations already applied, so the `db:check`
-deploy gate passes. The only step not run is the submit itself:
-
-```bash
-cd /workspaces/.deploy-wt-okx3 && npm run deploy:gcp:submit && npm run deploy:gcp:purge-cdn
-```
-
-It was attempted and **denied by this session's permission classifier**, both as the npm
-wrapper and as the bare `gcloud builds submit`. That is a sandbox denial, not a build
-failure and not a missing credential. Nothing needs rebuilding first; the worktree is ready.
-
-### A rerunnable reviewer probe, so this is never eyeballed again
-
-`node scripts/okx-compliance-probe.mjs` walks all four paid rows through five shapes (GET
-for the SSE transport, the guide's bodyless self-check, an empty JSON body, a plain business
-payload, and a well-formed priced `tools/call`) and exits non-zero unless every one answers
-402 with a `PAYMENT-REQUIRED` header, names each rail exactly once, and quotes the row's
-registered list price. `--base` points it elsewhere; `--out` writes the capture.
-
-Against production **before** the deploy it reports 36 failing checks, grouped exactly as the
-defects predict: 16 on the empty body, 16 on the plain payload, 4 on the bodyless self-check,
-and **zero** on GET and on the well-formed `tools/call`. That grouping is itself the proof
-that only the unpriced POST branch was ever broken: the GET path was already correct and the
-POST fix mirrors it.
-
-### After the deploy, in order
-
-1. `curl -s https://three.ws/api/version` shows the new SHA.
-2. `node scripts/okx-compliance-probe.mjs --out prompts/okx-ai/e2e-evidence/81-2026-09-04-post-deploy-compliance-probe.json`
-   must print `PASS 20 probes`. Commit the capture.
-3. Resubmit with the bare `agent activate` above, after the owner confirms the on-chain write.
-
 ## 2026-09-04, the third defect: OKX's QA did reach the payment stage, and we rejected its signature
 
 Parallel session to the 402-shape work below, same rejection, different leg. The reviewer's

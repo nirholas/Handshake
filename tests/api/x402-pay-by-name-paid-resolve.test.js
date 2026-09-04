@@ -137,8 +137,8 @@ describe('POST /api/x402/pay-by-name (paid resolution)', () => {
 	it('challenges a name-less probe rather than 400ing it (registry probes are body-less)', async () => {
 		// Directory validators register a paid row by probing it with a bare POST
 		// and reading the 402 back; a pre-payment 400 tells them the row sells
-		// nothing, which is how this route stayed off the x402scan origin listing.
-		// The challenge now comes first, and nothing on the payment path runs.
+		// nothing, which is how this route stayed off our public listing. The
+		// challenge now comes first, and nothing on the payment path runs.
 		const { res, body } = await post({ name: '   ' });
 		expect(res.statusCode).toBe(402);
 		expect(body.accepts).toHaveLength(1);

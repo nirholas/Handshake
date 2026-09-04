@@ -144,8 +144,8 @@ describe('credential-less probes always reach the 402 challenge', () => {
 	// pipeline and pay-by-name validated the request body BEFORE pricing it, so a
 	// bare `POST` with no body answered 400 (`invalid_stages`, `payer_wallet must
 	// be a base58 Solana public key`). Measured against production 2026-09-04:
-	// they were the only two of the 60 paid routes absent from the x402scan
-	// origin listing that answered a bodyless probe with anything other than a
+	// of the 60 paid routes missing from our public directory listing, these two
+	// were the only ones answering a bodyless probe with anything other than a
 	// 402 or an honest 503, which is exactly the shape that fails registration.
 
 	it('bodyless POST on pipeline serves the challenge, not the stage-validation 400', async () => {

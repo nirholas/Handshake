@@ -278,14 +278,13 @@ export default wrap(async (req, res) => {
 	const rawBody = Buffer.concat(chunks).toString('utf8');
 
 	// A body that never becomes a plan must NOT short-circuit the paywall. Every
-	// validator that indexes this route probes it with a bare POST and no body
-	// (x402scan's "Add API" registration flow, the A2MCP compliance self-check),
-	// and reads anything other than 402 as a row that sells nothing. Answering
-	// the probe with a 400 is why this route stayed unlistable while quoting a
-	// spec-valid 402 to real buyers. The probe now gets the challenge, priced at
-	// the catalog's example chain (the same amount /.well-known/x402.json and
-	// /openapi.json advertise for this route), and the validation error is
-	// re-raised below for any caller that actually crosses the paywall.
+	// directory that indexes a paid route registers it by probing with a bare
+	// POST and no body, and reads anything other than 402 as a row that sells
+	// nothing. Answering that probe with a 400 is why this route stayed
+	// unlistable while quoting a spec-valid 402 to real buyers. The probe now
+	// gets the challenge, priced at the catalog's example chain (the same amount
+	// /.well-known/x402.json and /openapi.json advertise for this route), and the
+	// validation error is re-raised below for any caller that crosses the paywall.
 	let plan = null;
 	let planError = null;
 	try {
