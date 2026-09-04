@@ -146,8 +146,24 @@ const POLLINATIONS_MODEL = 'openai-fast';
 // fails over to the reliable Vertex anchor in seconds. Read per-call (not a
 // load-time const) so it's tunable via env without a redeploy; floored so a bad
 // value can't disable the guard.
+// Per-provider wall clock for one rung of the chain. Shared so a rung that wants
+// "the same budget as everyone else" cannot drift from the number llmComplete
+// actually enforces.
+function perProviderTimeoutMs() {
+	return Math.max(4_000, Number(process.env.LLM_PER_PROVIDER_TIMEOUT_MS) || 12_000);
+}
+
+// NIM's free tier queues under load, so this rung once carried a 6s cap to reach
+// the credits-funded Vertex anchor below it "in seconds instead of blocking".
+// That trade only pays while Vertex answers, and Vertex has been denying every
+// call project-wide on a billing hold since 2026-08-27, so the cap was cutting a
+// HEALTHY rung off in front of an unreachable one. Measured on 2026-09-04, NIM
+// answers a full-size fact-check stance prompt (5.4KB in, 1024 tok out) in
+// 1.8s-10.5s: the 6s cap discarded half of those. It now defaults to the same
+// per-provider budget every other rung gets, and stays env-tunable for an
+// operator who has a faster anchor underneath it.
 function nvidiaLaneTimeoutMs() {
-	return Math.max(2_000, Number(process.env.NVIDIA_LANE_TIMEOUT_MS) || 6_000);
+	return Math.max(2_000, Number(process.env.NVIDIA_LANE_TIMEOUT_MS) || perProviderTimeoutMs());
 }
 const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
 // Paid last-resort tail (see policy above). Mini keeps the backstop cheap; the
@@ -534,8 +550,9 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			model: NVIDIA_MODEL,
 			extraBody: NVIDIA_NO_THINK,
 			// NIM free tier queues under load (observed hanging 25s on a 900-token
-			// prompt while every other free lane failed fast); cap it tight so the
-			// chain reaches the reliable Vertex anchor in seconds instead of blocking.
+			// prompt while every other free lane failed fast), so the lane stays
+			// bounded. See nvidiaLaneTimeoutMs for why that bound is no longer a
+			// hardcoded 6s.
 			timeoutMs: nvidiaLaneTimeoutMs(),
 		}));
 	}
@@ -746,7 +763,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 	// stop trying once the shared budget is spent. Most non-answers here are fast
 	// (429/402 in <1s); the cap only bites a genuine stall. Env-tunable; floored so
 	// a fat-fingered value can't strangle a legitimately-slow completion.
-	const perProviderMs = Math.max(4_000, Number(process.env.LLM_PER_PROVIDER_TIMEOUT_MS) || 12_000);
+	const perProviderMs = perProviderTimeoutMs();
 	// Floor for the fair-share cap below: below this even a healthy lane cannot
 	// finish, so slicing thinner would just fail every rung instead of some.
 	const MIN_ATTEMPT_MS = 4_000;
