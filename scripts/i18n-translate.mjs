@@ -53,7 +53,6 @@ import {
 	setDeep,
 	getDeep,
 	missingKeys,
-	untranslatedCount,
 	mergeOrdered,
 	pruneStale,
 	buildMasker,
@@ -235,10 +234,16 @@ const PROVIDER_DEFAULT_MODEL = {
 // honors response_format:json_object — free models often 400 on it, so those
 // rely on prompt-enforced JSON plus fence stripping instead.
 const OPENAI_COMPAT = {
+	// No jsonMode: Groq's `response_format:json_object` is server-validated, and
+	// gpt-oss narrates before it emits the object, so a real translation payload
+	// comes back as a hard `400 json_validate_failed` instead of a parseable
+	// reply. That is not a transient error, so the chunk burns its whole retry
+	// budget and then fails over, which took the fastest free lane out of every
+	// bulk run. The prompt already demands a bare JSON object and parseModelJSON
+	// strips fences and prose, so the unvalidated lane parses fine.
 	groq: {
 		envKey: 'GROQ_API_KEY',
 		url: () => 'https://api.groq.com/openai/v1/chat/completions',
-		jsonMode: true,
 	},
 	openrouter: {
 		envKey: 'OPENROUTER_API_KEY',
@@ -836,20 +841,27 @@ function persist(code, existing, translatedFlat) {
 // then renders as a half-translated page, because the runtime falls back to English
 // per key. Listing such a locale is exactly the failure this manifest exists to
 // prevent, so an incomplete catalog is skipped and reported rather than shipped.
+//
+// Counting empty values alone is not enough either, and that gap shipped: a key
+// ADDED to the source after a locale was translated is simply absent from that
+// catalog, not empty, so 81 locales missing 667 keys apiece still counted as
+// complete and stayed in the switcher. missingKeys() is the same rule lint
+// applies (absent OR blank), so the manifest and the lint gate now agree on what
+// "complete" means.
 function writeManifest() {
 	const skipped = [];
 	const ready = (code) => {
 		if (code === cfg.entryLocale) return true;
 		if (!existsSync(localePath(code))) return false;
-		let empty = 0;
+		let gaps = 0;
 		try {
-			empty = untranslatedCount(readJSON(localePath(code)));
+			gaps = missingKeys(source, readJSON(localePath(code))).length;
 		} catch {
 			skipped.push(`${code} (unreadable)`);
 			return false;
 		}
-		if (empty) skipped.push(`${code} (${empty} untranslated key${empty === 1 ? '' : 's'})`);
-		return empty === 0;
+		if (gaps) skipped.push(`${code} (${gaps} untranslated key${gaps === 1 ? '' : 's'})`);
+		return gaps === 0;
 	};
 	const localesList = [cfg.entryLocale, ...cfg.outputLocales].filter(ready).map((code) => ({
 		code,
@@ -921,8 +933,40 @@ async function repairLocale(code, maxAttempts = 4) {
 
 	let repaired = 0;
 	let baked = 0;
+
+	// First pass: re-translate every failing key together, in the same chunks a
+	// normal run would use. One key per request is affordable for the handful of
+	// sentinel drops repair was written for, but the failure that actually fills
+	// this list is a source string edited after translation, which fails the same
+	// key in all 84 locales at once: 11 such keys is 924 requests, more than a
+	// free lane's whole daily request budget, so repair could not finish. Batched,
+	// the same work is one request per locale. Each returned value still has to
+	// pass the same per-key check, so anything the batch mangles simply falls
+	// through to the per-key retries below.
+	const batched = {};
+	for (const keys of chunkKeys(failingKeys, (cfg.splitToken || 1200) * 4)) {
+		const payload = {};
+		const tokenMap = {};
+		for (const k of keys) {
+			const { masked, tokens } = masker.mask(String(getDeep(source, k) ?? ''));
+			payload[k] = masked;
+			tokenMap[k] = tokens;
+		}
+		let out;
+		try {
+			out = await translateChunk(langName, payload);
+		} catch (err) {
+			if (isFatalAuthFailure(err)) throw err;
+			continue;
+		}
+		for (const k of keys) {
+			const candidate = typeof out[k] === 'string' ? masker.unmask(out[k], tokenMap[k]) : null;
+			if (candidate && passes(k, candidate)) batched[k] = candidate;
+		}
+	}
+
 	for (const key of failingKeys) {
-		let fixed = null;
+		let fixed = batched[key] ?? null;
 		for (let attempt = 0; attempt < maxAttempts && fixed === null; attempt++) {
 			const { masked, tokens } = masker.mask(String(getDeep(source, key) ?? ''));
 			let out;
