@@ -13,7 +13,10 @@
  *      not the caller named a priced tool.
  *
  * Usage:
- *   node scripts/okx-compliance-probe.mjs [--base https://three.ws] [--out <file>]
+ *   node scripts/okx-compliance-probe.mjs [--base https://three.ws] [--out <file>] [--note <text>]
+ *
+ * `--note` is recorded verbatim in the capture, for saying what the run proves
+ * when the base is not the public site.
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -26,6 +29,7 @@ const flag = (name, fallback) => {
 
 const BASE = (flag('--base', 'https://three.ws') || '').replace(/\/+$/, '');
 const OUT = flag('--out', '');
+const NOTE = flag('--note', '');
 
 /** service id -> registered list price, in atomic units of a 6-decimal stablecoin. */
 const PAID_ROWS = [
@@ -166,6 +170,7 @@ const report = {
 	pass: failures.length === 0,
 	failures,
 	probes,
+	...(NOTE ? { note: NOTE } : {}),
 };
 
 const serialized = `${JSON.stringify(report, null, 2)}\n`;

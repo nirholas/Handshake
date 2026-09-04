@@ -1,0 +1,310 @@
+{
+  "captured_at": "2026-09-04T07:16:27.500Z",
+  "base": "http://127.0.0.1:8799",
+  "what": "Live A2MCP compliance capture of the four paid OKX.AI forge rows: the bodyless self-check answers the quotation, and every quotation names each rail once at the registered list price.",
+  "pass": true,
+  "failures": [],
+  "probes": [
+    {
+      "service": "forge-draft",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-draft",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-draft",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-draft",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-draft",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    }
+  ],
+  "note": "Run against the deploy artifact itself: server/index.mjs booted from the staged worktree /workspaces/.deploy-wt-okx3 at a49056707 (dist stamped dirty:false), on port 8799. The three X Layer rail variables were supplied locally because rail config lives on the Cloud Run service, not in .env; nothing is signed or settled by a 402 quotation, so only the advertisement gate is involved. Solana and Base are absent for the same reason, which is why 20 probes carry one accept each. This is the pre-deploy proof that both 2026-09-04 rejection defects are fixed in the bytes that will ship: the same probe against production returns 36 failures."
+}

@@ -6,6 +6,84 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-04, the chat host is deployable: the AI credential is no longer a missing secret
+
+The chat bot (agent #2632) is back online from the codespace stopgap, its Cloud Run deploy
+now needs no credential the owner has to mint, and the one thing that would have made a
+deployed host useless is now a sensor instead of a surprise.
+
+### Read live, not remembered
+
+- Wallet session: `onchainos wallet status` → `loggedIn: true`, `claude@three.ws`. No OTP
+  was needed. The listing's chat is being delivered again.
+- The worker runs under its own supervisor (`workers/okx-chat-bot/index.js`, PORT 8099),
+  `/readyz` 200, `health.reason = online`, 1 XMTP client serving 1 agent identity.
+- Its `bot_heartbeat` row is written, so `/api/healthz` carries `okx_chat_bot` again. It
+  reads **degraded**, not ok, because `hostDurable=false`: a codespace is a stopgap and the
+  wire says so.
+- The daemon's own boot log shows why this matters: `offline_replay_done ... replayed=1`
+  with `replayLagMs=71441816`. A message sent 2026-09-03T10:28 sat undelivered for roughly
+  20 hours while the host was down.
+
+### The blocker was never the deploy, it was a credential that does not exist
+
+The old cloudbuild demanded an `anthropic-api-key` secret and failed the deploy without one.
+That secret exists nowhere on this machine or in the project, so the deploy simply never
+happened. Both credentials the project *does* hold were measured today and **both refuse to
+serve**:
+
+| Lane | Probe | Answer |
+|---|---|---|
+| Vertex AI Claude | `POST .../publishers/anthropic/models/claude-haiku-4-5@20251001:rawPredict` | `403 PERMISSION_DENIED: Lightning dunning decision is deny for project: projects/93741856042` |
+| OpenAI (`openai-api-key` secret) | `POST /v1/chat/completions` | `429 billing_not_active: Your account is not active` |
+
+Both are valid, well-formed credentials. `GET /v1/models` on the OpenAI key returns 200 with
+124 models, which is exactly why a presence check is not a credential check. Note the second
+row separately: the platform's own `OPENAI_API_KEY` lane is dead for every surface that uses
+it, not just this bot.
+
+Codex has a second trap on top of that: codex >= 0.153 authenticates from `~/.codex/auth.json`
+and **ignores `OPENAI_API_KEY` in the environment**. With the key set and no login it fails
+`401 Missing bearer or basic authentication in header`. `codex login --with-api-key` fixes it
+and now runs at worker boot.
+
+### What changed, so the deploy no longer waits on the owner
+
+- **Vertex is the deploy's AI transport.** `three-ws@` already holds `roles/aiplatform.user`,
+  so `CLAUDE_CODE_USE_VERTEX=1` authenticates the spawned subsession through ADC. There is no
+  secret to mint, and `--set-secrets` carries only the heartbeat database URL.
+- **The credential is probed, not assumed** (`workers/okx-chat-bot/provider.js`). One tiny
+  request at boot and every 15 min, classified `ok` / `unauthorized` / `unreachable` /
+  `unprobed`. `unauthorized` fails `/readyz`, pages ops, and puts three ways out in the
+  `remedy`. `unreachable` deliberately does not: a provider blip is not a credential fault.
+- **`OKX_A2A_AI_PERMISSION_PRESET=bypass` is set in the deploy.** Without it a headless
+  subsession stalls on a tool-approval prompt nobody answers, which the buyer reads as
+  silence.
+- **A booting daemon no longer pages.** `okx-a2a daemon status` reads a lock written seconds
+  after the spawn, so every healthy boot used to alert `daemon_down` critical and recover a
+  minute later. Observed today, then fixed with a 90s grace window (`daemon_starting`,
+  status `unknown`, no alert).
+- **The session snapshot is seeded.** `npm run okx:bot:seed-state -- --apply` wrote
+  `gs://three-ws-okx-bot-state/okx-chat-bot/state.tar.gz` (329,396 bytes, generation
+  1788505342113858). Verified by restoring it into a throwaway HOME and reading
+  `onchainos wallet status` back as `loggedIn: true`. The first Cloud Run boot comes up
+  authenticated instead of asking for an OTP.
+- The workspace context was verified by asking the subsession a platform question in its own
+  workspace. It answered with the real catalog (draft/standard/HD at $0.01/$0.05/$0.25, image
+  to 3D at $0.25), named `$THREE` and Solana, and identified agent 2632 correctly.
+
+### What is left, and who owns it
+
+1. **The deploy itself (owner).** Prerequisites are complete; it is one command, in
+   `workers/okx-chat-bot/README.md` under "Ship it". Re-seed and stop the codespace stopgap
+   first: the GCS object has exactly one writer.
+2. **The GCP billing hold (owner).** Until it clears, a deployed host will report
+   `ai_provider_unauthorized`: chat is received and durable, replies are not authored. That
+   is strictly better than today (no durable host at all) and it is loud rather than silent.
+   Clearing the hold needs no redeploy; the next probe flips it to ok on its own.
+
+---
+
 ## 2026-09-04, all three defects fixed and the deploy built; the submit itself is what is left
 
 Everything below this line is fixed in `main` and none of it is in production. This entry
@@ -49,6 +127,21 @@ defects predict: 16 on the empty body, 16 on the plain payload, 4 on the bodyles
 and **zero** on GET and on the well-formed `tools/call`. That grouping is itself the proof
 that only the unpriced POST branch was ever broken: the GET path was already correct and the
 POST fix mirrors it.
+
+### Proven on the deploy artifact itself, before the deploy
+
+The submit being blocked does not mean the fix is unverified. `server/index.mjs` was booted
+straight out of the staged worktree on port 8799 (the same `dist`, stamped `dirty: false` at
+`a49056707`) and the probe run against it: **`PASS 20 probes`**, captured in
+`prompts/okx-ai/e2e-evidence/81-2026-09-04-built-artifact-compliance-pass.json`. The bodyless
+self-check that production answers `415` answers `402` with a `PAYMENT-REQUIRED` header and a
+`10000` quote on `forge-draft`, and no probe shape duplicates a rail.
+
+The three X Layer rail variables had to be supplied to that process because rail config lives
+on the Cloud Run service and not in `.env`. A 402 quotation signs and settles nothing, so only
+the advertisement gate is involved; Solana and Base are simply absent locally, which is why
+each probe carries one accept instead of four. The rail composition and dedup are covered
+separately by `tests/api/okx-forge.test.js`, green at 41/41 in the worktree.
 
 ### After the deploy, in order
 
