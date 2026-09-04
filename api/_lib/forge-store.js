@@ -271,17 +271,23 @@ const COPY_MAX_ATTEMPTS = 3;
 // body read, so it is sized for the 64 MB ceiling on a slow origin.
 const COPY_TIMEOUT_MS = 120_000;
 
-// Score, clean, and (optionally) compress a freshly-downloaded GLB before it
-// lands in the bucket. Every step is pure, local, and best-effort: a failure
-// never blocks delivery — it just means the response carries no quality signal,
-// or ships the un-cleaned / uncompressed bytes. `compress` is one of
-// COMPRESSION_MODES ('draco' | 'meshopt') or falsy to skip. `cleanup` runs the
-// codec-independent geometry cleanup (glb-cleanup.js) that tames the workers'
-// raw marching-cubes triangle soup; on by default for forge meshes.
-async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false }) {
+// Score, clean, derive PBR channels for, and (optionally) compress a freshly
+// downloaded GLB before it lands in the bucket. Every step is pure, local, and
+// best-effort: a failure never blocks delivery — it just means the response
+// carries no quality signal, or ships the un-cleaned / uncompressed bytes.
+// `compress` is one of COMPRESSION_MODES ('draco' | 'meshopt') or falsy to
+// skip. `cleanup` runs the codec-independent geometry cleanup (glb-cleanup.js)
+// that tames the workers' raw marching-cubes triangle soup; on by default for
+// forge meshes. `derivePbr` runs the material completion pass
+// (glb-pbr-derive.js) that turns an albedo-only lane output into a full PBR set
+// (normal + packed occlusion/roughness/metallic + the class's measured
+// extension layer); on by default, pass false to deliver the lane's own
+// materials untouched.
+async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false, derivePbr = false, prompt = '', tier = '', materialClass = '' }) {
 	let quality = null;
 	let compression = null;
 	let cleaned = null;
+	let pbr = null;
 	let outBuf = buf;
 	// Cleanup FIRST: a welded, de-duplicated, decimated mesh both renders better
 	// and compresses better than the raw soup, so the codec below operates on the
@@ -303,6 +309,29 @@ async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false
 			}
 		} catch (err) {
 			console.warn('[forge-store] geometry cleanup failed, delivering as-is:', err?.message);
+		}
+	}
+	// Material completion SECOND: it reads the albedo the lane baked and writes
+	// derived maps onto the geometry cleanup just settled, so it has to run after
+	// cleanup and before the codec pass (a Draco/meshopt-encoded buffer would
+	// have to be decoded again to touch its materials) and before quality
+	// scoring, so `no_materials` reflects what users actually receive.
+	if (derivePbr) {
+		try {
+			const r = await derivePbrChannels(outBuf, { prompt, tier, materialClass });
+			if (r.changed) {
+				outBuf = r.buffer;
+				pbr = {
+					input_bytes: r.inputBytes,
+					output_bytes: r.outputBytes,
+					materials_created: r.materialsCreated,
+					normals_filled: r.normalsFilled,
+					mime_types_fixed: r.mimeTypesFixed,
+					materials: r.materials,
+				};
+			}
+		} catch (err) {
+			console.warn('[forge-store] PBR derivation failed, delivering lane materials as-is:', err?.message);
 		}
 	}
 	if (computeQuality) {
@@ -331,7 +360,7 @@ async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false
 			compression = { mode: compress, skipped: true, reason: 'compression_failed' };
 		}
 	}
-	return { buf: outBuf, quality, compression, cleaned };
+	return { buf: outBuf, quality, compression, cleaned, pbr };
 }
 
 // An upstream Content-Type ends up as the object's stored type, which the CDN
@@ -345,7 +374,7 @@ function mediaTypeOr(header, fallback) {
 	return STORABLE_TYPE_RE.test(type) ? type : fallback;
 }
 
-async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, cleanup = false, forceContentType = null }) {
+async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, cleanup = false, derivePbr = false, prompt = '', tier = '', materialClass = '', forceContentType = null }) {
 	// fetchUpstream retries network errors and 408/425/429/5xx with jittered
 	// backoff and gives up immediately on 404/410 (the ephemeral asset has
 	// already expired; no retry can recover it), rejecting with an error that

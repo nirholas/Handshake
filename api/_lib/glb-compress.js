@@ -7,11 +7,13 @@
 //   • meshopt — EXT_meshopt_compression: slightly larger, decodes fast on the GPU;
 //               three.js' GLTFLoader in the three.ws viewer is decoder-equipped.
 //
-// Geometry only — textures are left untouched (no sharp dependency, no perceptual
-// re-encode) so the pass is fast and deterministic and never changes how the model
-// looks beyond standard vertex quantization. The heavy codecs (Draco wasm, the
-// meshopt encoder) are imported lazily inside compressGlb() so a plain `glb`
-// request — the default — never pays to load them.
+// Geometry is always handled. Textures are opt-in through `textures`: on a raw
+// generation the embedded PNG skins, not the vertex data, are what push a mesh
+// past 8 MB, so the delivery path (compressGlbForDelivery below) turns them into
+// WebP and caps their resolution while a bare `output_format: glb-draco` request
+// still gets the fast, deterministic geometry-only pass. The heavy codecs (Draco
+// wasm, the meshopt encoder, sharp) are imported lazily inside compressGlb() so a
+// plain `glb` request never pays to load them.
 
 import { Buffer } from 'node:buffer';
 
@@ -43,13 +45,23 @@ async function ioFor(mode) {
 	return io;
 }
 
+// Texture ceiling for the delivery pass. A 4096x4096 albedo costs a phone four
+// times the decode time and GPU memory of a 2048 one and is indistinguishable on
+// a 6-inch screen, so the delivery preset caps the long edge here. Raw geometry
+// requests are unaffected (textures default to off).
+export const DELIVERY_TEXTURE_MAX_PX = 2048;
+export const DELIVERY_TEXTURE_QUALITY = 90;
+
 /**
- * Compress a GLB's geometry. Returns the compressed buffer plus size stats.
- * Throws on an unparseable buffer or an unknown mode so the caller can fall back
- * to delivering the original, uncompressed mesh.
+ * Compress a GLB. Returns the compressed buffer plus size stats. Throws on an
+ * unparseable buffer or an unknown mode so the caller can fall back to
+ * delivering the original, uncompressed mesh.
  *
  * @param {Buffer|Uint8Array} buf - source GLB bytes
- * @param {{ mode?: 'draco' | 'meshopt' }} [opts]
+ * @param {{
+ *   mode?: 'draco' | 'meshopt',
+ *   textures?: false | { quality?: number, maxSize?: number },
+ * }} [opts]
  * @returns {Promise<{
  *   buffer: Buffer,
  *   mode: 'draco' | 'meshopt',
@@ -58,9 +70,10 @@ async function ioFor(mode) {
  *   ratio: number,            // outputBytes / inputBytes
  *   grew: boolean,            // true if compression didn't shrink (tiny meshes)
  *   extensionsUsed: string[],
+ *   textures: boolean,        // whether the texture pass ran
  * }>}
  */
-export async function compressGlb(buf, { mode = 'meshopt' } = {}) {
+export async function compressGlb(buf, { mode = 'meshopt', textures = false } = {}) {
 	if (!COMPRESSION_MODES.includes(mode)) {
 		throw new Error(`unsupported compression mode: ${mode}`);
 	}
@@ -78,6 +91,21 @@ export async function compressGlb(buf, { mode = 'meshopt' } = {}) {
 	// dedup + prune first (drop duplicate/orphaned data), then weld to an indexed
 	// mesh (both codecs need shared vertices), then the codec-specific encode.
 	const steps = [dedup(), prune(), weld()];
+	// Textures BEFORE the codec: re-encoding an image is independent of vertex
+	// layout, and running it first means the codec pass writes its buffers once
+	// over already-final image data instead of being re-serialised afterwards.
+	if (textures) {
+		const { textureCompress } = await import('@gltf-transform/functions');
+		const sharpMod = await import('sharp');
+		steps.push(
+			textureCompress({
+				encoder: sharpMod.default ?? sharpMod,
+				targetFormat: 'webp',
+				quality: textures.quality ?? DELIVERY_TEXTURE_QUALITY,
+				resize: [textures.maxSize ?? DELIVERY_TEXTURE_MAX_PX, textures.maxSize ?? DELIVERY_TEXTURE_MAX_PX],
+			}),
+		);
+	}
 	if (mode === 'draco') {
 		steps.push(draco());
 	} else {
@@ -101,5 +129,18 @@ export async function compressGlb(buf, { mode = 'meshopt' } = {}) {
 		ratio: inputBytes > 0 ? Math.round((outputBytes / inputBytes) * 1000) / 1000 : 1,
 		grew: outputBytes >= inputBytes,
 		extensionsUsed,
+		textures: Boolean(textures),
+	};
+}
+
+// The preset the serve path uses. Geometry through meshopt (the viewer's loader
+// is decoder-equipped, and meshopt decodes on the GPU far faster than Draco) plus
+// the texture pass, which is where the bytes actually are on a raw generation.
+// Kept here rather than at the call site so every writer of a served mesh gets
+// the same contract and a future change lands in one place.
+export function deliveryCompressionOptions() {
+	return {
+		mode: 'meshopt',
+		textures: { quality: DELIVERY_TEXTURE_QUALITY, maxSize: DELIVERY_TEXTURE_MAX_PX },
 	};
 }
