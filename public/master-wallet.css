@@ -898,7 +898,7 @@ input.wlt-input {
 	backdrop-filter: blur(3px);
 }
 .wlt-sheet[open] {
-	animation: wlt-sheet-in var(--duration-normal) var(--ease-standard);
+	animation: wlt-sheet-in var(--duration-base) var(--ease-standard);
 }
 @keyframes wlt-sheet-in {
 	from {

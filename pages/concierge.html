@@ -98,7 +98,7 @@
 				font-size: var(--text-sm);
 				letter-spacing: 0.08em;
 				text-transform: uppercase;
-				color: var(--text-tertiary);
+				color: var(--ink-faint);
 			}
 			.cl-hero h1 {
 				font-size: clamp(2rem, 5.5vw, 3.4rem);
@@ -108,7 +108,7 @@
 				max-width: 17ch;
 			}
 			.cl-hero .cl-sub {
-				color: var(--text-secondary);
+				color: var(--ink-dim);
 				font-size: var(--text-lg);
 				max-width: 56ch;
 				margin: 0 auto var(--space-lg);
@@ -134,14 +134,14 @@
 			.cl-btn:hover { transform: translateY(-1px); }
 			.cl-btn-primary { background: var(--btn-primary-bg, var(--accent)); color: var(--btn-primary-fg, #0a0a0a); }
 			.cl-btn-primary:hover { filter: brightness(1.08); }
-			.cl-btn-ghost { border: 1px solid var(--border-primary); color: var(--text-primary); }
+			.cl-btn-ghost { border: 1px solid var(--stroke); color: var(--ink-bright); }
 			.cl-btn-ghost:hover { border-color: var(--accent); }
 
 			.cl-hint {
 				margin-top: var(--space-lg);
 				font-family: var(--font-mono);
 				font-size: var(--text-sm);
-				color: var(--text-tertiary);
+				color: var(--ink-faint);
 			}
 			.cl-hint .cl-arrow { display: inline-block; animation: cl-nudge 1.6s ease-in-out infinite; }
 			@keyframes cl-nudge { 50% { transform: translate(4px, 4px); } }
@@ -154,7 +154,7 @@
 				margin: 0 0 var(--space-xs);
 			}
 			.cl-section .cl-lede {
-				color: var(--text-secondary);
+				color: var(--ink-dim);
 				max-width: 62ch;
 				margin: 0 0 var(--space-lg);
 				line-height: 1.65;
@@ -166,19 +166,19 @@
 				gap: var(--space-md);
 			}
 			.cl-card {
-				border: 1px solid var(--border-primary);
+				border: 1px solid var(--stroke);
 				border-radius: var(--radius-lg);
 				padding: var(--space-md);
-				background: var(--bg-secondary);
+				background: var(--bg-1);
 				transition: border-color 0.2s ease, transform 0.2s ease;
 			}
 			.cl-card:hover { border-color: var(--accent); transform: translateY(-2px); }
 			.cl-card h3 { margin: 0 0 var(--space-2); font-size: var(--text-base); }
-			.cl-card p { margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6; }
+			.cl-card p { margin: 0; color: var(--ink-dim); font-size: var(--text-sm); line-height: 1.6; }
 			.cl-card .cl-k {
 				font-family: var(--font-mono);
 				font-size: var(--text-xs);
-				color: var(--text-tertiary);
+				color: var(--ink-faint);
 				display: block;
 				margin-bottom: var(--space-2);
 			}
@@ -189,19 +189,19 @@
 				font-size: var(--text-sm);
 				padding: 0.4rem 0.85rem;
 				border-radius: 999px;
-				border: 1px solid var(--border-primary);
+				border: 1px solid var(--stroke);
 				background: none;
-				color: var(--text-secondary);
+				color: var(--ink-dim);
 				cursor: pointer;
 				transition: border-color 0.15s ease, color 0.15s ease;
 			}
 			.cl-tab:hover { border-color: var(--accent); }
-			.cl-tab[aria-selected='true'] { border-color: var(--accent); color: var(--text-primary); background: var(--bg-secondary); }
+			.cl-tab[aria-selected='true'] { border-color: var(--accent); color: var(--ink-bright); background: var(--bg-1); }
 			.cl-code {
 				position: relative;
-				border: 1px solid var(--border-primary);
+				border: 1px solid var(--stroke);
 				border-radius: var(--radius-lg);
-				background: var(--bg-secondary);
+				background: var(--bg-1);
 				overflow: hidden;
 			}
 			.cl-code pre {
@@ -211,7 +211,7 @@
 				font-family: var(--font-mono);
 				font-size: 0.82rem;
 				line-height: 1.6;
-				color: var(--text-primary);
+				color: var(--ink-bright);
 			}
 			.cl-copy {
 				position: absolute;
@@ -221,13 +221,13 @@
 				font-size: var(--text-xs);
 				padding: 0.3rem 0.65rem;
 				border-radius: var(--radius-sm);
-				border: 1px solid var(--border-primary);
-				background: var(--bg-primary);
-				color: var(--text-secondary);
+				border: 1px solid var(--stroke);
+				background: var(--bg-0);
+				color: var(--ink-dim);
 				cursor: pointer;
 				transition: color 0.15s ease, border-color 0.15s ease;
 			}
-			.cl-copy:hover { color: var(--text-primary); border-color: var(--accent); }
+			.cl-copy:hover { color: var(--ink-bright); border-color: var(--accent); }
 			.cl-panel[hidden] { display: none; }
 
 			.cl-steps { counter-reset: step; display: grid; gap: var(--space-md); }
@@ -241,8 +241,8 @@
 				padding-top: 0.15rem;
 			}
 			.cl-step h3 { margin: 0 0 var(--space-1); font-size: var(--text-base); }
-			.cl-step p { margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.65; max-width: 68ch; }
-			.cl-step code { font-family: var(--font-mono); font-size: 0.82em; background: var(--bg-secondary); padding: 0.1em 0.4em; border-radius: var(--radius-sm); }
+			.cl-step p { margin: 0; color: var(--ink-dim); font-size: var(--text-sm); line-height: 1.65; max-width: 68ch; }
+			.cl-step code { font-family: var(--font-mono); font-size: 0.82em; background: var(--bg-1); padding: 0.1em 0.4em; border-radius: var(--radius-sm); }
 
 			.cl-links { display: flex; gap: var(--space-md); flex-wrap: wrap; }
 			.cl-links a { color: var(--accent); text-decoration: none; font-size: var(--text-sm); }

@@ -789,7 +789,7 @@
 		.walk-preview-retry {
 			margin-top: 4px; padding: 7px 16px;
 			font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
-			text-transform: uppercase; color: var(--text-1);
+			text-transform: uppercase; color: var(--text);
 			background: transparent; border: 1px solid var(--hairline-strong);
 			border-radius: 6px; cursor: pointer;
 			transition: border-color 0.15s ease, background 0.15s ease, transform 0.05s ease;

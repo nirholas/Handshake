@@ -116,7 +116,7 @@ body {
 	transition: border-color 0.18s;
 	min-width: 0;
 }
-.wl-add-input::placeholder { color: var(--ink-dim); font-family: var(--font-base); }
+.wl-add-input::placeholder { color: var(--ink-dim); font-family: var(--font-body); }
 .wl-add-input:focus { outline: none; border-color: var(--accent, #7c6aff); }
 /* Match the toolbar search field: the border tint alone is a weak keyboard
    affordance, so restore the platform ring the `outline: none` above removes. */

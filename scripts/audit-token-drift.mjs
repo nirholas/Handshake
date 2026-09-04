@@ -10,7 +10,11 @@
  *
  *   - It counts hardcoded occurrences of the canonical status/base hexes inside
  *     <style> blocks of pages/ *.html files that load the token vocabulary
- *     (via /style.css, /nav.css, or /tokens.css).
+ *     (via /style.css, /nav.css, or /tokens.css), and inside every stylesheet
+ *     under src/ and public/ (QB-07). Those sheets are token-covered by
+ *     construction: they already reference the canonical vars throughout, so a
+ *     raw hex beside them is drift by the same definition, and leaving them out
+ *     was hiding four fifths of the debt.
  *   - The count may only go DOWN. If it exceeds the recorded baseline the audit
  *     fails and names each offending file so the author swaps the hex for the var.
  *   - When the count drops, the audit tells you to lower the baseline so the
@@ -20,6 +24,17 @@
  * JS/canvas literals and pages that deliberately re-theme a token (they define
  * their own --success/--danger/--warn) are out of scope — the ratchet only sees
  * CSS on pages where the canonical var is the unambiguous right answer.
+ *
+ * It also runs a second, non-ratcheted gate: VOCABULARY INTEGRITY (QB-07). Every
+ * bare `var(--x)` whose name belongs to a canonical token family (--ink-*,
+ * --surface-*, --bg-*, --accent-*, --space-*, --radius-*, --duration-* …) must
+ * actually be defined, either in public/tokens.css or locally in the same file.
+ * A bare var() that resolves to nothing is not a style nit: the whole
+ * declaration is dropped at computed-value time, so the element silently
+ * inherits instead. That is how /concierge shipped a --text-primary /
+ * --bg-secondary vocabulary no sheet on the platform defines, and how a page can
+ * reference a token a refactor removed. This half has no baseline and no ratchet
+ * (it is always zero).
  *
  * Usage:
  *   node scripts/audit-token-drift.mjs             # exit 1 if drift increased
@@ -68,6 +83,22 @@ function stripNonAuthoritative(css) {
 	return out;
 }
 
+/** Every stylesheet under a source root, minus the token sheet itself and any
+ * build output (public/chat/assets is written by `npm run build:chat`). */
+function collectStylesheets(dir) {
+	const out = [];
+	for (const entry of readdirSync(dir)) {
+		const p = join(dir, entry);
+		if (statSync(p).isDirectory()) {
+			if (entry === 'node_modules' || entry === 'vendor' || entry === 'assets') continue;
+			out.push(...collectStylesheets(p));
+		} else if (entry.endsWith('.css') && relative(ROOT, p) !== 'public/tokens.css') {
+			out.push(p);
+		}
+	}
+	return out;
+}
+
 function collectPages(dir) {
 	const out = [];
 	for (const entry of readdirSync(dir)) {
@@ -97,6 +128,21 @@ function countDrift() {
 		}
 		if (n > 0) {
 			perFile[relative(ROOT, page)] = n;
+			total += n;
+		}
+	}
+	for (const sheet of [
+		...collectStylesheets(join(ROOT, 'src')),
+		...collectStylesheets(join(ROOT, 'public')),
+	]) {
+		const css = stripNonAuthoritative(readFileSync(sheet, 'utf8'));
+		let n = 0;
+		for (const { hex, token } of TOKEN_HEXES) {
+			if (LOCAL_DEF(css, token)) continue;
+			n += (css.match(new RegExp(`${hex}(?![0-9a-fA-F])`, 'gi')) || []).length;
+		}
+		if (n > 0) {
+			perFile[relative(ROOT, sheet)] = n;
 			total += n;
 		}
 	}

@@ -734,7 +734,7 @@
 	@media (max-width: 720px) { #home-sniper .snipe-stats { grid-template-columns: 1fr; gap: 12px; } }
 	#home-sniper .snipe-stat {
 		position: relative; padding: 26px 24px; border-radius: 14px; overflow: hidden;
-		background: var(--surface-0); border: 1px solid var(--hairline-strong);
+		background: var(--surface-1); border: 1px solid var(--hairline-strong);
 		transition: transform .25s cubic-bezier(.2,.7,.3,1), border-color .25s, background .25s;
 	}
 	#home-sniper .snipe-stat::before {
@@ -743,7 +743,7 @@
 		opacity: 0; transition: opacity .3s;
 	}
 	#home-sniper .snipe-stat:hover {
-		transform: translateY(-3px); border-color: rgba(255,255,255,0.4); background: var(--surface-1);
+		transform: translateY(-3px); border-color: rgba(255,255,255,0.4); background: var(--surface-2);
 	}
 	#home-sniper .snipe-stat:hover::before { opacity: 1; }
 	#home-sniper .snipe-stat-val {
@@ -761,13 +761,13 @@
 
 	#home-sniper .snipe-console {
 		margin-top: 24px; border: 1px solid var(--hairline-strong); border-radius: 16px;
-		background: var(--surface-0); overflow: hidden;
+		background: var(--surface-1); overflow: hidden;
 		box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 24px 60px -32px rgba(0,0,0,0.8);
 	}
 	#home-sniper .snipe-console-head {
 		display: flex; align-items: center; justify-content: space-between; gap: 16px;
 		padding: 14px 20px; border-bottom: 1px solid var(--hairline);
-		background: linear-gradient(to bottom, var(--surface-1), var(--surface-0));
+		background: linear-gradient(to bottom, var(--surface-2), var(--surface-1));
 	}
 	#home-sniper .snipe-status { display: flex; align-items: center; gap: 12px; min-width: 0; }
 	#home-sniper .snipe-state {
