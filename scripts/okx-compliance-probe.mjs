@@ -123,6 +123,10 @@ const failures = [];
 
 for (const [service, listPrice] of PAID_ROWS) {
 	const shapes = [
+		[
+			'GET, the SSE transport a streaming MCP client opens with',
+			{ method: 'GET', headers: { accept: 'text/event-stream' } },
+		],
 		['docs self-check: POST, no body, no content-type', {}],
 		[
 			'POST {} with content-type application/json',

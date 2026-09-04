@@ -97,7 +97,6 @@ function isOnCurveAddress(addr) {
 
 async function handlePaidNameResolve(req, res, body) {
 	const name = String(body?.name || '').trim();
-	if (!name) return error(res, 400, 'validation_error', 'name required');
 
 	const resourceUrl = resolveResourceUrl(req, PAID_RESOLVE_ROUTE);
 	const accepts = buildSolanaAccepts(PAID_RESOLVE_PRICE_ATOMIC, resourceUrl);
@@ -115,6 +114,14 @@ async function handlePaidNameResolve(req, res, body) {
 			tags: ['identity', 'resolution', 'solana'],
 		});
 	}
+
+	// The `name` check lives BELOW the challenge on purpose. A bare POST with no
+	// body is how every listing validator probes a paid row (x402scan's "Add API"
+	// registration flow, the A2MCP compliance self-check), and a 400 tells it this
+	// route sells nothing. The probe now reads the 402 it looks for, and a buyer
+	// who actually pays without naming anything still gets the validation error,
+	// before anything is settled.
+	if (!name) return error(res, 400, 'validation_error', 'name required');
 
 	let verified;
 	try {
@@ -437,8 +444,18 @@ export default wrap(async (req, res) => {
 	// Paid name resolution — body has `name` but no payer_wallet/amount_usdc and
 	// no explicit prep/send mode. Returns 402 challenge; on payment resolves the
 	// name and returns { data: { name, address, verified, source } }.
-	if (body?.name && !body?.payer_wallet && !body?.amount_usdc &&
-		body?.mode !== 'send' && body?.mode !== 'prep') {
+	//
+	// A body-less POST lands here too. That is the paid capability this route is
+	// cataloged under, and a bare `curl -X POST` is exactly how a directory
+	// validates a paid row: it fell through to the free prep branch and answered
+	// 400, so the row read as selling nothing. mode=prep still reaches prep, it
+	// just has to say so (or carry the wallet/amount fields prep needs anyway).
+	const paidResolveLane =
+		!body?.payer_wallet &&
+		!body?.amount_usdc &&
+		body?.mode !== 'send' &&
+		body?.mode !== 'prep';
+	if (paidResolveLane) {
 		return handlePaidNameResolve(req, res, body);
 	}
 

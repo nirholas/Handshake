@@ -24,6 +24,12 @@ beforeAll(async () => {
 			X402_PAY_TO_BASE: '0x4022de2d36c334e73c7a108805cea11c0564f402',
 			X402_ASSET_ADDRESS_BASE: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
 			X402_ADVERTISE_BASE: 'true',
+			// pay-by-name builds its own Solana-only accept list and answers 503
+			// not_configured without these three, so the probe would never reach
+			// the challenge the test below asserts.
+			X402_PAY_TO_SOLANA: 'wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU',
+			X402_FEE_PAYER_SOLANA: 'WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW',
+			X402_ASSET_MINT_SOLANA: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
 		},
 		timeoutMs: 60_000,
 	});
@@ -46,6 +52,8 @@ beforeAll(async () => {
 			'/api/x402/cosmetic-purchase',
 			'/api/x402/animation-download',
 			'/api/x402/fact-check',
+			'/api/x402/pipeline',
+			'/api/x402/pay-by-name',
 			'/api/v1/x/openai/chat',
 			'/api/v1/x/coingecko/price',
 		].map((route) => fetch(`${BASE}${route}`).catch(() => {})),
@@ -131,5 +139,52 @@ describe('credential-less probes always reach the 402 challenge', () => {
 			body: '{}',
 		});
 		await expectChallenge(res);
+	}, 15000);
+
+	// pipeline and pay-by-name validated the request body BEFORE pricing it, so a
+	// bare `POST` with no body answered 400 (`invalid_stages`, `payer_wallet must
+	// be a base58 Solana public key`). Measured against production 2026-09-04:
+	// they were the only two of the 60 paid routes absent from the x402scan
+	// origin listing that answered a bodyless probe with anything other than a
+	// 402 or an honest 503, which is exactly the shape that fails registration.
+
+	it('bodyless POST on pipeline serves the challenge, not the stage-validation 400', async () => {
+		const res = await fetch(`${BASE}/api/x402/pipeline`, { method: 'POST' });
+		await expectChallenge(res);
+	}, 15000);
+
+	it('pipeline prices a probe at the catalog example chain (generate + rig)', async () => {
+		// The catalog advertises the example chain's price for this route, so an
+		// unpriceable probe body must quote that same amount or the directory
+		// lists a price no buyer is ever shown. The child server inherits this
+		// process's env, so the stage prices behind both are identical.
+		const { priceForChain } = await import('../api/_lib/pipeline.js');
+		const res = await fetch(`${BASE}/api/x402/pipeline`, { method: 'POST' });
+		const body = await expectChallenge(res);
+		expect(body.accepts[0].amount).toBe(priceForChain(['generate', 'rig']).atomics);
+	}, 15000);
+
+	it('a body naming an unknown stage still reaches the challenge, not a 400', async () => {
+		const res = await fetch(`${BASE}/api/x402/pipeline`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ stages: ['not-a-stage'] }),
+		});
+		await expectChallenge(res);
+	}, 15000);
+
+	it('bodyless POST on pay-by-name serves the paid-resolve challenge, not the prep 400', async () => {
+		const res = await fetch(`${BASE}/api/x402/pay-by-name`, { method: 'POST' });
+		const body = await expectChallenge(res);
+		expect(body.resource?.url ?? body.resourceUrl ?? '').toContain('/api/x402/pay-by-name');
+	}, 15000);
+
+	it('pay-by-name still routes an explicit mode=prep to prep validation', async () => {
+		const res = await fetch(`${BASE}/api/x402/pay-by-name`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ mode: 'prep' }),
+		});
+		expect(res.status).toBe(400);
 	}, 15000);
 });
