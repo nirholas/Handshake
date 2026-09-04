@@ -43,7 +43,10 @@
 	})();
 
 	var MV_CDN = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
-	var MESHOPT_CDN = 'https://cdn.jsdelivr.net/npm/meshoptimizer@0.22.0/meshopt_decoder.js';
+	// Served from the same origin this embed script came from (ORIGIN above), not
+	// a public CDN: the decoder is a hard dependency of every compressed avatar,
+	// so it must have exactly the same availability as the embed itself.
+	var MESHOPT_CDN = ORIGIN + '/vendor/meshopt_decoder.js';
 
 	// model-viewer auto-loads the Draco and KTX2 decoders but leaves Meshopt
 	// unset, and every server-baked avatar (the /api/avatars/<id>/glb lane and

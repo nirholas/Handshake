@@ -37,7 +37,12 @@
 // or exports, so it also runs correctly if a page still loads it as a module.
 (function () {
 	if (!window.customElements) return;
-	var DECODER_URL = 'https://cdn.jsdelivr.net/npm/meshoptimizer@0.22.0/meshopt_decoder.js';
+	// Served from our own origin (public/vendor/, vendored from the meshoptimizer
+	// npm package by scripts/vendor-meshopt-decoder.mjs). It used to hotlink
+	// jsdelivr, which made every compressed model on the site unrenderable for
+	// anyone the CDN is slow or blocked for, and added a second DNS + TLS
+	// handshake to the critical path of the first 3D frame on a phone.
+	var DECODER_URL = '/vendor/meshopt_decoder.js';
 
 	function applyTo(ctor) {
 		// `meshoptDecoderLocation` is a writable static on model-viewer; guard the
