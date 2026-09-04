@@ -65,6 +65,11 @@ export const IGNORE_CONSOLE = [
 	// Emitted by the driver, never by our code, and absent on real GPUs.
 	/GL Driver Message/i,
 	/GPU stall due to ReadPixels/i,
+	// MediaPipe's native (WASM) logger narrating its own GL setup on /create/selfie
+	// and the other vision surfaces: glog-formatted lines the C++ library writes
+	// directly, with no JS frame of ours anywhere in them. The verbosity is not
+	// reachable from the JS API, so there is nothing on our side to turn down.
+	/\bgl_context\.cc:\d+\]/i,
 	// Content-Security-Policy noise from third-party embeds
 	/content security policy/i,
 	/Refused to (load|connect|execute|frame)/i,

@@ -61,29 +61,41 @@ export function manifestRoutes(opts) {
 	return manifestPages(opts).map((p) => p.path);
 }
 
-// Authenticated routes the manifest omits: dashboard sub-pages and account
-// surfaces that are product, not marketing, so they never belonged in the
-// public page index. A sweep with a session replays these too.
-export const AUTHED_ROUTES = [
-	'/dashboard',
-	'/dashboard/actions',
-	'/dashboard/sessions',
-	'/dashboard/wallets',
-	'/dashboard/settings',
-	'/dashboard/memory',
-	'/dashboard/strategy',
-	'/dashboard/voice',
-	'/dashboard/sns',
-	'/dashboard/delegation',
-	'/dashboard/embed-policy',
-	'/dashboard/agent-pumpfun',
-	'/dashboard/x402',
-	'/dashboard/portfolio',
-	'/profile',
-	'/settings',
-	'/my-agents',
-	'/dashboard/developers',
-];
+// Authenticated surfaces the public manifest omits: dashboard sub-pages and
+// account routes that are product, not marketing, so they never belonged in
+// the public page index. A sweep with a session replays these too.
+//
+// The dashboard's own route table in vercel.json is the source of truth for
+// which of them exist, because a hand-kept copy goes stale silently. By
+// 2026-09-04 ten of the eighteen hardcoded entries had become 301 stubs
+// pointing at consolidated pages (the sweep was auditing empty redirects) and
+// twenty-one live dashboard pages had never been audited under a session at
+// all. Reading the table means a page added or consolidated there is picked
+// up by the next sweep with no second edit.
+const AUTHED_PREFIX = /^\/dashboard\//;
+
+// Account surfaces that live outside the dashboard route block.
+const STANDALONE_AUTHED_ROUTES = ['/profile', '/settings', '/my-agents'];
+
+/** Concrete (non-pattern, non-redirect) dashboard pages from the route table. */
+function dashboardRoutes() {
+	const config = JSON.parse(readFileSync(resolve(ROOT, 'vercel.json'), 'utf8'));
+	const out = [];
+	for (const route of config.routes || []) {
+		const src = route.src;
+		if (typeof src !== 'string' || !AUTHED_PREFIX.test(src)) continue;
+		// A redirect stub has no page of its own; its destination is audited instead.
+		if (route.status || route.headers?.Location || !route.dest) continue;
+		const path = src.replace(/\/\?$/, '').replace(/(.)\/$/, '$1');
+		// Capture groups and character classes are patterns, not addressable routes.
+		if (/[()[\]*+|^$\\?]/.test(path)) continue;
+		if (!isHtmlRoute(path)) continue;
+		out.push(path);
+	}
+	return out;
+}
+
+export const AUTHED_ROUTES = [...new Set([...dashboardRoutes(), ...STANDALONE_AUTHED_ROUTES])].sort();
 
 /**
  * Parameterised routes filled with real ids from the live API.

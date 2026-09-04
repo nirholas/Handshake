@@ -127,6 +127,15 @@ const LOCAL_ONLY_IGNORE = [
 	/esm\.sh/,
 	/ajax\.googleapis\.com/,
 	/\/node_modules\/vite\/dist\/client\/env\.mjs/,
+	// Vite's HMR client dials a websocket at the page's own host. On a plain
+	// laptop that connects; inside a Codespace the page is served over a
+	// forwarded https origin whose wss upgrade answers 404, so every locally
+	// audited page reports the same three errors (the handshake, Vite's own
+	// retry log, and the uncaught close) before a single line of page code
+	// runs. Hot reload is a dev-server feature that production does not ship,
+	// so its failure says nothing about the page.
+	/\[vite\] failed to connect to websocket/,
+	/WebSocket (connection to '[^']*' failed|closed without opened)/,
 	/Unexpected token .+, .<!doctype /,
 	/Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text\/html"/,
 ];

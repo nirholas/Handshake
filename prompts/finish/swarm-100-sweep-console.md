@@ -57,6 +57,16 @@ sweep those reads are cross-origin and refused; on the origin the page is
 actually served from they are same-origin. Do not "fix" it by making those
 relative, which is what breaks the IBM-hosted copy.
 
+Four routes carried warnings rather than errors. Three are closed; the fourth is
+a production configuration gap that no page edit can close:
+
+| Route | Warning | Disposition |
+|---|---|---|
+| `/play/war` | Two assets "preloaded but not used" | **Fixed.** `src/play/war.js` returns early with "No battle to join" when the link carries no pairing, so a static `<link rel=preload>` in the head downloaded a manifest and an avatar the page never read. `pages/play/war.html` now injects the two preloads from the head only when `match`, `ticket` and `coin` are all present, which keeps the head start on the real path and emits nothing on the dead one. `/play/arena` keeps its static pair because it always loads both, which is why it never warned. |
+| `/create/selfie` | `gl_context.cc:1118] OpenGL error checking is disabled` | **Filtered.** MediaPipe's native logger, glog-formatted, written by the C++ library with no JS frame of ours in it and no verbosity control on the JS API. Added to `scripts/lib/console-noise.mjs` beside the other headless-GL driver lines. |
+| `/avatar-sdk` | `RGBELoader has been deprecated. Please use HDRLoader instead.` | **Intentional, documented.** `avatar-sdk/src/viewer.js` explains it: the SDK's peer range is `three >= 0.150.0`, `HDRLoader.js` does not exist before r180, and a bundler resolves the literal dynamic import statically, so renaming trades one cosmetic console line on new `three` for a hard "module not found" build failure for every consumer on older `three`. Revisit when the peer floor moves to `>= 0.180.0`. |
+| `/clash` | `clash: CoinCommunities unconfigured, polling stopped` | **Not a code defect: one missing credential.** `CC_API_KEY` is absent from `.env`, `.env.local` and the `three-ws-api` service (`node scripts/read-service-env.mjs '^CC_API_KEY$' --names` finds no match), and production's `/api/clash/state` answers `503 cc_unconfigured` for the same reason. The page is fully wired behind the var and degrades as designed: one request per page view, poll cancelled, the designed unavailable state on both tabs. The warning names a real operational gap and stays. Supplying `CC_API_KEY` is the fix, and it is the owner's. |
+
 ## Step 0: re-derive the current state
 
     npm run audit:console
