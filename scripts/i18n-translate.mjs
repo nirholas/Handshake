@@ -37,6 +37,7 @@
 //   node scripts/i18n-translate.mjs --repair        # re-translate only lint-failing keys
 //   node scripts/i18n-translate.mjs --dry-run       # report what would translate
 //   node scripts/i18n-translate.mjs --concurrency=8 # widen the chunk pool for a bulk run
+//   node scripts/i18n-translate.mjs --split-token=2400 # bigger chunks, fewer requests
 
 import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -87,6 +88,13 @@ if (opt('model')) cfg.modelName = opt('model');
 // a from-scratch locale is ~550 chunks, so let a bulk run open it up without
 // editing the config every other lane still depends on.
 if (opt('concurrency')) cfg.concurrency = Math.max(1, Number(opt('concurrency')) || cfg.concurrency);
+// Free lanes meter REQUESTS per day, not tokens, so a 668-key backlog across 84
+// locales can exhaust a daily request cap long before it runs out of quota. The
+// chunk budget is the only lever that changes the request count for a fixed
+// amount of text: doubling it halves the requests without changing the tokens.
+// The committed value stays conservative (small chunks truncate less on the weak
+// free models the default chain rides); a bulk run raises it for the lane it has.
+if (opt('split-token')) cfg.splitToken = Math.max(200, Number(opt('split-token')) || cfg.splitToken);
 const sourcePath = resolve(ROOT, cfg.entry);
 const source = readJSON(sourcePath);
 if (!source) {
