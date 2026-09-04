@@ -1470,7 +1470,7 @@
 				flex: 1 1 auto;
 			}
 			.step-label {
-				line-height: var(--leading-snug, 1.35);
+				line-height: var(--leading-tight);
 			}
 			.step-detail {
 				font-size: var(--text-2xs);
@@ -2088,13 +2088,22 @@
 					transition: none;
 				}
 			}
+			/* The action row carries seventeen tools. As a `flex: none` item inside
+			   the wrapping result bar its base size was max-content, which measured
+			   ~2570px at EVERY viewport, so its own flex-wrap never had anything to
+			   wrap against: the row simply ran off the panel and `overflow-x: clip`
+			   on <body> hid the remainder without so much as a scrollbar. Twelve of
+			   the seventeen actions, Download GLB included, rendered off-screen and
+			   could not be clicked at 320, 768 or 1440. Giving the row the bar's
+			   full width is what lets the wrap it already declared do its job. */
 			.result-bar .actions {
 				display: flex;
 				gap: var(--space-xs);
-				flex: none;
+				flex: 1 1 100%;
+				min-width: 0;
 				align-items: center;
 				flex-wrap: wrap;
-				justify-content: flex-end;
+				justify-content: flex-start;
 			}
 
 			/* Refine — re-run the same prompt/views one quality tier higher. An
@@ -2510,7 +2519,7 @@
 			.stylize-blurb {
 				color: var(--ink-dim);
 				font-size: var(--text-xs);
-				line-height: var(--leading-snug);
+				line-height: var(--leading-tight);
 			}
 			.stylize-controls {
 				display: flex;
