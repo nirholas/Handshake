@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-04",
+			"title": "We can now measure exactly which surface detail a generated model is missing",
+			"summary": "A 3D model can have perfect shape and still look like plastic, because the colour picture painted onto it is only half of what makes a surface look real. The other half is the invisible detail: which parts are bumpy, which are shiny, which sit in shadow. Without it, leather, wool and glass all catch the light in exactly the same flat way. There was no way to check which of those layers a given model actually carried, so we built one, and pointed it at real generations coming out of the live engines. It found that our fastest engine ships colour and nothing else, and that both engines currently label every surface as \"fully metal\", which is why some objects read as if they were cast in dull metal rather than made of what you asked for. The measurement now lives in our worker documentation so the gap is tracked rather than guessed at, and the tool refuses to pass a model that is missing a layer it should have, so this cannot quietly come back.",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
 			"title": "Opening the homepage, Create and Discover no longer loads 3D you never asked to see",
 			"summary": "Three pages were doing heavy 3D work before anyone had scrolled to it. The homepage hero picked whichever featured avatar the list returned first, which meant a 4.6 MB model downloading and decoding while the page was still trying to become usable; it now picks the richest avatar that fits a size budget, which cut the hero to 2.1 MB without changing what the stage shows. Discover was fetching an entire 3D viewer engine on every visit even though almost every card in the directory is a still thumbnail, and now fetches it only when a card that really has a 3D model comes near the screen. The Create page did the same for one preview card that already waited for your cursor, and now waits for it too, with the poster on screen in the meantime so the card looks the same. The walking companion also stopped booting on top of a page that is still loading: it waits for the page to settle first, then turns up as before.",
 			"tags": [
@@ -26547,6 +26556,16 @@
 				"fix"
 			],
 			"link": "/glance"
+		},
+		{
+			"date": "2026-09-04",
+			"title": "Pairing a house, paying an agent and the status page all answer again",
+			"summary": "A packaging rule left two small token modules out of the deployed image, and because the server loads them the moment a request arrives, every route that touched them answered with a server error instead of a page: pairing or managing a house, the agent payment endpoint, and the public status page. The modules ship again, and the check that simulates the upload now runs as part of every deploy, so a file the server needs can no longer go missing quietly.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/status"
 		}
 	]
 }

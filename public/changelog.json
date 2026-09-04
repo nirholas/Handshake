@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T08:24:33.688Z",
+	"generated_at": "2026-09-04T08:27:43.651Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -79,6 +79,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Pairing a house, paying an agent and the status page all answer again",
+			"summary": "A packaging rule left two small token modules out of the deployed image, and because the server loads them the moment a request arrives, every route that touched them answered with a server error instead of a page: pairing or managing a house, the agent payment endpoint, and the public status page. The modules ship again, and the check that simulates the upload now runs as part of every deploy, so a file the server needs can no longer go missing quietly.",
+			"link": "/status",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -207,6 +218,17 @@
 			"link": null,
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "We can now measure exactly which surface detail a generated model is missing",
+			"summary": "A 3D model can have perfect shape and still look like plastic, because the colour picture painted onto it is only half of what makes a surface look real. The other half is the invisible detail: which parts are bumpy, which are shiny, which sit in shadow. Without it, leather, wool and glass all catch the light in exactly the same flat way. There was no way to check which of those layers a given model actually carried, so we built one, and pointed it at real generations coming out of the live engines. It found that our fastest engine ships colour and nothing else, and that both engines currently label every surface as \"fully metal\", which is why some objects read as if they were cast in dull metal rather than made of what you asked for. The measurement now lives in our worker documentation so the gap is tracked rather than guessed at, and the tool refuses to pass a model that is missing a layer it should have, so this cannot quietly come back.",
+			"link": null,
+			"tags": [
+				"docs",
 				"improvement"
 			]
 		},
