@@ -12,8 +12,7 @@
  * chain that cannot pin one hash. api/_lib/model-viewer-cdn.js explains each rung.
  *
  * Nothing enforced that, and it drifted: eight of eighty-one references sat a
- * major version behind the rest, with two stale SRI hashes still pointing at the
- * older build. This checks three things offline:
+ * major version behind the rest. This checks three things offline:
  *
  *   1. every model-viewer URL in tracked source names the same version,
  *   2. no version is served with two different integrity hashes (the shape a
