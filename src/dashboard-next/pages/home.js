@@ -98,20 +98,32 @@ const STATE = {
 	const widgets = widgetsRes.status === 'fulfilled' ? (widgetsRes.value?.widgets ?? []) : [];
 	const agents  = agentsRes.status === 'fulfilled'  ? (agentsRes.value?.agents  ?? []) : [];
 
+	// A rejected load collapses to [] above so the rest of the page still renders,
+	// but [] and "the request failed" are different facts and the sections that
+	// count things must not present the second as the first: a dead network read
+	// as "0 avatars, 0 of 4 steps complete" and pushes a user who already has
+	// avatars back into first-run onboarding. Every derived section takes this and
+	// shows a scoped, retryable error instead of a fabricated zero.
+	const loadErrors = {
+		avatars: avatarsRes.status === 'rejected' ? avatarsRes.reason : null,
+		widgets: widgetsRes.status === 'rejected' ? widgetsRes.reason : null,
+		agents:  agentsRes.status  === 'rejected' ? agentsRes.reason  : null,
+	};
+
 	// The dashboard holds authoritative server state; the floating guide
 	// (getting-started.js) otherwise only infers progress from the current route
 	// and drifts. Reconcile it here on every dashboard visit — this is data sync,
 	// so it runs even when the onboarding panel is dismissed.
 	reconcileGuide({ avatars, agents, widgets });
 
-	renderHero(slots.hero, avatars, avatarsRes.status === 'rejected' ? avatarsRes.reason : null);
+	renderHero(slots.hero, avatars, loadErrors.avatars);
 	loadTradingOverview(slots.trading);
-	renderAgentHealth(slots.health, agents, widgets);
+	renderAgentHealth(slots.health, agents, widgets, loadErrors);
 	renderQuickActions(slots.quick, { avatars, agents });
 	renderDirectory(slots.directory);
 
 	if (slots.onboarding) {
-		renderOnboarding(slots.onboarding, { avatars, agents, widgets });
+		renderOnboarding(slots.onboarding, { avatars, agents, widgets, loadErrors });
 	}
 
 	// First-run guided tour — fires once after wizard completion (?welcome=1)
@@ -142,8 +154,8 @@ const STATE = {
 
 	const refresh = async () => {
 		await Promise.all([
-			refreshKpis(slots.kpis, { avatars, widgets }),
-			refreshActivity(slots.activity, { widgets }),
+			refreshKpis(slots.kpis, { avatars, widgets, loadErrors }),
+			refreshActivity(slots.activity, { widgets, loadErrors }),
 		]);
 	};
 
@@ -307,6 +319,7 @@ function renderHero(host, avatars, err) {
 // ── KPI row ───────────────────────────────────────────────────────────────
 
 async function refreshKpis(host, ctx) {
+	const errs = ctx.loadErrors || {};
 	const widgetStats = (await Promise.all(ctx.widgets.map((w) =>
 		get(`/api/widgets/${encodeURIComponent(w.id)}/stats`).catch(() => null),
 	))).filter(Boolean);
@@ -327,6 +340,7 @@ async function refreshKpis(host, ctx) {
 			value: viewTotal.toLocaleString('en-US'),
 			numeric: viewTotal,
 			series: viewSeries,
+			unavailable: !!errs.widgets,
 			empty: ctx.widgets.length === 0,
 			emptyCta: { label: 'Embed an agent', href: '/dashboard/widgets' },
 		},
@@ -336,6 +350,7 @@ async function refreshKpis(host, ctx) {
 			value: chatTotal.toLocaleString('en-US'),
 			numeric: chatTotal,
 			series: chatSeries,
+			unavailable: !!errs.widgets,
 			empty: ctx.widgets.length === 0,
 			emptyCta: { label: 'Create a chat widget', href: '/dashboard/widgets' },
 		},
@@ -345,6 +360,7 @@ async function refreshKpis(host, ctx) {
 			value: avatarTotal.toLocaleString('en-US'),
 			numeric: avatarTotal,
 			series: avatarSeries,
+			unavailable: !!errs.avatars,
 			empty: avatarTotal === 0,
 			emptyCta: { label: 'Create from selfie', href: '/create' },
 		},
@@ -358,7 +374,17 @@ async function refreshKpis(host, ctx) {
 
 	host.innerHTML = cards.map(renderKpiCard).join('');
 
+	if (cards.some((c) => c.unavailable)) {
+		ensureStateKitStyles();
+		attachRetry(host, () => location.reload());
+	}
+
 	for (const c of cards) {
+		if (c.unavailable) {
+			// Never tween from a real number toward an unknown one, and never let a
+			// failed read overwrite the last good value we would animate away from.
+			continue;
+		}
 		const prev = STATE.kpi[c.key];
 		if (prev != null && prev !== c.numeric) {
 			tweenNumber(host.querySelector(`[data-kpi="${c.key}"] .dnx-kpi-value`), prev, c.numeric, c.value);
@@ -368,6 +394,17 @@ async function refreshKpis(host, ctx) {
 }
 
 function renderKpiCard(c) {
+	if (c.unavailable) {
+		return `
+			<div class="dn-panel dnx-kpi dnx-kpi-is-unavailable" data-kpi="${esc(c.key)}" role="status">
+				<div class="dnx-kpi-label">${esc(c.label)}</div>
+				<div class="dnx-kpi-empty">
+					<div class="dnx-kpi-value dnx-kpi-value-unknown">Unknown</div>
+					<div class="dnx-kpi-unavailable-note">Could not be loaded.</div>
+					<button type="button" class="dn-btn" data-sk-retry data-sk-scope="kpi-${esc(c.key)}">Retry</button>
+				</div>
+			</div>`;
+	}
 	if (c.empty) {
 		return `
 			<div class="dn-panel dnx-kpi dnx-kpi-is-empty" data-kpi="${esc(c.key)}">
@@ -499,11 +536,24 @@ async function loadTradingOverview(host) {
 	`;
 }
 
-function renderAgentHealth(host, agents, widgets) {
+function renderAgentHealth(host, agents, widgets, loadErrors = {}) {
+	if (loadErrors.agents) {
+		host.style.display = '';
+		ensureStateKitStyles();
+		host.innerHTML = `<div class="dn-panel dnx-health-panel" style="padding:0">${errorStateHTML({
+			title: "Couldn't load agent health",
+			body: esc(loadErrors.agents.message || "The agents service didn't respond. Check your connection and try again."),
+			scope: 'agent-health',
+		})}</div>`;
+		attachRetry(host, () => location.reload());
+		return;
+	}
+
 	if (!agents.length) {
 		host.style.display = 'none';
 		return;
 	}
+	host.style.display = '';
 
 	const widgetsByAvatar = new Map();
 	for (const w of widgets) {
@@ -547,6 +597,25 @@ function renderAgentHealth(host, agents, widgets) {
 // ── Activity feed ─────────────────────────────────────────────────────────
 
 async function refreshActivity(host, ctx) {
+	// The feed is stitched from the caller's widgets. If that list never loaded,
+	// "Nothing here yet" would read as "you have no visitors" when the truth is
+	// "we could not ask".
+	if (ctx.loadErrors?.widgets) {
+		ensureStateKitStyles();
+		host.innerHTML = `
+			<div class="dn-panel">
+				<div class="dn-panel-title">Recent activity</div>
+				${errorStateHTML({
+					title: "Couldn't load activity",
+					body: esc(ctx.loadErrors.widgets.message || "Your widgets didn't load, so there's nothing to read activity from."),
+					scope: 'activity',
+				})}
+			</div>
+		`;
+		attachRetry(host, () => location.reload());
+		return;
+	}
+
 	const events = await collectActivity(ctx.widgets);
 
 	if (!events.length) {
@@ -825,6 +894,12 @@ function reconcileGuide({ avatars = [], agents = [], widgets = [] }) {
 	} catch (_) {}
 }
 
+/** ['a','b','c'] -> "a, b and c" — used in the "could not be loaded" copy. */
+function joinList(items) {
+	if (items.length <= 1) return items[0] || '';
+	return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
 // Has the user completed the optional monetize step on any surface? The guide is
 // the cross-page record of record for it.
 function guideStepDone(id) {
@@ -839,7 +914,22 @@ const OB_ICONS = {
 	monetize: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h4.5a2 2 0 010 4H10a2 2 0 000 4h5"/></svg>`,
 };
 
-function renderOnboarding(host, { avatars, agents, widgets }) {
+function renderOnboarding(host, { avatars, agents, widgets, loadErrors = {} }) {
+	// Every step in this checklist is derived from all three lists, so one failed
+	// read makes the whole progress read wrong. Say so instead of resetting a
+	// returning user to "0 of 4 steps complete".
+	const stale = ['avatars', 'agents', 'widgets'].filter((k) => loadErrors[k]);
+	if (stale.length) {
+		ensureStateKitStyles();
+		host.innerHTML = `<div class="dn-panel" style="padding:0">${errorStateHTML({
+			title: "Couldn't check your setup progress",
+			body: `Your ${esc(joinList(stale))} could not be loaded, so this checklist would show the wrong step. Retry for an accurate read.`,
+			scope: 'onboarding',
+		})}</div>`;
+		attachRetry(host, () => location.reload());
+		return;
+	}
+
 	const steps = [
 		{
 			id: 'avatar',
@@ -1549,7 +1639,7 @@ function injectStyles() {
 			gap: 14px;
 		}
 		@media (max-width: 760px) {
-			.dnx-hero { grid-template-columns: 1fr; }
+			.dnx-hero { grid-template-columns: minmax(0, 1fr); }
 		}
 		.dnx-hero-card {
 			position: relative;
@@ -1674,6 +1764,9 @@ function injectStyles() {
 		.dnx-kpi-spark { height: 38px; }
 		.dnx-kpi-empty { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 		.dnx-kpi-empty .dnx-kpi-value { margin-bottom: 0; }
+		.dnx-kpi-is-unavailable { border-color: var(--nxt-stroke-strong); }
+		.dnx-kpi-value-unknown { color: var(--nxt-ink-fade); }
+		.dnx-kpi-unavailable-note { font-size: 11.5px; color: var(--nxt-ink-fade); line-height: 1.4; }
 
 		/* ── Welcome header ── */
 		.dnx-welcome-row {
@@ -1763,7 +1856,7 @@ function injectStyles() {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			gap: 10px;
 		}
-		@media (max-width: 620px) { .dnx-shortcuts-grid { grid-template-columns: 1fr; } }
+		@media (max-width: 620px) { .dnx-shortcuts-grid { grid-template-columns: minmax(0, 1fr); } }
 		.dnx-quick-card {
 			display: flex; align-items: center; gap: 12px;
 			padding: 13px 14px; cursor: pointer; position: relative;
@@ -2373,7 +2466,7 @@ function injectStyles() {
 		.dnx-tc-dim { color: var(--nxt-ink-faint, #5c6273); }
 		.dnx-tc-arm-cta { color: var(--nxt-accent, #7c83ff); }
 		@media (max-width: 600px) {
-			.dnx-trading-cards { grid-template-columns: 1fr; }
+			.dnx-trading-cards { grid-template-columns: minmax(0, 1fr); }
 		}
 	`;
 	const tag = document.createElement('style');

@@ -1,8 +1,9 @@
 // /defi — DeFi TVL & protocols. Header stat cards (total TVL, protocol count,
-// top category), a category filter, and a sortable table of the top protocols
-// by TVL. Data comes from /api/defi/protocols (DeFiLlama, keyless), normalized
-// server-side. Mirrors the /coins markets-table pattern: stat cards, sortable
-// cv-table, designed loading / empty / error states.
+// top category), a category filter, a toolbar refresh, and a sortable table of
+// the top protocols by TVL, each row linking through to /protocol/:slug. Data
+// comes from /api/defi/protocols (DeFiLlama, keyless), normalized server-side.
+// Mirrors the /coins markets-table pattern: stat cards, sortable cv-table,
+// designed loading / empty / error states.
 
 import { formatUsd, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
 import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
@@ -343,13 +344,29 @@ function renderTable() {
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 
+// The toolbar refresh reports its own progress: the icon spins for exactly as
+// long as the request is in flight, and the button stops accepting clicks so a
+// visitor cannot stack four fetches on one impatient row of taps.
+function setRefreshing(busy) {
+	const btn = $('defi-refresh');
+	if (!btn) return;
+	btn.disabled = busy;
+	btn.setAttribute('aria-busy', busy ? 'true' : 'false');
+}
+
 async function load() {
-	// A retry re-enters here from the error state, so reset to loading before
-	// painting or the skeleton would be replaced by the stale error message.
-	state.loading = true;
-	state.error = false;
-	statsSkeleton();
-	renderTable();
+	// A refresh over a populated table keeps the current numbers on screen while
+	// the request runs; only a page with nothing to show falls back to the
+	// skeleton. A retry from the error state is that case, and resetting the
+	// flags here is what lets the skeleton replace the error message.
+	const hadRows = state.protocols.length > 0;
+	setRefreshing(true);
+	if (!hadRows) {
+		state.loading = true;
+		state.error = false;
+		statsSkeleton();
+		renderTable();
+	}
 	try {
 		const { body: data, stale } = await getJson('/api/defi/protocols');
 		state.protocols = Array.isArray(data.protocols) ? data.protocols : [];
@@ -374,14 +391,25 @@ async function load() {
 		}
 		renderTable();
 	} catch {
-		state.loading = false;
-		state.error = true;
-		state.protocols = [];
-		state.stale = false;
-		$('defi-stats').innerHTML = '';
-		$('defi-updated').textContent = 'Data: DeFiLlama';
-		renderTable();
+		// Good figures are still painted when a manual refresh fails: say so
+		// rather than throwing the table away over one upstream blip.
+		if (hadRows) {
+			$('defi-updated').textContent =
+				'Refresh failed, still showing the last figures. Data: DeFiLlama';
+		} else {
+			state.loading = false;
+			state.error = true;
+			state.protocols = [];
+			state.stale = false;
+			$('defi-stats').innerHTML = '';
+			$('defi-updated').textContent = 'Data: DeFiLlama';
+			renderTable();
+		}
+	} finally {
+		setRefreshing(false);
 	}
 }
+
+$('defi-refresh')?.addEventListener('click', () => load());
 
 load();

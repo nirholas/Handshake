@@ -489,15 +489,14 @@ const BRAIN_LABELS = {
 	'claude-opus-4-7': 'Claude Opus 4.7',
 	'llama-3.3-70b-versatile': 'Llama 3.3 70B · Groq',
 	'llama-3.1-8b-instant': 'Llama 3.1 8B · Groq',
-	'openai/gpt-oss-20b:free': 'GPT-OSS 20B · OpenRouter',
+	'google/gemma-4-31b-it:free': 'Gemma 4 31B · OpenRouter',
 	'meta-llama/llama-3.1-8b-instruct:free': 'Llama 3.1 8B · OpenRouter',
 	'nvidia/nemotron-3-super-120b-a12b:free': 'Nemotron 3 Super 120B · OpenRouter',
-	'google/gemma-4-31b-it:free': 'Gemma 4 31B · OpenRouter',
 };
 
 function brainLabel(agent) {
 	const model = agent.meta?.brain?.model;
-	if (!model) return 'GPT-OSS 20B · OpenRouter'; // runtime default
+	if (!model) return 'Gemma 4 31B · OpenRouter'; // runtime default
 	return BRAIN_LABELS[model] || model.split('/').pop() || model;
 }
 

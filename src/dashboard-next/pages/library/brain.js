@@ -39,7 +39,7 @@ const MODELS = [
 		brain_key: 'groq-llama',
 	},
 	{
-		model:   'openai/gpt-oss-20b:free',
+		model:   'google/gemma-4-31b-it:free',
 		label:   'Llama 3.3 70B',
 		network: 'OpenRouter',
 		tier:    'Free · open-source',
@@ -66,7 +66,7 @@ const MODELS = [
 		brain_key: 'groq-llama',
 	},
 ];
-const MODEL_DEFAULT = 'openai/gpt-oss-20b:free';
+const MODEL_DEFAULT = 'google/gemma-4-31b-it:free';
 const MMAP = new Map(MODELS.map((m) => [m.model, m]));
 
 function friendly(err) {
