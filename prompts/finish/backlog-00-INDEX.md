@@ -24,7 +24,7 @@ Re-measure before you trust any number below. Commands are in each work order.
 | Forge generation | 98% (48/49 finished, 6h) | same |
 | Fact-check benchmark | `ran: true`, `source: "database"`, 40% (16/40), published 2026-08-10 | `curl -s https://three.ws/api/fact-check-benchmark` |
 | Media CORS at the site edge | `access-control-allow-origin: *` | `curl -I -H 'Origin: https://example.org' https://three.ws/avatars/cesium-man.glb` |
-| `gcloud` auth | dead (token refresh fails non-interactively) | `gcloud run services list` |
+| `gcloud` auth | **live again** (re-read 2026-09-04; it was dead on 2026-09-01) | `gcloud run services describe three-ws-api --region us-central1` |
 
 Two of these overturn text elsewhere in this pack: the benchmark is live from the database
 (order 04's only remaining line closed with the 2026-08-28 deploy), and production is no
@@ -66,9 +66,10 @@ reclaim plan that reported sealed wallets as reclaimable was fixed on 2026-09-02
 it now opens each planned wallet's key and lists the ones that will not decrypt under
 `agent_reclaim.failed`, so a dry total of 0 means the owner has to send SOL. 05 waits on one R2 admin
 token. 07 needs one faucet claim and nothing else: a deployer key now exists in the gitignored
-`contracts/.env` at `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (re-verified 2026-09-02,
-balance 0 tBNB), both dry runs simulate green against the live chain-97 RPC, and the
-`--broadcast` path is proven end to end on a local chain-97 node. Fund that address, not
+`contracts/.env` at `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (re-verified 2026-09-04,
+still 0 tBNB on three chain-97 lanes), both dry runs simulate green against the live chain-97
+RPC at unchanged gas, and the `--broadcast` path was re-proven end to end on a local chain-97
+node with the real `scripts/bnb-testnet-deploy-prove.mjs --broadcast`. Fund that address, not
 the retired 2026-08-02 one.
 08's worker is built and committed; on 2026-09-02 it beat for the first time, from this
 codespace, so `/api/healthz` now carries the `okx_chat_bot` subsystem and reports it as the

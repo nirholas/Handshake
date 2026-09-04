@@ -262,6 +262,40 @@ was re-measured against the current tree rather than carried forward:
   dropping to 0 on `Left`. Local addresses are deliberately not recorded here;
   they are anvil-local and mean nothing on the public chain.
 
+**Re-verified 2026-09-04. Still one faucet claim away, nothing else.** Every
+line was re-measured against the current tree, not carried forward:
+
+- Both dry runs simulate green against the live chain-97 RPC at exactly the
+  same gas as the two previous re-reads: `DeployWorldMoves` 566,068 gas and
+  `DeployGreenfieldVault` 1,711,362 gas at 0.1 gwei (0.0000566068 and
+  0.0001711362 BNB, 0.000227743 BNB for the pair).
+- `forge test` is 19/19 on WorldMoves and 41/41 on GreenfieldVault.
+- The deployer `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` still holds
+  0 tBNB, read independently on three RPC lanes
+  (`data-seed-prebsc-1-s1`, `bsc-testnet.drpc.org`,
+  `bsc-testnet-rpc.publicnode.com`), all answering chainId 97.
+- The `--broadcast` path was re-proven end to end against a local
+  `anvil --chain-id 97`, running the real
+  `scripts/bnb-testnet-deploy-prove.mjs --broadcast` rather than a
+  hand-assembled sequence: both contracts deployed, then 1 `join`, 3 `move`,
+  and 1 `leave` mined through the real `api/_lib/bnb/world-moves.js` sender,
+  decoded live by `src/bnb/world-presence-reader.js` (1 Joined, 3 Moved,
+  1 Left), with `createGhostTracker` holding 1 ghost before the leave and 0
+  after. Local addresses are again deliberately not recorded: they are
+  anvil-local.
+- The faucet is still the only human step. Four claim paths were checked and
+  every one is captcha- or account-gated: the official
+  `testnet.bnbchain.org/faucet-smart` (its `/api/v1/faucet` path serves the
+  HTML page, not a claim API), ghostchain.io and faucet.zalalena.com (both
+  Cloudflare Turnstile / hCaptcha), and tokentool.bitbond.com (wallet connect
+  plus a completed third-party profile).
+- The wiring after funding is unblocked and was re-checked: `gcloud` is
+  authenticated in the workspace again, `WORLD_MOVES_ADDRESS_TESTNET` is
+  confirmed absent from the `three-ws-api` service env, and
+  `/api/bnb/world-config?network=testnet` answers live today with
+  `address: null, deployed: false`. Setting the var is a config-only
+  `--update-env-vars` call, which needs no further approval.
+
 **Real broadcast proof — anvil fork of LIVE BSC testnet state** (per
 00-CONTEXT's decision-default table: "if every faucet fails, finish ALL code +
 tests against a local `anvil --chain-id 97` fork" — the same workaround
@@ -446,7 +480,9 @@ BNB figures above were the constructor-only measurement; the number that
 matters for funding is the total. The funding blocker is unchanged; see the
 re-verification notes in the WorldMoves section for the full re-check and for
 the throwaway deployer address now waiting on the faucet. Re-measured again
-2026-09-02: same 1,711,362 total gas, and `forge test` is now 41/41.
+2026-09-02 and 2026-09-04: same 1,711,362 total gas both times, and `forge
+test` is 41/41. See the WorldMoves section's 2026-09-04 block for the full
+re-read, including the four faucet paths that are all human-gated.
 
 Deploy (once funded), preferred, because it also proves the live paths in the
 same run:
