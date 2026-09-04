@@ -217,7 +217,29 @@
 				"before": {
 					"id": "before",
 					"tierRequested": "standard",
-					"views": {}
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/8b3ed5bc-e30e-4ad0-86f6-a584411ef165.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/c65b6a39-fb87-484f-a8d8-f63908f84a4f.jpg",
+					"creationId": "8b3ed5bc-e30e-4ad0-86f6-a584411ef165",
+					"generationMs": 515301,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
 				}
 			},
 			"directed": null,
@@ -247,7 +269,13 @@
 			"prompt": "A synthetic persona, not a real person: a contemporary dancer in her thirties, tall athletic build, hair tied back, wearing a fitted dark leotard and a loose wrap skirt with bare feet, standing tall in a poised neutral stance with one arm raised slightly to the side and both hands open, fingers separated and clearly visible.",
 			"subjectClass": "person",
 			"stylized": false,
-			"variants": {},
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {}
+				}
+			},
 			"directed": null,
 			"directedVia": null,
 			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
