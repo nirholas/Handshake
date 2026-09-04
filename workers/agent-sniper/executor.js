@@ -9,6 +9,7 @@ import { sql } from '../../api/_lib/db.js';
 import { log } from './log.js';
 import { loadAgentKeypair } from './keys.js';
 import { mayhemGate } from './mayhem-gate.js';
+import { reviewBuy, resolveRiskOfficerLevel } from './risk-officer.js';
 import { marketCapBandReason } from './scorer.js';
 import { recordJournal, journalEntry } from './journal.js';
 import { getTradeCtx, signAndSend, submitProtectedTrade } from './trade-client.js';
@@ -42,7 +43,7 @@ function snipeConfidence({ priceImpactPct, maxImpactPct, firewallVerdict }) {
 // ledger. Best-effort: the on-chain buy has already settled, so a ledger-write
 // failure must never throw the trade away. Reconciled later against the closed
 // position's realized P&L by api/cron/reconcile-decisions.js.
-async function recordSnipeDecision({ strat, network, mint, posId, sig, mode, priceImpactPct, firewall, perTradeLamports }) {
+async function recordSnipeDecision({ strat, network, mint, posId, sig, mode, priceImpactPct, firewall, perTradeLamports, riskOfficer }) {
 	try {
 		const perTradeSol = Number(BigInt(perTradeLamports)) / 1e9;
 		const confidence = snipeConfidence({
@@ -74,6 +75,10 @@ async function recordSnipeDecision({ strat, network, mint, posId, sig, mode, pri
 				mode,
 				symbol: mint.symbol || null,
 				llm: mint.llm ? { model: mint.llm.model, confidence: mint.llm.confidence, thesis: mint.llm.thesis } : null,
+				// The adversarial second opinion, when one was ENFORCED on this trade.
+				// A shadow-mode review is a counterfactual, not part of the decision,
+				// so it lives in sniper_risk_reviews and never in the ledger's inputs.
+				risk_officer: riskOfficer || null,
 			},
 			prediction: { direction: 'up', basis: 'snipe entry expects a profitable exit', metric: 'realized_pnl' },
 			rationale,
@@ -374,19 +379,25 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			// require_sol_quote check below only guards the curve branch.
 			const ammEntry = mint.venue === 'amm';
 
-			// 6. quote + price-impact circuit breaker
-			let quote;
-			if (ammEntry) {
-				const ammQuote = await quoteAmmBuy({
-					network: cfg.network, mint: mint.mint, quoteAmount: bn(ctx, perTrade), slippagePct,
-				});
-				quote = { priceImpactPct: ammQuote.priceImpactPct };
-			} else {
-				quote = await ctx.client.quoteForBuy({ mint: mintPk, quoteAmount: bn(ctx, perTrade), slippagePct });
-				if (strat.require_sol_quote && !quote.quoteMint.equals(ctx.web3.PublicKey.default) && quote.quoteMint.toBase58() !== 'So11111111111111111111111111111111111111112') {
-					return await fail(posId, tag, 'quote_not_sol');
+			// 6. quote + price-impact circuit breaker. Priced through a helper so the
+			//    trade can be re-quoted at a smaller size if the risk officer (6c)
+			//    cuts it — the impact we RECORD must describe the trade we actually
+			//    send, not the larger one that was refused.
+			const quoteFor = async (size) => {
+				if (ammEntry) {
+					const ammQuote = await quoteAmmBuy({
+						network: cfg.network, mint: mint.mint, quoteAmount: bn(ctx, size), slippagePct,
+					});
+					return { priceImpactPct: ammQuote.priceImpactPct };
 				}
-			}
+				const curveQuote = await ctx.client.quoteForBuy({ mint: mintPk, quoteAmount: bn(ctx, size), slippagePct });
+				if (strat.require_sol_quote && !curveQuote.quoteMint.equals(ctx.web3.PublicKey.default) && curveQuote.quoteMint.toBase58() !== 'So11111111111111111111111111111111111111112') {
+					return { rejected: 'quote_not_sol' };
+				}
+				return curveQuote;
+			};
+			let quote = await quoteFor(perTrade);
+			if (quote.rejected) return await fail(posId, tag, quote.rejected);
 			const impact = checkPriceImpact(Number(quote.priceImpactPct), Number(strat.max_price_impact_pct));
 			if (impact) return await fail(posId, tag, impact.reason);
 
@@ -460,6 +471,56 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 					firewallSnapshot = { verdict: assessment.verdict, score: assessment.score };
 				}
 			}
+
+			// 6c. adversarial Risk Officer — the independent second opinion. Every
+			// gate above answers a question with a number; this one is handed the
+			// proposed trade plus the agent's own thesis and told to find what the
+			// agent missed. Runs LAST so it sees the real price impact and the real
+			// firewall verdict. Default level is 'shadow': it records the veto it
+			// WOULD have cast and changes nothing, because enforcement decides what
+			// the live fleet buys with real SOL and arming that is an owner call.
+			// Fails OPEN, unlike the firewall: it sits behind a safety proof that
+			// already passed, so a reviewer outage must never halt the fleet.
+			const officer = await reviewBuy({
+				cfg, strat, mint, posId,
+				perTradeLamports: perTrade,
+				minTradeLamports: cfg.minTradeLamports,
+				budgetLeftLamports: dailyBudget > BigInt(spent) ? dailyBudget - BigInt(spent) : 0n,
+				slotsLeft: Math.max(0, Number(strat.max_concurrent_positions) - open),
+				priceImpactPct: Number(quote.priceImpactPct),
+				firewall: firewallSnapshot,
+				agentReason: mint.llm?.thesis || null,
+			});
+			if (officer.blocked) {
+				await sql`
+					UPDATE agent_sniper_positions
+					SET status = 'failed', error = ${`risk_officer_veto: ${officer.reason}`.slice(0, 280)}, closed_at = now()
+					WHERE id = ${posId}
+				`;
+				log.warn('buy vetoed by the risk officer', { ...tag, reasons: officer.review?.reasons });
+				screenPush(`$${(mint.symbol || mint.mint.slice(0, 6)).toUpperCase()} vetoed by risk review: ${officer.reason}`, 'analysis');
+				return { status: 'failed', reason: 'risk_officer_veto' };
+			}
+			if (officer.resized) {
+				log.info('trade size cut by the risk officer', {
+					...tag, from: perTrade.toString(), to: officer.sizeLamports.toString(),
+					reasons: officer.review?.reasons,
+				});
+				perTrade = officer.sizeLamports;
+				// A smaller buy can only move the curve less, so the breaker above
+				// cannot newly trip; re-quote purely so the recorded entry impact is
+				// the one this trade actually pays.
+				const reQuote = await quoteFor(perTrade).catch(() => null);
+				if (reQuote && !reQuote.rejected) quote = reQuote;
+			}
+			const officerSnapshot = officer.review
+				? {
+					level: resolveRiskOfficerLevel(strat, cfg.riskOfficer),
+					severity: officer.review.severity,
+					reasons: officer.review.reasons,
+					resized: officer.resized,
+				}
+				: null;
 
 			// 7. build + (live) broadcast
 			let built;
@@ -538,6 +599,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			await recordSnipeDecision({
 				strat, network: cfg.network, mint, posId, sig, mode: cfg.mode,
 				priceImpactPct: Number(quote.priceImpactPct), firewall: firewallSnapshot, perTradeLamports: perTrade,
+				riskOfficer: officerSnapshot,
 			});
 			return { status: 'open', sig };
 		} catch (err) {

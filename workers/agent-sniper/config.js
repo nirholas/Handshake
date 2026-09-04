@@ -111,6 +111,16 @@ export function loadConfig() {
 		// Global emergency stop — set SNIPER_GLOBAL_KILL=1 to halt all new buys
 		// while still letting the position loop manage/exit open positions.
 		globalKill: bool('SNIPER_GLOBAL_KILL', false),
+		// ── adversarial Risk Officer ─────────────────────────────────────────────
+		// Fleet-wide DEFAULT enforcement level for the independent pre-trade review
+		// (workers/agent-sniper/risk-officer.js); a strategy's own
+		// `risk_officer_level` column overrides it. 'shadow' (the default) records
+		// the veto it would have cast and changes nothing; 'enforce' lets a veto
+		// abort the buy and a smaller suggested size shrink it; 'off' skips it.
+		// Deliberately NOT 'enforce' out of the box: enforcement changes what the
+		// live fleet buys with real SOL, so arming it is an owner decision made
+		// against the evidence in sniper_risk_reviews.
+		riskOfficer: (process.env.SNIPER_RISK_OFFICER || 'shadow').trim().toLowerCase(),
 		// Position re-quote / exit-evaluation cadence.
 		pollMs: Math.max(1_000, num('SNIPER_POLL_MS', 5_000)),
 		// Liquidity-decay exit: an underwater position whose quoted value has not
