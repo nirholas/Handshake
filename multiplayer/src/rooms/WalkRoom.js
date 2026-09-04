@@ -1232,7 +1232,7 @@ export class WalkRoom extends Room {
 		// Notify the newly-tagged client so they get the "YOU'RE IT!" alert.
 		try {
 			const clients = this.clients.filter(c => c.sessionId === newItId);
-			if (clients.length) this.send(clients[0], 'tag', { event: 'became-it', itId: newItId });
+			if (clients.length) clients[0].send('tag', { event: 'became-it', itId: newItId });
 		} catch { /* best-effort */ }
 		this._broadcastTagState();
 	}
@@ -1474,7 +1474,7 @@ export class WalkRoom extends Room {
 	/** Send the current game state to one client (on join), so a mid-round arrival
 	 *  sees the correct zone, timer and scoreboard immediately. */
 	_sendKingSync(client) {
-		try { this.send(client, 'game:king', this._kingSnapshot('sync')); } catch { /* best-effort */ }
+		try { client.send('game:king', this._kingSnapshot('sync')); } catch { /* best-effort */ }
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────────
