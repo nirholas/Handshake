@@ -35,6 +35,18 @@ const SORTERS = {
 	followers: (a, b) => (b.follow_count ?? 0) - (a.follow_count ?? 0),
 };
 
+// The upstream taxonomy records an avatar URL on its own image host, and that
+// host answers 403 to every request that is not a session on its own site. In a
+// browser that lands as ERR_BLOCKED_BY_ORB, so no visitor has ever seen one of
+// these pictures: on 2026-09-04 the copy desk logged seven blocked requests per
+// load while the directory rendered the trader initial it was designed to fall
+// back to. Serving a URL that cannot load is a request every client pays for and
+// no client can use, so it does not go on the wire. The field stays in the
+// source directory, ready if the host ever allows off-site loads.
+function publicRow({ avatar, ...row }) {
+	return row;
+}
+
 function clampInt(value, min, max, fallback) {
 	const n = Number.parseInt(value, 10);
 	if (!Number.isFinite(n)) return fallback;
@@ -71,7 +83,7 @@ export default wrap(async (req, res) => {
 	}
 
 	const total = rows.length;
-	const page = [...rows].sort(SORTERS[sort]).slice(offset, offset + limit);
+	const page = [...rows].sort(SORTERS[sort]).slice(offset, offset + limit).map(publicRow);
 
 	return json(res, 200, {
 		wallets: page,

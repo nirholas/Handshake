@@ -651,10 +651,11 @@ function smartRow(w) {
 	const handle = w.twitter_username
 		? `<a class="sm-tw" href="https://x.com/${esc(w.twitter_username)}" target="_blank" rel="noopener">@${esc(w.twitter_username)}</a>`
 		: `<span class="sm-tw sm-mono">${esc(shortAddr(w.address))}</span>`;
-	const fallback = esc(initial(w));
-	const avatar = w.avatar
-		? `<img src="${esc(w.avatar)}" alt="" loading="lazy" data-fallback="text" data-fallback-text="${fallback}" />`
-		: fallback;
+	// The directory carries no portrait: its upstream image host refuses every
+	// off-site load, so the tile below has always been the initial. Rendering the
+	// initial directly is what the row already showed, minus a request per wallet
+	// that the browser blocked before it left the page.
+	const avatar = esc(initial(w));
 	const tags = [
 		...w.categories.map((c) => `<span class="sm-tag ${esc(c)}">${esc(c.replace('_', ' '))}</span>`),
 		`<span class="sm-tag chain">${esc(w.chain)}</span>`,
