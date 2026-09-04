@@ -20,7 +20,7 @@
 // Both A2MCP families share ONE transport (handleA2mcp): same challenge, verify,
 // batch pricing, single-use payment proof and settle-on-success. Only the tool
 // catalog, the price function and the discovery metadata differ per service.
-import { cors, error, json, readBody, readJson, wrap } from '../../_lib/http.js';
+import { cors, error, json, readBody, wrap } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import {
 	buildExactRequirements,
@@ -431,7 +431,27 @@ async function handleA2mcp(req, res, cfg) {
 	if (req.method === 'DELETE') return handleTerminate(req, res);
 	if (req.method !== 'POST') return send401(res, 'method not supported');
 
-	const body = await readJson(req, 1_000_000);
+	// Lenient body read, deliberately NOT readJson(). The A2MCP compliance
+	// self-check the OKX.AI guide prescribes is a bare
+	// `curl -i -X POST <endpoint>`: no request body and no content-type header,
+	// and the guide's stated pass condition for a paid row is "HTTP 402 +
+	// PAYMENT-REQUIRED". readJson() rejected that probe with 415 before any
+	// payment logic ran, so the marketplace validator saw no x402 quotation at
+	// all on the four paid forge rows and could not enter the payment stage
+	// (OKX review, 2026-09-04). A body-less or non-JSON POST prices as nothing,
+	// which on a paid row is exactly the 402 the probe expects; a caller that
+	// gets PAST the paywall having sent unparseable bytes still gets the
+	// JSON-RPC parse error it earned, below.
+	const rawBody = (await readBody(req, 1_000_000)).toString('utf8').trim();
+	let body = {};
+	let bodyMalformed = false;
+	if (rawBody) {
+		try {
+			body = JSON.parse(rawBody);
+		} catch {
+			bodyMalformed = true;
+		}
+	}
 
 	const { totalAmount: x402Amount, allFree } = priceBatch(body, {
 		priceForTool,
@@ -456,7 +476,17 @@ async function handleA2mcp(req, res, cfg) {
 	const extraAccepts = xlayerAcceptsFor(x402Amount || listPrice);
 
 	const result = await authenticateRequest(req, res, {
-		x402Amount,
+		// The SAME amount the prepended X Layer accept quotes. Passing the raw
+		// batch total let it be null on any POST that named no priced tool (an
+		// empty body, a plain business payload, a typo'd tool name), and
+		// paymentRequirements() then fell back to the platform-wide default
+		// price. The challenge went out quoting eip155:196 TWICE at two
+		// different amounts, the catalog price and the $0.001 default, which is
+		// an ambiguous quotation: OKX's listing validator read it as
+		// non-compliant and never entered the payment stage (review 2026-09-04).
+		// handleSse already pinned its own challenge to listPrice for exactly
+		// this reason; the POST path had been left on the raw total.
+		x402Amount: x402Amount || listPrice,
 		resourcePath,
 		challenge,
 		// Discovery (initialize / tools/list / ping) is free for EVERY caller
@@ -481,6 +511,13 @@ async function handleA2mcp(req, res, cfg) {
 	});
 	if (!result) return;
 	const { auth, x402Ctx } = result;
+
+	// Past the paywall (paid, bearer, or a free row) with bytes we could not
+	// parse: answer the JSON-RPC parse error rather than dispatching an empty
+	// batch. Nothing is settled, because nothing ran.
+	if (bodyMalformed) {
+		return sendJsonRpcError(res, null, -32700, 'Parse error: body must be JSON-RPC 2.0');
+	}
 
 	const ipRl = await limits.mcpIp(clientIp(req));
 	if (!ipRl.success)
