@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Material preset contact sheet</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				background: #14161a;
+				color: #e8eaee;
+				font: 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+			}
+			#sheet {
+				display: grid;
+				grid-template-columns: repeat(5, 200px);
+				gap: 10px;
+				padding: 16px;
+			}
+			figure {
+				margin: 0;
+			}
+			canvas {
+				display: block;
+				width: 200px;
+				height: 200px;
+				border-radius: 8px;
+				background: #0b0d10;
+			}
+			figcaption {
+				padding-top: 6px;
+				font-size: 12px;
+				letter-spacing: 0.01em;
+				color: #b9bfc9;
+			}
+			h1 {
+				margin: 0;
+				padding: 16px 16px 0;
+				font-size: 15px;
+				font-weight: 600;
+			}
+		</style>
+	</head>
+	<body>
+		<h1 id="title">loading</h1>
+		<div id="sheet"></div>
+		<script type="module">
+			/*
+			 * Renders every @three-ws/viewer-presets material preset on the same
+			 * geometry under one shipped environment, using the SAME renderer
+			 * configuration src/viewer.js uses (NeutralToneMapping, exposure 0,
+			 * environmentIntensity 1.15, sRGB output) so a value tuned here is a
+			 * value the platform viewer actually produces. Driven by
+			 * scripts/material-preset-sheet.mjs; the environment is chosen with
+			 * ?env=<id> against src/environments.js.
+			 */
+			import {
+				WebGLRenderer,
+				Scene,
+				PerspectiveCamera,
+				SphereGeometry,
+				TorusKnotGeometry,
+				MeshPhysicalMaterial,
+				Mesh,
+				PMREMGenerator,
+				NeutralToneMapping,
+				SRGBColorSpace,
+				DirectionalLight,
+				AmbientLight,
+			} from 'three';
+			import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+			import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
+			import { MATERIAL_PRESETS, MATERIAL_PRESET_NAMES, applyMaterialPreset } from '@three-ws/viewer-presets';
+			import { environments } from '/src/environments.js';
+			import * as THREE from 'three';
+
+			const params = new URLSearchParams(location.search);
+			const envId = params.get('env') ?? 'neutral';
+			const shape = params.get('shape') === 'knot' ? 'knot' : 'sphere';
+			const env = environments.find((e) => e.id === envId);
+			if (!env) throw new Error(`unknown environment "${envId}"`);
+
+			const sheet = document.getElementById('sheet');
+			document.getElementById('title').textContent = `${env.name} — ${MATERIAL_PRESET_NAMES.length} presets`;
+
+			// One shared renderer, drawn once per preset and copied into that
+			// preset's own 2D canvas: 20 live WebGL contexts exceed the browser's
+			// per-page limit and start evicting each other mid-capture.
+			const SIZE = 400;
+			const renderer = new WebGLRenderer({ antialias: true, alpha: false });
+			renderer.setSize(SIZE, SIZE, false);
+			renderer.setPixelRatio(1);
+			renderer.toneMapping = NeutralToneMapping;
+			renderer.toneMappingExposure = Math.pow(2, 0);
+			renderer.outputColorSpace = SRGBColorSpace;
+
+			const pmrem = new PMREMGenerator(renderer);
+			pmrem.compileEquirectangularShader();
+
+			async function loadEnvMap() {
+				if (env.id === '') return null;
+				if (env.id === 'neutral') return pmrem.fromScene(new RoomEnvironment()).texture;
+				const texture = await new EXRLoader().loadAsync(env.path);
+				const map = pmrem.fromEquirectangular(texture).texture;
+				texture.dispose();
+				return map;
+			}
+
+			const envMap = await loadEnvMap();
+
+			const scene = new Scene();
+			scene.environment = envMap;
+			if ('environmentIntensity' in scene) scene.environmentIntensity = 1.15;
+
+			// The viewer's punctual rig, reduced to the key + ambient terms that
+			// matter on a single centered object. Without it the "None"
+			// environment renders pure black and proves nothing.
+			const key = new DirectionalLight(0xffffff, 0.8 * Math.PI);
+			key.position.set(1.4, 1.6, 1.2);
+			scene.add(key);
+			scene.add(new AmbientLight(0xffffff, 0.45));
+
+			const camera = new PerspectiveCamera(35, 1, 0.1, 100);
+			camera.position.set(0, 0, 4.2);
+			camera.lookAt(0, 0, 0);
+
+			const geometry =
+				shape === 'knot' ? new TorusKnotGeometry(0.75, 0.26, 220, 32) : new SphereGeometry(1.1, 96, 64);
+			const mesh = new Mesh(geometry, new MeshPhysicalMaterial({ color: 0xffffff }));
+			scene.add(mesh);
+
+			for (const name of MATERIAL_PRESET_NAMES) {
+				applyMaterialPreset(THREE, mesh, name);
+				renderer.render(scene, camera);
+
+				const figure = document.createElement('figure');
+				const out = document.createElement('canvas');
+				out.width = SIZE;
+				out.height = SIZE;
+				out.getContext('2d').drawImage(renderer.domElement, 0, 0);
+				const caption = document.createElement('figcaption');
+				const p = MATERIAL_PRESETS[name];
+				caption.textContent = `${p.label} — m ${p.metalness ?? 0}, r ${p.roughness ?? 0}`;
+				figure.append(out, caption);
+				sheet.append(figure);
+			}
+
+			document.body.dataset.ready = 'true';
+		</script>
+	</body>
+</html>
