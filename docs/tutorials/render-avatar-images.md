@@ -455,7 +455,8 @@ Sometimes an image is not enough and you want the actual interactive model. Load
 Two hosts, two answers (measured 2026-08-01):
 
 - **`https://three.ws/...`**, which is where the built-in library avatars live (`/avatars/selfie-girl.glb` and friends), answers every origin with `access-control-allow-origin: *`. Load these directly. No proxy needed.
-- **`https://pub-*.r2.dev/...`**, the media CDN behind every avatar you or your users generated, answers only origins on its allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`). From `https://your-site.com`, from Jupyter, or from a Vite server on `localhost:5173`, a direct load fails with a CORS error and an empty canvas. That is the URL `/api/avatar/render` redirects to and the URL the avatar APIs return for user avatars.
+- **`https://pub-*.r2.dev/...`**, the media bucket's own host, behind every avatar you or your users generated, answers only origins on its allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`; re-measured 2026-09-04). From `https://your-site.com`, from Jupyter, or from a Vite server on `localhost:5173`, a direct load fails with a CORS error and an empty canvas. That is the URL `/api/avatar/render` redirects to and the URL the avatar APIs return for user avatars.
+- **`https://three.ws/cdn/<key>`** serves those same bucket objects first-party, with `access-control-allow-origin: *` on every origin. If you have the object key (everything after the bucket host), this loads directly and needs nothing below.
 
 `GET /api/glb?src=<url>` exists for the second case. It streams any public GLB back with `access-control-allow-origin: *`, and it is harmless on the first, so if you cannot tell which host a URL points at, use it. The example below proxies a `three.ws` URL that would also load directly, because it is the pattern that keeps working when you swap in a generated avatar:
 

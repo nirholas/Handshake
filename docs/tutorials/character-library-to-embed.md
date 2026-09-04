@@ -313,7 +313,7 @@ Then use that URL in the element:
 
 Safe by construction: the upstream objects are already public and keyless, and the proxy fetch runs through an SSRF-hardened client (scheme allowlist, DNS pinning, private-address blocklist, redirect re-validation, 30 MB cap, 20 second timeout). It is a CORS shim, not an open proxy. The response is cached immutably, so the proxy costs one hop on a cold cache and nothing after.
 
-One exception worth knowing, so you do not reach for the proxy reflexively: this applies to the `pub-*.r2.dev` CDN host, which is where every manifest GLB lives. Files served from `three.ws` itself (`https://three.ws/avatars/cesium-man.glb` and the rest of the built-in set) already answer every origin with `access-control-allow-origin: *`, measured 2026-08-01. Those load directly, no proxy. Check the host in the URL, not the symptom.
+One exception worth knowing, so you do not reach for the proxy reflexively: this applies to the `pub-*.r2.dev` bucket host, which is where every manifest GLB lives. Files served from `three.ws` itself (`https://three.ws/avatars/cesium-man.glb` and the rest of the built-in set) already answer every origin with `access-control-allow-origin: *`, re-measured 2026-09-04. So does `https://three.ws/cdn/<key>`, which serves the very same bucket objects first-party. Those load directly, no proxy. Check the host in the URL, not the symptom.
 
 Use the proxied URL from the start and you never have a localhost-only success to unlearn. The same shim is what makes these GLBs loadable in a Jupyter or Colab notebook and on a dev server running on a non-standard port.
 

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-04",
+			"title": "Cross-origin 3D loads no longer break on a header your site never sent",
+			"summary": "Embedding a three.ws avatar on your own site loads the model straight from us, and the site answers every origin. One case still failed: if your loader attached any extra header (a trace id, an auth token, anything a browser does not treat as standard), the browser first asked us for permission and we answered with a 404 page, so the model never loaded. That request is now answered properly, and the answer echoes exactly the headers you asked about. Alongside it, the media docs now spell out the three ways to read a model file and which one to pick: files under three.ws load directly, generated assets load directly from three.ws/cdn, and the /api/glb proxy is there for a URL whose host you cannot identify.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/docs/media-api"
+		},
+		{
+			"date": "2026-09-04",
 			"title": "Knock somebody's door and get your money back if they never answer",
 			"summary": "Paying to reach a stranger has meant paying first and hoping. The money left your wallet the moment the payment cleared, and if the person never replied, that was that. Doors can now take escrowed knocks instead: your payment sits in a vault on Solana that the recipient cannot touch until they actually answer you. If they answer, they are paid. If they decline, you get everything back and are charged nothing, because reading something and passing on it is not a service. And if they simply never respond before the window they set, anyone at all can trigger the refund and every cent comes back to you, so it does not depend on you remembering to chase it. three.ws holds no key that can move that money, and neither does anyone else. Door owners can turn the lane on in their knock settings and choose how long they get to reply, from an hour to a month.",
 			"link": "/docs/knock",
@@ -26407,6 +26417,15 @@
 			"summary": "Buying agents that pay for a 3D generation on X Layer sign their payment with a wallet that carries an on-chain delegation, which is how every OKX agent wallet is built. Our checker judged those signatures with a contract call that answers a different question, so it turned away correct, fully funded payments and quoted the price a second time instead of doing the work. Payments are now checked the same way the stablecoin itself checks them, so a signed authorization that the network would honour is one we accept.",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"title": "When the payment wallets run thin, the money now reaches the right one first",
+			"summary": "three.ws pays its own on-chain fees from a funding wallet that tops up every engine below its floor. It ranked those engines purely by the size of their shortfall, so a top-up went to whichever wallet was missing the most, and the small wallet that pays the fee on every single payment could sit under its cutoff while the rail stayed shut. The payment wallets are now funded first, so a modest top-up restores settlement instead of a large one being required to reach it by accident. Two related repairs land with it: a wallet holding stablecoins but too little native currency to open the account a swap pays out into is now told exactly how much it is short, instead of retrying the same impossible conversion every half hour, and previewing the rebalancer with a dry run no longer executes real swaps.",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		}
 	]

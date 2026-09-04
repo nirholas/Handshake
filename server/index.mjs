@@ -417,6 +417,36 @@ app.use(async (req, res) => {
 		}
 	}
 
+	// CORS preflight for the static media routes. Those rules advertise
+	// `access-control-allow-methods: GET, HEAD, OPTIONS`, but the filesystem
+	// phase below only serves GET/HEAD, so an OPTIONS request fell through to
+	// the 404 and every cross-origin fetch carrying a non-safelisted header
+	// (a GLTFLoader with setRequestHeader, a fetch with an auth or tracing
+	// header) was blocked by the browser even though the GET itself is
+	// world-open. Answer the preflight from the headers the route already
+	// collected. /api/ paths are excluded: their handlers own their own CORS.
+	if (
+		req.method === 'OPTIONS' &&
+		!currentPath.startsWith('/api/') &&
+		collected['access-control-allow-methods']
+	) {
+		const requested = req.headers['access-control-request-headers'];
+		res
+			.status(204)
+			.set(collected)
+			.set({
+				'access-control-allow-headers': requested || '*',
+				'access-control-max-age': '86400',
+				// The route's own long cache-control belongs to the asset, not to
+				// this negotiation: a shared cache holding one preflight would
+				// answer it for a different requested-header set.
+				'cache-control': 'no-store',
+				vary: 'Origin, Access-Control-Request-Headers',
+			})
+			.end();
+		return;
+	}
+
 	// Functions phase: anything routed under /api/ is a serverless handler.
 	if (currentPath.startsWith('/api/')) {
 		// Vercel parity: a handler behind a dest rewrite sees the dest's query

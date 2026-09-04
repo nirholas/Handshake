@@ -23,6 +23,14 @@
 			<description>Buying agents that pay for a 3D generation on X Layer sign their payment with a wallet that carries an on-chain delegation, which is how every OKX agent wallet is built. Our checker judged those signatures with a contract call that answers a different question, so it turned away correct, fully funded payments and quoted the price a second time instead of doing the work. Payments are now checked the same way the stablecoin itself checks them, so a signed authorization that the network would honour is one we accept.</description>
 		</item>
 		<item>
+			<title>Cross-origin 3D loads no longer break on a header your site never sent</title>
+			<link>https://three.ws/docs/media-api</link>
+			<guid isPermaLink="false">2026-09-04:Cross-origin 3D loads no longer break on a header your site never sent</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Embedding a three.ws avatar on your own site loads the model straight from us, and the site answers every origin. One case still failed: if your loader attached any extra header (a trace id, an auth token, anything a browser does not treat as standard), the browser first asked us for permission and we answered with a 404 page, so the model never loaded. That request is now answered properly, and the answer echoes exactly the headers you asked about. Alongside it, the media docs now spell out the three ways to read a model file and which one to pick: files under three.ws load directly, generated assets load directly from three.ws/cdn, and the /api/glb proxy is there for a URL whose host you cannot identify.</description>
+		</item>
+		<item>
 			<title>Knock somebody's door and get your money back if they never answer</title>
 			<link>https://three.ws/docs/knock</link>
 			<guid isPermaLink="false">2026-09-04:Knock somebody's door and get your money back if they never answer</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The live demo pages loaded their own payment script across the network by full address, so on any address other than the main site (a preview, a local run, a copy published on a partner domain) the browser refused it and the paid demos never armed. Each page now loads the copy it ships with. The publish-once page IBM hosts got the opposite fix: every file it pulls now carries our full address, so its language switcher no longer looks for a file on the host's own domain and comes back empty.</description>
+		</item>
+		<item>
+			<title>When the payment wallets run thin, the money now reaches the right one first</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-04:When the payment wallets run thin, the money now reaches the right one first</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>three.ws pays its own on-chain fees from a funding wallet that tops up every engine below its floor. It ranked those engines purely by the size of their shortfall, so a top-up went to whichever wallet was missing the most, and the small wallet that pays the fee on every single payment could sit under its cutoff while the rail stayed shut. The payment wallets are now funded first, so a modest top-up restores settlement instead of a large one being required to reach it by accident. Two related repairs land with it: a wallet holding stablecoins but too little native currency to open the account a swap pays out into is now told exactly how much it is short, instead of retrying the same impossible conversion every half hour, and previewing the rebalancer with a dry run no longer executes real swaps.</description>
 		</item>
 		<item>
 			<title>Docs · Connect a home that is only on your network</title>

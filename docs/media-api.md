@@ -250,26 +250,36 @@ If `draco=1` comes back `500 transcode_failed` with `draco.createCompressedPrimi
 ### When you need it, and when you do not
 
 It depends entirely on which host serves the `.glb`, not on which origin you
-are loading from. Measured 2026-08-01:
+are loading from. Re-measured 2026-09-04, unchanged since 2026-08-01:
 
 | Source host | Cross-origin fetch | Use the proxy? |
 |---|---|---|
 | `https://three.ws/...` (built-in library avatars, `/avatars/*`, anything under the site) | `access-control-allow-origin: *` on every origin | No. Fetch it directly. |
-| `https://pub-*.r2.dev/...` (the media bucket: user-generated avatars, forge output, character-library GLBs, the target of `/api/avatar/render`'s `302`) | Header only for origins on the bucket allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`). Every other origin gets no header and the fetch dies. | Yes. |
+| `https://three.ws/cdn/<key>` (the same bucket objects, served first-party) | `access-control-allow-origin: *` on every origin | No. Fetch it directly, and prefer this over the proxy. |
+| `https://pub-*.r2.dev/...` (the media bucket's own host: user-generated avatars, forge output, character-library GLBs, the target of `/api/avatar/render`'s `302`) | Header only for origins on the bucket allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`). Every other origin gets a `200` with no `access-control-allow-origin`, so the browser discards the bytes. | Yes, or rewrite the URL to `/cdn/<key>`. |
 
 So a `<model-viewer>` embed on a partner site, a Jupyter/Colab notebook, a
 Codespaces preview, or a Vite dev server on `localhost:5173` can read
-`three.ws` URLs directly but needs the proxy for bucket URLs. If you cannot
-tell which one an API handed you, the proxy is always safe: passing it a
-`three.ws` URL costs one extra hop on a cold CDN cache and nothing after.
+`three.ws` URLs directly but needs the proxy for `pub-*.r2.dev` URLs.
+
+Two ways out of a bucket URL, and they are not equivalent:
+
+- **[`/cdn/<key>`](#how-bucket-objects-are-served-cdnkey)** is the cheaper one
+  when you have the object key (everything after the bucket host). Same bytes,
+  first-party, CORS-open, and CDN-cached for 30 days at the edge.
+- **`/api/glb?src=<url>`** is the one to reach for when all you have is a URL
+  someone handed you, including a URL on a host that is not ours at all. It is
+  always safe: passing it a `three.ws` URL costs one extra hop on a cold CDN
+  cache and nothing after.
 
 The bucket allowlist is the deliberate part for uploads (presigned `PUT`s stay
 origin-locked) and an accident for reads, which are meant to be world-open.
 `scripts/set-r2-cors.mjs` holds the corrected policy and
-`node scripts/set-r2-cors.mjs --probe` measures what is live; see
-[`scripts/README.md`](../scripts/README.md). Even once reads are world-open,
-this proxy stays the right answer for callers that want one URL shape and no
-dependency on a third-party host's headers.
+`node scripts/set-r2-cors.mjs --probe` measures what is live from any machine,
+with no bucket credentials; see [`scripts/README.md`](../scripts/README.md).
+Even once reads are world-open, both first-party paths stay the right answer for
+callers that want one URL shape and no dependency on a third-party host's
+headers.
 
 Safe by construction: upstream objects are already public and keyless, and
 the fetch runs through the SSRF-hardened fetcher (scheme allowlist, DNS

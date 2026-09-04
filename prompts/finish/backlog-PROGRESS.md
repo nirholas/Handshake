@@ -1396,3 +1396,183 @@ The one definition-of-done line not met to the letter: the two healthz reads are
 apart rather than an hour. Both are an order of magnitude under the threshold and the sensor
 itself scores the subsystem `ok`, so the line's intent holds; noted here rather than papered
 over. Retired the order file and dropped its row from the index in the same commit.
+
+## 2026-09-04: 07 bnb-testnet-deploys (re-verified again; still one human faucet claim, and nothing else)
+
+Measured, all against the current tree rather than carried forward from the 2026-09-02 entry:
+
+- `forge script script/DeployWorldMoves.s.sol:DeployWorldMoves --rpc-url https://data-seed-prebsc-1-s1.bnbchain.org:8545 --sender 0x1C49...3871`
+  simulates green: 566,068 gas at 0.1 gwei = 0.0000566068 BNB.
+- `forge script script/DeployGreenfieldVault.s.sol:DeployGreenfieldVault` against the same live
+  chain-97 RPC simulates green against the real testnet PermissionHub / CrossChain / ObjectHub:
+  1,711,362 gas = 0.0001711362 BNB. Both numbers are identical to the two previous re-reads.
+- `forge test`: 19/19 WorldMoves, 41/41 GreenfieldVault.
+- `cast balance 0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` is **0** on three independent
+  chain-97 lanes (`data-seed-prebsc-1-s1`, `bsc-testnet.drpc.org`,
+  `bsc-testnet-rpc.publicnode.com`), each confirmed to answer chainId 97 first.
+- `node scripts/bnb-testnet-deploy-prove.mjs` (preflight, signs nothing) renders the spend table
+  and stops on the unfunded deployer, as designed.
+- `curl -s 'https://three.ws/api/bnb/world-config?network=testnet'` returns
+  `address: null, deployed: false` to an anonymous caller. `WORLD_MOVES_ADDRESS_TESTNET` is
+  confirmed absent from the `three-ws-api` service env.
+
+Did:
+
+- Re-proved the whole `--broadcast` path end to end against a local `anvil --chain-id 97`,
+  running the real `scripts/bnb-testnet-deploy-prove.mjs --broadcast` (not a hand-assembled
+  sequence), so a funded run will not be the first execution of this code. Both contracts
+  deployed, then 1 `join`, 3 `move`, 1 `leave` mined through the real
+  `api/_lib/bnb/world-moves.js` sender, decoded live by `src/bnb/world-presence-reader.js`
+  (1 Joined, 3 Moved, 1 Left), `createGhostTracker` at 1 ghost before the leave and 0 after.
+  Local addresses deliberately not recorded: they are anvil-local.
+- Re-checked the faucet blocker from scratch across four claim paths instead of citing the
+  earlier finding. All four are human-gated: the official `testnet.bnbchain.org/faucet-smart`
+  serves its HTML page at the `/api/v1/faucet` path rather than a claim API; ghostchain.io and
+  faucet.zalalena.com both load Cloudflare Turnstile / hCaptcha; tokentool.bitbond.com needs a
+  wallet connect plus a completed third-party profile. No agent path exists.
+- Corrected one stale fact the index carried: `gcloud` is authenticated in this workspace again
+  (the 2026-09-01 snapshot recorded it dead), so the post-deploy `--update-env-vars` step needs
+  no further unblocking.
+- Updated `contracts/DEPLOYMENTS.md` with the 2026-09-04 re-verification in both the WorldMoves
+  and GreenfieldVault sections.
+
+Left, and it is the same single line it has been since 2026-07-08: **fund**
+`0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` **with tBNB** at
+https://www.bnbchain.org/en/testnet-faucet (the owner, because the faucet is captcha-gated).
+0.000227743 BNB covers both deploys; any faucet drip is far more than enough. After funding,
+one command finishes the order end to end:
+
+```
+node scripts/bnb-testnet-deploy-prove.mjs --broadcast
+```
+
+which deploys both contracts, proves the live sender / reader / ghost paths against what it just
+deployed, and prints the exact `--update-env-vars` line for `WORLD_MOVES_ADDRESS_TESTNET`.
+The work-order file stays on disk: this is a partial, not a close.
+
+## 2026-09-04: 05 R2 bucket CORS (re-measured, edge preflight fixed, still one credential short)
+
+Measured, all three surfaces, from raw `curl` as well as
+`node scripts/set-r2-cors.mjs --probe` (which exits 1 and needs no credentials):
+
+| Surface | Result |
+|---|---|
+| 1. Public bucket host `pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev`, GET from `https://example.org` | FAIL. `200`, no `access-control-allow-origin`. Allowlisted origins get their own origin echoed with `Vary: Origin`. `OPTIONS` on it is a bare `403`. |
+| 2. Presigned `PUT` preflight on `chatty-storage.<account>.r2.cloudflarestorage.com` | MIXED, identical to 2026-08-01. `204` for `three.ws`, `3d-agent.vercel.app`, a synthetic `*.vercel.app` subdomain, `localhost:3000`; `403` for `www.three.ws`, `*.app.github.dev`, `localhost:5173`, `example.org`. |
+| 3. Site edge `three.ws/avatars/cesium-man.glb` | PASS on GET/HEAD from any origin (`access-control-allow-origin: *`). Its advertised `OPTIONS` preflight answered `404`. |
+| Bonus, first-party `three.ws/cdn/<key>` | PASS from any origin. Same bucket bytes, CDN-cached, so it routes around row 1 for any caller holding the object key. |
+
+So the live bucket is still one allowlist rule serving both reads and writes.
+Item confirmed again, not closed.
+
+Did: fixed row 3's preflight in [server/index.mjs](../../server/index.mjs). The
+media routes in `vercel.json` advertise `access-control-allow-methods: GET, HEAD,
+OPTIONS`, but the filesystem phase serves GET/HEAD only, so `OPTIONS` fell
+through to the 404 page and any cross-origin fetch carrying a non-safelisted
+header was blocked even though the GET is world-open. Those routes now answer
+`204` from the headers the route already collected, echoing
+`access-control-request-headers` and `no-store` so a shared cache cannot hold one
+preflight for a different header set; `/api/` paths still reach their own
+handlers. Covered by `tests/server-media-cors-preflight.test.js` (5 tests).
+Refreshed the measured claims and dates in `docs/media-api.md`,
+`docs/character-library.md` and both embed tutorials, and added `/cdn/<key>` to
+the "which path do I use" guidance beside `/api/glb` (the proxy stays, and stays
+the right advice for a URL whose host you cannot identify). ISSUES.md item 9
+carries the 2026-09-04 table. Changelog entry added; `npm run audit:docs` clean.
+
+The two cleanups this order asked for were already done on 2026-08-01 and were
+verified still true rather than redone: `scripts/set-r2-cors.mjs` names
+`.env.local` and `scripts/read-service-env.mjs` and explicitly warns off
+`vercel env pull`, and the `/api/glb` docs already said which host needs it.
+
+Left: applying the bucket policy, and only that. Re-checked the credential
+situation from scratch on 2026-09-04, and it is worse than 2026-08-01, not
+better: this machine's `.env` holds three unrelated vars and `.env.local` holds
+only `DATABASE_URL`, the `three-ws-api` service carries no `R2_*` or
+`CLOUDFLARE_*` variable at all (`node scripts/read-service-env.mjs --names`), and
+the project's only matching Secret Manager entry is `s3-secret-access-key`, the
+object-scoped key. There is therefore no S3 admin path and no Cloudflare REST API
+path either. Owner: mint an "Admin Read & Write" R2 token scoped to
+`chatty-storage`, put it in `.env.local` as `R2_ACCESS_KEY_ID` /
+`R2_SECRET_ACCESS_KEY`, run `node scripts/set-r2-cors.mjs`, confirm with
+`--probe` (it should print "Live policy matches POLICY in this script").
+
+One alternative the owner may prefer, noted and deliberately NOT taken here:
+`S3_PUBLIC_DOMAIN` on the Cloud Run service is the `pub-*.r2.dev` host, and
+`publicUrl()` in [api/_lib/r2.js](../../api/_lib/r2.js) builds every public media
+URL from it. Pointing it at `https://three.ws/cdn` would make every emitted URL
+first-party and world-readable in one config change, with no R2 token. It is not
+free: it re-points every media URL the platform hands out, and
+`keyFromPublicUrl()` would stop resolving the r2.dev URLs already stored in
+columns like `preview_image_url`, so deletion paths would need a migration or a
+dual-prefix match first. That is an architecture decision, not a CORS fix, so it
+is the owner's call.
+
+## 2026-09-04: 01 x402 settle runway
+Measured, all of it live:
+- `curl -s https://three.ws/api/version` → `c2148462e`, revision `three-ws-api-00412-s7l`,
+  built 2026-09-03 19:16 UTC. 25 commits behind `main`.
+- `curl -s https://three.ws/api/healthz` → **HTTP 500**, so the DoD's settle-rate line
+  cannot be read at all right now. Cause, from
+  `gcloud logging read '... "healthz"' --freshness=1h`:
+  `Cannot find module '/app/services/home-relay/src/token.js' imported from
+  /app/api/_lib/home/relay.js` on every request. Already fixed in the tree by
+  `d668ceece` (.gcloudignore never re-included `services/`); that commit is NOT in the
+  running revision, so healthz recovers on the next deploy. Not this order's bug, but it
+  gates this order's verification.
+- `curl -s https://three.ws/api/x402/runway-lab` → sponsor `Wwwu…T3WwW` 0.001508 SOL,
+  spendable 0; ring payer `X4o2…stML` 0.001253 SOL; **982 of 1003 paid attempts in 24 h
+  refused, every one of them `cause: floor`, example
+  `fee_wallet_below_floor:1253408<2000000`**. That lamport figure is the RING PAYER's,
+  not the sponsor's: the ring runs self-pay, so `decoded.feePayer` is the payer and it is
+  the payer's floor that is shutting the rail. `fee_runway_exhausted` no longer appears in
+  the 24 h refusal book at all.
+- `POST /api/cron/treasury-topup?dry=1` → `master_deficit_sol` 0.308492 (non-zero, so
+  lever 1 is doing its job), `spendable_sol` 0, `plan: []`, `reclaim.reclaimedSol` 0,
+  `agent_reclaim`: 110 wallets `at_or_below_floor`, 2 `failed` at stage `recover`
+  (Atlas #22 0.0684 SOL, Echo #22 0.0545 SOL, both `secret_undecryptable`, the retired
+  key from `docs/ops/wallet-key-migration.md`). Nothing reclaimable exists.
+- Secret Manager has exactly one version of `wallet-encryption-key` (created 2026-09-02)
+  and no `WALLET_ENCRYPTION_KEY_PREVIOUS` on the service, so the 0.49 SOL sealed under the
+  retired key stays sealed. Re-confirmed rather than re-litigated.
+
+Found and fixed three defects that decide whether owner capital actually restores the rail:
+
+1. **A thin top-up funded the wrong wallet.** `planTopUps` ordered targets by absolute
+   deficit only. Production's two targets are the relayer/treasury bundle (deficit 0.983
+   SOL) and the ring payer (deficit 0.179 SOL), so simulating the real planner against the
+   real balances shows an owner sending 0.1, 0.2 or 0.5 SOL putting **all** of it in the
+   bundle and leaving the payer at 0.001253 SOL, still under its 0.002 hard floor: the
+   settle rate would not have moved until roughly 1 SOL landed. The x402 sponsor and payer
+   specs now carry `settleCritical: true` (`api/_lib/solana-signers.js`), `treasury-topup`
+   merges the flag across specs sharing a pubkey, and `planTopUps` funds settle-critical
+   wallets first. Same simulation after the change: 0.1 SOL goes to the payer and clears
+   its floor.
+2. **`?dry=1` on `economy-rebalance` executed live swaps.** Its only non-signing path was
+   being disarmed, and production is armed, so previewing it here built, signed and
+   submitted a real swap (it died in simulation, so nothing moved and no signature
+   landed). It now honors `?dry=1` the way `treasury-topup` always has.
+3. **The rebalancer re-planned a swap that cannot execute, every 30 minutes.** The ring
+   payer holds 4.18 USDC and 1,253,408 lamports; a `usdc->sol` swap must fund the
+   1,855,569-lamport rent for the wSOL account it creates (verified on chain: the payer
+   has no wSOL account, `getMinimumBalanceForRentExemption(165)` = 1,855,569), so every
+   run died inside the ATA `CreateIdempotent` with system error `0x1` under a truncated
+   `failed`. `planRebalance` now skips with `below_swap_rent:1253408<1870569`, waived when
+   a wSOL account already exists. This is why the payer cannot self-rescue from its own
+   USDC float: it is ~0.0006 SOL short of being able to spend the 4.18 USDC it holds.
+
+Did: the three fixes above plus five tests (`tests/economy-master.test.js`,
+`tests/economy-rebalance.test.js`), the skip-reason split
+(`master_insufficient_spendable` vs `run_cap_reached`, which had made an empty master read
+as a cap to raise), `docs/economy-master.md` (guard table, skip-reason table, dry-run
+section, invariant 4), and a `data/changelog.json` entry. `npm run gate` green.
+
+Left, and all of it is the owner's:
+- **Capital.** Send SOL to the economy master `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`
+  and nowhere else. 0.1 SOL now reaches the ring payer first and restarts settlement;
+  2 SOL clears the fleet's 1.47 SOL deficit with real runway. Stop-and-ask gate 1.
+- **The deploy.** All three fixes, and the healthz 500 fix `d668ceece`, are in the tree and
+  absent from revision 00412. Until it ships, funding the master still hits the old
+  ordering.
+- DoD lines 1 to 3 stay open behind those two. Lines 4 to 6 (recurrence guard + test,
+  changelog, this log) are done. The prompt file stays on disk.
