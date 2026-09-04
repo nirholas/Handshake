@@ -19,7 +19,11 @@
 // as /api/leaderboard/unified) and resets naturally at UTC midnight.
 //
 // Also returns yesterday's winner (same aggregate, previous UTC day) and a
-// short live feed of today's most recent actions for the ticker.
+// short live feed of today's most recent output for the ticker. The feed
+// unions the SAME four sources the board scores (actions, launches, sniper
+// and pump trades, confirmed skill sales), so a board with ranked agents can
+// never sit next to an empty ticker: reading only agent_actions used to leave
+// an agent that shipped a launch, a trade or a sale ranked but invisible.
 //
 // Format adopted from Bowyer's Arena (bowyer.app/arena): they run this daily
 // output-match format on top of three.ws avatars; adopted here with credit.
@@ -141,13 +145,37 @@ export default wrap(async (req, res) => {
 		standingsRows(0, limit),
 		standingsRows(1, 1),
 		sql`
-			select a.type, a.source_skill, a.created_at, i.id as agent_id, i.name
-			from agent_actions a
-			join agent_identities i on i.id = a.agent_id
-			where a.created_at >= date_trunc('day', now() at time zone 'utc')
-			  and i.deleted_at is null and i.is_public = true
+			with bounds as (
+				select date_trunc('day', now() at time zone 'utc') as day_start
+			),
+			events as (
+				select a.agent_id, a.type, a.source_skill, a.created_at
+				from agent_actions a, bounds b
+				where a.created_at >= b.day_start
+				union all
+				select m.agent_id, 'launch', m.symbol, m.created_at
+				from pump_agent_mints m, bounds b
+				where m.created_at >= b.day_start
+				union all
+				select p.agent_id, 'trade', p.symbol, p.closed_at
+				from agent_sniper_positions p, bounds b
+				where p.closed_at is not null and p.closed_at >= b.day_start
+				union all
+				select m.agent_id, t.direction, m.symbol, t.created_at
+				from pump_agent_trades t
+				join pump_agent_mints m on m.id = t.mint_id, bounds b
+				where t.created_at >= b.day_start
+				union all
+				select s.agent_id, 'sale', s.skill, s.confirmed_at
+				from skill_purchases s, bounds b
+				where s.status = 'confirmed' and s.confirmed_at >= b.day_start
+			)
+			select e.type, e.source_skill, e.created_at, i.id as agent_id, i.name
+			from events e
+			join agent_identities i on i.id = e.agent_id
+			where i.deleted_at is null and i.is_public = true
 			  and not (i.name = any(${PLACEHOLDER_NAMES}))
-			order by a.created_at desc
+			order by e.created_at desc
 			limit 12
 		`,
 	]);
