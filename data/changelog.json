@@ -3,8 +3,8 @@
 	"entries": [
 		{
 			"date": "2026-09-04",
-			"title": "We can now measure exactly which surface detail a generated model is missing",
-			"summary": "A 3D model can have perfect shape and still look like plastic, because the colour picture painted onto it is only half of what makes a surface look real. The other half is the invisible detail: which parts are bumpy, which are shiny, which sit in shadow. Without it, leather, wool and glass all catch the light in exactly the same flat way. There was no way to check which of those layers a given model actually carried, so we built one, and pointed it at real generations coming out of the live engines. It found that our fastest engine ships colour and nothing else, and that both engines currently label every surface as \"fully metal\", which is why some objects read as if they were cast in dull metal rather than made of what you asked for. The measurement now lives in our worker documentation so the gap is tracked rather than guessed at, and the tool refuses to pass a model that is missing a layer it should have, so this cannot quietly come back.",
+			"title": "Generated models are checked for the invisible surface detail that makes them look real",
+			"summary": "A 3D model can have perfect shape and still look like plastic, because the colour picture painted onto it is only half of what makes a surface look real. The other half is invisible detail: which parts are bumpy, which are shiny, which sit in shadow. Without it, leather, wool and glass all catch the light in exactly the same flat way, and an object can read as though it were cast in dull metal rather than made of what you asked for. There was no way to check which of those layers a model actually carried, so we built one and pointed it at real generations from the live engines, then wrote down what each engine does and does not produce. That measurement is now published alongside the texturing service instead of being guessed at, and the checker refuses to pass a model missing a layer it should have, so the gap cannot quietly reopen.",
 			"tags": [
 				"docs",
 				"improvement"
