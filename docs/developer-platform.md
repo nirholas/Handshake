@@ -258,6 +258,78 @@ Event types:
 - `agent.created`
 - `agent.updated`
 - `agent.deleted`
+- `forge.completed`
+- `forge.failed`
+
+### Generation job events
+
+A forge generation is asynchronous and outlives the request that started it: you
+submit to `POST /api/forge`, get a `job_id` back, and the platform finishes the
+job even if the caller disconnects (see
+[forge-background-generation.md](./forge-background-generation.md)). Without a
+push, the only way to learn the outcome is to keep polling
+`GET /api/forge?job=<job_id>`. These two events replace that poll loop.
+
+They are scoped to your account, so they fire for generations made while signed
+in (a session cookie or a bearer token on the submit). Anonymous browser
+generations have no account to deliver to.
+
+`forge.completed` fires from the single completion writer every generation lane
+flows through, which makes it exactly-once per job and independent of how the
+job finished: the free lane, a paid x402 call, or the unattended finalizer that
+picks up an abandoned job all deliver the same event.
+
+```json
+{
+  "id": "3f2b9c40-1a77-4d2e-9c31-8a0e5b7d41aa",
+  "status": "done",
+  "prompt": "a small wooden toy boat with a striped sail",
+  "glb_url": "https://three.ws/cdn/forge/<client>/<id>.glb",
+  "preview_image_url": "https://three.ws/cdn/forge/<client>/<id>.webp",
+  "backend": "trellis_selfhost",
+  "tier": "draft",
+  "path": "image",
+  "size_bytes": 1638400,
+  "latency_ms": 150000
+}
+```
+
+`forge.failed` fires only when a job is genuinely dead. A generation that fails
+on one lane and is automatically redispatched to another is **not** reported
+here: the platform is still working on it, and you get `forge.completed` if the
+retry lands. That is why a failure event can arrive several minutes after the
+lane error itself.
+
+```json
+{
+  "id": "3f2b9c40-1a77-4d2e-9c31-8a0e5b7d41aa",
+  "status": "failed",
+  "prompt": "a small wooden toy boat with a striped sail",
+  "error": "generation timed out after 45 minutes",
+  "backend": "trellis_selfhost",
+  "tier": "draft"
+}
+```
+
+Subscribe to just these two and submit a job:
+
+```bash
+# 1. register the receiver
+curl -s https://three.ws/api/developer/webhooks \
+  -b "__Host-sid=$SID" -H "x-csrf-token: $CSRF" \
+  -H 'content-type: application/json' \
+  -d '{"url":"https://example.com/hooks/forge","events":["forge.completed","forge.failed"],"description":"generation results"}'
+
+# 2. submit a generation; the response returns immediately with a job_id
+curl -s https://three.ws/api/forge \
+  -b "__Host-sid=$SID" \
+  -H 'content-type: application/json' \
+  -d '{"prompt":"a small wooden toy boat with a striped sail","tier":"draft"}'
+```
+
+Verify the signature exactly as for every other event (see
+[Delivery format and signature verification](#delivery-format-and-signature-verification));
+the `forge.*` payloads carry no separate signing scheme.
 
 ### GET /api/developer/webhooks
 
@@ -284,7 +356,7 @@ Response, `200`:
       "stats_7d": { "total": 24, "succeeded": 23, "failed": 1, "last_delivery_at": "2026-07-29T20:00:00.000Z" }
     }
   ],
-  "event_types": ["avatar.created", "avatar.updated", "avatar.deleted", "avatar.appearance.changed", "agent.created", "agent.updated", "agent.deleted"]
+  "event_types": ["avatar.created", "avatar.updated", "avatar.deleted", "avatar.appearance.changed", "agent.created", "agent.updated", "agent.deleted", "forge.completed", "forge.failed"]
 }
 ```
 

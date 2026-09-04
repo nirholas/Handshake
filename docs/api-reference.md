@@ -1350,6 +1350,12 @@ silently.
 
 Poll with `GET /api/forge?job=<job>` — it returns `{ status: "queued" | "done" | "failed", glb_url? }`.
 
+Signed-in callers can skip the poll loop entirely: register a webhook for
+`forge.completed` and `forge.failed` and the platform POSTs you the finished
+job. Payloads, delivery semantics and a runnable subscribe-then-submit example
+are in
+[docs/developer-platform.md](./developer-platform.md#generation-job-events).
+
 A generation that fails mid-flight on one engine is automatically re-dispatched
 to the next configured free lane (up to 3 backups); the poll keeps reporting
 `status: "running"` with the new `backend` plus a `failover_from` field, so the
