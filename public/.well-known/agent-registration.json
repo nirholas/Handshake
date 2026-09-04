@@ -870,6 +870,28 @@
 			],
 			"scheme": "exact",
 			"priceUsdc": "0.002"
+		},
+		{
+			"url": "https://three.ws/api/x402/print-order",
+			"method": "POST",
+			"description": "Physical Manufacturing - pay in USDC to have a 3D model printed in resin, nylon or full-color sandstone and shipped to a street address.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "12"
+		},
+		{
+			"url": "https://three.ws/api/x402/knock",
+			"method": "POST",
+			"description": "Agent-to-human contact - pay a person's own asking price to get exactly one message through to them, delivered out loud by their 3D companion.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.05"
 		}
 	],
 	"registrations": [],
