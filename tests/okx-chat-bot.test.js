@@ -15,7 +15,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, it, expect, vi } from 'vitest';
-import { classify, loginInstructions } from '../workers/okx-chat-bot/session.js';
+import { classify, loginInstructions, providerInstructions } from '../workers/okx-chat-bot/session.js';
+import { classifyProbeStatus, loginCodex } from '../workers/okx-chat-bot/provider.js';
 import { resolveProvider, resolveHost, loadConfig, paths } from '../workers/okx-chat-bot/config.js';
 import { createHealthHandler } from '../workers/okx-chat-bot/health-server.js';
 import { createSupervisor } from '../workers/okx-chat-bot/supervisor.js';
@@ -134,6 +135,26 @@ describe('okx-chat-bot provider selection', () => {
 		rmSync(home, { recursive: true, force: true });
 	});
 
+	// Vertex authenticates with the runtime service account, so there is no key to
+	// mint, rotate or forget, and the spend lands on the GCP credit pool. It has to
+	// win over a key, or the deploy quietly goes on depending on a secret again.
+	it('prefers Vertex over every API key, and names the transport', () => {
+		const r = resolveProvider(
+			{ CLAUDE_CODE_USE_VERTEX: '1', ANTHROPIC_VERTEX_PROJECT_ID: 'aerial-vehicle-466722-p5', ANTHROPIC_API_KEY: 'sk-ant-x' },
+			bare,
+		);
+		expect(r).toMatchObject({ provider: 'claude', transport: 'vertex', credentialed: true });
+	});
+
+	// Half a Vertex config is not a credential: the flag with no project is how a
+	// half-finished env edit would otherwise read as credentialed and boot green.
+	it('does not call a half-configured Vertex setup a credential', () => {
+		expect(resolveProvider({ CLAUDE_CODE_USE_VERTEX: '1' }, bare)).toMatchObject({
+			transport: 'none',
+			credentialed: false,
+		});
+	});
+
 	it('honours an explicit pin and still tells the truth about its credential', () => {
 		expect(resolveProvider({ OKX_BOT_AI_PROVIDER: 'codex', OPENAI_API_KEY: 'k' }, bare)).toMatchObject({
 			provider: 'codex',
@@ -143,6 +164,71 @@ describe('okx-chat-bot provider selection', () => {
 			provider: 'claude',
 			credentialed: false,
 		});
+	});
+});
+
+// A configured credential is not a working one, and the gap is not academic:
+// measured 2026-09-04, this project's Vertex access answers "Lightning dunning
+// decision is deny" and its openai-api-key secret answers billing_not_active.
+// Both are present, well-formed, and refuse to serve. A presence check calls
+// that green and the buyer hears nothing back.
+describe('okx-chat-bot provider credential probe', () => {
+	it('calls an outright refusal what it is', () => {
+		expect(classifyProbeStatus(401, '{"error":{"message":"invalid x-api-key"}}').code).toBe('unauthorized');
+		expect(classifyProbeStatus(403, 'Lightning dunning decision is deny for project').code).toBe('unauthorized');
+	});
+
+	// The two 429s mean opposite things. A rate limit clears on its own; an
+	// account that cannot bill never does, and only the second is worth a page.
+	it('separates a rate limit from an account that cannot bill', () => {
+		expect(classifyProbeStatus(429, 'Rate limit reached for requests').code).toBe('unreachable');
+		expect(
+			classifyProbeStatus(429, '{"error":{"code":"billing_not_active","message":"Your account is not active"}}').code,
+		).toBe('unauthorized');
+	});
+
+	// The provider had to authenticate the caller before it could object to the
+	// body, so a quibble about the request is proof the credential was accepted.
+	it('reads a complaint about the probe request as proof the credential works', () => {
+		expect(classifyProbeStatus(404, 'model not found').code).toBe('ok');
+		expect(classifyProbeStatus(400, 'max_tokens must be >= 1').code).toBe('ok');
+		expect(classifyProbeStatus(200, '{}').code).toBe('ok');
+	});
+
+	// A provider outage is real, transient, and nothing a human can fix at 3am.
+	// Paging for it is how pages stop being read.
+	it('does not blame the credential for a provider outage', () => {
+		expect(classifyProbeStatus(503, 'upstream unavailable').code).toBe('unreachable');
+		expect(classify({ ...ONLINE, providerProbe: { code: 'unreachable', detail: 'x' } }).ready).toBe(true);
+	});
+
+	it('refuses readiness when the provider refuses the credential', () => {
+		const v = classify({ ...ONLINE, providerProbe: { code: 'unauthorized', detail: 'billing_not_active' } });
+		expect(v).toMatchObject({ ready: false, reason: 'ai_provider_unauthorized', status: 'degraded' });
+		expect(v.detail).toContain('billing_not_active');
+	});
+
+	// A host that has not probed yet must not read red for it.
+	it('stays online while the first probe has not answered', () => {
+		expect(classify({ ...ONLINE, providerProbe: null }).reason).toBe('online');
+	});
+
+	it('names all three ways out, Vertex first, in the remedy', () => {
+		const lines = providerInstructions('billing_not_active').join('\n');
+		expect(lines).toContain('CLAUDE_CODE_USE_VERTEX=1');
+		expect(lines).toContain('anthropic-api-key');
+		expect(lines).toContain('OKX_BOT_AI_PROVIDER=codex');
+		expect(lines).toContain('billing_not_active');
+	});
+
+	// Codex >= 0.153 reads ~/.codex/auth.json and ignores OPENAI_API_KEY, so the
+	// login has to run at boot. It must stay a no-op for every other provider.
+	it('leaves a non-codex provider alone', async () => {
+		await expect(loginCodex({ provider: 'claude', home: '/state' }, {})).resolves.toMatchObject({ ran: false, ok: true });
+	});
+
+	it('refuses to claim codex is logged in with no key to log in with', async () => {
+		await expect(loginCodex({ provider: 'codex', home: '/state' }, {})).resolves.toMatchObject({ ran: false, ok: false });
 	});
 });
 
@@ -281,6 +367,7 @@ describe('okx-chat-bot health surface (smoke)', () => {
 
 	const liveRecord = (probe, login = null) => ({
 		verdict: classify(probe),
+		providerProbe: probe.providerProbe ?? null,
 		checkedAt: Date.now(),
 		daemon: probe.daemon,
 		wallet: probe.wallet,
@@ -320,6 +407,20 @@ describe('okx-chat-bot health surface (smoke)', () => {
 		expect(r.status).toBe(200);
 		expect(r.body.ok).toBe(true);
 		expect(r.body.health.ready).toBe(false);
+	});
+
+	// The other failure only a human can clear. Chat is delivered and every reply
+	// dies on a 401, which from outside looks exactly like an idle listing.
+	it('answers /readyz 503 and carries the fix when the provider refuses the key', async () => {
+		const live = liveRecord({
+			...ONLINE,
+			providerProbe: { code: 'unauthorized', detail: 'Your account is not active', checkedAt: Date.now() },
+		});
+		const r = await get(live, '/readyz');
+		expect(r.status).toBe(503);
+		expect(r.body.health.reason).toBe('ai_provider_unauthorized');
+		expect(r.body.provider.verdict).toBe('unauthorized');
+		expect(r.body.remedy.join('\n')).toContain('CLAUDE_CODE_USE_VERTEX=1');
 	});
 
 	it('omits the remedy when no human is needed', async () => {
