@@ -37,13 +37,16 @@ const HOSTS = {
 };
 
 // The free chain in providerChain() order, with the env each rung needs. Groq
-// appears twice on purpose: the 70B lane leads, and the instant lane is the
-// last free rung (a separate per-model quota), so reaching it means every rung
-// between them was tried and skipped.
+// appears THREE times on purpose: Groq meters tokens per model id, so each id is
+// an independent 8k-tokens/minute bucket. The 27B lane leads, the 120B lane sits
+// right behind it to widen the burst Groq absorbs, and the 20B instant lane is
+// the last free rung, so reaching it means every rung between was tried and
+// skipped.
 const FREE_CHAIN = [
 	{ provider: 'groq', host: HOSTS.groq, model: 'qwen/qwen3.8-27b' },
+	{ provider: 'groq#120b', host: HOSTS.groq, model: 'openai/gpt-oss-120b' },
 	{ provider: 'cerebras', host: HOSTS.cerebras, model: 'llama-3.3-70b' },
-	{ provider: 'openrouter', host: HOSTS.openrouter, model: 'openai/gpt-oss-20b:free' },
+	{ provider: 'openrouter', host: HOSTS.openrouter, model: 'google/gemma-4-31b-it:free' },
 	{ provider: 'nvidia', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-super-120b-a12b' },
 	{ provider: 'sambanova', host: HOSTS.sambanova, model: 'Meta-Llama-3.3-70B-Instruct' },
 	{ provider: 'mistral', host: HOSTS.mistral, model: 'mistral-small-latest' },
