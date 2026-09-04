@@ -38,7 +38,7 @@ const TOKEN_HEXES = [
 	{ hex: '#f87171', token: '--danger' },
 	{ hex: '#fbbf24', token: '--warn' },
 	// QB-07: the base palette. Each of these is a light-theme bug, not just a
-	// style nit — a hardcoded #0a0a0a panel or #e8e8e8 label keeps its dark
+	// style nit: a hardcoded #0a0a0a panel or #e8e8e8 label keeps its dark
 	// value when [data-theme='light'] remaps the token, so the surface renders
 	// dark-on-dark (or light-on-light) for anyone using the light theme.
 	{ hex: '#0a0a0a', token: '--bg-0' },
@@ -54,7 +54,7 @@ const LOCAL_DEF = (css, token) => new RegExp(`${token}\\s*:`).test(css);
 
 const STYLE_BLOCK = /<style[^>]*>([\s\S]*?)<\/style>/gi;
 
-/** A hex inside a `var(--token, #hex)` fallback is not drift — the var resolves
+/** A hex inside a `var(--token, #hex)` fallback is not drift: the var resolves
  * first and flips with the theme; the literal only shows if the sheet is missing.
  * Comments are prose. Strip both before counting so the ratchet measures only
  * literals that actually paint. Loops because fallbacks nest. */

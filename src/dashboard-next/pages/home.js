@@ -904,7 +904,7 @@ function reconcileGuide({ avatars = [], agents = [], widgets = [] }) {
 	} catch (_) {}
 }
 
-/** ['a','b','c'] -> "a, b and c" — used in the "could not be loaded" copy. */
+/** ['a','b','c'] -> "a, b and c", used in the "could not be loaded" copy. */
 function joinList(items) {
 	if (items.length <= 1) return items[0] || '';
 	return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
