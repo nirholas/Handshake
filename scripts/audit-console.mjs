@@ -29,6 +29,19 @@
  * dev server proxies /api/* to https://three.ws, so API calls hit real
  * endpoints — auth/payment-gated 4xx are classified "expected", never failures.
  *
+ * That proxy also means an API finding measures PRODUCTION, not this working
+ * tree: when production runs behind main, a handler that exists here answers 404
+ * or 500 there and the page above it reads as broken code. To tell the two apart,
+ * run the repo's own server and point the dev proxy at it:
+ *
+ *   node --env-file-if-exists=.env --env-file-if-exists=.env.local server/index.mjs &
+ *   DEV_API_PROXY=http://localhost:8080 npx vite --port 3211 --strictPort &
+ *   AUDIT_BASE=http://localhost:3211 npm run audit:console
+ *
+ * A finding that clears under that run is deploy lag, not a defect. The reverse
+ * also holds: endpoints whose credentials live only on the deployed service
+ * answer `not_configured` locally, so judge those against the proxied default.
+ *
  * Which API the pages talk to decides what a finding MEANS, so pick it on
  * purpose:
  *

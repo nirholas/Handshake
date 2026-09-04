@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T01:36:21.284Z",
+	"generated_at": "2026-09-04T01:47:50.604Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -15,6 +15,16 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The IBM partnership demos arm wherever the page is opened",
+			"summary": "The live demo pages loaded their own payment script across the network by full address, so on any address other than the main site (a preview, a local run, a copy published on a partner domain) the browser refused it and the paid demos never armed. Each page now loads the copy it ships with. The publish-once page IBM hosts got the opposite fix: every file it pulls now carries our full address, so its language switcher no longer looks for a file on the host's own domain and comes back empty.",
+			"link": "/ibm/hello",
+			"tags": [
+				"fix"
 			]
 		},
 		{
