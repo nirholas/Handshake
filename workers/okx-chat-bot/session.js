@@ -23,6 +23,32 @@ export function loginInstructions(loginUrl, authSessionId) {
 }
 
 /**
+ * The exact commands that put a working AI credential on the service.
+ *
+ * A refused credential is the other failure only a human can clear, so it gets
+ * the same treatment as an expired session: the fix travels with the status
+ * rather than living in a runbook someone has to find. Vertex leads because it
+ * is the only option with no secret to mint, rotate or forget, and it bills the
+ * GCP credit pool the platform already prefers.
+ */
+export function providerInstructions(detail = '') {
+	return [
+		`The provider refused this host's credential: ${detail}`,
+		'',
+		'1. Preferred (no secret): clear the project billing hold, then',
+		'   gcloud run services update okx-chat-bot --region us-central1 \\',
+		"     --update-env-vars=CLAUDE_CODE_USE_VERTEX=1,ANTHROPIC_VERTEX_PROJECT_ID=aerial-vehicle-466722-p5,CLOUD_ML_REGION=global",
+		'2. Or mint an Anthropic key and put it on the service through Secret Manager:',
+		"   printf '%s' \"$ANTHROPIC_API_KEY\" | gcloud secrets create anthropic-api-key --data-file=-",
+		'   then add ANTHROPIC_API_KEY=anthropic-api-key:latest to --set-secrets in',
+		'   workers/okx-chat-bot/cloudbuild.yaml and redeploy (a hand-patched secret is',
+		'   stripped by the next deploy).',
+		'3. Or reactivate billing on the OpenAI account behind the openai-api-key secret',
+		'   and pin OKX_BOT_AI_PROVIDER=codex.',
+	];
+}
+
+/**
  * Roll the three raw probes into one verdict. Pure, so the state machine is
  * testable without a daemon, a wallet, or a network.
  *
@@ -31,10 +57,11 @@ export function loginInstructions(loginUrl, authSessionId) {
  * @param {{ loggedIn: boolean, email?: string }|null} probe.wallet  null = CLI failed
  * @param {{ agentCount: number, activeClients: number }} probe.agents
  * @param {boolean} probe.providerCredentialed
+ * @param {{ code: string, detail: string }} [probe.providerProbe] what the provider's own API answered
  * @returns {{ status: 'ok'|'degraded'|'down'|'unknown', ready: boolean, reason: string, detail: string,
  *   needsHumanLogin: boolean }}
  */
-export function classify({ daemon, wallet, agents, providerCredentialed }) {
+export function classify({ daemon, wallet, agents, providerCredentialed, providerProbe }) {
 	const daemonRunning = typeof daemon === 'string' && daemon.startsWith('running');
 
 	if (!daemonRunning) {
@@ -88,7 +115,24 @@ export function classify({ daemon, wallet, agents, providerCredentialed }) {
 			reason: 'ai_provider_uncredentialed',
 			detail:
 				'chat is delivered but no AI-provider credential is configured, so the spawned subsession cannot ' +
-				'author a reply. Set ANTHROPIC_API_KEY (preferred) or OPENAI_API_KEY on the service.',
+				'author a reply. Set CLAUDE_CODE_USE_VERTEX=1 (preferred: no key to rotate), ANTHROPIC_API_KEY, ' +
+				'or OPENAI_API_KEY on the service.',
+			needsHumanLogin: false,
+		};
+	}
+
+	// A configured credential is not a working one. A key the provider refuses
+	// looks identical from inside this process to a key that works, right up until
+	// a buyer's message arrives and the subsession cannot author a reply, which is
+	// the silent failure the whole worker exists to make loud.
+	if (providerProbe?.code === 'unauthorized') {
+		return {
+			status: 'degraded',
+			ready: false,
+			reason: 'ai_provider_unauthorized',
+			detail:
+				`chat is delivered but the AI provider refuses this host's credential, so no reply can be authored: ` +
+				`${providerProbe.detail}`,
 			needsHumanLogin: false,
 		};
 	}

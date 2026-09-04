@@ -17,7 +17,7 @@
 // testable over real HTTP without a daemon, a wallet, or a network.
 
 import http from 'node:http';
-import { loginInstructions } from './session.js';
+import { loginInstructions, providerInstructions } from './session.js';
 import { log } from './log.js';
 
 /**
@@ -34,7 +34,17 @@ export function statusBody(cfg, live, daemonStats, bootAt) {
 		agentId: cfg.agentId,
 		bootAt,
 		host: { label: cfg.host, durable: cfg.hostDurable },
-		provider: { name: cfg.provider, credentialed: cfg.providerCredentialed, reason: cfg.providerReason },
+		provider: {
+			name: cfg.provider,
+			transport: cfg.providerTransport,
+			credentialed: cfg.providerCredentialed,
+			reason: cfg.providerReason,
+			// What the provider itself last answered, as opposed to what this host
+			// merely has configured. null until the first probe returns.
+			verdict: live.providerProbe?.code ?? null,
+			verdictDetail: live.providerProbe?.detail ?? null,
+			verdictAt: live.providerProbe?.checkedAt ?? null,
+		},
 		daemon: { status: live.daemon, ...daemonStats },
 		session: live.wallet ? { loggedIn: live.wallet.loggedIn, email: live.wallet.email } : null,
 		agents: live.agents,
@@ -44,6 +54,7 @@ export function statusBody(cfg, live, daemonStats, bootAt) {
 		checkedAt: live.checkedAt,
 	};
 	if (live.verdict.needsHumanLogin) body.remedy = loginInstructions(live.login?.loginUrl, live.login?.authSessionId);
+	else if (live.verdict.reason === 'ai_provider_unauthorized') body.remedy = providerInstructions(live.providerProbe?.detail);
 	return body;
 }
 

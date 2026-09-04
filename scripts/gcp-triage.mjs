@@ -159,6 +159,13 @@ const KNOWN_SIGNATURES = [
 		action: `The OKX marketplace chat bot's wallet session expired, so every XMTP client is offline and buyer chat for agent #2632 is NOT delivered. Nothing here is config-fixable and a redeploy will not help: OKX requires a human to complete an email OTP as claude@three.ws. The host already minted the login URL and holds the exact three commands, so do not go hunting for them: curl -s https://okx-chat-bot-<hash>-uc.a.run.app/readyz | jq .remedy (or read the ops alert, which carries the same lines). Renewing the session restores delivery within a minute; the host's next probe flips healthz okx_chat_bot back to ok on its own. Left unfixed, OKX's own chat test times out at 30 minutes and flags the listing offline. See workers/okx-chat-bot/README.md.`,
 	},
 	{
+		id: 'okx-bot-provider-unauthorized',
+		match: /ai_provider_unauthorized|"msg":"provider credential".*"code":"unauthorized"/i,
+		services: ['okx-chat-bot'],
+		class: 'owner',
+		action: `The chat bot's AI credential is configured but the provider refuses it, so buyer chat for agent #2632 arrives and is never answered. This is NOT the same as a missing key and no redeploy fixes it: the two credentials this project holds have each failed this way (Vertex answers "Lightning dunning decision is deny", a GCP billing hold that reads like an IAM error; the openai-api-key secret is valid but its account answers billing_not_active). Read the exact three ways out off the host rather than guessing: curl -s $OKX_BOT_URL/readyz | jq .remedy. Preferred is Vertex, because it authenticates with the runtime service account and there is no key to mint or rotate. See workers/okx-chat-bot/README.md.`,
+	},
+	{
 		id: 'okx-bot-daemon-restart',
 		match: /"msg":"daemon exited"/i,
 		services: ['okx-chat-bot'],

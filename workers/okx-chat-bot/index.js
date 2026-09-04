@@ -25,6 +25,7 @@ import { sql } from '../../api/_lib/db.js';
 import { loadConfig, paths } from './config.js';
 import { agentRefresh, beginLogin, daemonStatus, exec, walletStatus } from './cli.js';
 import { startHealthServer } from './health-server.js';
+import { loginCodex, probeProvider } from './provider.js';
 import { classify, loginInstructions } from './session.js';
 import { restoreState, snapshotState } from './state.js';
 import { createSupervisor } from './supervisor.js';
@@ -44,6 +45,10 @@ const live = {
 	login: null,
 	workspace: null,
 	stateRestore: null,
+	// What the provider's own API last answered. Undefined until the first probe,
+	// which is why classify() treats a missing verdict as "no opinion" rather than
+	// as a failure: a host must not read red for a probe that has not run yet.
+	providerProbe: null,
 };
 
 async function heartbeat(cfg, supervisor) {
@@ -61,7 +66,9 @@ async function heartbeat(cfg, supervisor) {
 		agentCount: live.agents.agentCount,
 		activeClients: live.agents.activeClients,
 		provider: cfg.provider,
+		providerTransport: cfg.providerTransport,
 		providerCredentialed: cfg.providerCredentialed,
+		providerVerdict: live.providerProbe?.code ?? null,
 		daemonRestarts: supervisor.stats().restarts,
 		checkedAt: live.checkedAt,
 	};
@@ -106,6 +113,24 @@ async function maybeAlert(cfg, verdict) {
 	}).catch((err) => log.warn('ops alert failed', { err: err?.message }));
 }
 
+// Ask the provider whether it still serves this host. Kept off the session
+// probe's path: it is a network call to a third party, and a slow one must not
+// delay the verdict about whether XMTP is delivering. A transient `unreachable`
+// answer is remembered as-is, because classify() deliberately does not fail
+// readiness on it.
+async function probeProviderCredential(cfg) {
+	const before = live.providerProbe?.code ?? null;
+	live.providerProbe = await probeProvider(cfg);
+	if (live.providerProbe.code !== before) {
+		log[live.providerProbe.code === 'unauthorized' ? 'error' : 'info']('provider credential', {
+			provider: cfg.provider,
+			transport: cfg.providerTransport,
+			code: live.providerProbe.code,
+			detail: live.providerProbe.detail,
+		});
+	}
+}
+
 // One probe at a time. A probe can legitimately outrun its own interval (the
 // three CLI calls are bounded at 15s + 30s + 90s), and two in flight would race
 // on the login mint below: both would see `live.login` empty and start a second
@@ -128,7 +153,13 @@ async function runProbe(cfg, supervisor) {
 	const daemon = await daemonStatus(cfg);
 	const wallet = daemon.startsWith('running') ? await walletStatus(cfg) : null;
 	const agents = wallet?.loggedIn ? await agentRefresh(cfg) : { agentCount: 0, activeClients: 0 };
-	const verdict = classify({ daemon, wallet, agents, providerCredentialed: cfg.providerCredentialed });
+	const verdict = classify({
+		daemon,
+		wallet,
+		agents,
+		providerCredentialed: cfg.providerCredentialed,
+		providerProbe: live.providerProbe,
+	});
 
 	// Mint a fresh login URL only when one is actually needed, and only when we
 	// do not already hold an unused one: `login --phase init` starts a new auth
@@ -173,7 +204,7 @@ async function main() {
 	if (!cfg.providerCredentialed) {
 		log.error('no AI-provider credential: the daemon will receive chat but cannot author replies', {
 			provider: cfg.provider,
-			needs: 'ANTHROPIC_API_KEY (preferred) or OPENAI_API_KEY',
+			needs: 'CLAUDE_CODE_USE_VERTEX=1 (preferred), ANTHROPIC_API_KEY, or OPENAI_API_KEY',
 		});
 	}
 
@@ -189,6 +220,12 @@ async function main() {
 	// answer, which reads to the buyer as an unresponsive bot.
 	await exec(cfg, 'okx-a2a', ['config', 'provider', '--provider', cfg.provider], { timeoutMs: 30_000 });
 	await exec(cfg, 'okx-a2a', ['config', 'permissions', '--preset', 'bypass'], { timeoutMs: 30_000 });
+
+	// Codex reads ~/.codex/auth.json, never OPENAI_API_KEY from the environment,
+	// so without this the key is present, the CLI spawns, and every reply dies on
+	// a 401 the buyer only experiences as silence. No-op for every other provider.
+	const codexLogin = await loginCodex(cfg);
+	if (codexLogin.ran) log[codexLogin.ok ? 'info' : 'error']('codex login', codexLogin);
 
 	const supervisor = createSupervisor(cfg, p);
 	supervisor.start();
@@ -208,6 +245,13 @@ async function main() {
 		() => snapshotState(cfg, { reason: 'timer' }).catch(() => {}),
 		cfg.snapshotMs,
 	);
+	const providerProbeTimer = setInterval(
+		() => probeProviderCredential(cfg).catch((err) => log.warn('provider probe failed', { err: err?.message })),
+		cfg.providerProbeMs,
+	);
+	// Run the first credential probe immediately, but off the boot path: a slow
+	// provider must delay the verdict, never the daemon that receives the chat.
+	probeProviderCredential(cfg).catch((err) => log.warn('provider probe failed', { err: err?.message }));
 	// Give the daemon a moment to bind XMTP before the first verdict, so a normal
 	// boot does not page as "down".
 	setTimeout(probe, 10_000);
@@ -220,6 +264,7 @@ async function main() {
 		clearInterval(probeTimer);
 		clearInterval(heartbeatTimer);
 		clearInterval(snapshotTimer);
+		clearInterval(providerProbeTimer);
 		server?.close();
 		// Order matters: stop the daemon FIRST so its sqlite files are quiesced,
 		// then snapshot. A live-copy snapshot can tear; this one cannot.
