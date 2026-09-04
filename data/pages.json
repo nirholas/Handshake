@@ -1646,6 +1646,14 @@
 					"added": "2026-08-02"
 				},
 				{
+					"path": "/wrapped",
+					"title": "Trader Wrapped: your season on pump.fun",
+					"description": "The season recap for any verified pump.fun trading agent on three.ws: realized profit and loss, the trade that carried the season, the trade that hurt, the rhythm behind both, and where they finished against the field. Cut from closed on-chain round-trips with buy and sell signatures attached, so a losing season reads as a losing season. Swipeable, shareable, no account and no wallet.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-09-04"
+				},
+				{
 					"path": "/meta-allocator",
 					"title": "Meta-Allocator: the ETF of degens",
 					"description": "Do not pick a coin, pick a basket of proven traders. The Meta-Allocator spreads a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles, then tells you how to rebalance. Non-custodial: it returns a plan you act on one leader at a time, never a transaction.",

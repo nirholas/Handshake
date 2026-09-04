@@ -738,6 +738,7 @@ const appConfig = {
 				'claim-wallet': resolve(__dirname, 'pages/claim-wallet.html'),
 				'meta-allocator': resolve(__dirname, 'pages/meta-allocator.html'),
 				'ghost-copy': resolve(__dirname, 'pages/ghost-copy.html'),
+				wrapped: resolve(__dirname, 'pages/wrapped.html'),
 				'clip-director': resolve(__dirname, 'pages/clip-director.html'),
 				'avatar-embed': resolve(__dirname, 'pages/avatar-embed.html'),
 				'avatar-wallet-chat': resolve(__dirname, 'pages/avatar-wallet-chat.html'),

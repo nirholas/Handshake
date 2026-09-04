@@ -1123,6 +1123,14 @@
 			"dest": "/meta-allocator.html"
 		},
 		{
+			"src": "/wrapped/([^/]+)/share/?",
+			"dest": "/api/wrapped-share?agent=$1"
+		},
+		{
+			"src": "/wrapped/?",
+			"dest": "/wrapped.html"
+		},
+		{
 			"src": "/ghost-copy/?",
 			"dest": "/ghost-copy.html"
 		},
@@ -1376,6 +1384,14 @@
 		{
 			"src": "/api/trader-og",
 			"dest": "/api/trader-og.js"
+		},
+		{
+			"src": "/api/wrapped-og",
+			"dest": "/api/wrapped-og.js"
+		},
+		{
+			"src": "/api/wrapped-share",
+			"dest": "/api/wrapped-share.js"
 		},
 		{
 			"src": "/api/trader-passport/verify",
@@ -3317,6 +3333,10 @@
 		{
 			"src": "/api/pump/ghost-copy",
 			"dest": "/api/pump/ghost-copy.js"
+		},
+		{
+			"src": "/api/pump/wrapped",
+			"dest": "/api/pump/wrapped.js"
 		},
 		{
 			"src": "/api/pump/smart-money",
