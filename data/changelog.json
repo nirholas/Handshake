@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-09-04",
+			"title": "The Smart Money directory stops asking your browser for pictures it can never get",
+			"summary": "Every wallet in the copy-trading Smart Money list carried a portrait link pointing at an outside image host that serves nobody but its own site. Browsers blocked all of them, so the list drew the trader initials it was designed to fall back on while quietly recording a failed request for each row on screen. That unusable link is no longer sent, so the directory looks exactly as it did with none of the wasted traffic behind it.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"title": "The IRL placements desk can use your location again, and only when you ask it to",
+			"summary": "The page that pins your agents to real places offers to measure how far away each pin is and to drop a new one where you are standing. None of it could work: the page arrived with the browser location service switched off for it, so every attempt failed on the spot. Location is allowed on that page now. It also no longer reaches for your position the second the page opens: it reads it only when you have already granted permission, and otherwise waits for you to press one of the location buttons.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
 			"title": "DeFi tables stop showing broken logos when a coin icon disappears",
 			"summary": "The protocol and chain logos on the fees, DeFi, DEX volumes, chain, protocol and exchange pages were loaded straight from a third-party icon host. When that host renamed or removed an icon, the row rendered a broken-image glyph and every reader's browser recorded a failed request. Those logos now come from three.ws itself: we fetch and resize them on our side, cache them, and hand back an empty answer for an icon that no longer exists, so the row shows the same neutral disc a protocol without a logo already gets. Pages load a little faster too, since a 24-pixel icon no longer arrives at full size, and your browser no longer talks to an outside host on every table paint.",
 			"tags": [
