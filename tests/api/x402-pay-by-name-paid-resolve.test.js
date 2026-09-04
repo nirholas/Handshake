@@ -134,11 +134,24 @@ describe('POST /api/x402/pay-by-name (paid resolution)', () => {
 		expect(settlePaymentMock).not.toHaveBeenCalled();
 	});
 
-	it('rejects a missing name before touching the payment path', async () => {
+	it('challenges a name-less probe rather than 400ing it (registry probes are body-less)', async () => {
+		// Directory validators register a paid row by probing it with a bare POST
+		// and reading the 402 back; a pre-payment 400 tells them the row sells
+		// nothing, which is how this route stayed off the x402scan origin listing.
+		// The challenge now comes first, and nothing on the payment path runs.
 		const { res, body } = await post({ name: '   ' });
+		expect(res.statusCode).toBe(402);
+		expect(body.accepts).toHaveLength(1);
+		expect(verifyPaymentMock).not.toHaveBeenCalled();
+		expect(settlePaymentMock).not.toHaveBeenCalled();
+	});
+
+	it('rejects a missing name past the paywall, before verify or settle', async () => {
+		const { res, body } = await post({ name: '   ' }, { 'x-payment': 'proof' });
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toBe('validation_error');
 		expect(verifyPaymentMock).not.toHaveBeenCalled();
+		expect(settlePaymentMock).not.toHaveBeenCalled();
 	});
 
 	it('settles and returns the address when the name resolves', async () => {
