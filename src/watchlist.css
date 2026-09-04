@@ -129,8 +129,8 @@ body {
 	margin-bottom: 12px;
 }
 .wl-add-msg-ok   { background: rgba(52,211,153,.12); color: #34d399; }
-.wl-add-msg-warn { background: rgba(251,191,36,.1);  color: #fbbf24; }
-.wl-add-msg-err  { background: rgba(248,113,113,.1); color: #f87171; }
+.wl-add-msg-warn { background: rgba(251,191,36,.1);  color: var(--warn); }
+.wl-add-msg-err  { background: rgba(248,113,113,.1); color: var(--danger); }
 
 .wl-hero-row {
 	display: flex;
@@ -319,7 +319,7 @@ body {
 	pointer-events: none;
 }
 .wl-delta--up   { color: #34d399; border-color: rgba(52,211,153,0.35); }
-.wl-delta--down { color: #f87171; border-color: rgba(248,113,113,0.35); }
+.wl-delta--down { color: var(--danger); border-color: rgba(248,113,113,0.35); }
 
 /* ── Upgraded-since-last-visit accent ─────────────────────────────────────── */
 

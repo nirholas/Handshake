@@ -8,7 +8,7 @@
 	--ad-muted: rgba(231, 233, 238, 0.55);
 	--ad-dim: rgba(231, 233, 238, 0.35);
 	--ad-violet: #888888;
-	--ad-green: #4ade80;
+	--ad-green: var(--success);
 	--ad-amber: #f5a524;
 	--ad-cyan: #57c7ff;
 
@@ -608,7 +608,7 @@ div.ad-hero-avatar canvas {
 	background: rgba(87, 199, 255, 0.08);
 }
 .ad-pill-red {
-	color: #f87171;
+	color: var(--danger);
 	border-color: rgba(248, 113, 113, 0.35);
 	background: rgba(248, 113, 113, 0.08);
 }
@@ -1303,7 +1303,7 @@ div.ad-hero-avatar canvas {
 .ad-btn-deploy {
 	background: rgba(139, 92, 246, 0.15) !important;
 	border-color: rgba(139, 92, 246, 0.4) !important;
-	color: #c4b5fd !important;
+	color: var(--accent-violet) !important;
 }
 .ad-btn-deploy:hover {
 	background: rgba(139, 92, 246, 0.25) !important;
@@ -1507,7 +1507,7 @@ div.ad-hero-avatar canvas {
 	background: rgba(74, 222, 128, 0.08);
 }
 .ad-price-badge.pwyw {
-	color: #c4b5fd;
+	color: var(--accent-violet);
 	border-color: rgba(167, 139, 250, 0.4);
 	background: rgba(167, 139, 250, 0.08);
 }
@@ -1553,7 +1553,7 @@ div.ad-hero-avatar canvas {
 
 /* ── Subscription tiers ────────────────────────────────────────────────── */
 .ad-bullet-violet {
-	background: #a78bfa;
+	background: var(--accent-violet-strong);
 }
 .ad-tiers-sub {
 	font-size: 13px;
@@ -1622,7 +1622,7 @@ div.ad-hero-avatar canvas {
 	content: "✓";
 	position: absolute;
 	left: 0;
-	color: #a78bfa;
+	color: var(--accent-violet-strong);
 	font-weight: 700;
 }
 .ad-tier-foot {
@@ -1633,7 +1633,7 @@ div.ad-hero-avatar canvas {
 	padding: 8px 12px;
 	border-radius: 9px;
 	border: 1px solid transparent;
-	background: #a78bfa;
+	background: var(--accent-violet-strong);
 	color: #14101f;
 	font: inherit;
 	font-size: 13px;
@@ -1650,7 +1650,7 @@ div.ad-hero-avatar canvas {
 	transform: translateY(1px);
 }
 .ad-tier-btn:focus-visible {
-	outline: 2px solid #c4b5fd;
+	outline: 2px solid var(--accent-violet);
 	outline-offset: 2px;
 }
 .ad-tier-note {
@@ -2633,7 +2633,7 @@ div.ad-hero-avatar canvas {
 	background: rgba(245, 165, 36, 0.1);
 }
 .ad-conc-very-high {
-	color: #f87171;
+	color: var(--danger);
 	border-color: rgba(248, 113, 113, 0.35);
 	background: rgba(248, 113, 113, 0.1);
 }
@@ -2791,7 +2791,7 @@ div.ad-hero-avatar canvas {
 }
 
 /* ── Agent Genome lineage panel ───────────────────────────────────────────── */
-.ad-bullet-violet { background: #a78bfa; }
+.ad-bullet-violet { background: var(--accent-violet-strong); }
 .ad-lineage { display: flex; flex-direction: column; gap: 8px; }
 .ad-lineage-section-label {
 	font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
@@ -2803,7 +2803,7 @@ div.ad-hero-avatar canvas {
 	border: 1px solid var(--ad-stroke, #23262f); color: var(--ad-ink, #e8eaf0);
 	transition: border-color 0.16s ease, transform 0.16s ease;
 }
-.ad-lineage-node:hover { border-color: #a78bfa; transform: translateX(2px); }
+.ad-lineage-node:hover { border-color: var(--accent-violet-strong); transform: translateX(2px); }
 .ad-lineage-role { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ad-muted, #8a8f9c); min-width: 58px; }
 .ad-lineage-name { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ad-lineage-gen { font-size: 0.72rem; color: var(--ad-muted, #8a8f9c); }

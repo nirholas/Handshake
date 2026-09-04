@@ -8,9 +8,9 @@
 	--fc-text: var(--text, #e8eaf0);
 	--fc-muted: color-mix(in srgb, var(--text, #e8eaf0) 55%, transparent);
 	--fc-dim: color-mix(in srgb, var(--text, #e8eaf0) 35%, transparent);
-	--fc-green: #4ade80;
-	--fc-red: #f87171;
-	--fc-amber: #fbbf24;
+	--fc-green: var(--success);
+	--fc-red: var(--danger);
+	--fc-amber: var(--warn);
 	--fc-cyan: #57c7ff;
 	--fc-mono: var(--mono, ui-monospace, "SF Mono", Menlo, monospace);
 	--fc-r: 14px;

@@ -50,7 +50,7 @@
 }
 html[data-theme='dark'] .cv-chip.sc-mech.algo,
 html:not([data-theme='light']) .cv-chip.sc-mech.algo {
-	color: #fbbf24;
+	color: var(--warn);
 }
 .cv-chip.sc-mech.other {
 	background: var(--cv-surface-3);

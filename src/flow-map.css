@@ -17,9 +17,9 @@
 	--fm-accent: #22d3ee;
 	--fm-accent-2: #818cf8;
 	--fm-source: #34d399;
-	--fm-sink: #fbbf24;
+	--fm-sink: var(--warn);
 	--fm-hub: #60a5fa;
-	--fm-relay: #a78bfa;
+	--fm-relay: var(--accent-violet-strong);
 	--fm-quiet: rgba(238, 241, 247, 0.3);
 	--fm-radius: 16px;
 	--fm-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.85);

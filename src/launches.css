@@ -511,7 +511,7 @@ body {
 .lx-of-btn.active { background: var(--surface-3); color: var(--ink-bright); }
 .lx-of-btn[data-tier="prime"].active { color: #c084fc; }
 .lx-of-btn[data-tier="strong"].active { color: #34d399; }
-.lx-of-btn[data-tier="lean"].active { color: #fbbf24; }
+.lx-of-btn[data-tier="lean"].active { color: var(--warn); }
 
 .lx-count {
 	margin-left: auto;

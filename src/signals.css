@@ -7,7 +7,7 @@
 	--sm-accent-soft: rgba(139, 92, 246, 0.12);
 	--sm-stroke: rgba(139, 92, 246, 0.32);
 	--sm-win: #34d399;
-	--sm-loss: #f87171;
+	--sm-loss: var(--danger);
 	--sm-flat: #94a3b8;
 }
 

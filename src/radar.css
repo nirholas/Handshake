@@ -356,7 +356,7 @@
 }
 .rc-badge-glyph { font-size: 0.9em; line-height: 1; }
 .rc-badge--smart { color: #5fe3ff; background: rgba(95,227,255,0.12); border-color: rgba(95,227,255,0.32); }
-.rc-badge--news { color: #fbbf24; background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.3); }
+.rc-badge--news { color: var(--warn); background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.3); }
 .rc-badge--cluster { color: var(--ink-dim); background: var(--surface-2); border-color: var(--stroke-strong); }
 .rc-badge--grad { color: var(--success); background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.3); }
 .rc-badge--rug { color: var(--danger); background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.3); }

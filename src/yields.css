@@ -19,9 +19,9 @@
 	--yl-amber-soft: rgba(245, 158, 11, 0.14);
 }
 :root[data-theme='dark'] {
-	--yl-apy-axis: #a78bfa;
+	--yl-apy-axis: var(--accent-violet-strong);
 	--yl-tvl-axis: #60a5fa;
-	--yl-amber: #fbbf24;
+	--yl-amber: var(--warn);
 	--yl-amber-soft: rgba(245, 158, 11, 0.16);
 }
 

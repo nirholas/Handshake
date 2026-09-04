@@ -86,7 +86,7 @@
 	background: rgba(234, 179, 8, 0.12);
 }
 :root[data-theme='dark'] .sc-mech-algo {
-	color: #fbbf24;
+	color: var(--warn);
 }
 
 /* Price + peg-health badge. */
@@ -126,7 +126,7 @@
 	border-color: rgba(234, 179, 8, 0.35);
 }
 :root[data-theme='dark'] .sc-peg-mid {
-	color: #fbbf24;
+	color: var(--warn);
 }
 .sc-peg-lo {
 	color: var(--cv-red);
@@ -160,7 +160,7 @@
 	color: #b45309;
 }
 :root[data-theme='dark'] .sc-dev-mid {
-	color: #fbbf24;
+	color: var(--warn);
 }
 .sc-dev-lo {
 	color: var(--cv-red);

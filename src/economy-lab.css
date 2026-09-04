@@ -18,7 +18,7 @@
 	--el-faint: #6a7183;
 	--el-accent: #6ee7b7;
 	--el-accent-ink: #04241a;
-	--el-warn: #fbbf24;
+	--el-warn: var(--warn);
 	--el-danger: #fb7185;
 	--el-info: #7dd3fc;
 	--el-r: 14px;

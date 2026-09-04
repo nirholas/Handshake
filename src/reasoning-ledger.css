@@ -10,11 +10,11 @@
 	--rl-text: var(--text, #e8eaf0);
 	--rl-muted: color-mix(in srgb, var(--text, #e8eaf0) 55%, transparent);
 	--rl-dim: color-mix(in srgb, var(--text, #e8eaf0) 35%, transparent);
-	--rl-green: #4ade80;
-	--rl-red: #f87171;
-	--rl-amber: #fbbf24;
+	--rl-green: var(--success);
+	--rl-red: var(--danger);
+	--rl-amber: var(--warn);
 	--rl-cyan: #57c7ff;
-	--rl-violet: #a78bfa;
+	--rl-violet: var(--accent-violet-strong);
 	--rl-mono: var(--mono, ui-monospace, "SF Mono", Menlo, monospace);
 	--rl-r: 14px;
 }
