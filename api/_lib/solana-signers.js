@@ -26,6 +26,9 @@
  *   master auto-tops it up (defaults to minSol×3 in the treasury-topup cron)
  * @property {boolean} [isMaster] the funding root itself — watched for a low
  *   balance, but never a refill TARGET (it funds the others, not itself)
+ * @property {boolean} [settleCritical] a fee wallet the x402 payment rail pays
+ *   from: under its floor the facilitator refuses every settle, so a thin
+ *   funding run brings this signer up BEFORE any float or feed wallet
  * @property {boolean} [holdsTokens] this wallet operationally HOLDS SPL token
  *   balances (revenue, payout float, tip inventory). The sweepback module
  *   (api/_lib/economy-sweepback.js) never takes its tokens in excess mode —
@@ -155,6 +158,7 @@ export const SOLANA_SIGNERS = [
 		// the topup floor a hair above that hard floor and let the economy master's
 		// treasury-topup cron refill it before the loop stops.
 		minSol: 0.03,
+		settleCritical: true,
 		purpose: 'x402 ring sponsor (fee payer): co-signs + pays SOL on every self-hosted-facilitator settle; below-floor pauses the whole ring',
 		network: 'mainnet',
 	},
@@ -167,6 +171,7 @@ export const SOLANA_SIGNERS = [
 		// Its USDC float is watched separately by the wallet-balance monitor; the
 		// economy master only ever tops up SOL, never USDC.
 		minSol: 0.03,
+		settleCritical: true,
 		holdsTokens: true,
 		purpose: 'x402 ring payer (self-pay mode): signs + pays its own 1-sig fee on each ring settle; USDC float watched by the balance monitor',
 		network: 'mainnet',

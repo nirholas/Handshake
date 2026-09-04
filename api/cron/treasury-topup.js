@@ -89,11 +89,21 @@ export default wrapCron(async (req, res) => {
 		const refillToSol = spec.refillTo ?? spec.minSol * DEFAULT_REFILL_MULTIPLE;
 		const merged = byPubkey.get(resolved.pubkey);
 		if (!merged) {
-			byPubkey.set(resolved.pubkey, { names: [spec.name], minSol: spec.minSol, refillToSol });
+			byPubkey.set(resolved.pubkey, {
+				names: [spec.name],
+				minSol: spec.minSol,
+				refillToSol,
+				// One shared wallet is settle-critical if ANY spec resolving to it
+				// is: the x402 ring payer shares a pubkey with the coin-launcher
+				// master, and the payment rail's claim on it does not weaken
+				// because a launcher happens to spend from the same address.
+				settleCritical: !!spec.settleCritical,
+			});
 		} else {
 			merged.names.push(spec.name);
 			merged.minSol = Math.max(merged.minSol, spec.minSol);
 			merged.refillToSol = Math.max(merged.refillToSol, refillToSol);
+			merged.settleCritical = merged.settleCritical || !!spec.settleCritical;
 		}
 	}
 	for (const [pubkey, merged] of byPubkey) {
@@ -112,6 +122,7 @@ export default wrapCron(async (req, res) => {
 			pubkey,
 			currentSol: Number(sol.toFixed(6)),
 			refillToSol: merged.refillToSol,
+			settleCritical: merged.settleCritical,
 		});
 	}
 

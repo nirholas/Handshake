@@ -57,12 +57,22 @@ belongs in an engine signer the master funds — not in the master.
 |---|---|---|---|
 | Reserve floor | `ECONOMY_MASTER_RESERVE_SOL` | `0.02` | Never spend the master below this: its own rent-exemption plus fee headroom. An on-chain read, so it holds even with no database. When the master is also the x402 sponsor fee wallet (`X402_FEE_PAYER_SOLANA` points at it), the sweep floor rises to the sponsor settle floor (0.02 SOL) plus `ECONOMY_MASTER_SPONSOR_HEADROOM_SOL` (default `0.03`), so topping up engines can never starve settlement (`sweepFloorSol()`). |
 | Per-engine cap | `ECONOMY_MASTER_PER_TOPUP_MAX_SOL` | `0.5` | Most SOL moved to any single engine in one sweep. |
-| Per-run cap | `ECONOMY_MASTER_RUN_CAP_SOL` | `2` | Most SOL moved across all engines in one sweep. Neediest engine funded first, so a tight cap protects the most-drained flow. |
+| Per-run cap | `ECONOMY_MASTER_RUN_CAP_SOL` | `2` | Most SOL moved across all engines in one sweep. Settle-critical engines are funded first, then the neediest, so a tight cap protects the payment rail and then the most-drained flow. |
 | Dust skip | — | `0.005` | Skip a top-up smaller than this to avoid fee churn. |
+| Settle-critical first | `settleCritical` on the signer spec | x402 ring sponsor + payer | A wallet the x402 facilitator pays fees from is funded before any float or feed wallet, regardless of whose deficit is larger. Under its floor the facilitator refuses **every** settle, so the rail's claim on a thin run outranks a bigger number elsewhere. Measured 2026-09-04: without this, a 0.1, 0.2 or 0.5 SOL top-up went entirely to the relayer/treasury bundle (deficit 0.98 SOL) and left the ring payer at 0.00125 SOL, under its 0.002 hard floor, so settlement stayed dead until roughly 1 SOL landed. |
 | Pubkey match | `ECONOMY_MASTER_ADDRESS` | the address above | The installed secret must derive to the expected pubkey or `loadEconomyMaster()` throws `master_mismatch` — a mis-paste never silently drains a different wallet. |
 
 `planTopUps()` is pure (no RPC), so all of the above are unit-tested in
 [`tests/economy-master.test.js`](../tests/economy-master.test.js) without a key.
+
+Each skipped engine says which bound stopped it, and the two that look alike
+have opposite fixes:
+
+| `skipped[].reason` | What it means | The fix |
+|---|---|---|
+| `below_dust_threshold` | The engine is under floor by less than 0.005 SOL. | Nothing. Fee churn avoided on purpose. |
+| `run_cap_reached` | Earlier engines in this run consumed the per-run budget. | Nothing, or raise `ECONOMY_MASTER_RUN_CAP_SOL`. The next run funds the rest. |
+| `master_insufficient_spendable` | The master itself has nothing above its sweep floor. No cap was involved. | Fund the master. No knob changes this. |
 
 ## The leak invariant (no SOL leaves the owner-controlled set)
 
@@ -359,6 +369,20 @@ Set `ECONOMY_USDC_TOPUP_ENABLED=0` to disable. The sizing math is a pure functio
 (`planUsdcTopups`) covered by
 [`tests/economy-usdc-topup.test.js`](../tests/economy-usdc-topup.test.js).
 
+### Previewing the rebalancer safely
+
+`?dry=1` returns the plan and signs nothing, whether or not
+`ECONOMY_REBALANCE_ENABLED` is set:
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $CRON_SECRET" \
+  'https://three.ws/api/cron/economy-rebalance?dry=1' | jq '{mode, plan, skipped}'
+```
+
+`mode` reads `dry_run` and `armed` reports whether the cron would have executed.
+Before 2026-09-04 the only path that did not sign was being **disarmed**, so on
+production (armed) a `?dry=1` preview built, signed and submitted real swaps.
+
 ### Why the rebalancer alone was not enough
 
 The rebalancer keeps each payer stocked in the asset it spends by swapping its
@@ -368,7 +392,7 @@ USDC, the next sells that SOL back for USDC, forever. That ran 134 reversing
 swaps and churned ~$900 of notional in 2.5 hours on 2026-07-28, paying two swap
 fees and double slippage per round trip to end where it started.
 
-Three invariants close it permanently, the first two in `planRebalance`:
+Four invariants close it permanently, three of them in `planRebalance`:
 
 1. **No opposing legs in one run** — the neediest leg wins; the other defers to
    the next run against fresh balances.
@@ -403,6 +427,21 @@ Three invariants close it permanently, the first two in `planRebalance`:
    float for SOL it does not need, and with `SIGNER_MIN_SOL_X402_RING_PAYER` raised
    to 0.15 that leg was armed permanently. It is how the ring's float turned into
    SOL in the first place (2026-07-28: 66 `usdc->sol` swaps, $438 churned).
+
+4. **A rescue the wallet cannot pay for is never planned.** A `usdc->sol` swap
+   lands its output in a wSOL account the transaction itself creates, and the
+   wallet funds that account's rent-exemption (1,855,569 lamports on mainnet)
+   out of its own balance for the life of the transaction. A wallet holding less
+   than that cannot buy the SOL it needs: the swap dies inside the ATA
+   `CreateIdempotent` with system error `0x1` and nothing ever lands. Mainnet
+   2026-09-04: the x402 ring payer held 1,253,408 lamports and 4.18 USDC it
+   could not convert, and the rebalancer re-planned the same doomed leg every 30
+   minutes, reporting a truncated `failed` that named neither the shortfall nor
+   the fix. `planRebalance` now skips with
+   `below_swap_rent:<have><<need>` instead, so the number an operator reads is
+   the SOL that unlocks the wallet's own USDC. The guard is waived when the
+   wallet already holds a wSOL account, where the rent is paid and the create is
+   a no-op.
 
 Step 4 is what makes those invariants affordable: a payer that is genuinely short
 of both assets is now refilled from the root instead of being asked to

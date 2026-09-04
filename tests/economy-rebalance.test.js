@@ -63,10 +63,41 @@ describe('planRebalance', () => {
 		const { plan } = planRebalance({
 			solPriceUsd: SOL,
 			bounds,
-			wallets: [{ name: 'gas', pubkey: 'G', sol: 0.0, usdc: 20, wants: 'sol', floorUsd: 5 }],
+			// 0.01 SOL: under its floor, but still able to fund the wSOL account
+			// the swap output lands in (see the rent guard below).
+			wallets: [{ name: 'gas', pubkey: 'G', sol: 0.01, usdc: 20, wants: 'sol', floorUsd: 5 }],
 		});
 		expect(plan[0].dir).toBe('usdc->sol');
 		expect(plan[0].inUsd).toBe(3); // per-swap cap
+	});
+
+	// The ring payer deadlock of 2026-09-04: 1,253,408 lamports, 4.18 USDC it
+	// could not convert, and a usdc->sol leg planned every 30 minutes that died
+	// in simulation creating the wSOL account it could not afford. A plan that
+	// cannot execute is worse than an honest skip, because the reason an
+	// operator reads has to name the SOL that unlocks the USDC.
+	it('skips a USDC → SOL rescue the wallet cannot pay the output rent for', () => {
+		const { plan, skipped } = planRebalance({
+			solPriceUsd: SOL,
+			bounds,
+			wallets: [{ name: 'ring-payer', pubkey: 'X', sol: 0.001253408, usdc: 4.18, wants: 'sol', floorUsd: 5 }],
+		});
+		expect(plan).toHaveLength(0);
+		expect(skipped[0].name).toBe('ring-payer');
+		expect(skipped[0].reason).toBe('below_swap_rent:1253408<1870569');
+	});
+
+	it('plans the rescue anyway when the wallet already holds a wSOL account', () => {
+		// The rent is already paid, so the create is a no-op and only fees remain.
+		const { plan } = planRebalance({
+			solPriceUsd: SOL,
+			bounds,
+			wallets: [
+				{ name: 'ring-payer', pubkey: 'X', sol: 0.001253408, usdc: 4.18, wants: 'sol', floorUsd: 5, hasWsolAccount: true },
+			],
+		});
+		expect(plan).toHaveLength(1);
+		expect(plan[0].dir).toBe('usdc->sol');
 	});
 
 	it('never plans opposing swaps on the same wallet in one run', () => {

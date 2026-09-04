@@ -8,7 +8,8 @@
 //
 // SAFE BY DEFAULT: inert unless ECONOMY_REBALANCE_ENABLED=1. Even disabled it
 // computes and returns the plan (dry run) so the owner can see what it WOULD do
-// before arming it. Every swap is reserve-, per-swap-, per-run- and slippage-capped
+// before arming it, and `?dry=1` returns that same plan without signing even
+// when it IS armed. Every swap is reserve-, per-swap-, per-run- and slippage-capped
 // (see economy-rebalance.js). Read-and-quote only until armed.
 //
 // Env: CRON_SECRET, SOLANA_RPC_URL, the a2a-payer / x402-ring-payer signer secrets,
@@ -18,7 +19,7 @@ import { env } from '../_lib/env.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey, loadSignerKeypair } from '../_lib/solana-signers.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
-import { planRebalance, executeSwap, resolveSelfPayFloors, REBALANCE, USDC_WALLETS } from '../_lib/economy-rebalance.js';
+import { planRebalance, executeSwap, resolveSelfPayFloors, REBALANCE, USDC_WALLETS, WSOL_MINT } from '../_lib/economy-rebalance.js';
 import { USDC_MINT_BY_NETWORK } from '../_lib/vault-jupiter.js';
 import { logAudit } from '../_lib/audit.js';
 import { requireCron } from '../_lib/cron-auth.js';
@@ -30,6 +31,11 @@ async function readWallet(connection, pubkey) {
 	const { PublicKey } = await import('@solana/web3.js');
 	let sol = 0;
 	let usdc = 0;
+	// Whether a wSOL account already exists decides whether a usdc->sol swap has
+	// to fund one out of this wallet's own lamports (planRebalance's swap-rent
+	// guard). Read it here rather than assuming: assuming "absent" would block a
+	// wallet that can in fact swap.
+	let hasWsolAccount = false;
 	try {
 		const owner = new PublicKey(pubkey);
 		sol = (await connection.getBalance(owner)) / 1e9;
@@ -38,10 +44,12 @@ async function readWallet(connection, pubkey) {
 			(a, x) => a + Number(x.account.data.parsed.info.tokenAmount.uiAmount || 0),
 			0,
 		);
+		const wsol = await connection.getParsedTokenAccountsByOwner(owner, { mint: new PublicKey(WSOL_MINT) });
+		hasWsolAccount = wsol.value.length > 0;
 	} catch {
 		/* an RPC hiccup — report zeros; the plan just skips this wallet honestly */
 	}
-	return { sol, usdc };
+	return { sol, usdc, hasWsolAccount };
 }
 
 export default wrapCron(async (req, res) => {
@@ -59,7 +67,7 @@ export default wrapCron(async (req, res) => {
 		const resolved = await resolveSignerPubkey(spec).catch(() => null);
 		const pubkey = resolved?.pubkey;
 		if (!pubkey) continue;
-		const { sol, usdc } = await readWallet(connection, pubkey);
+		const { sol, usdc, hasWsolAccount } = await readWallet(connection, pubkey);
 		const floorUsd = Number(process.env[cfg.floorEnv]) || cfg.floorDflt;
 		// A self-pay wallet's fee-SOL refill target doubles as the untouchable
 		// reserve on its sol->usdc leg (see planRebalance), so the USDC floor can
@@ -73,7 +81,7 @@ export default wrapCron(async (req, res) => {
 		const floors = cfg.selfPayFee
 			? resolveSelfPayFloors({ sol, usdc, solPriceUsd, targetSol, usdcFloorUsd: floorUsd })
 			: { solFloor: 0, constrained: false, rescueArmed: false };
-		wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'usdc', floorUsd, solFloor: floors.solFloor });
+		wallets.push({ name: cfg.role, pubkey, sol, usdc, hasWsolAccount, wants: 'usdc', floorUsd, solFloor: floors.solFloor });
 
 		// Self-pay fee wallets get a second row for their SOL need. Same name on
 		// purpose: the executor resolves the signing key by name, and both legs
@@ -83,18 +91,26 @@ export default wrapCron(async (req, res) => {
 		// rescue can never overshoot into a level the other leg will claw straight
 		// back.
 		if (floors.rescueArmed) {
-			wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'sol', floorUsd: floors.solFloor * solPriceUsd });
+			wallets.push({ name: cfg.role, pubkey, sol, usdc, hasWsolAccount, wants: 'sol', floorUsd: floors.solFloor * solPriceUsd });
 		}
 	}
 
 	const { plan, skipped } = planRebalance({ solPriceUsd, wallets });
 	const armed = REBALANCE.enabled;
+	// ?dry=1 → plan only, no key load and no swap. Being disarmed used to be the
+	// only path that did not sign: with ECONOMY_REBALANCE_ENABLED=1 in
+	// production a ?dry=1 preview built, signed and submitted real swaps (hit
+	// 2026-09-04 while previewing this cron). treasury-topup has honored the
+	// same query flag since it shipped and the triage runbook tells an operator
+	// to preview before firing, so the two crons agreeing is what makes that
+	// instruction safe to follow.
+	const dryRun = /[?&]dry=(1|true)\b/.test(req.url || '');
 
-	// Dry run (disabled) — return the plan without touching a key.
-	if (!armed) {
+	// Dry run (disarmed, or asked for): return the plan without touching a key.
+	if (!armed || dryRun) {
 		return json(res, 200, {
 			ok: true,
-			armed: false,
+			armed,
 			mode: 'dry_run',
 			solPriceUsd,
 			wallets: wallets.map((w) => ({
@@ -102,7 +118,9 @@ export default wrapCron(async (req, res) => {
 			})),
 			plan,
 			skipped,
-			note: 'ECONOMY_REBALANCE_ENABLED is not set — no swaps executed',
+			note: armed
+				? 'dry=1: plan only, no swaps executed'
+				: 'ECONOMY_REBALANCE_ENABLED is not set, so no swaps executed',
 		});
 	}
 

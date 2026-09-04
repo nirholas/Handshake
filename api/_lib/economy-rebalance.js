@@ -26,6 +26,15 @@
 import { USDC_MINT_BY_NETWORK, USDC_DECIMALS, jupQuote, buildSwapTx } from './vault-jupiter.js';
 
 export const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+
+// Rent-exemption for the 165-byte wSOL account a usdc->sol swap creates to
+// receive its output. The wallet pays it out of its own lamports inside the
+// swap transaction (refunded when the account closes at the end of the same
+// transaction), so a wallet holding less than this cannot buy SOL at all:
+// simulation dies inside the ATA CreateIdempotent and no swap ever lands.
+export const SWAP_OUTPUT_RENT_LAMPORTS = 1_855_569;
+// Signature fee plus headroom for the extra instructions a swap carries.
+const SWAP_FEE_BUFFER_LAMPORTS = 15_000;
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const USDC_ATOMICS = 10 ** USDC_DECIMALS;
 
@@ -138,7 +147,7 @@ export function resolveSelfPayFloors({ sol, usdc, solPriceUsd, targetSol, usdcFl
  *
  * @param {object} p
  * @param {number} p.solPriceUsd                 live SOL/USD price
- * @param {Array<{name:string,pubkey:string,sol:number,usdc:number,wants:'usdc'|'sol',floorUsd:number,solFloor?:number}>} p.wallets
+ * @param {Array<{name:string,pubkey:string,sol:number,usdc:number,wants:'usdc'|'sol',floorUsd:number,solFloor?:number,hasWsolAccount?:boolean}>} p.wallets
  * @param {object} [p.bounds]                     REBALANCE snapshot (injectable for tests)
  * @returns {{ plan:Array<{name:string,pubkey:string,dir:'sol->usdc'|'usdc->sol',inUsd:number,reason:string}>,
  *             skipped:Array<{name:string,reason:string}> }}
@@ -219,6 +228,25 @@ export function planRebalance({ solPriceUsd, wallets, bounds }) {
 			plannedDir.set(w.pubkey, 'sol->usdc');
 			runRemainingUsd = round(runRemainingUsd - inUsd);
 		} else {
+			// A wallet too poor to open the account its own swap output lands in
+			// can never rescue itself, and planning the leg anyway costs a failed
+			// simulation every run while reporting an opaque `failed` that names
+			// neither the shortfall nor the fix. Measured on the ring payer
+			// 2026-09-04: 1,253,408 lamports against a 1,855,569 rent line, with
+			// 4.18 USDC it could not convert and the whole settle rail down
+			// behind it. Skip with the numbers instead, so the surface an
+			// operator reads says exactly how much SOL unlocks that USDC.
+			// Waived when the wallet already holds a wSOL account: the rent is
+			// paid, the create is a no-op, and only fees remain.
+			const rentFloor = Number.isFinite(B.swapRentLamports)
+				? B.swapRentLamports
+				: SWAP_OUTPUT_RENT_LAMPORTS;
+			const lamports = Math.floor(w.sol * LAMPORTS_PER_SOL);
+			const rentNeeded = rentFloor + SWAP_FEE_BUFFER_LAMPORTS;
+			if (!w.hasWsolAccount && lamports < rentNeeded) {
+				skipped.push({ name: w.name, reason: `below_swap_rent:${lamports}<${rentNeeded}` });
+				continue;
+			}
 			// Convert USDC → SOL, keeping the USDC reserve untouched.
 			const swappableUsdcUsd = Math.max(0, w.usdc - B.usdcReserve);
 			const inUsd = Math.min(shortfallUsd, swappableUsdcUsd, B.perSwapUsd, runRemainingUsd);

@@ -87,6 +87,50 @@ test('dust: a sub-threshold deficit is skipped, not churned', () => {
 	assert.deepEqual(skipped, [{ name: 'hair', reason: 'below_dust_threshold' }]);
 });
 
+// The ordering only decides anything when the master is thin, and that is
+// exactly when it used to decide wrong: production 2026-09-04 held a
+// relayer/treasury bundle wanting 0.98 SOL and the x402 ring payer wanting 0.18,
+// so every top-up under ~1 SOL went entirely to the bundle and left the payer
+// under the hard floor the self-facilitator refuses to settle beneath.
+test('settle-critical first: a thin master funds the fee wallet before a needier float', () => {
+	const targets = [
+		{ name: 'relayer+treasury', pubkey: 'W', currentSol: 0.016894, refillToSol: 1 },
+		{ name: 'x402-ring-payer', pubkey: 'X', currentSol: 0.001253, refillToSol: 0.18, settleCritical: true },
+	];
+	// master 0.1015 → spendable ~0.0695 (reserve 0.02): only one engine fits.
+	const { plan, skipped } = planTopUps(0.101508, targets);
+	assert.equal(plan.length, 1);
+	assert.equal(plan[0].pubkey, 'X');
+	// And the top-up clears the 0.002 SOL settle floor by a wide margin.
+	assert.ok(plan[0].sol + 0.001253 > 0.002);
+	assert.deepEqual(skipped, [{ name: 'relayer+treasury', reason: 'run_cap_reached' }]);
+});
+
+test('settle-critical does not reorder anything once the budget covers both', () => {
+	const targets = [
+		{ name: 'relayer+treasury', pubkey: 'W', currentSol: 0, refillToSol: 1 },
+		{ name: 'x402-ring-payer', pubkey: 'X', currentSol: 0, refillToSol: 0.18, settleCritical: true },
+	];
+	const { plan, skipped } = planTopUps(10, targets);
+	assert.equal(plan.length, 2);
+	assert.equal(plan[0].pubkey, 'X');
+	assert.equal(skipped.length, 0);
+});
+
+// "run_cap_reached" on a master with nothing to give sent operators looking for
+// a cap knob to raise; the fix is capital, and the reason has to say so.
+test('a dry master says it is dry, not that a cap was reached', () => {
+	const { plan, skipped } = planTopUps(0.001508, [
+		{ name: 'relayer+treasury', pubkey: 'W', currentSol: 0.016894, refillToSol: 1 },
+		{ name: 'x402-ring-payer', pubkey: 'X', currentSol: 0.001253, refillToSol: 0.18, settleCritical: true },
+	]);
+	assert.equal(plan.length, 0);
+	assert.deepEqual(
+		skipped.map((s) => s.reason),
+		['master_insufficient_spendable', 'master_insufficient_spendable'],
+	);
+});
+
 test('neediest first: the most-drained engine is planned before a less-needy one', () => {
 	const { plan } = planTopUps(1.5, [
 		{ name: 'small', pubkey: 'S', currentSol: 0.4, refillToSol: 0.5 }, // deficit 0.1

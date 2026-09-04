@@ -120,19 +120,38 @@ export async function loadEconomyMaster() {
  * on-chain writes — so the plan is unit-testable and the cron can log it.
  *
  * @param {number} masterSol            master's current SOL balance
- * @param {Array<{name:string,pubkey:string,currentSol:number,refillToSol:number}>} targets
+ * @param {Array<{name:string,pubkey:string,currentSol:number,refillToSol:number,settleCritical?:boolean}>} targets
  * @returns {{ plan: Array<{name:string,pubkey:string,sol:number}>, skipped: Array<{name:string,reason:string}>, totalSol:number, spendableSol:number }}
  */
 export function planTopUps(masterSol, targets) {
 	const spendableSol = Math.max(0, round(masterSol - sweepFloorSol()));
 	const runCap = Math.min(RUN_CAP_SOL, spendableSol);
-	// Neediest first, so a tight run cap protects the most-drained engines.
-	const ordered = [...targets].sort(
-		(a, b) => b.refillToSol - b.currentSol - (a.refillToSol - a.currentSol),
-	);
+	// Settle-critical wallets first, THEN neediest first, so a tight run cap
+	// protects the most-drained engines within each band.
+	//
+	// Absolute deficit alone ranked the wrong wallet first whenever the master
+	// was thin, which is exactly when the ordering decides anything. Measured
+	// against production on 2026-09-04: the relayer/treasury bundle wanted 0.98
+	// SOL and the x402 ring payer 0.18, so a 0.1, 0.2 or even 0.5 SOL top-up
+	// went entirely to the bundle and left the payer at 0.00125 SOL, under the
+	// 0.002 hard floor the self-facilitator fail-closes on. The rail would have
+	// stayed dead through three separate fundings and only recovered at ~1 SOL.
+	// A float wallet running dry slows a feed; a fee wallet under its floor
+	// stops every payment on the platform, so it is funded first even when its
+	// deficit is smaller.
+	const ordered = [...targets].sort((a, b) => {
+		if (!!a.settleCritical !== !!b.settleCritical) return b.settleCritical ? 1 : -1;
+		return b.refillToSol - b.currentSol - (a.refillToSol - a.currentSol);
+	});
 	const plan = [];
 	const skipped = [];
 	let total = 0;
+	// A master with nothing to give and a run cap that genuinely throttled a
+	// later engine both end the loop with no budget left, and reporting both as
+	// `run_cap_reached` sent operators hunting for a cap knob to raise when the
+	// real answer was to fund the master (production 2026-09-04: spendable 0,
+	// both refill targets reported `run_cap_reached`). Name which one bound.
+	const masterDry = spendableSol < MIN_TOPUP_SOL;
 	for (const t of ordered) {
 		const deficit = round(t.refillToSol - t.currentSol);
 		if (deficit < MIN_TOPUP_SOL) {
@@ -141,7 +160,10 @@ export function planTopUps(masterSol, targets) {
 		}
 		const remaining = round(runCap - total);
 		if (remaining < MIN_TOPUP_SOL) {
-			skipped.push({ name: t.name, reason: 'run_cap_reached' });
+			skipped.push({
+				name: t.name,
+				reason: masterDry ? 'master_insufficient_spendable' : 'run_cap_reached',
+			});
 			continue;
 		}
 		// Clamp to whatever's left in the run cap rather than skipping the engine
