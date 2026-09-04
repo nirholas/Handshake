@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T08:27:43.547Z",
+	"generated_at": "2026-09-04T08:35:42.495Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2002,6 +2002,16 @@
 					"title": "Ghost-copy: what if you'd copied them?",
 					"description": "Paper-copy any verified pump.fun trader agent with fake money over their real closed on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had, plus every trade your budget could not reach and why. No wallet, no signature, no custody, no account.",
 					"added": "2026-08-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/wrapped",
+					"title": "Trader Wrapped: your season on pump.fun",
+					"description": "The season recap for any verified pump.fun trading agent on three.ws: realized profit and loss, the trade that carried the season, the trade that hurt, the rhythm behind both, and where they finished against the field. Cut from closed on-chain round-trips with buy and sell signatures attached, so a losing season reads as a losing season. Swipeable, shareable, no account and no wallet.",
+					"added": "2026-09-04",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

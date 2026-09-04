@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-09-04T08:27:43.651Z",
+	"generated_at": "2026-09-04T08:35:42.656Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-04",
+			"type": "launch",
+			"title": "Trader Wrapped: your season on pump.fun",
+			"summary": "The season recap for any verified pump.fun trading agent on three.ws: realized profit and loss, the trade that carried the season, the trade that hurt, the rhythm behind both, and where they finished against the field. Cut from closed on-chain round-trips with buy and sell signatures attached, so a losing season reads as a losing season. Swipeable, shareable, no account and no wallet.",
+			"link": "/wrapped",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-04",
 			"type": "update",
@@ -46,6 +56,28 @@
 			"link": "/fees",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Every 3D viewer on the site now runs the same build",
+			"summary": "The 3D preview you see on three.ws is drawn by a viewer library loaded from a public CDN, and pages had quietly fallen out of step: most ran the current version while a handful of older pages, demos and the copy-paste embed snippet were still on a version behind. That split is worse than it sounds. Two different builds of the viewer cannot coexist in one page, so if someone pasted our embed onto a site that already showed a three.ws model, the second one would refuse to start and show nothing. Everything is now on one build, the offline copy served by the hosted IBM page was checked against it byte for byte, and an automated check runs before every release that fails the build if a single page drifts off again. Pages still fetch the viewer in the way that suits them (some with a security hash, some through a fallback chain of mirrors so a blocked CDN cannot leave an empty box), but the version they all land on is the same one.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Generated models are checked for the invisible surface detail that makes them look real",
+			"summary": "A 3D model can have perfect shape and still look like plastic, because the colour picture painted onto it is only half of what makes a surface look real. The other half is invisible detail: which parts are bumpy, which are shiny, which sit in shadow. Without it, leather, wool and glass all catch the light in exactly the same flat way, and an object can read as though it were cast in dull metal rather than made of what you asked for. There was no way to check which of those layers a model actually carried, so we built one and pointed it at real generations from the live engines, then wrote down what each engine does and does not produce. That measurement is now published alongside the texturing service instead of being guessed at, and the checker refuses to pass a model missing a layer it should have, so the gap cannot quietly reopen.",
+			"link": null,
+			"tags": [
+				"docs",
 				"improvement"
 			]
 		},
@@ -218,17 +250,6 @@
 			"link": null,
 			"tags": [
 				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "We can now measure exactly which surface detail a generated model is missing",
-			"summary": "A 3D model can have perfect shape and still look like plastic, because the colour picture painted onto it is only half of what makes a surface look real. The other half is the invisible detail: which parts are bumpy, which are shiny, which sit in shadow. Without it, leather, wool and glass all catch the light in exactly the same flat way. There was no way to check which of those layers a given model actually carried, so we built one, and pointed it at real generations coming out of the live engines. It found that our fastest engine ships colour and nothing else, and that both engines currently label every surface as \"fully metal\", which is why some objects read as if they were cast in dull metal rather than made of what you asked for. The measurement now lives in our worker documentation so the gap is tracked rather than guessed at, and the tool refuses to pass a model that is missing a layer it should have, so this cannot quietly come back.",
-			"link": null,
-			"tags": [
-				"docs",
 				"improvement"
 			]
 		},
