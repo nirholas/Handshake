@@ -66,3 +66,26 @@ fn account_discriminators_match_the_js_decoder() {
     assert_eq!(hex(&sha256(b"account:Door")[..8]), EXPECT_DISC_DOOR);
     assert_eq!(hex(&sha256(b"account:KnockRecord")[..8]), EXPECT_DISC_KNOCK);
 }
+
+#[test]
+fn instruction_discriminators_match_the_browser_client() {
+    // Anchor's instruction discriminator is sha256("global:<snake_case_name>")[..8].
+    // The browser builds these by hand in src/knock/escrow-program.js, because
+    // it signs for the sender and the owner directly rather than going through
+    // a server that could move their money. A mismatch here does not fail
+    // loudly on-chain; it dispatches to a DIFFERENT instruction or none at all,
+    // so both sides pin the same eight bytes.
+    for (name, expect) in [
+        ("initialize", "afaf6d1f0d989bed"),
+        ("set_config", "6c9e9aafd4623442"),
+        ("open_door", "0b8c29ba454e37f7"),
+        ("set_door", "e3022b8b592a417a"),
+        ("knock", "fbd9cc537e9b5da3"),
+        ("answer", "48d62c2035de09f4"),
+        ("refuse", "c449f3c611fac816"),
+        ("reclaim", "2cb1ecf9916da3ba"),
+    ] {
+        let disc = &ix_data(name, &[])[..8];
+        assert_eq!(hex(disc), expect, "discriminator for {name}");
+    }
+}
