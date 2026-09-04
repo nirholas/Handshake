@@ -474,7 +474,7 @@ const WEB_VARIANT_MIN_BYTES = 512 * 1024;
 // Below this the variant is not worth a second object: keep storage honest.
 const WEB_VARIANT_MIN_GAIN = 0.9;
 
-export function buildWebVariant({ buffer, creationId, keyPrefix, clientKey }) {
+export function buildWebVariant({ buffer, creationId, keyPrefix }) {
 	if (!buffer?.length || buffer.length < WEB_VARIANT_MIN_BYTES) return Promise.resolve(null);
 	const key = `${keyPrefix}.web.glb`;
 	return Promise.resolve()
@@ -493,7 +493,7 @@ export function buildWebVariant({ buffer, creationId, keyPrefix, clientKey }) {
 					web_glb_url = ${publicUrl(key)},
 					web_size_bytes = ${result.outputBytes},
 					updated_at = now()
-				where id = ${creationId}${clientKey ? sql` and client_key = ${clientKey}` : sql``}
+				where id = ${creationId}
 			`;
 			return { key, url: publicUrl(key), bytes: result.outputBytes };
 		})
@@ -611,7 +611,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 		gradeDeliveredMesh({ buffer: glb.buffer, creationId: existing.id, sourceUrl: glb.publicUrl });
 		// …and a phone-sized delivery variant. See buildWebVariant for why this is
 		// a second object and why it runs after the row is already 'done'.
-		buildWebVariant({ buffer: glb.buffer, creationId: existing.id, keyPrefix, clientKey });
+		buildWebVariant({ buffer: glb.buffer, creationId: existing.id, keyPrefix });
 		// A finished, signed-in creation is a qualifying streak action + the
 		// trigger for the "first creation" badge. Fire-and-forget — never blocks
 		// delivery of the model itself.
@@ -847,7 +847,8 @@ export async function getPublicCreation({ id, voterKey = null }) {
 	if (!forgeStoreEnabled() || !id) return null;
 	try {
 		const rows = await sql`
-			select fc.id, fc.prompt, fc.aspect, fc.glb_url, fc.preview_image_url, fc.outcome,
+			select fc.id, fc.prompt, fc.aspect, fc.glb_url, fc.web_glb_url, fc.web_size_bytes,
+				fc.preview_image_url, fc.outcome,
 				fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path, fc.model_category, fc.created_at,
 				fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 				fc.vote_count, fc.size_bytes, fc.remixable, fc.remix_royalty_bps,
@@ -881,6 +882,11 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			prompt: r.prompt,
 			aspect: r.aspect,
 			glb_url: r.glb_url,
+			// The phone-sized delivery variant, or null when one was never built.
+			// Viewers prefer it and fall back to glb_url; downloads always use
+			// glb_url. See buildWebVariant.
+			web_glb_url: r.web_glb_url ?? null,
+			web_size_bytes: r.web_size_bytes ?? null,
 			preview_image_url: r.preview_image_url,
 			outcome: r.outcome,
 			views_used: r.views_used ?? null,
@@ -1052,7 +1058,7 @@ export async function listCreations({ clientKey, limit = 24 }) {
 	const capped = Math.min(Math.max(Number(limit) || 24, 1), 48);
 	try {
 		const rows = await sql`
-			select id, prompt, aspect, glb_url, preview_image_url, outcome, downloaded,
+			select id, prompt, aspect, glb_url, web_glb_url, preview_image_url, outcome, downloaded,
 				views_used, multiview, backend, tier, path, model_category, created_at
 			from forge_creations
 			where client_key = ${clientKey} and status = 'done' and glb_url is not null
@@ -1064,6 +1070,7 @@ export async function listCreations({ clientKey, limit = 24 }) {
 			prompt: r.prompt,
 			aspect: r.aspect,
 			glb_url: r.glb_url,
+			web_glb_url: r.web_glb_url ?? null,
 			preview_image_url: r.preview_image_url,
 			outcome: r.outcome,
 			downloaded: r.downloaded,
@@ -1117,6 +1124,7 @@ export async function listCreationsByUser({ userId, limit = 24, before } = {}) {
 			type: 'model',
 			prompt: r.prompt,
 			glbUrl: r.glb_url,
+			webGlbUrl: r.web_glb_url ?? null,
 			previewImageUrl: r.preview_image_url,
 			category: r.model_category ?? 'other',
 			isRemix: Boolean(r.parent_creation_id),
@@ -1178,7 +1186,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 	try {
 		const rows = top
 			? await sql`
-				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url,
+				select fc.id, fc.prompt, fc.glb_url, fc.web_glb_url, fc.preview_image_url,
 					fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path,
 					fc.model_category, fc.created_at, fc.vote_count,
 					fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
@@ -1193,7 +1201,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 				limit ${capped}
 			`
 			: await sql`
-				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url,
+				select fc.id, fc.prompt, fc.glb_url, fc.web_glb_url, fc.preview_image_url,
 					fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path,
 					fc.model_category, fc.created_at, fc.vote_count,
 					fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
@@ -1210,6 +1218,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 			id: r.id,
 			prompt: r.prompt,
 			glb_url: r.glb_url,
+			web_glb_url: r.web_glb_url ?? null,
 			preview_image_url: r.preview_image_url,
 			views_used: r.views_used ?? null,
 			multiview: r.multiview ?? null,
@@ -1340,7 +1349,7 @@ export async function listRecentCreations({ limit = 24, before } = {}) {
 	try {
 		const rows = before
 			? await sql`
-				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url, fc.model_category,
+				select fc.id, fc.prompt, fc.glb_url, fc.web_glb_url, fc.preview_image_url, fc.model_category,
 					fc.parent_creation_id, fc.created_at,
 					fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 					u.username, u.display_name, u.avatar_url
@@ -1353,7 +1362,7 @@ export async function listRecentCreations({ limit = 24, before } = {}) {
 				order by fc.created_at desc
 				limit ${capped}`
 			: await sql`
-				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url, fc.model_category,
+				select fc.id, fc.prompt, fc.glb_url, fc.web_glb_url, fc.preview_image_url, fc.model_category,
 					fc.parent_creation_id, fc.created_at,
 					fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 					u.username, u.display_name, u.avatar_url

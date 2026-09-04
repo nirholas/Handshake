@@ -783,10 +783,16 @@ export async function derivePbrChannels(buf, opts = {}) {
 	const report = [];
 
 	// A derived map is written as WebP, so the document has to declare
-	// EXT_texture_webp for the GLB to be valid. Created once and reused for every
-	// derived texture below; a run that derives nothing leaves it unused, and
-	// gltf-transform drops unused extensions on write.
-	doc.createExtension(exts.EXTTextureWebP).setRequired(false);
+	// EXT_texture_webp for the GLB to be valid. Created LAZILY on the first
+	// derived texture: gltf-transform keeps a created-but-unused extension in
+	// extensionsUsed, and a run that derives no map at all (an untextured
+	// vertex-colored mesh, where only the measured factors land) must not ship a
+	// GLB claiming an extension it never uses.
+	let webpExtension = null;
+	const declareWebp = () => {
+		if (!webpExtension) webpExtension = doc.createExtension(exts.EXTTextureWebP).setRequired(false);
+		return webpExtension;
+	};
 
 	// Classify the subject once from the prompt when the caller did not, keeping
 	// the match position: resolveMaterialClass weighs the subject against the
@@ -836,6 +842,7 @@ export async function derivePbrChannels(buf, opts = {}) {
 		if (field && !hasNormal) {
 			const rgb = normalFromHeight(field.luma, field.width, field.height, cls.normalStrength);
 			const webp = await encodeMap(sharp, rgb, field.width, field.height, NORMAL_WEBP);
+			declareWebp();
 			const tex = doc.createTexture(`${name || 'material'}_normal`).setImage(webp).setMimeType('image/webp');
 			material.setNormalTexture(tex);
 			// Match the albedo's UV set, or the derived map samples the wrong atlas.
@@ -852,6 +859,7 @@ export async function derivePbrChannels(buf, opts = {}) {
 			const blurred = boxBlur(half.data, half.width, half.height, Math.max(2, Math.round(half.width / 128)));
 			const rgb = packOrm(half.data, blurred, half.width, half.height, cls);
 			const webp = await encodeMap(sharp, rgb, half.width, half.height, ORM_WEBP);
+			declareWebp();
 			const tex = doc.createTexture(`${name || 'material'}_orm`).setImage(webp).setMimeType('image/webp');
 			const baseInfo = material.getBaseColorTextureInfo();
 			if (!hasMr) {

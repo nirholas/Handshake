@@ -267,3 +267,57 @@ carrying a job token issued while the lane was up, so an unconfigured deployment
 never reports a legitimate token as malformed. Production env vars for
 `three.ws` live on the `three-ws-api` Cloud Run service (`gcloud run services
 describe three-ws-api --region us-central1`), not in a `.env` file.
+
+## PBR channel matrix (what each lane actually emits)
+
+A mesh can be geometrically perfect and still read as plastic, because a glTF
+material carrying only a baseColor atlas has no normal map, no
+roughness/metallic map and no ambient occlusion: a knife blade, a wool sweater
+and a pane of glass then all reflect the viewer's IBL identically. This table is
+the measured state of that gap, not an estimate. Reproduce it with:
+
+```bash
+# one real generation per lane through the live router, then:
+node scripts/inspect-glb-materials.mjs --matrix \
+  --label=trellis_selfhost <glb-url> \
+  --label=hunyuan3d <glb-url>
+```
+
+`scripts/inspect-glb-materials.mjs` prints, per material, which of the five glTF
+metallic-roughness texture slots exist and at what resolution, decoding each
+image header rather than trusting a declared size. It exits `1` when any model is
+missing a channel its own materials imply it should carry, so it doubles as a
+regression gate.
+
+Measured 2026-09-04 against `/api/forge`, prompt "a worn brown leather armchair
+with brass studs", tier `standard`:
+
+| Lane | baseColor | normal | metallicRoughness | occlusion | emissive |
+| --- | --- | --- | --- | --- | --- |
+| `trellis_selfhost` | 2048x2048 | no | no | no | no |
+| `hunyuan3d` | 2048x2048 | no | 2048x2048 | no | no |
+| `triposg` (sketch path) | untextured by design | no | no | no | no |
+
+Two consequences are worth stating plainly, because both are invisible until the
+model is lit:
+
+- Every lane ships `metallicFactor 1.0` and `roughnessFactor 1.0`. On
+  `trellis_selfhost`, which emits no metallicRoughness texture at all, there is
+  nothing to modulate those factors, so a leather armchair renders as fully
+  metallic, fully rough bare metal.
+- Hunyuan3D declares `image/png` on texture bytes that are actually JPEG.
+
+`api/_lib/glb-pbr-derive.js` closes both gaps in one pass, filling only what is
+absent so a lane that starts emitting real normals is never overwritten by an
+estimate. Measured on the same two generations:
+
+| Lane | derived | in | out | wall clock |
+| --- | --- | --- | --- | --- |
+| `trellis_selfhost` | normal, metallicRoughness, occlusion, sheen | 3791 KiB | 5306 KiB | 5.4 s |
+| `hunyuan3d` | normal, occlusion, sheen (mime corrected to JPEG) | 3006 KiB | 4234 KiB | 3.5 s |
+
+Both re-inspect clean: `All 2 model(s) carry a complete PBR set.` Derived map
+size follows the tier (`TIER_DERIVED_SIZE`: draft 1024, standard 2048, high
+4096); the packed occlusion/roughness/metallic texture is written at half that,
+which is standard practice for a low-frequency channel and is why the table above
+shows a 1024 ORM beside a 2048 normal at the standard tier.
