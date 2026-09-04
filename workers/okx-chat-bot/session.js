@@ -9,6 +9,13 @@
 // So readiness here is deliberately strict: a bot that cannot receive a message
 // is NOT ready, even though the process is perfectly alive.
 
+// How long a freshly spawned daemon may go without claiming its lock before the
+// silence counts as a failure. Measured boots take ~11s on this host; a cold
+// container restoring a state tree first is slower, so the window is generous.
+// It only delays the verdict, never the recovery: the supervisor is already
+// restarting a child that truly died.
+const DAEMON_BOOT_GRACE_MS = 90_000;
+
 /** The exact commands a human runs to bring an expired session back. */
 export function loginInstructions(loginUrl, authSessionId) {
 	const url = loginUrl || 'run `onchainos wallet login --phase init` to mint one';
@@ -58,13 +65,30 @@ export function providerInstructions(detail = '') {
  * @param {{ agentCount: number, activeClients: number }} probe.agents
  * @param {boolean} probe.providerCredentialed
  * @param {{ code: string, detail: string }} [probe.providerProbe] what the provider's own API answered
+ * @param {{ pid: number|null, uptimeMs: number }} [probe.daemonChild] supervisor.stats(), so a daemon
+ *   still writing its lock is told apart from one that never came up
  * @returns {{ status: 'ok'|'degraded'|'down'|'unknown', ready: boolean, reason: string, detail: string,
  *   needsHumanLogin: boolean }}
  */
-export function classify({ daemon, wallet, agents, providerCredentialed, providerProbe }) {
+export function classify({ daemon, wallet, agents, providerCredentialed, providerProbe, daemonChild }) {
 	const daemonRunning = typeof daemon === 'string' && daemon.startsWith('running');
 
 	if (!daemonRunning) {
+		// `okx-a2a daemon status` reads a lock file the daemon writes seconds after
+		// it is spawned, so a healthy boot spends a window looking exactly like a
+		// dead one. Calling that window `down` paged critical on every single
+		// restart and then recovered a minute later, and an alert that cries wolf
+		// on every deploy is an alert people learn to skip. A live child inside the
+		// grace window is `unknown`: still not ready, but not yet a claim.
+		if (daemonChild?.pid && daemonChild.uptimeMs < DAEMON_BOOT_GRACE_MS) {
+			return {
+				status: 'unknown',
+				ready: false,
+				reason: 'daemon_starting',
+				detail: `okx-a2a was spawned ${Math.round(daemonChild.uptimeMs / 1000)}s ago and has not claimed its lock yet`,
+				needsHumanLogin: false,
+			};
+		}
 		return {
 			status: 'down',
 			ready: false,

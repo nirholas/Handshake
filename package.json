@@ -407,6 +407,7 @@
 		"claude": "./scripts/claude.sh",
 		"typecheck": "tsc -p jsconfig.json",
 		"okx:bot": "node scripts/okx-bot-revive.mjs",
+		"okx:bot:seed-state": "node scripts/okx-bot-seed-state.mjs",
 		"okx:three-copy": "node scripts/okx-three-copy-check.mjs",
 		"okx:gauntlet": "node scripts/okx-e2e-gauntlet.mjs",
 		"check:conflicts": "node scripts/check-merge-conflicts.mjs",

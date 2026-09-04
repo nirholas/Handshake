@@ -80,8 +80,11 @@ delivered through, restores that identity from GCS on boot, and rebuilds the AI
 subsession's briefing and skills from the image every time. Readiness is strict:
 a bot that cannot receive a buyer's message reports 503 on `/readyz` even though
 the process is alive, because the outage this worker exists to kill is silent.
-Must run `--min-instances=1 --max-instances=1` (single snapshot writer). Run
-locally with `npm run worker:okx-bot`. See [okx-chat-bot/README.md](okx-chat-bot/README.md).
+It also asks the AI provider whether it will actually serve the host, rather than
+checking that a key is present: a credential the provider refuses reads exactly
+like a working one until a buyer's message goes unanswered. Must run
+`--min-instances=1 --max-instances=1` (single snapshot writer). Run locally with
+`npm run worker:okx-bot`. See [okx-chat-bot/README.md](okx-chat-bot/README.md).
 
 ### `robinhood-feed/`
 Robinhood Chain (4663) firehose: watches the NOXA and The Odyssey launchpads

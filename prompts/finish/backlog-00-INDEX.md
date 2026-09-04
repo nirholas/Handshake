@@ -43,7 +43,7 @@ observable health, so 01 to 03 come first.
 | 01 | [x402 settle: clear `fee_runway_exhausted`](backlog-01-x402-settle-runway.md) | capital and the deploy (three more code defects found and fixed 2026-09-04, incl. a thin top-up that funded the wrong wallet) | SOL to the economy master, and the deploy that carries the ordering fix; the config levers are already applied |
 | 05 | [R2 bucket CORS: verify, then fix at the origin](backlog-05-r2-bucket-cors.md) | one credential | mint an R2 admin token |
 | 07 | [BNB testnet: deploy the two finished contracts](backlog-07-bnb-testnet-deploys.md) | one funded EOA | send tBNB to `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (faucet is reCAPTCHA-gated) |
-| 08 | [OKX chat bot: move off the codespace](backlog-08-okx-chat-bot-always-on.md) | nothing | one email OTP login |
+| 08 | [OKX chat bot: move off the codespace](backlog-08-okx-chat-bot-always-on.md) | the deploy (everything it depended on now exists) | approve the deploy; clear the GCP billing hold so replies can be authored |
 | 09 | [Telegram bots: durable hosting for both feeds](backlog-09-telegram-bots-durability.md) | **done**, verified live 2026-09-02 | clear the commit gate on its file update |
 | 10 | [x402scan listing: finish the last three steps](backlog-10-x402scan-listing.md) | the deploy (the facilitator listing itself is live) | approve the deploy, then one wallet signature to re-register the origin |
 
@@ -73,7 +73,15 @@ node with the real `scripts/bnb-testnet-deploy-prove.mjs --broadcast`. Fund that
 the retired 2026-08-02 one.
 08's worker is built and committed; on 2026-09-02 it beat for the first time, from this
 codespace, so `/api/healthz` now carries the `okx_chat_bot` subsystem and reports it as the
-stopgap it is (`hostDurable=false`). The Cloud Run host is still undeployed.
+stopgap it is (`hostDurable=false`). On 2026-09-04 the deploy stopped waiting on a credential
+nobody had: it now authenticates the AI subsession through Vertex with the runtime service
+account, so `--set-secrets` carries only the heartbeat database URL, and the session snapshot
+is seeded and verified so the first boot comes up authenticated rather than paging for an OTP.
+The Cloud Run host is still undeployed, and that is now the only agent-doable step left.
+Read the same day: both AI credentials this project holds are present and refused (Vertex
+`Lightning dunning decision is deny`, a billing hold; the `openai-api-key` account
+`billing_not_active`, which kills the platform's OpenAI lane everywhere, not just here), so a
+deployed host will report the new `ai_provider_unauthorized` until the owner clears billing.
 09 is done: the sibling repository is checked out at `/workspaces/pump-fun-sdk` after all, and
 both feeds were verified running on Cloud Run on 2026-09-02 (`Ready=True`, websocket transport,
 25 h uptime each) while this codespace's own rebuild killed their local processes.

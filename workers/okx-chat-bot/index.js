@@ -45,7 +45,7 @@ const live = {
 	login: null,
 	workspace: null,
 	stateRestore: null,
-	// What the provider's own API last answered. Undefined until the first probe,
+	// What the provider's own API last answered. Null until the first probe lands,
 	// which is why classify() treats a missing verdict as "no opinion" rather than
 	// as a failure: a host must not read red for a probe that has not run yet.
 	providerProbe: null,
@@ -159,6 +159,7 @@ async function runProbe(cfg, supervisor) {
 		agents,
 		providerCredentialed: cfg.providerCredentialed,
 		providerProbe: live.providerProbe,
+		daemonChild: supervisor.stats(),
 	});
 
 	// Mint a fresh login URL only when one is actually needed, and only when we
@@ -252,8 +253,10 @@ async function main() {
 	// Run the first credential probe immediately, but off the boot path: a slow
 	// provider must delay the verdict, never the daemon that receives the chat.
 	probeProviderCredential(cfg).catch((err) => log.warn('provider probe failed', { err: err?.message }));
-	// Give the daemon a moment to bind XMTP before the first verdict, so a normal
-	// boot does not page as "down".
+	// A first verdict early enough to be useful. It can legitimately land before
+	// the daemon has claimed its lock, which classify() reports as
+	// `daemon_starting` rather than `daemon_down`, so an ordinary boot no longer
+	// pages critical and recovers a minute later.
 	setTimeout(probe, 10_000);
 
 	let draining = false;

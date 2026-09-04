@@ -53,6 +53,26 @@ describe('okx-chat-bot session classifier', () => {
 		expect(classify({ ...ONLINE, daemon: 'stale pid=4242 lockPid=4242' }).reason).toBe('daemon_down');
 	});
 
+	// `daemon status` reads a lock the daemon writes seconds after it is spawned,
+	// so every healthy boot passes through a window that looks identical to a dead
+	// daemon. Paging critical there fired on every restart and recovered a minute
+	// later, which teaches people to skip the alert that matters.
+	it('does not page for a daemon that is still claiming its lock', () => {
+		const v = classify({ ...ONLINE, daemon: 'stopped', daemonChild: { pid: 4242, uptimeMs: 8_000 } });
+		expect(v).toMatchObject({ status: 'unknown', ready: false, reason: 'daemon_starting' });
+	});
+
+	// The grace window delays the claim, it does not withdraw it: a child that has
+	// been up for minutes without a lock is genuinely failing to start.
+	it('still calls a daemon down once the boot window has passed', () => {
+		const v = classify({ ...ONLINE, daemon: 'stopped', daemonChild: { pid: 4242, uptimeMs: 300_000 } });
+		expect(v).toMatchObject({ status: 'down', reason: 'daemon_down' });
+	});
+
+	it('calls a daemon with no child at all down immediately', () => {
+		expect(classify({ ...ONLINE, daemon: 'stopped', daemonChild: { pid: null, uptimeMs: 0 } }).reason).toBe('daemon_down');
+	});
+
 	it('flags a logged-out session as needing a human, not a restart', () => {
 		const v = classify({ ...ONLINE, wallet: { loggedIn: false }, agents: { agentCount: 0, activeClients: 0 } });
 		expect(v.status).toBe('down');

@@ -29,11 +29,13 @@ in every state below except `online`.
 
 | `reason` | Status | Ready | What it means |
 |---|---|---|---|
+| `daemon_starting` | unknown | no | The daemon child is alive but has not claimed its lock yet. Deliberately not a page: `daemon status` reads a lock file written seconds after the spawn, so every healthy boot passes through this window. |
 | `daemon_down` | down | no | `okx-a2a` is not running. No chat is delivered. |
 | `wallet_unreadable` | unknown | no | `onchainos wallet status` did not answer. Session state unknown. |
 | `session_logged_out` | down | no | Session expired. Every XMTP client is offline. **Needs a human OTP.** |
 | `no_active_client` | degraded | no | Logged in, but 0 XMTP clients serving. The daemon retries every minute. |
-| `ai_provider_uncredentialed` | degraded | no | Chat arrives but the subsession has no key, so it cannot author a reply. |
+| `ai_provider_uncredentialed` | degraded | no | Chat arrives but no credential is configured, so the subsession cannot author a reply. |
+| `ai_provider_unauthorized` | degraded | no | A credential IS configured and the provider **refuses** it (expired, revoked, or an account that cannot bill). Chat arrives and every reply dies. **Needs a human.** |
 | `online` | ok | yes | At least one XMTP client is serving at least one agent identity. |
 
 `classify()` in [session.js](session.js) is pure, so this state machine is
@@ -46,6 +48,7 @@ testable without a daemon, a wallet, or a network.
 | `index.js` | Entrypoint. Boot order, session probe, heartbeat, ops alerts, graceful shutdown. |
 | `config.js` | Env-driven config (`loadConfig`, `paths`) and AI-provider selection (`resolveProvider`). |
 | `cli.js` | Timeout-bounded, non-throwing wrappers around the `okx-a2a` and `onchainos` binaries. |
+| `provider.js` | Asks the AI provider whether it will actually serve this host, and hands codex its key. |
 | `session.js` | Pure health `classify()` plus `loginInstructions()`, the exact commands a human runs. |
 | `health-server.js` | The HTTP surface: strict `/readyz`, always-200 liveness, and the `remedy` payload. |
 | `state.js` | Tar the wallet/XMTP identity to GCS and restore it on boot (`snapshotState`, `restoreState`). |
@@ -100,6 +103,11 @@ locally with no code change. Defaults are the production posture.
 | `OKX_BOT_STATE_OBJECT` | `okx-chat-bot/state.tar.gz` | Object name within that bucket. |
 | `OKX_BOT_REPO_ROOT` | `/app` | Where the briefing and skills are read from. |
 | `OKX_BOT_AI_PROVIDER` | auto | Pin the provider (`claude`, `codex`, `hermes`, `openclaw`). |
+| `CLAUDE_CODE_USE_VERTEX` | unset | `1` routes the Claude subsession to Vertex AI, authenticated by the runtime service account. The production posture: no secret exists to leak, rotate, or forget. |
+| `ANTHROPIC_VERTEX_PROJECT_ID` | unset | The GCP project Vertex bills. Required alongside the flag above. |
+| `CLOUD_ML_REGION` | `global` | Vertex region for both the subsession and the credential probe. |
+| `OKX_A2A_AI_PERMISSION_PRESET` | unset | `bypass` on a headless host. Without it the subsession stalls on a tool-approval prompt nobody is there to answer, which the buyer experiences as an unresponsive bot. |
+| `OKX_BOT_PROVIDER_PROBE_MS` | `900000` | How often the provider's own API is asked whether the credential still works. |
 | `OKX_BOT_HOST_LABEL` | auto | Name this host on every beat. Cloud Run names itself from `K_SERVICE`. |
 | `OKX_BOT_HOST_DURABLE` | unset | Set to `1` to claim a non-Cloud-Run host stays up on its own. |
 | `OKX_BOT_DAEMON_BIN` | `okx-a2a` | The XMTP daemon binary the supervisor owns. |
@@ -113,12 +121,52 @@ locally with no code change. Defaults are the production posture.
 **Provider selection is by credential, not by preference.** A provider CLI with
 no key spawns, fails to authenticate, and produces exactly the symptom this
 worker exists to kill: silence on the buyer's side. So an explicit
-`OKX_BOT_AI_PROVIDER` wins; otherwise `ANTHROPIC_API_KEY` or
-`CLAUDE_CODE_OAUTH_TOKEN` selects `claude`, and `OPENAI_API_KEY` selects
-`codex`. A developer host carries no key at all: its claude CLI was logged in by
-a human, so an existing `$OKX_BOT_HOME/.claude/.credentials.json` also counts as
-a credential. With no credential at all the worker boots, logs an error, and
-reports `ai_provider_uncredentialed` rather than pretending to be healthy.
+`OKX_BOT_AI_PROVIDER` wins; otherwise Vertex (`CLAUDE_CODE_USE_VERTEX=1` plus a
+project) selects `claude`, then `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`
+selects `claude`, then `OPENAI_API_KEY` selects `codex`. A developer host carries
+no key at all: its claude CLI was logged in by a human, so an existing
+`$OKX_BOT_HOME/.claude/.credentials.json` also counts as a credential. With no
+credential at all the worker boots, logs an error, and reports
+`ai_provider_uncredentialed` rather than pretending to be healthy.
+
+**Vertex wins over every key on purpose.** The credential is the runtime service
+account, reached through ADC, so there is nothing to mint, rotate, paste into a
+secret, or forget to renew, and the spend lands on the GCP credit pool the
+platform already prefers over paid third-party APIs. `three-ws@` holds
+`roles/aiplatform.user`, so the deploy needs no AI secret at all.
+
+**A configured credential is not a working one, and the probe says which.**
+This is the trap that would otherwise rebuild the worker's own defining failure
+one level up. Measured 2026-09-04, *both* credentials this project holds are
+present, well-formed, and refuse to serve: Vertex answers
+`PERMISSION_DENIED: Lightning dunning decision is deny` (a billing hold that
+reads like an IAM problem) and the `openai-api-key` secret's account answers
+`billing_not_active`. A presence check calls either one green, the host reports
+ready, a buyer's message lands, and no reply is ever authored.
+
+So [provider.js](provider.js) asks the provider itself: one tiny request at boot
+and every `OKX_BOT_PROVIDER_PROBE_MS`, classified into `ok`, `unauthorized`,
+`unreachable`, or `unprobed`. Only `unauthorized` fails readiness. `unreachable`
+deliberately does not: a provider outage is transient and self-heals, and paging
+a human for something no human can fix is how alerts stop being read. An
+interactive OAuth grant is `unprobed`, because the CLI refreshes that grant
+itself and no endpoint here can prove it without reimplementing the refresh.
+
+**One thing about Vertex that could not be tested here.** The billing hold denies
+every Vertex call on this project, so the credential probe was verified against
+the real endpoint (it returns the 403 above, and `classifyProbeStatus` calls that
+`unauthorized`) but the spawned subsession's own Vertex round trip was not. When
+the hold clears, watch the first reply: if the CLI reports an unknown model, pin
+one Vertex publishes with `ANTHROPIC_MODEL` on the service (a config-only
+`gcloud run services update --update-env-vars`, which is pre-approved). Nothing
+else about the transport is in question: the URL shape, the region and the
+service account's `roles/aiplatform.user` were all exercised.
+
+**Codex needs a login, not an env var.** Codex >= 0.153 authenticates from
+`~/.codex/auth.json` and ignores `OPENAI_API_KEY` in the environment: with the
+key set and no login, every request fails
+`401 Missing bearer or basic authentication in header`. `loginCodex()` runs
+`codex login --with-api-key` at boot, before the daemon can spawn a subsession.
 
 `DATABASE_URL` is also required, for the heartbeat row.
 
@@ -163,96 +211,94 @@ someone has to go find.
 
 ## Deploying
 
-**Status: running as a stopgap on a developer codespace, not yet deployed.**
-There is no `okx-chat-bot` Cloud Run service in `aerial-vehicle-466722-p5`.
-Two of the three one-time prerequisites now exist (created 2026-09-02):
-`gs://three-ws-okx-bot-state` (versioned, `three-ws@` holds `objectAdmin`) and
-the `okx-chat-bot-database-url` secret (copied from the project's existing
-`DATABASE_URL` secret so the two cannot drift, `three-ws@` holds
-`secretAccessor`). **The one thing still missing is the AI-provider secret**,
-`anthropic-api-key`, whose value exists nowhere on this machine. The deploy
-references it in `--set-secrets` and will fail loudly without it, which is the
-intended trade: a bot that receives buyer chat and cannot answer is worse than a
-refused deploy.
+**Status: built, prerequisites complete, deploy owner-gated.** There is still no
+`okx-chat-bot` Cloud Run service in `aerial-vehicle-466722-p5`; a codespace runs
+the stopgap. Everything the deploy depends on now exists:
 
-Since 2026-09-02 this worker has beat for the first time, from a codespace, so
-`/api/healthz` reports the `okx_chat_bot` subsystem instead of `unknown`. That
-is a stopgap and says so on the wire: every beat carries `host` and
-`hostDurable`, and a beat whose host cannot survive on its own reads as
-**degraded**, never `ok`, with the deploy command as its hint. Calling a
-codespace green would rebuild, one level up, the false-green this worker exists
-to kill.
+| Prerequisite | State |
+|---|---|
+| `gs://three-ws-okx-bot-state` | created 2026-09-02, versioned, `three-ws@` holds `objectAdmin` |
+| `okx-chat-bot-database-url` secret | created 2026-09-02 from the project's own `DATABASE_URL`, `three-ws@` holds `secretAccessor` |
+| AI credential | **no secret needed.** `three-ws@` already holds `roles/aiplatform.user`, so `CLAUDE_CODE_USE_VERTEX=1` in the deploy authenticates through ADC |
+| Seeded session | seeded 2026-09-04, so the first boot restores an authenticated wallet instead of paging for an OTP |
 
-### The first boot pages for an OTP, unless the state object is seeded
+The AI-provider secret used to be the one blocker, and the deploy was written to
+fail loudly without it on the reasoning that a bot receiving chat it can never
+answer is worse than a refused deploy. That was right about the failure and wrong
+about the remedy: the key was never minted, the deploy never happened, and chat
+kept being served by a workspace that dies every night. Vertex removes the trade
+(the credential cannot go missing) and the case the gate really guarded against,
+a credential that is present but refused, is now caught at runtime by the
+credential probe and reported as `ai_provider_unauthorized` with the fix in the
+`remedy`.
 
-`gs://three-ws-okx-bot-state` holds no snapshot yet, so the first revision boots
-logged out and alerts for a human email OTP as `claude@three.ws`. That round trip
-is avoidable: a machine already holding a live session (the codespace stopgap
-does) can write the same archive this worker writes, and the new host then
-restores an authenticated session and comes up online.
+Since 2026-09-02 this worker has beat from a codespace, so `/api/healthz` reports
+the `okx_chat_bot` subsystem instead of `unknown`. That is a stopgap and says so
+on the wire: every beat carries `host` and `hostDurable`, and a beat whose host
+cannot survive on its own reads as **degraded**, never `ok`, with the deploy
+command as its hint. Calling a codespace green would rebuild, one level up, the
+false-green this worker exists to kill.
 
-```bash
-# On the machine holding the live session, with its daemon STOPPED so the sqlite
-# files are quiesced. The worker's SIGTERM path stops it for you.
-OKX_BOT_STATE_BUCKET=three-ws-okx-bot-state node -e "
-  import('./workers/okx-chat-bot/state.js').then(async ({ snapshotState }) => {
-    const { loadConfig } = await import('./workers/okx-chat-bot/config.js');
-    console.log(await snapshotState(loadConfig(), { reason: 'seed' }));
-  })"
-```
-
-Two caveats. The archive carries the wallet keyring and session, so it belongs in
-this private bucket and nowhere else, and `snapshotState` needs
-`GCP_SERVICE_ACCOUNT_JSON` on a machine that is not already on GCP. And the
-bucket has exactly one writer: stop the seeding host before the Cloud Run service
-starts, or the two interleave snapshots. Skipping the seed is not a failure, it
-just leaves the OTP that the first boot would have asked for anyway.
-
-The service must run `--min-instances=1 --max-instances=1`. This is not a
-capacity choice: the GCS snapshot has exactly one writer, and concurrent
-revisions would interleave snapshots and corrupt the identity.
-
-Shipping is one command once the setup below exists:
+### Ship it (one command, after the two steps below)
 
 ```bash
+# 1. Refresh the seeded session from the host that holds it, daemon stopped:
+npm run okx:bot:seed-state -- --apply
+
+# 2. Stop that host. The GCS object has exactly one writer; a codespace stopgap
+#    and the Cloud Run service running at once interleave snapshots.
+
+# 3. Deploy.
 gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml \
   --region us-central1 --project aerial-vehicle-466722-p5 \
   --substitutions=SHORT_SHA=manual$(date +%s) .
 ```
 
 The build pins `three-ws-build@` and the service runs as `three-ws@`; the
-project's default compute service account was deleted, so both pins are
-required. The bucket and secret commands are at the top of
-[cloudbuild.yaml](cloudbuild.yaml).
+project's default compute service account was deleted, so both pins are required.
+The service must run `--min-instances=1 --max-instances=1`. That is not a capacity
+choice: the GCS snapshot has exactly one writer, and concurrent revisions would
+interleave snapshots and corrupt the identity.
 
 Cloud Run's startup probe is wired to `/healthz` and deliberately **not** to
 `/readyz`, for the same reason liveness is always-200.
 
-One-time setup (none of it has run yet; the exact commands are at the top of
-[cloudbuild.yaml](cloudbuild.yaml)):
+### Seeding the session (why the first boot does not page)
 
-1. Create the state bucket and grant the runtime service account
-   `roles/storage.objectAdmin` on it.
-2. Create the `okx-chat-bot-database-url` and `anthropic-api-key` secrets and
-   grant the runtime service account `roles/secretmanager.secretAccessor` on
-   both. The deploy step wires them by name and **fails if either is missing**,
-   which is deliberate: a bot with no AI credential receives buyer chat and
-   never answers it. `OKX_BOT_STATE_BUCKET` needs no manual step, the deploy
-   sets it.
-3. Confirm the image has both CLIs installed and the repo at `OKX_BOT_REPO_ROOT`.
+`gs://three-ws-okx-bot-state` holds a snapshot taken 2026-09-04 from the codespace
+stopgap, verified by restoring it into a throwaway HOME and reading
+`onchainos wallet status` back as `loggedIn: true, claude@three.ws`. So the first
+Cloud Run revision restores an authenticated session and comes up online rather
+than alerting for an email OTP.
 
-Never patch the AI key onto the service by hand. `--set-secrets` in the deploy
-step replaces the whole secret set, so a hand-added key survives exactly until
-the next deploy and then vanishes without a single error line.
+[scripts/okx-bot-seed-state.mjs](../../scripts/okx-bot-seed-state.mjs) (`npm run
+okx:bot:seed-state`) writes that archive from any machine holding a live session.
+It builds the tar from the same exported `STATE_ROOTS` / `STATE_EXCLUDES` the
+worker uses, so the two cannot drift, and uploads it with `gcloud` (the deployed
+host uses ADC; a developer codespace has none). A bare run is plan-only; `--apply`
+uploads. It **refuses to run while the daemon is up**, because a live copy of the
+XMTP sqlite files can tear, and a torn identity costs a human OTP to recover.
 
-The first boot logs `no state snapshot yet: first boot for this bucket` and
-comes up logged out, which pages a human to complete the initial OTP as
-`claude@three.ws`. Every boot after that restores the session.
+The archive carries the wallet keyring and the XMTP identity. It belongs in that
+private bucket and nowhere else.
 
-Shutdown order matters and is handled on SIGTERM: the daemon is stopped
-**before** the final snapshot, so the sqlite files are quiesced rather than
-copied mid-write. The periodic timer snapshot is a live copy and is
-best-effort by design, so an ungraceful kill loses minutes, not the identity.
+Skipping the seed is not a failure; it just leaves the OTP the first boot would
+otherwise have asked for.
+
+### Switching off Vertex
+
+Never patch an AI key onto the service by hand. `--set-secrets` in the deploy step
+replaces the whole secret set, so a hand-added key survives exactly until the next
+deploy and then vanishes without a single error line. To use a key instead of
+Vertex, edit [cloudbuild.yaml](cloudbuild.yaml): drop `CLAUDE_CODE_USE_VERTEX`
+from `--set-env-vars` (it wins over every key) and add
+`ANTHROPIC_API_KEY=anthropic-api-key:latest` to `--set-secrets`, after creating
+that secret and granting `three-ws@` `secretAccessor` on it.
+
+Shutdown order matters and is handled on SIGTERM: the daemon is stopped **before**
+the final snapshot, so the sqlite files are quiesced rather than copied mid-write.
+The periodic timer snapshot is a live copy and is best-effort by design, so an
+ungraceful kill loses minutes, not the identity.
 
 ## Monitoring
 
@@ -282,11 +328,12 @@ URL=$(gcloud run services describe okx-chat-bot --region us-central1 \
 curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" "$URL/readyz" | jq .remedy
 ```
 
-Two signatures are classified in
+Three signatures are classified in
 [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), so `npm run triage:gcp`
 explains them instead of filing them as unknown: `okx-bot-session-logged-out`
-(owner action, needs the OTP) and `okx-bot-daemon-restart` (self-healing unless
-the restart count climbs continuously).
+(owner action, needs the OTP), `okx-bot-provider-unauthorized` (owner action, the
+AI credential is present and refused) and `okx-bot-daemon-restart` (self-healing
+unless the restart count climbs continuously).
 
 A transition into a bad state fires an ops alert through `sendOpsAlert`, at most
 once per `OKX_BOT_ALERT_REPEAT_MS` while it persists, so one overnight expiry
@@ -298,5 +345,6 @@ Daemon stdout and stderr are forwarded into the worker's own log stream under a
 ## Related
 
 - [scripts/okx-bot-revive.mjs](../../scripts/okx-bot-revive.mjs) stages the same workspace locally.
+- [scripts/okx-bot-seed-state.mjs](../../scripts/okx-bot-seed-state.mjs) seeds the GCS session snapshot (`npm run okx:bot:seed-state`).
 - [api/_lib/okx-chat-briefing.js](../../api/_lib/okx-chat-briefing.js) generates the subsession briefing.
 - [workers/README.md](../README.md) is the worker index.

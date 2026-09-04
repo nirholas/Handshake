@@ -89,6 +89,9 @@ PORT=8080 OKX_BOT_REPO_ROOT=/workspaces/three.ws \
 curl -s localhost:8080/readyz     # 200 with health.ready true when chat is deliverable
 ```
 
+If that port is taken the worker exits on `EADDRINUSE` before it ever spawns the daemon, which
+reads as "the bot will not start" rather than "the port is busy". Pick another `PORT`.
+
 Run that way it supervises the daemon itself, beats to `bot_heartbeat` every 30s (so
 `/api/healthz` finally shows the `okx_chat_bot` subsystem instead of `no heartbeat reported
 yet`), and labels every beat `host=codespace:<name>`, `hostDurable=false`, which reads as
@@ -111,11 +114,27 @@ gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml \
 Until that lands, `npm run okx:bot` before an OKX retest window is still the stopgap: a
 codespace cannot stay up on its own, so the local bot dies whenever this workspace sleeps.
 
-Two owner actions remain either way. The wallet OTP is unavoidable (OKX requires a human,
-and it never surfaces as a CLI prompt). The AI-provider credential is what lets the headless
-box author replies at all: set `ANTHROPIC_API_KEY` on the service (preferred), or
-`OPENAI_API_KEY` to run the Codex CLI instead. Without one the host still receives chat and
-reports `ai_provider_uncredentialed` rather than pretending to be healthy.
+**The deploy no longer waits on a credential (2026-09-04).** It used to demand an
+`anthropic-api-key` secret that exists nowhere, so it never ran. The service now authenticates
+the AI subsession through Vertex AI with the runtime service account (`three-ws@` already holds
+`roles/aiplatform.user`), so `--set-secrets` carries only the heartbeat database URL, and the
+session snapshot is seeded in `gs://three-ws-okx-bot-state`, so the first boot restores an
+authenticated wallet rather than paging for an OTP. Before shipping, re-seed from the host that
+holds the live session and stop it: `npm run okx:bot:seed-state -- --apply`, then stop the
+stopgap. That GCS object has exactly one writer.
+
+One owner action beyond the deploy: **the GCP billing hold**. Measured 2026-09-04, both AI
+credentials this project holds are present and refused, Vertex with
+`403 PERMISSION_DENIED: Lightning dunning decision is deny for project: projects/93741856042`
+and the `openai-api-key` secret's account with `429 billing_not_active` (that second one kills
+the platform's OpenAI lane everywhere, not just here). The host no longer takes a configured
+credential on trust: it asks the provider at boot and every 15 minutes and reports
+`ai_provider_unauthorized`, which fails `/readyz`, pages ops, and carries the three ways out in
+the `remedy`. Until billing clears, a deployed host receives chat durably and authors no
+replies. Clearing it needs no redeploy; the next probe flips the verdict on its own.
+
+The wallet OTP remains unavoidable whenever the session does expire (OKX requires a human, and
+it never surfaces as a CLI prompt).
 
 Once deployed, the fix for a logged-out session is readable off the service itself, so
 nobody has to reconstruct it from this runbook:

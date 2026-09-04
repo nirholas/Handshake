@@ -1576,3 +1576,38 @@ Left, and all of it is the owner's:
   ordering.
 - DoD lines 1 to 3 stay open behind those two. Lines 4 to 6 (recurrence guard + test,
   changelog, this log) are done. The prompt file stays on disk.
+
+## 2026-09-04: 08 OKX chat bot always-on
+Measured: `onchainos wallet status` → `loggedIn: true, claude@three.ws` (no OTP needed).
+No `okx-chat-bot` Cloud Run service in `aerial-vehicle-466722-p5` (`gcloud run services
+list`), and no `anthropic-api-key` secret (`gcloud secrets list`), which is what the deploy
+demanded. Both credentials the project does hold refuse to serve: Vertex answers
+`403 PERMISSION_DENIED: Lightning dunning decision is deny for project: projects/93741856042`,
+and the `openai-api-key` secret's account answers `429 billing_not_active` on
+`/v1/chat/completions` while `GET /v1/models` returns 200 with 124 models. The daemon's boot
+log replayed a buyer message with `replayLagMs=71441816`: one message sat ~20 hours
+undelivered while the host was down.
+
+Did: revived the stopgap under the worker's own supervisor (`/readyz` 200, `online`,
+1 XMTP client, heartbeat writing so `/api/healthz` carries `okx_chat_bot` again as degraded
+per `hostDurable=false`). Removed the deploy's missing-secret blocker by making Vertex the
+AI transport (`CLAUDE_CODE_USE_VERTEX=1` on the service; `three-ws@` already holds
+`roles/aiplatform.user`, so there is no secret to mint) and stopped trusting presence as
+proof: `workers/okx-chat-bot/provider.js` asks the provider itself at boot and every 15 min
+and reports `ai_provider_unauthorized`, which fails `/readyz`, pages ops, and carries three
+ways out in the `remedy`. Also fixed codex auth (>=0.153 ignores `OPENAI_API_KEY` and needs
+`codex login --with-api-key`, now run at boot), set `OKX_A2A_AI_PERMISSION_PRESET=bypass` in
+the deploy so a headless subsession cannot stall on an approval prompt, and stopped the
+`daemon_down` false page a booting daemon fired on every restart (90s `daemon_starting`
+grace, observed live before the fix). Seeded the session snapshot with the new
+`npm run okx:bot:seed-state -- --apply` (329,396 bytes, generation 1788505342113858),
+verified by restoring it into a throwaway HOME and reading `loggedIn: true` back, so the
+first Cloud Run boot comes up authenticated. Workspace context verified by asking the
+subsession a platform question: it answered with the real catalog, `$THREE`, Solana and
+agent 2632.
+
+Left: the deploy itself (owner-gated, one command in `workers/okx-chat-bot/README.md` under
+"Ship it"; re-seed and stop the codespace stopgap first, the GCS object has exactly one
+writer), and the GCP billing hold (owner). Until the hold clears a deployed host reports
+`ai_provider_unauthorized`: chat is received and durable, replies are not authored. That is
+loud rather than silent, and clearing the hold needs no redeploy.
