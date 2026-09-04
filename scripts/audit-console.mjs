@@ -458,6 +458,22 @@ function newContext(browser, vp) {
 // the retry, so nothing is excused, only re-measured.
 const BROWSER_GONE = /has been closed|Target closed|browser has (been )?disconnected|Browser closed/i;
 
+// The dev server went away, or the tab died taking the page with it. Either way
+// the reading is about this machine, not about the route.
+const HARNESS_DOWN = /ERR_CONNECTION_REFUSED|ERR_EMPTY_RESPONSE|ERR_CONNECTION_RESET|Page crashed/i;
+
+// Wait for the base URL to answer again, so a route is re-read against a live
+// server rather than blamed for a dead one. Bounded: a server that is gone for
+// good must not stall the sweep.
+async function waitForBase(deadlineMs = 60_000) {
+	const until = Date.now() + deadlineMs;
+	while (Date.now() < until) {
+		if (await probe(`${base}/`, 3000)) return true;
+		await new Promise((r) => setTimeout(r, 2000));
+	}
+	return false;
+}
+
 let browser = await launchBrowser();
 
 // results[viewportKey] = array of per-route result objects
@@ -485,6 +501,17 @@ for (const vpKey of viewportKeys) {
 			recycling = null;
 		});
 		return recycling;
+	};
+
+	// One reading of a route, transparently surviving a browser the machine killed.
+	const recheck = async (route) => {
+		try {
+			return await checkRoute(context, base, route);
+		} catch (e) {
+			if (!BROWSER_GONE.test(e?.message || '')) throw e;
+			await recycle();
+			return checkRoute(context, base, route);
+		}
 	};
 
 	let done = 0;
@@ -524,13 +551,19 @@ for (const vpKey of viewportKeys) {
 	if (failed.length) {
 		console.log(C.y(`\n  re-running ${failed.length} failing route(s) serially\n`));
 		for (const [r, i] of failed) {
-			let again;
-			try {
-				again = await checkRoute(context, base, r.route);
-			} catch (e) {
-				if (!BROWSER_GONE.test(e?.message || '')) throw e;
-				await recycle();
-				again = await checkRoute(context, base, r.route);
+			let again = await recheck(r.route);
+			// A retry that could not reach the dev server, or that crashed the tab,
+			// measured the machine rather than the page. The serial pass walks the
+			// heaviest WebGL routes back to back, which is exactly when a Vite on a
+			// memory-tight box falls over, and on 2026-09-04 eight routes were
+			// reported broken for that reason alone. Wait for the server to answer
+			// again and take a third reading; only then is the result about the page.
+			if (totalErrors(again) > 0 && again.navErrors.some((e) => HARNESS_DOWN.test(e))) {
+				if (await waitForBase()) {
+					again = await recheck(r.route);
+				} else {
+					console.log(C.r(`  ${base} never came back; ${r.route.path} was not measured`));
+				}
 			}
 			const errs = totalErrors(again);
 			if (errs === 0) recovered++;
