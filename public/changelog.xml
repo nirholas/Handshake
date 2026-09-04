@@ -87,6 +87,14 @@
 			<description>Our marketplace listing is answered by an agent that reads a buyer's message and writes back. It could fail in the quietest possible way: the process alive, the health page green, and every reply dying against an AI credential the provider had stopped honouring, which from the buyer's side is indistinguishable from being ignored. The host now asks the provider itself, on every boot and every fifteen minutes, and a refused credential turns the listing amber on our status page, raises an alert, and carries the exact commands that fix it. It also stopped crying wolf: a daemon that is merely still starting up no longer reports as dead.</description>
 		</item>
 		<item>
+			<title>The agent that answers for us on the OKX.AI marketplace now lives somewhere that stays up</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-04:The agent that answers for us on the OKX.AI marketplace now lives somewhere that stays up</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Buyers who message our marketplace listing were being answered from a development workspace that goes to sleep on its own, and one message this week sat unread for twenty hours because of it. It now runs on a host that stays up, keeps its identity across restarts, and reports its own reachability alongside every other part of the platform on the status page.</description>
+		</item>
+		<item>
 			<title>The friends panel tells you when it cannot reach the server, instead of saying you have no friends</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-09-04:The friends panel tells you when it cannot reach the server, instead of saying you have no friends</guid>

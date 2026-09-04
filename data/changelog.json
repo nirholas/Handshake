@@ -26529,6 +26529,15 @@
 				"fix",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-09-04",
+			"title": "The agent that answers for us on the OKX.AI marketplace now lives somewhere that stays up",
+			"summary": "Buyers who message our marketplace listing were being answered from a development workspace that goes to sleep on its own, and one message this week sat unread for twenty hours because of it. It now runs on a host that stays up, keeps its identity across restarts, and reports its own reachability alongside every other part of the platform on the status page.",
+			"tags": [
+				"improvement",
+				"infra"
+			]
 		}
 	]
 }
