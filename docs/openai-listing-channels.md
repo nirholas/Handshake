@@ -106,6 +106,8 @@ In order: rebase onto `main` and resolve `registry.yaml` and `authors.yaml` by h
 
 The nearest self-serve adjacent surface is the [OpenAI Developer Community](https://community.openai.com) "Use cases and examples" category. No gate, indexed by search, and legitimate to post a build writeup to.
 
+Two drafts are written and waiting for that surface: [openai-community-3d-studio-post.md](./openai-community-3d-studio-post.md) (the original Apps SDK plus Actions build writeup) and [openai-community-physical-world-post.md](./openai-community-physical-world-post.md) (the follow-up: the eleven keyless tools, the vision and simulation-readiness surfaces built on top of them, and the design rules for tools that spend money or move physical objects).
+
 ---
 
 ## 5. Grove: wrong stage, note it and move on

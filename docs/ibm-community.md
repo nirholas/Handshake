@@ -164,6 +164,14 @@ The group's first pure troubleshooting thread, and the most SEO-shaped one. Cove
 
 A first-run walkthrough of the Forge from a user's perspective, no account, wallet, or API key required. The flow: open three.ws/forge, describe a single object with explicit materials ("a glazed ceramic teapot"), pick a quality tier (Draft, about 15 seconds and 12k triangles; Standard, about 1 minute and 30k; High, about 2 minutes and 200k), generate, preview in the live viewer, then download the GLB for Blender, Unity, Unreal, or three.js, or open it in AR on a phone. Prompt advice: one object per prompt, name the materials, skip scenes and backgrounds. The developer section covers the keyless HTTP API and the MCP server, and links the text-to-3D tutorial, prompt recipes, the image-to-3D guide, and the HTTP API docs. Invites readers to share results and prompts.
 
+## Drafts written, not yet posted
+
+| Draft | Subject |
+|---|---|
+| [ibm-community-governed-agents-post.md](./ibm-community-governed-agents-post.md) | Granite Guardian as an action veto once agents can control a home, ride in a car, and order a manufactured object; the watsonx.ai surface map; the quarter's shipping recap; and the group's next event question |
+
+The draft carries the framing rules from [ibm.md](./ibm.md) in its frontmatter, including which section to cut first if the group's no-crypto-cluster rule is applied strictly.
+
 ## Keeping this catalog current
 
 When a new post lands in the group, add it here in digest order with the same fields (author, date, activity, URL, faithful summary) and refresh the snapshot table's date and counts. The sources of truth are the [digest viewer](https://community.ibm.com/community/user/groups/community-home/digestviewer?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) for threads and the [recent blogs page](https://community.ibm.com/community/user/groups/community-home/recent-community-blogs?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) for blogs. The posting cadence and topic rules for the group itself live in the [SEO keyword plan](./ops/seo-keyword-plan.md) and in [ibm.md](./ibm.md).
