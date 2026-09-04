@@ -44,7 +44,7 @@
 			--border: rgba(255, 255, 255, 0.08);
 			--border-hi: rgba(255, 255, 255, 0.22);
 			--danger: #f87171;
-			--green: #4ade80;
+			--green: var(--success, #4ade80);
 			--radius: 14px;
 		}
 
@@ -533,7 +533,7 @@
 		}
 		.irl-status.is-hidden { opacity: 0; }
 		.irl-status.is-error { color: var(--danger); }
-		.irl-status.is-warn { color: #fbbf24; }
+		.irl-status.is-warn { color: var(--warn, #fbbf24); }
 		.irl-status-spinner {
 			width: 13px;
 			height: 13px;
@@ -693,7 +693,7 @@
 		#irl-clear-btn { color: var(--danger); border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.06); }
 		#irl-clear-btn:hover { background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.5); }
 		#irl-lock-btn.is-active {
-			color: #fbbf24;
+			color: var(--warn, #fbbf24);
 			border-color: rgba(251,191,36,0.45);
 			background: rgba(251,191,36,0.1);
 		}
@@ -728,7 +728,7 @@
 		#irl-ghost-toggle.is-active:hover { background: rgba(120,170,255,0.2); }
 		/* WebXR floor-anchor entry — accent it as the premium placement path */
 		#irl-anchor-btn {
-			color: #c4b5fd;
+			color: var(--accent-violet, #c4b5fd);
 			border-color: rgba(155,140,255,0.4);
 			background: rgba(155,140,255,0.08);
 		}
@@ -941,7 +941,7 @@
 		#irl-nearby-badge[hidden] { display: none; }
 		/* Refresh-failed indicator (E4) — the nearby poll couldn't reach the server. */
 		#irl-nearby-badge.is-error {
-			color: #fbbf24;
+			color: var(--warn, #fbbf24);
 			background: rgba(251,191,36,0.12);
 			border-color: rgba(251,191,36,0.38);
 		}
@@ -1021,7 +1021,7 @@
 		}
 		.irl-net-pill.is-live::before { box-shadow: 0 0 6px currentColor; }
 		.irl-net-pill.is-connecting {
-			color: #fbbf24;
+			color: var(--warn, #fbbf24);
 			background: rgba(251,191,36,0.12);
 			border-color: rgba(251,191,36,0.38);
 		}
@@ -1031,7 +1031,7 @@
 		   degraded, tap to retry" rather than greyed-out/off. Amber also clears AA
 		   against the dark pill, where the old grey #9aa6b2 did not. */
 		.irl-net-pill.is-polling {
-			color: #fbbf24;
+			color: var(--warn, #fbbf24);
 			background: rgba(251,191,36,0.12);
 			border-color: rgba(251,191,36,0.38);
 			cursor: pointer;
@@ -1261,7 +1261,7 @@
 			pointer-events: none;
 		}
 		.irl-radar-hint[hidden] { display: none; }
-		.irl-radar-hint.is-error { color: #fbbf24; }
+		.irl-radar-hint.is-error { color: var(--warn, #fbbf24); }
 
 		/* Agent interaction bottom sheet */
 		#irl-sheet {
@@ -1563,7 +1563,7 @@
 		/* Expiry chip in the meta line — countdown for anonymous pins, "permanent"
 		   for signed-in ones. Near-expiry (≤24h) shifts amber to draw the eye. */
 		.irl-pin-exp { color: #9ca3af; }
-		.irl-pin-exp.is-soon { color: #fbbf24; }
+		.irl-pin-exp.is-soon { color: var(--warn, #fbbf24); }
 		.irl-pin-exp.is-perm { color: #9ca3af; }
 
 		/* Owned-pins overview map — a lazy Leaflet map above the list. Hidden until
@@ -1584,7 +1584,7 @@
 		.irl-mypins-map .leaflet-control-attribution a { color: #9cf; }
 		.irl-mypins-map .leaflet-marker-icon.irl-mypins-pin { background: none; border: none; }
 		/* Gold dot marker — matches the "your agent" gold used on nearby labels */
-		.irl-mypins-marker { width: 14px; height: 14px; border-radius: 50%; background: #fbbf24; border: 2px solid rgba(12,14,20,0.9); box-shadow: 0 0 0 2px rgba(251,191,36,0.45), 0 0 10px rgba(251,191,36,0.55); cursor: pointer; }
+		.irl-mypins-marker { width: 14px; height: 14px; border-radius: 50%; background: var(--warn, #fbbf24); border: 2px solid rgba(12,14,20,0.9); box-shadow: 0 0 0 2px rgba(251,191,36,0.45), 0 0 10px rgba(251,191,36,0.55); cursor: pointer; }
 		/* Row flash when its marker is tapped */
 		.irl-pin-row.is-highlight { animation: irl-pin-flash 1.6s ease-out; }
 		@keyframes irl-pin-flash {
@@ -1658,7 +1658,7 @@
 		/* Own agent label: gold border to differentiate from others' */
 		.irl-agent-label.is-own {
 			border-color: rgba(251,191,36,0.6);
-			color: #fbbf24;
+			color: var(--warn, #fbbf24);
 			box-shadow: 0 0 10px rgba(251,191,36,0.2);
 		}
 		.irl-agent-label.is-own.is-aware {
@@ -1834,7 +1834,7 @@
 			color: #cbd5e1;
 			font-variant-numeric: tabular-nums;
 		}
-		.irl-rep-star { color: #fbbf24; }
+		.irl-rep-star { color: var(--warn, #fbbf24); }
 		.irl-rep-strip .irl-rep-sep { color: #4b5563; }
 		.irl-rep-strip b { color: #e5e7eb; font-weight: 700; }
 		/* "New here — no on-chain reputation yet" muted chip */
@@ -1854,7 +1854,7 @@
 		.irl-taptip { margin-top: 10px; }
 		.irl-taptip-toggle {
 			display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
-			appearance: none; cursor: pointer; font: 700 12px/1 inherit; color: #c4b5fd;
+			appearance: none; cursor: pointer; font: 700 12px/1 inherit; color: var(--accent-violet, #c4b5fd);
 			background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.32);
 			border-radius: 999px; padding: 9px 14px; transition: background .15s, border-color .15s;
 		}
@@ -1872,7 +1872,7 @@
 		.irl-taptip-cap { font-size: 12px; color: #9ca3af; margin-bottom: 10px; line-height: 1.4; }
 		.irl-taptip-open {
 			display: inline-flex; align-items: center; gap: 4px; font: 700 12px/1 inherit; text-decoration: none;
-			color: #0a0a0a; background: linear-gradient(135deg,#c4b5fd,#a78bfa); border-radius: 999px; padding: 9px 14px;
+			color: #0a0a0a; background: linear-gradient(135deg,var(--accent-violet, #c4b5fd),var(--accent-violet-strong, #a78bfa)); border-radius: 999px; padding: 9px 14px;
 			transition: filter .15s;
 		}
 		.irl-taptip-open:hover { filter: brightness(1.07); }
@@ -2004,7 +2004,7 @@
 			border-radius: 11px;
 			border: 1px solid rgba(139,92,246,0.4);
 			background: rgba(139,92,246,0.18);
-			color: #c4b5fd;
+			color: var(--accent-violet, #c4b5fd);
 			font: inherit; font-size: 14px; font-weight: 600;
 			cursor: pointer; transition: background 0.15s, opacity 0.15s;
 		}

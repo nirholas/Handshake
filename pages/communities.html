@@ -106,9 +106,9 @@
 			.name-field input:focus, .url-field input:focus {
 				outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
 			}
-			.url-field input.is-error { border-color: #f87171; }
+			.url-field input.is-error { border-color: var(--danger, #f87171); }
 			.url-field { margin-top: 14px; }
-			.field-error { font-size: 12px; min-height: 16px; margin-top: 6px; color: #f87171; }
+			.field-error { font-size: 12px; min-height: 16px; margin-top: 6px; color: var(--danger, #f87171); }
 			.field-error.is-ok { color: #34d399; }
 
 			.avatar-row { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -195,8 +195,8 @@
 				font: inherit; font-size: 13px; font-family: ui-monospace, monospace; transition: border-color .15s, box-shadow .15s;
 			}
 			#mint-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-			#mint-input.is-error { border-color: #f87171; }
-			.mint-error { color: #f87171; font-size: 12px; min-height: 16px; margin-top: 6px; }
+			#mint-input.is-error { border-color: var(--danger, #f87171); }
+			.mint-error { color: var(--danger, #f87171); font-size: 12px; min-height: 16px; margin-top: 6px; }
 
 			.primary-btn {
 				padding: 11px 20px; border-radius: 11px; border: none; cursor: pointer;
@@ -255,7 +255,7 @@
 			.cp-trade + .cp-trade { border-top: 1px solid var(--panel-border); }
 			.cp-trade-side { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 8px; border-radius: 6px; }
 			.cp-trade-side.buy { color: #34d399; background: rgba(52,211,153,0.12); }
-			.cp-trade-side.sell { color: #f87171; background: rgba(248,113,113,0.12); }
+			.cp-trade-side.sell { color: var(--danger, #f87171); background: rgba(248,113,113,0.12); }
 			.cp-trade-user { font-family: ui-monospace, monospace; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 			.cp-trade-amt { font-variant-numeric: tabular-nums; font-weight: 600; }
 			.cp-trade-time { color: var(--muted-2); font-size: 11px; font-variant-numeric: tabular-nums; }

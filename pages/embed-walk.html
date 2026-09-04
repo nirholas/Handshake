@@ -102,7 +102,7 @@
 		}
 		.ew-input:focus, .ew-select:focus { border-color: var(--accent); }
 		.ew-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
-		.ew-select option { background: #1a1a1a; }
+		.ew-select option { background: var(--bg-1, #1a1a1a); }
 
 		.ew-radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
 		.ew-radio-group label {
@@ -260,7 +260,7 @@
 			font-family: var(--font);
 		}
 		.ew-copy-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-		.ew-copy-btn.copied { color: #4ade80; border-color: rgba(74,222,128,0.3); }
+		.ew-copy-btn.copied { color: var(--success, #4ade80); border-color: rgba(74,222,128,0.3); }
 
 		.ew-note {
 			font-size: 12px;

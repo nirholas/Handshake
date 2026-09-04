@@ -193,7 +193,7 @@
 				white-space: pre;
 			}
 			.snippet .tag { color: #7dd3fc; }
-			.snippet .attr { color: #fbbf24; }
+			.snippet .attr { color: var(--warn, #fbbf24); }
 			.snippet .val { color: #86efac; }
 			.copy-btn {
 				margin-top: 12px;
@@ -237,16 +237,16 @@
 				flex: 0 0 auto;
 				background: var(--dim);
 			}
-			.preview-status[data-state='loading'] .dot { background: #fbbf24; }
-			.preview-status[data-state='ready'] .dot { background: #4ade80; }
+			.preview-status[data-state='loading'] .dot { background: var(--warn, #fbbf24); }
+			.preview-status[data-state='ready'] .dot { background: var(--success, #4ade80); }
 			.preview-status[data-state='error'] {
 				border-color: rgba(248, 113, 113, 0.45);
 				background: rgba(248, 113, 113, 0.08);
 				color: #fecaca;
 			}
-			.preview-status[data-state='error'] .dot { background: #f87171; }
+			.preview-status[data-state='error'] .dot { background: var(--danger, #f87171); }
 			.preview-status[data-state='degraded'] { border-color: rgba(251, 191, 36, 0.4); }
-			.preview-status[data-state='degraded'] .dot { background: #fbbf24; }
+			.preview-status[data-state='degraded'] .dot { background: var(--warn, #fbbf24); }
 			.preview-status button {
 				margin-left: auto;
 				appearance: none;

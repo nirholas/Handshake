@@ -15,10 +15,10 @@
 	<style>
 		:root {
 			--bg: #000000; --bg2: #0a0a0a; --text: #e8e8e8; --text-2: #8a8a92; --text-3: #555;
-			--accent: #c4b5fd; --accent-2: #7a6cf0; --panel: rgba(255,255,255,0.04);
+			--accent: var(--accent-violet, #c4b5fd); --accent-2: #7a6cf0; --panel: rgba(255,255,255,0.04);
 			--border: rgba(255,255,255,0.08); --border-hi: rgba(255,255,255,0.22);
-			--danger: #f87171; --green: #4ade80; --gold: #fbbf24; --radius: 16px;
-			--easy: #4ade80; --medium: #fbbf24; --hard: #f87171;
+			--danger: #f87171; --green: var(--success, #4ade80); --gold: var(--warn, #fbbf24); --radius: 16px;
+			--easy: var(--success, #4ade80); --medium: var(--warn, #fbbf24); --hard: #f87171;
 		}
 		* { box-sizing: border-box; }
 		html, body { margin: 0; background: var(--bg); color: var(--text);
