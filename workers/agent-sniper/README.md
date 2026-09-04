@@ -88,6 +88,7 @@ Enforced in `executeBuy`, short-circuiting before any transaction:
 9. **Market-cap band (owner rule)** — buy only inside a market-cap window. Enforced at the `executeBuy` chokepoint (`marketCapBandReason`), so `new_mint`, `intel`, `alpha`, `first_claim`, `radar` and `swarm` all obey it. **Fails closed**: a coin whose market cap can't be confirmed inside the band is skipped, not bought. A per-strategy `min/max_market_cap_usd` only *tightens* the fleet-wide floor/ceil (`SNIPER_MIN_MC_FLOOR_USD` / `SNIPER_MAX_MC_CEIL_USD`) — it can never loosen it. On a blind `new_mint` snipe the create-event cap is ~$4k, so a $10k floor correctly rejects brand-new launches; use the `intel_confirmed` trigger to buy a coin *after* it pumps into the band.
 10. **Realized-loss circuit breaker (portfolio layer)** — once an agent's **net realized loss over the trailing 24 h** crosses its cap, it stops opening new positions for the rest of the window. Catches a fleet that bleeds one losing entry at a time — each trade passes the per-trade caps yet the wallet still grinds down. A profitable or break-even day never trips it; a DB hiccup never blocks (the lamports caps stay the backstop). The fleet-wide `SNIPER_MAX_DAILY_LOSS_SOL` protects every agent at once and is tightened by an optional per-strategy `daily_loss_limit_lamports`. **The same breaker gates the auto-funder** — a wallet past its loss cap stops being refilled, so the master can't keep pouring SOL after a wallet that only loses.
 11. **Agent scoping** — `SNIPER_AGENT_IDS` restricts the worker to a specific set of agents, so a bounded run against the shared DB can't act on every other armed strategy.
+12. **Adversarial Risk Officer**: the last gate, and the only one that is not a number. See the section below. **Off by default in the sense that matters**: it reviews, but it does not enforce until an owner arms it.
 
 > **Wallet/funds pre-check.** An agent with no wallet or too little SOL is skipped
 > *before* the idempotency claim, so it leaves no `failed` position row — those
@@ -139,6 +140,88 @@ Enforced in `executeBuy`, short-circuiting before any transaction:
 > To clear positions already parked without waiting for a worker deploy:
 > `node scripts/sniper-reconcile-wedged.mjs` (re-reads every real on-chain balance
 > and skips anything still holding tokens).
+
+## Adversarial Risk Officer
+
+Every guardrail above answers a question with a number: is the market cap inside
+the band, is the impact under the ceiling, does the round-trip simulation revert.
+None of them asks the question a human risk desk asks last: *knowing everything
+we know, is this specific trade still a good idea?*
+
+`risk-officer.js` is that second opinion, and it is deliberately **adversarial**.
+It is not the buy-side judge (`llm-judge.js`) run twice. The judge is looking for
+a reason to buy; the officer is shown the proposed trade **plus the judge's own
+thesis** and told to assume the trade is bad until the facts prove otherwise.
+That asymmetry is the whole value. Running the same optimistic prompt again would
+only launder the first answer.
+
+It runs at the end of `executeBuy`, after the quote and after the firewall, so it
+sees the real price impact and the real safety verdict rather than estimates.
+
+### Levels
+
+| Level | Behaviour |
+|---|---|
+| `shadow` (default) | The review runs and is recorded, and **nothing changes**. Fire-and-forget, so it adds **zero latency** to the buy path. |
+| `enforce` | Awaited before the broadcast. A `block` severity kills the buy; a smaller `size_adjustment` shrinks it. |
+| `off` | Never called. |
+
+Set fleet-wide with `SNIPER_RISK_OFFICER`; a strategy's own `risk_officer_level`
+column overrides it. An unrecognised value on a row degrades to `shadow` and
+stops there rather than falling through to the env default, so a typo in one
+strategy can never silently arm enforcement.
+
+**Shadow is the default on purpose.** Enforcement decides what the live fleet
+buys with real SOL, so arming it is an owner decision, not a deploy-time default.
+Shadow mode is how that decision gets its evidence: `sniper_risk_reviews`
+accumulates the vetoes the officer *would* have cast against the positions that
+actually opened, and those positions' realized P&L answers whether it was right.
+
+```sql
+-- Would the officer have made money? Join its shadow calls to what happened.
+select r.severity,
+       count(*)                                            as trades,
+       round(avg(p.realized_pnl_lamports) / 1e9, 5)        as avg_pnl_sol
+  from sniper_risk_reviews r
+  join agent_sniper_positions p on p.id = r.position_id
+ where r.level = 'shadow' and p.status = 'closed'
+   and p.realized_pnl_lamports is not null
+ group by r.severity;
+```
+
+If the `block` row's average P&L is meaningfully worse than the `none` row's, the
+officer is catching real losers and is worth arming. If it is not, it is noise
+and should stay in shadow. That table is the argument, in either direction.
+
+### It fails OPEN, unlike the firewall
+
+The firewall *proves* a coin is not a honeypot, so an unavailable firewall must
+block: "couldn't prove it's safe" is not "safe". The officer is a judgment layer
+sitting **behind** that proof. If the model is down, timed out, saturated, or
+answers with something unparseable, every mechanical gate has already passed and
+the trade proceeds unchanged, with a `degraded` row in the ledger. A reviewer
+outage must never become a fleet-wide halt.
+
+### Sizing
+
+The officer is told to prefer a smaller size over a full veto when the concern is
+size-shaped rather than existential. A size adjustment may only ever **shrink**
+the trade: a suggestion at or above the proposed size is ignored, and one below
+the network minimum clamps up to that floor rather than aborting, because the
+officer asked for less risk, not for no trade. After a cut the trade is re-quoted
+so the recorded entry impact describes the buy that was actually sent.
+
+### Which brain reviews
+
+Unset by default, and that default is deliberate: with no model named the officer
+asks the platform's own free-first chain (`llmComplete`), which leads with Vertex
+Claude on GCP credits where that is enabled. That keeps it independent of the
+judge, which routes `strat.llm_model` through OpenRouter. Naming a model
+(`SNIPER_RISK_OFFICER_MODEL`, or a strategy's `risk_officer_model`) routes the
+review through OpenRouter first and keeps the platform chain as the backstop.
+The ledger records both who was asked (`model`) and who actually answered
+(`answered_by`).
+
 
 ## Exit reasons
 
@@ -231,6 +314,10 @@ scoreboard renders it as the "Judgment ledger" section on /sniper/experiments.
 | `SNIPER_LLM_TIMEOUT_MS` | | `9000` | Per-verdict LLM time budget. |
 | `OPENROUTER_API_KEY` | llm arms | unset | One key serves every experiment model; the free-first `llmComplete` chain backstops an outage. |
 | `SNIPER_AGENT_IDS` | | — | Comma/space-separated agent UUID allowlist. Unset = all agents for the network. |
+| `SNIPER_RISK_OFFICER` | | `shadow` | Fleet-wide default level for the adversarial Risk Officer: `shadow` reviews and records without changing the trade, `enforce` lets a veto abort the buy, `off` skips it. A strategy's `risk_officer_level` overrides it. |
+| `SNIPER_RISK_OFFICER_MODEL` | | unset | Route the review through OpenRouter on this model. Unset (default) asks the platform's free-first chain instead, which prefers GCP-credit Vertex Claude where enabled. |
+| `SNIPER_RISK_OFFICER_TIMEOUT_MS` | | `6000` | Per-review time budget. The review sits between a quote and a broadcast; an officer that answers late has already answered wrong. |
+| `SNIPER_RISK_OFFICER_MAX_CONCURRENT` | | `3` | Concurrent reviews. Past the cap the buy proceeds unreviewed (fail open), never queued. |
 | `SNIPER_MIN_MC_FLOOR_USD` | | — | Fleet-wide market-cap floor (USD). Buys below it are skipped across every agent; a per-strategy `min_market_cap_usd` only tightens it. Unset = no floor. |
 | `SNIPER_MAX_MC_CEIL_USD` | | — | Fleet-wide market-cap ceiling (USD). Buys above it are skipped; a per-strategy `max_market_cap_usd` only tightens it. Unset = no ceiling. |
 | `SNIPER_MAX_DAILY_LOSS_SOL` | | — | Fleet-wide realized-loss cap (SOL) per trailing 24 h. An agent past it stops opening positions AND stops being auto-funded. Tightened by per-strategy `daily_loss_limit_lamports`. Unset = no cap. |

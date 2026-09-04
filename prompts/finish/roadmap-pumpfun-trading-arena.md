@@ -20,15 +20,30 @@
 > Section 9's named blocker, AMM exits on graduated positions, is done
 > (`workers/agent-sniper/amm-exit.js`).
 >
-> **One item remains: Prompt D, the adversarial Risk Officer** (section 6). The
-> executor enforces several real pre-trade gates today (Mayhem exclusion, the oracle
-> gate, the token-intel gate, market-realness, the trade firewall's buy/sell
-> round-trip, budgets and concurrency), but none of them is the independent
-> second-opinion LLM veto with a `size_adjustment` that this section specifies.
-> It is deliberately unbuilt: it would change what the live fleet buys with real
-> funds, so arming it is an owner call under stop-and-ask gate 1, not a
-> session-end addition. **Owner: owner decision to arm.** Everything else in this
-> plan is live.
+> **Prompt D, the adversarial Risk Officer (section 6), is now BUILT**
+> (`workers/agent-sniper/risk-officer.js`, migration
+> `20260904020000_sniper_risk_officer.sql`, tests `tests/sniper-risk-officer.test.js`).
+> It is the independent second opinion the executor's other gates (Mayhem
+> exclusion, the oracle gate, the token-intel gate, market-realness, the trade
+> firewall's buy/sell round-trip, budgets and concurrency) cannot be: it runs last
+> in `executeBuy`, sees the real price impact and the real firewall verdict plus
+> the judge's own thesis, and is told to assume the trade is bad until the facts
+> prove otherwise. It carries the `size_adjustment` this section specifies, which
+> may only ever shrink a trade.
+>
+> **It ships DISARMED, and that resolves the gate rather than deferring it.** The
+> level defaults to `shadow` on every strategy: the review runs fire-and-forget,
+> records into `sniper_risk_reviews`, and changes nothing about what the live
+> fleet buys, so shipping it is not a spend decision. Shadow rows join to the
+> positions that actually opened, so their realized P&L is the evidence for or
+> against arming it (the query is in `workers/agent-sniper/README.md`).
+>
+> **Owner: two owner-gated steps remain, both by design.** (1) Deploy the
+> agent-sniper worker so shadow evidence starts accumulating in production (gate
+> 2). (2) Once that evidence justifies it, arm enforcement with
+> `SNIPER_RISK_OFFICER=enforce` fleet-wide, or per strategy via
+> `risk_officer_level` (gate 1: it changes what real SOL buys). Everything else in
+> this plan is live.
 **The only coin this platform promotes is `$THREE` (`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`).** Pump.fun coins traded/launched through the platform are user runtime data, never endorsements.
 
 ---
