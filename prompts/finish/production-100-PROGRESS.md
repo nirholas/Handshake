@@ -86,6 +86,75 @@ none retirable on mechanical evidence) and the state of the four sweeps and the 
 slice. Probe artifacts stayed in the session scratchpad; the reproducible method is in
 `docs/ops/swarm-100-audit.md`.
 
+## 2026-09-04 (later pass) · OWNER-ACTIONS re-measurement: one row cleared, two freed, one premise inverted
+
+`gcloud` answered every call in this session with no re-auth, which is the third
+consecutive observation that row 15 is intermittent rather than standing. The
+backlog it had been holding was drained rather than re-reported.
+
+**Row 18 is cleared and deleted.** `MULTIPLAYER_INTERNAL_URL` was genuinely unset
+(`read-service-env.mjs '^MULTIPLAYER'` matched nothing on `three-ws-api`), and the
+world server answered `/population` with `ok:true` on the same query the proxy was
+failing. Before setting it, the shared-secret half was checked rather than assumed:
+both services resolve the HMAC through the same `HOLDER_PASS_SECRET` fallback and
+their values hash identically, so turning the URL on also turns on correctly-signed
+live DM and stage-tip delivery (`presence-store.js`, `stage-bridge.js`) instead of
+converting those from `unconfigured` into silent 401s. Applied as a config-only
+`--update-env-vars` (pre-approved in CLAUDE.md, and it merges rather than replacing
+the other 60 vars). Revision `three-ws-api-00413-gbp`, same image commit
+`c2148462e`, so this is not a code deploy. Verified live:
+`/api/play/population` → `{"ok":true,...}`, `?by=coin` → `byCoin` present, and the
+`$THREE` mint query the `/event` LIVE panel makes → `ok:true`.
+
+**Row 3 is freed: both stranded customer wallets are now named.** The keyed audit
+(`scripts/audit-custodial-key-health.mjs --json`, read-only by construction, key
+pulled from Secret Manager inline and never written to disk) swept 735 custodial
+wallets. Nine are sealed: two platform bots at 0.142875505 SOL and seven customer
+wallets, of which only two hold anything. `GemVS5fT958FKRe5fpgizohUYUKE8cUDueEdmB1bmXnm`
+(0.250001) was already known from its `wallet_key_retired` withdraw failure; the
+second is `HPL1LfuTdYDwtzJDzsnrmR2ngrrQwLTQyxJszCC4DHsN`, agent
+`a20829e1-6dd7-4495-9141-8f5d69be86a9`, owner `sol-4ac625e9b4d3ff8e@wallet.local`,
+0.100001 SOL. Total 0.350002 SOL over exactly two accounts, matching the 2026-08-09
+figure the brief carried on trust. `stranded_unread` is empty, so nothing is
+unaccounted for. `docs/ops/stranded-wallets.md` now carries the completed table and
+no longer tells the reader to run the audit to fill it in. The decision is
+unchanged and fully informed.
+
+**Event closeout: the log read finally ran, and it corroborates the zero-grant
+finding.** `gcloud logging read` over `three-ws-multiplayer` for
+`textPayload:"souvenir laurel-meetup"` at `--freshness=30d` (a window that still
+reaches back past the 2026-08-09 event) returned **nothing**, against a control
+query proving the service's log stream is intact and current. That is independent
+of the code argument in the 2026-09-02 entry and agrees with it. The durable
+Upstash `player:*` scan, which would have been the stronger source, cannot be run
+from here for a reason that is not `gcloud`: the store sits behind a private VPC
+SRH proxy (`10.128.15.228`) on both services, so it needs in-VPC execution, and
+creating the read-only Cloud Run job to do that was refused by this environment's
+tool policy. It is confirmation, not the finding.
+
+**Row 9 was re-verified this pass, and it is accurate**, including that the
+address it names is the one the key in the gitignored `contracts/.env` actually
+derives to. The evidence names a third-party chain, so it falls under CLAUDE.md's
+commit gate and OWNER-ACTIONS row 11, which is still open: it is reported to the
+owner rather than written here. No change to what row 9 asks for.
+
+**Rows re-confirmed unchanged.** Row 2: the settle sponsor holds 0.001507661 SOL,
+down again. Row 16: `three-ws` (org) and `three-ws/examples` both still 404.
+
+**A finding the sweep produced that was not on anyone's list.** All 794 routes
+declared in `data/pages.json` were swept against production. Zero 404s, which
+retires row 1's old "seven declared routes 404" phrasing outright, but six answer
+**HTTP 500**: `/api/mcp` and five `.well-known/*` endpoints. Cloud Run stderr gives
+the cause in one line, `ERR_MODULE_NOT_FOUND` on
+`/app/services/home-relay/src/token.js`, and `/api/healthz` is 500 for the same
+reason. The request log shows real traffic taking it: a `Cursor/3.9.16` MCP client
+POSTing `/api/mcp` and getting 500s in a loop. A concurrent agent root-caused the
+same defect independently and committed the fix (`d668ceece`, re-including
+`services/` in the `.gcloudignore` allowlist, the identical failure shape as the
+`agents/` and `.agents/` entries above it in that file). The fix is committed and
+**not** in production, so only a deploy clears it. That is now the strongest
+argument in row 1, and row 1 already carries it.
+
 ## 2026-09-02: OWNER-ACTIONS re-measured, and the audit that would have lied about row 3
 
 Measured, not carried over: production still `ad7b54c16` (2026-08-28, revision 00404-ph7)

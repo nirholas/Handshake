@@ -140,6 +140,45 @@ Still open: 02 (the in-world half of the walkthrough was never done and no defec
 
 Correction to the pack's own dates: the window that actually ran was 2026-08-09 17:00 to 19:30 UTC (`git show 5616ff9b8^:public/event.json`), not 2026-08-08.
 
+## 2026-09-04 · The souvenir log read ran: zero grants, finding corroborated
+
+The 2026-09-02 entry determined by code argument that no `laurel-meetup` souvenir
+could have been granted during the 2026-08-09 window, and left two reads open
+behind a `gcloud` token. `gcloud` answered today, so the first one ran, comfortably
+ahead of the ~2026-09-08 retention deadline:
+
+```bash
+gcloud logging read 'resource.type="cloud_run_revision"
+  resource.labels.service_name="three-ws-multiplayer"
+  textPayload:"souvenir laurel-meetup"' \
+  --freshness=30d --project aerial-vehicle-466722-p5 --format='value(textPayload)'
+```
+
+**Zero lines.** Exit 0, no error. A control query without the `textPayload` filter
+returned current entries for the same service (`[walk_world ...] -leave ...`,
+timestamped today), which is what makes the empty result evidence rather than an
+artifact of a broken query, a wrong service name, or an expired window: the stream
+is intact and `--freshness=30d` from 2026-09-04 still reaches 2026-08-05, four days
+before the event.
+
+So two independent lines of evidence now agree that nobody left the event with a
+souvenir: the code argument (`event-drop.js` landed 2026-08-07, after the running
+image was built) and the absence of any grant line in the logs that image wrote.
+
+**The second read stays open, and not because of `gcloud`.** The durable Upstash
+`player:*` scan is still the stronger source, and it remains the only thing that
+could overturn this. It cannot run from this workspace for a newly measured reason:
+`UPSTASH_REDIS_REST_URL` on both `three-ws-api` and `three-ws-multiplayer` points at
+`10.128.15.228`, a private SRH proxy reachable only through the `three-ws-vpc`
+connector, so a token is not enough and no amount of re-auth helps. It needs
+in-VPC execution; creating the read-only Cloud Run job for that was refused by this
+environment's tool policy. Since it can now only confirm what two sources already
+agree on, it should not gate the closeout.
+
+**Consequence for OWNER-ACTIONS row 13.** The decision is unchanged in substance,
+but it is better founded: settling from nothing is no longer an inference, it is a
+measurement. Row 15 no longer gates it.
+
 ## 2026-09-02 · Order 08 · Closeout: the client-side event ran, the server-side event did not
 
 **World determination: split, and the split is the finding.** The order framed this as (a) the event
