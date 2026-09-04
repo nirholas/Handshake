@@ -229,6 +229,80 @@ describe('402 challenge: the OKX Agent Payments Protocol integration', () => {
 		expect(accepts[0].network).toBe('eip155:196');
 	});
 
+	// The A2MCP guide's own compliance self-check is `curl -i -X POST <endpoint>`:
+	// no request body, no content-type, and its stated pass condition for a paid
+	// row is "HTTP 402 + PAYMENT-REQUIRED". readJson() rejected exactly that
+	// probe with 415 before any payment logic ran, so OKX's listing validator
+	// read four live paid rows as having no x402 quotation at all and never
+	// reached the payment stage (review 2026-09-04).
+	for (const [id, atomics] of PAID_FORGE) {
+		it(`${id}: the documented self-check POST (no body, no content-type) answers 402, not 415`, async () => {
+			const req = makeReq({ service: id });
+			delete req.headers['content-type'];
+			const res = makeRes();
+			await handler(req, res);
+			expect(res.statusCode).toBe(402);
+			expect(res.headers['payment-required']).toBeTruthy();
+			const challenge = JSON.parse(res.body);
+			expect(challenge.x402Version).toBe(2);
+			expect(challenge.accepts[0].network).toBe('eip155:196');
+			expect(challenge.accepts[0].amount).toBe(atomics);
+			expect(submitted).toHaveLength(0);
+		});
+	}
+
+	// Any POST that names no priced tool (an empty body, a plain business
+	// payload, a typo'd tool name) priced as null, and paymentRequirements()
+	// then fell back to the platform-wide default. The challenge went out
+	// quoting eip155:196 TWICE at two different amounts, the catalog price and
+	// $0.001, an ambiguous quotation the OKX validator reads as non-compliant.
+	for (const body of [{}, { prompt: 'a low-poly fox' }, rpc('not_a_tool', {})]) {
+		it(`an unpriced POST (${JSON.stringify(body).slice(0, 32)}) quotes one price per rail, the list price`, async () => {
+			const res = await post('forge-hd', body);
+			expect(res.statusCode).toBe(402);
+			const { accepts } = JSON.parse(res.body);
+			expect(accepts[0].network).toBe('eip155:196');
+			// One quotation per rail, and every rail quotes THIS row's price.
+			// ($THREE prices the same call in its own token, so it is judged on
+			// naming its rail once rather than on the USD-atomic amount.)
+			const rails = accepts.map((a) => `${a.scheme}|${a.network}|${a.asset}`);
+			expect(new Set(rails).size).toBe(rails.length);
+			for (const a of accepts.filter((x) => !/pump$/.test(x.asset))) {
+				expect(a.amount ?? a.maxAmountRequired).toBe('250000');
+			}
+			expect(submitted).toHaveLength(0);
+		});
+	}
+
+	// Unparseable bytes must not become a silent empty batch. On a paid row the
+	// paywall answers first; on the free row the caller gets the JSON-RPC parse
+	// error it earned, and nothing is dispatched.
+	it('answers unparseable bytes with the paywall on a paid row and a parse error on the free row', async () => {
+		const paid = makeRes();
+		const paidReq = Readable.from([Buffer.from('not json at all', 'utf8')]);
+		Object.assign(paidReq, {
+			method: 'POST',
+			url: '/api/okx/3d/forge-draft',
+			query: { service: 'forge-draft' },
+			headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.9' },
+		});
+		await handler(paidReq, paid);
+		expect(paid.statusCode).toBe(402);
+
+		const free = makeRes();
+		const freeReq = Readable.from([Buffer.from('not json at all', 'utf8')]);
+		Object.assign(freeReq, {
+			method: 'POST',
+			url: '/api/okx/3d/forge-status',
+			query: { service: 'forge-status' },
+			headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.9' },
+		});
+		await handler(freeReq, free);
+		expect(free.statusCode).toBe(200);
+		expect(JSON.parse(free.body).error.code).toBe(-32700);
+		expect(submitted).toHaveLength(0);
+	});
+
 	// GET is the discovery challenge a reviewer opens first. paymentRequirements()
 	// was quoting the shared default there while the prepended rail quoted the
 	// real price, so the same rail appeared twice at two different amounts and a
