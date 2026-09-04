@@ -66,6 +66,13 @@ export function householdPanel(home) {
 	body.style.marginTop = 'var(--space-sm)';
 	wrap.append(body);
 
+	// A sent invitation's link lives here, outside the body, because a refresh
+	// clears the body and the server keeps only a hash of the link. Rendering it
+	// inside the part that re-renders destroys the only copy that will ever
+	// exist, a second after showing it.
+	const sent = el('div');
+	wrap.append(sent);
+
 	let loaded = false;
 	const run = async () => {
 		clear(body);
@@ -75,7 +82,7 @@ export function householdPanel(home) {
 		try {
 			const data = await listHousehold(home.id);
 			clear(body);
-			body.append(renderHousehold(home, data, run));
+			body.append(renderHousehold(home, data, run, sent));
 		} catch (err) {
 			clear(body);
 			body.append(noticeEl({
@@ -94,7 +101,7 @@ export function householdPanel(home) {
 	return wrap;
 }
 
-function renderHousehold(home, data, rerender) {
+function renderHousehold(home, data, rerender, sent) {
 	const frag = document.createDocumentFragment();
 	const members = Array.isArray(data?.members) ? data.members : [];
 	const invites = Array.isArray(data?.invites) ? data.invites : [];
@@ -115,7 +122,7 @@ function renderHousehold(home, data, rerender) {
 	}
 
 	if (canAdminister) {
-		frag.append(inviteForm(home, { assignable, rerender }));
+		frag.append(inviteForm(home, { assignable, rerender, sent }));
 	} else if (members.length === 1) {
 		// The only person in the household, and no way to change that from here.
 		// Saying who can is more useful than an empty panel.
@@ -491,7 +498,7 @@ function radio(name, value, text) {
 	return { input, label };
 }
 
-function inviteForm(home, { assignable, rerender }) {
+function inviteForm(home, { assignable, rerender, sent }) {
 	const form = el('form', 'hm-panel');
 	form.style.marginTop = 'var(--space-sm)';
 	form.style.background = 'transparent';
@@ -554,8 +561,10 @@ function inviteForm(home, { assignable, rerender }) {
 			// The link is shown once, here, because the server keeps only a hash of
 			// it. Telling somebody to "check the invitations list for the link"
 			// would be a promise this system cannot keep, and it is shown whether or
-			// not the email went out for exactly that reason.
-			outcome.append(inviteLinkBlock(result?.invite_url, { emailed: result?.emailed === true, to: sentTo }));
+			// not the email went out for exactly that reason. It goes to `sent`,
+			// which the refresh below does not touch.
+			clear(sent);
+			sent.append(inviteLinkBlock(result?.invite_url, { emailed: result?.emailed === true, to: sentTo }));
 			rerender();
 		} catch (err) {
 			outcome.append(noticeEl({

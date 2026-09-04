@@ -98,7 +98,9 @@ describe('the household panel renders what the server said', () => {
 		const panel = await open(roster({
 			members: [{ user_id: 'g', role: 'guest', scoped: true, scope: { mode: 'allow', areas: ['kitchen'], entities: [] }, email: 'g@example.invalid', display_name: 'Sitter', can_manage: true }],
 		}));
-		expect(panel.textContent).toContain('never be able to approve unlocking a door');
+		// Matched as a guarantee, not as a sentence: the copy is allowed to be
+		// reworded, the promise that a guest can never approve a door is not.
+		expect(panel.textContent).toMatch(/never\b[^.]*approve unlocking a door/);
 		expect(panel.textContent).toContain('Limited to 1 room');
 	});
 

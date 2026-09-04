@@ -37,10 +37,18 @@ import { CONNECT_DISCLOSURE, DISCLOSURES, VOICE_DISCLOSURE, disclosureById } fro
 const MIGRATIONS_DIR = join(process.cwd(), 'api/_lib/migrations');
 
 function homeMigrations() {
+	// Sorted, because the filenames are timestamps and the scans below read them
+	// the way Postgres applied them: in order, with a later statement winning.
 	return readdirSync(MIGRATIONS_DIR)
+		.sort()
 		.filter((f) => f.endsWith('.sql'))
 		.map((f) => ({ file: f, sql: readFileSync(join(MIGRATIONS_DIR, f), 'utf8') }))
 		.filter((m) => /create table (if not exists )?home_/i.test(m.sql) || /alter table home_/i.test(m.sql));
+}
+
+/** The same SQL with its comments removed, so prose about a constraint is not read as one. */
+function withoutSqlComments(sql) {
+	return sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, '');
 }
 
 /** Every `home_*` table any migration in the repo creates. */
@@ -318,15 +326,32 @@ describe('home privacy: retention bounds', () => {
 		// never heard of. Two of these shipped in this campaign
 		// (home_entity_grants.granted_by, home_layouts.updated_by), both invisible
 		// to a test that only deletes an owner's own data, because an owner's
-		// homes cascade in the same statement. Every future one fails here.
-		const offenders = [];
+		// homes cascade in the same statement. Both were then repaired by a later
+		// migration, which is why this reads the schema the way Postgres builds
+		// it rather than one file at a time: in apply order, with a later ALTER
+		// replacing what an earlier CREATE TABLE said about the same column, and
+		// with comments carrying no weight. Every future one fails here.
+		const constraints = new Map();
 		for (const { file, sql } of homeMigrations()) {
-			for (const m of sql.matchAll(/references\s+users\s*\(\s*id\s*\)([^,\n)]*)/gi)) {
-				if (!/on delete/i.test(m[1])) {
-					offenders.push(`${file}: "references users(id)${m[1].trim()}"`);
-				}
+			let table = null;
+			for (const line of withoutSqlComments(sql).split('\n')) {
+				const target = /(?:create|alter)\s+table\s+(?:if\s+(?:not\s+)?exists\s+)?([a-z0-9_]+)/i.exec(line);
+				if (target) table = target[1].toLowerCase();
+				if (!table || !/references\s+users\s*\(\s*id\s*\)/i.test(line)) continue;
+				// An ALTER names its column in `foreign key (col)`; a CREATE TABLE
+				// column definition opens the line with the column's own name.
+				const named = /foreign\s+key\s*\(\s*([a-z0-9_]+)\s*\)/i.exec(line) || /^\s*([a-z0-9_]+)\b/.exec(line);
+				if (!named) continue;
+				constraints.set(`${table}.${named[1].toLowerCase()}`, {
+					file,
+					text: line.trim(),
+					deletable: /on\s+delete/i.test(line),
+				});
 			}
 		}
+		const offenders = [...constraints]
+			.filter(([, c]) => !c.deletable)
+			.map(([column, c]) => `${column} (${c.file}): "${c.text}"`);
 		expect(
 			offenders,
 			`A home_* column references users(id) with no ON DELETE action, so an account that touched it can never be deleted. Choose CASCADE (the person's own row) or SET NULL (a record of an action that outlives the actor):\n  ${offenders.join('\n  ')}`,
