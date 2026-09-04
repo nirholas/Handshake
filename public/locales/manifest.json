@@ -122,6 +122,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "te",
+			"name": "తెలుగు",
+			"dir": "ltr"
+		},
+		{
 			"code": "mr",
 			"name": "मराठी",
 			"dir": "ltr"
@@ -129,6 +134,11 @@
 		{
 			"code": "ms",
 			"name": "Bahasa Melayu",
+			"dir": "ltr"
+		},
+		{
+			"code": "sv",
+			"name": "Svenska",
 			"dir": "ltr"
 		},
 		{
@@ -157,6 +167,26 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "hu",
+			"name": "Magyar",
+			"dir": "ltr"
+		},
+		{
+			"code": "he",
+			"name": "עברית",
+			"dir": "rtl"
+		},
+		{
+			"code": "bg",
+			"name": "Български",
+			"dir": "ltr"
+		},
+		{
+			"code": "sw",
+			"name": "Kiswahili",
+			"dir": "ltr"
+		},
+		{
 			"code": "hr",
 			"name": "Hrvatski",
 			"dir": "ltr"
@@ -167,8 +197,103 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "gu",
+			"name": "ગુજરાતી",
+			"dir": "ltr"
+		},
+		{
+			"code": "kn",
+			"name": "ಕನ್ನಡ",
+			"dir": "ltr"
+		},
+		{
+			"code": "ml",
+			"name": "മലയാളം",
+			"dir": "ltr"
+		},
+		{
+			"code": "as",
+			"name": "অসমীয়া",
+			"dir": "ltr"
+		},
+		{
+			"code": "ne",
+			"name": "नेपाली",
+			"dir": "ltr"
+		},
+		{
+			"code": "kk",
+			"name": "Қазақша",
+			"dir": "ltr"
+		},
+		{
+			"code": "uz",
+			"name": "Oʻzbekcha",
+			"dir": "ltr"
+		},
+		{
 			"code": "az",
 			"name": "Azərbaycan dili",
+			"dir": "ltr"
+		},
+		{
+			"code": "pa",
+			"name": "ਪੰਜਾਬੀ",
+			"dir": "ltr"
+		},
+		{
+			"code": "ka",
+			"name": "ქართული",
+			"dir": "ltr"
+		},
+		{
+			"code": "mn",
+			"name": "Монгол",
+			"dir": "ltr"
+		},
+		{
+			"code": "ky",
+			"name": "Кыргызча",
+			"dir": "ltr"
+		},
+		{
+			"code": "tg",
+			"name": "Тоҷикӣ",
+			"dir": "ltr"
+		},
+		{
+			"code": "km",
+			"name": "ខ្មែរ",
+			"dir": "ltr"
+		},
+		{
+			"code": "sl",
+			"name": "Slovenščina",
+			"dir": "ltr"
+		},
+		{
+			"code": "et",
+			"name": "Eesti",
+			"dir": "ltr"
+		},
+		{
+			"code": "mk",
+			"name": "Македонски",
+			"dir": "ltr"
+		},
+		{
+			"code": "gl",
+			"name": "Galego",
+			"dir": "ltr"
+		},
+		{
+			"code": "eu",
+			"name": "Euskara",
+			"dir": "ltr"
+		},
+		{
+			"code": "so",
+			"name": "Soomaali",
 			"dir": "ltr"
 		}
 	]
