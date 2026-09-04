@@ -13,7 +13,7 @@ Portal: Inception Portal > Capital Connect > Inception Capital Connect Form.
 | Board Seat Allocation | **No board seat** | Standard for a sub-$1M pre-seed on a SAFE. Change to "Negotiable" only if you intend to offer one. |
 | Term Sheet | **No** | No signed or circulated term sheet as of 2026-09-04. |
 | Annual Recurring Revenue (ARR) | **Under $100K** | See "What counts as ARR" below. The pump.fun creator-fee revenue is real but it is not ARR. |
-| Year-over-year growth rate | **Pick the band your revenue dashboard supports** | The one number in this form that no file in this repo can prove. See "The one number to look up" below. |
+| Year-over-year growth rate | **Lowest band, and say "under a year old" on the call** | There is no year of data: `forge_creations` starts 2026-06-11. Month over month is the real story (August nearly doubled July). See "Growth" below. |
 | Lead investor for this round | **No** | Confirm before submitting. Capital Connect is being used to find one. |
 | Proposed funding close date | **Nov 30, 2026** | Placeholder, roughly 90 days out. Set it to your real target; VCs treat a date already in the past as a dead round. |
 | Why are you raising capital? | See the block below (under the 1,000-character cap). | Written from the live product surface. |
@@ -27,18 +27,34 @@ Roughly $400K in cumulative pump.fun creator-fee rewards is real money and it be
 Report it this way and you get credit for it without a credibility hit:
 
 - **ARR field:** Under $100K.
-- **Deck, traction slide:** "About $400K in cumulative on-chain creator-fee revenue to date, plus a live pay-per-call generation API (x402, USDC on Solana) at $0.05 / $0.15 / $0.50 per generation."
-- **First VC call:** lead with the $400K as proof the market pays, and be explicit that the pre-seed converts it into contracted revenue.
+- **Deck, traction slide:** the $400K sits beside the usage numbers, labelled non-recurring and volume-correlated in the same sentence. Saying it before a VC asks is worth more than the number is.
+- **First VC call:** lead with the $400K as proof this audience pays, then pivot immediately to the twelve-week usage curve, because that is what the round actually compounds.
 
-## The one number to look up
+## Growth: what the database says
 
-Year-over-year growth is the only required field this repo cannot answer. Pull it from whichever of these you actually track and pick the matching band:
+Answered from the production database on 2026-09-04, so nothing here needs guessing.
 
-- Monthly creator-fee revenue, this month against the same month last year.
-- Forge generations per month (`forge_creations` in the production database is the authoritative table: it carries a row per generation with backend, status and timestamp).
-- Monthly active embeds or unique sites serving `<agent-3d>`.
+**There is no year-over-year number, because there is no year of data.** `forge_creations` starts 2026-06-11. The instrumented history is twelve weeks. Select the band that reflects the operating period, and open the first VC call by saying the product is under a year old rather than letting them discover it in diligence.
 
-If the company is younger than a year, choose the band that reflects the last twelve months of operation and say so on the first call. Do not leave it blank; the form will not submit.
+What the twelve weeks actually show:
+
+| Month | Generations | Unique users | Paid (x402) |
+| --- | --- | --- | --- |
+| June 2026 (from the 11th) | 6,975 | 6,519 | 0 |
+| July 2026 | 5,245 | 2,800 | 125 |
+| August 2026 | 10,165 | 7,443 | 315 |
+| September 2026 (first 4 days) | 3,350 | 2,706 | 0 |
+
+- **25,735 generations and 19,412 unique users** since 2026-06-11.
+- **August nearly doubled July** (5,245 to 10,165) after a July dip.
+- **September is running at about 838 generations a day against August's 328 a day**, roughly 2.5x. The last eight days ran 600 to 1,400 a day.
+
+Month over month is the honest growth story here, and it is a good one. Lead with it.
+
+### Two numbers that must not go in the deck as revenue
+
+1. **x402 agent payments total $64.20.** 428 settled paid generations all-time, at $0.15 each on the standard tier. The rail works end to end, which matters, but it is not a revenue line and the first VC to ask will find that out. The deck now says the rail is proven and early, which is true.
+2. **The last paid x402 generation was 2026-08-31**, and the August 13 cluster fired at almost exactly 30-minute intervals, which reads like an automated caller rather than organic demand. Worth understanding before someone asks who those buyers are.
 
 ## Why are you raising capital? (form text, 1,000-character cap)
 
@@ -62,7 +78,7 @@ The built PDF follows this exactly. Every claim maps to a file or a live URL so 
 8. **Distribution.** 795 public routes, 90 published npm packages, an MCP server in the public registry, and an x402-listed paid API.
 9. **Open source as go-to-market.** Apache-2.0, the whole stack in one public repo, 1,351 test files, developer-first docs.
 10. **Business model.** Free tier, pay-per-call agent API in USDC, creator-fee revenue, and the enterprise embed tier this round funds.
-11. **Traction.** About $400K cumulative creator-fee revenue, live production on Cloud Run, a public changelog shipping continuously.
+11. **Traction.** 19,412 unique users and 25,735 generations in twelve weeks, September running about 2.5x August's daily rate, plus the $400K in cumulative creator-fee revenue labelled honestly. Every figure measured from the production database on 2026-09-04.
 12. **Market.** Every brand, game, and AI product that needs a face, plus the agent-to-agent economy paying per generation.
 13. **Why now.** Generation quality crossed the usable line, browsers got fast enough, and agents acquired wallets.
 14. **The ask.** Pre-seed under $1M. Use of funds is stated as a split: 45% GPU capacity, 35% two engineers, 20% go-to-market. Change those three numbers in the HTML if your plan differs; a VC will hold you to them.
@@ -85,7 +101,7 @@ Source: [`three-ws-inception-deck.html`](three-ws-inception-deck.html). One `<se
 ## Before you submit
 
 - [ ] Set a real close date, not the placeholder.
-- [ ] Look up the year-over-year band and select it.
+- [ ] Select the lowest year-over-year band and be ready to say the product is under a year old.
 - [ ] Confirm lead investor and term sheet are still both "No".
 - [ ] Build the deck: `npm run deck:inception`, then confirm the PDF is under 5MB and 15 pages.
 - [ ] Read the deck once for anything confidential. NVIDIA distributes it to third-party VCs.
