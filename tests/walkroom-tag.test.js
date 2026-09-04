@@ -14,8 +14,9 @@ function player(name, x, z) {
 }
 
 // Build a WalkRoom instance without the Colyseus constructor, wiring only the
-// state + broadcast surface the tag helpers touch. `broadcasts` and `sent`
-// capture outgoing messages so tests can assert what peers/clients receive.
+// state + broadcast surface the tag helpers touch. `broadcasts` captures room
+// broadcasts and `sent` captures per-client sends (recorded on each fake
+// client's own send), so tests can assert what peers and individuals receive.
 function makeRoom() {
 	const room = Object.create(WalkRoom.prototype);
 	room.state = { players: new Map() };
@@ -25,7 +26,6 @@ function makeRoom() {
 	room.broadcasts = [];
 	room.sent = [];
 	room.broadcast = (type, msg) => room.broadcasts.push({ type, msg });
-	room.send = (client, type, msg) => room.sent.push({ client, type, msg });
 	return room;
 }
 
@@ -33,7 +33,11 @@ function makeRoom() {
 function seat(room, id, name, x, z) {
 	room.state.players.set(id, player(name, x, z));
 	room._tagTime.set(id, { timeMs: 0, becameIt: null });
-	room.clients.push({ sessionId: id });
+	// A targeted message goes out as client.send(type, msg): Colyseus deprecated
+	// room.send(client, ...), so the recorder belongs on the client, not the room.
+	const client = { sessionId: id };
+	client.send = (type, msg) => room.sent.push({ client, type, msg });
+	room.clients.push(client);
 }
 
 function itCount(room) {
