@@ -67,6 +67,32 @@ a production configuration gap that no page edit can close:
 | `/avatar-sdk` | `RGBELoader has been deprecated. Please use HDRLoader instead.` | **Intentional, documented.** `avatar-sdk/src/viewer.js` explains it: the SDK's peer range is `three >= 0.150.0`, `HDRLoader.js` does not exist before r180, and a bundler resolves the literal dynamic import statically, so renaming trades one cosmetic console line on new `three` for a hard "module not found" build failure for every consumer on older `three`. Revisit when the peer floor moves to `>= 0.180.0`. |
 | `/clash` | `clash: CoinCommunities unconfigured, polling stopped` | **Not a code defect: one missing credential.** `CC_API_KEY` is absent from `.env`, `.env.local` and the `three-ws-api` service (`node scripts/read-service-env.mjs '^CC_API_KEY$' --names` finds no match), and production's `/api/clash/state` answers `503 cc_unconfigured` for the same reason. The page is fully wired behind the var and degrades as designed: one request per page view, poll cancelled, the designed unavailable state on both tabs. The warning names a real operational gap and stays. Supplying `CC_API_KEY` is the fix, and it is the owner's. |
 
+## Second pass, 2026-09-04 later the same day (re-measured against this tree)
+
+Four of the rows above did not survive re-measurement. Each was re-checked by
+running this repo's own API server and re-requesting the endpoint, and by loading
+the page in a real browser, rather than by re-reading the earlier report.
+
+| Row above | What was actually true | What changed |
+|---|---|---|
+| `/fees` waits on `cc5dbb211` | `cc5dbb211` is already deployed, and `/fees` still logged 404s. Repairing a URL cannot help: the icons come from a third-party CDN, and one it has retired 404s whatever URL you ask for. The browser logs that 404 before any `onerror` handler can run, so no client-side recovery keeps the console clean. | Fixed at root in `23160dc9f`. Every upstream logo on `/fees`, `/defi`, `/dex-volumes`, `/chain/:name`, `/protocol/:slug` and `/exchange/:id` now goes through `/api/img` with the new `fallback=none`, which answers `204 No Content` instead of the token-art placeholder. A `204` logs nothing and still fires `error` on the `<img>`, so each surface paints the neutral disc it already designs. Measured on `/fees`: 99 logos, all proxied, 0 broken, 1 disc, 0 failed requests. |
+| `/oracle-lab` waits on `272b659fc` | `272b659fc` is deployed and `https://three.ws/api/oracle/model` answers `200`. | Row closed, nothing to do. |
+| `/smart-home*` sees `/api/home` 404 | Production answers `500`, not `404`. `e6a32da61` shipped, but the handler's `services/` directory did not travel with the image. | The fix is `d668ceece`, still unshipped. The endpoint answers `401` signed out against this tree, as designed. |
+| `/ibm/hello` "is correct as it stands" | It is not. `/x402.js`, `/i18n.js`, `/locales/*.json` and `/ibm/hello.live` all answered with no `access-control-allow-origin`, so on the copy IBM hosts the live update failed silently and the page froze on its baked baseline, the language switcher never mounted, and the paid demo never armed. Worse, the one-line embed `docs/x402-studio.md` recommends (`<script type="module" src="https://three.ws/x402.js">`) has therefore never worked on anybody's site: proven from a foreign origin against production, the module is CORS-refused and the payable button stays inert. | Fixed in `cbf83b2a0`: `vercel.json` grants those paths open CORS, the boot script absolutizes the live document's root-relative scripts the way the bake already did, and `src/i18n.js` derives its catalog origin from `import.meta.url`. `npm run audit:ibm-hosted` holds it (`docs/ops/ibm-hosted-page-audit.md`). The advice above still stands: do NOT make the baked page's URLs relative. |
+
+The instruction to keep `/ibm/hello`'s absolute URLs was right; the conclusion
+that the route was therefore fine was not. A page that is same-origin on three.ws
+and cross-origin everywhere else needs an audit that loads it from somewhere
+else, which is what `npm run audit:ibm-hosted` now does.
+
+**A raw parallel sweep on this box cannot be trusted, and that is fixed too.**
+The first re-run reported 550 of 780 routes broken. Every route sampled out of
+that list was clean when checked alone: the box was at load 100+ beside another
+agent's `build:gcp`, and pages were missing their settle window. `c9deecba3`
+makes `audit:console` re-run each failing route once, serially, and report that
+second reading, with the report naming how many cleared that way. Before trusting
+any number from this sweep, check that line.
+
 ## Step 0: re-derive the current state
 
     npm run audit:console
