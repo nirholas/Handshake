@@ -1,29 +1,41 @@
 {
-	"mcpServers": {
-		"meshy": {
-			"command": "npx",
-			"args": ["-y", "@meshy-ai/meshy-mcp-server"],
-			"env": {
-				"MESHY_API_KEY": "${MESHY_API_KEY}"
-			}
-		},
-		"3d-agent": {
-			"url": "https://three.ws/api/mcp",
-			"headers": {
-				"Authorization": "Bearer ${THREE_WS_MCP_TOKEN}"
-			}
-		},
-		"3d-agent-local": {
-			"command": "node",
-			"args": ["mcp-server/src/index.js"],
-			"env": {
-				"MCP_EVM_PAYMENT_ADDRESS": "${MCP_EVM_PAYMENT_ADDRESS}",
-				"MCP_SVM_PAYMENT_ADDRESS": "${MCP_SVM_PAYMENT_ADDRESS}"
-			}
-		},
-		"atelier": {
-			"type": "http",
-			"url": "https://app.useatelier.ai/mcp"
-		}
-	}
+  "mcpServers": {
+    "meshy": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@meshy-ai/meshy-mcp-server"
+      ],
+      "env": {
+        "MESHY_API_KEY": "${MESHY_API_KEY}"
+      }
+    },
+    "3d-agent": {
+      "url": "https://three.ws/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${THREE_WS_MCP_TOKEN}"
+      }
+    },
+    "3d-agent-local": {
+      "command": "node",
+      "args": [
+        "mcp-server/src/index.js"
+      ],
+      "env": {
+        "MCP_EVM_PAYMENT_ADDRESS": "${MCP_EVM_PAYMENT_ADDRESS}",
+        "MCP_SVM_PAYMENT_ADDRESS": "${MCP_SVM_PAYMENT_ADDRESS}"
+      }
+    },
+    "atelier": {
+      "type": "http",
+      "url": "https://app.useatelier.ai/mcp"
+    },
+    "knos": {
+      "command": "python",
+      "args": [
+        "-m",
+        "knos.mcp"
+      ]
+    }
+  }
 }
