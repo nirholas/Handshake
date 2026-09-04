@@ -15,6 +15,7 @@
 import { AvatarGalleryPicker } from './avatar-gallery-picker.js';
 import { AgentPicker } from './agent-picker.js';
 import { walletChipEl, hasWallet } from './shared/agent-wallet-chip.js';
+import { proxiedImageURL } from './ipfs.js';
 
 // ── tiny DOM helpers ─────────────────────────────────────────────────────────
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -336,13 +337,21 @@ async function loadWorlds() {
 	renderWorlds();
 }
 
+// World tiles paint the coin's own logo from whatever host its metadata named.
+// The same-origin proxy keeps that art alive when a gateway rate-limits us or
+// retires: it answers a generated placeholder rather than an error, and serves
+// the size the card paints rather than whatever the creator uploaded.
+function worldArt(world) {
+	return proxiedImageURL(world?.image || '', world?.token || '', { width: 320 });
+}
+
 function worldCard(w) {
 	const symbol = w.symbol ? `$${w.symbol}` : `${w.token.slice(0, 4)}…${w.token.slice(-4)}`;
 	const isRobinhood = w.chain === 'robinhood-chain';
 	const card = el('button', { class: 'wl-card', type: 'button', title: `Enter ${symbol}` }, [
 		el('div', { class: 'wl-card-art' }, [
-			w.image
-				? el('img', { src: w.image, alt: symbol, loading: 'lazy', referrerpolicy: 'no-referrer' })
+			worldArt(w)
+				? el('img', { src: worldArt(w), alt: symbol, loading: 'lazy', referrerpolicy: 'no-referrer' })
 				: el('div', { class: 'wl-card-art-ph', text: symbol.slice(0, 3) }),
 			el('span', { class: 'wl-card-live' }, [el('span', { class: 'wl-live-dot' }), 'live']),
 			isRobinhood ? el('span', { class: 'wl-card-chain', title: 'Robinhood Chain' }, ['RH']) : null,

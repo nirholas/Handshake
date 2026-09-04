@@ -36,6 +36,7 @@ import {
 	verifiedBadge,
 } from './trader-format.js';
 import { walletChipEl } from './shared/agent-wallet-chip.js';
+import { proxiedImageURL } from './ipfs.js';
 import { agentAvatarGlb, hasCustomAvatar, seeInWorldHref } from './shared/agent-3d.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
 import { terminalLinks } from './shared/trading-terminals.js';
@@ -405,7 +406,12 @@ function renderHero() {
 	// Identity, with graceful fallback precedence: live market → registry → intel.
 	const name = coin?.name || reg?.name || intel?.name || 'Unknown coin';
 	const symbol = (coin?.symbol || reg?.symbol || intel?.symbol || '').toUpperCase();
-	const image = coin?.image_uri || coin?.image || intel?.image_uri || null;
+	// Coin art arrives as whatever URL the launch's metadata carried: usually a
+	// public IPFS gateway, which now rate-limits our reads and leaves a no-cors
+	// <img> with nothing to render. /api/img fetches it server-side across
+	// gateways at the 72 px this avatar paints, and answers a placeholder rather
+	// than an error when every one of them is down.
+	const image = proxiedImageURL(coin?.image_uri || coin?.image || intel?.image_uri || '', state.mint || '', { width: 192 });
 
 	document.title = `${symbol ? `$${symbol} · ` : ''}${name} · three.ws`;
 
@@ -1491,12 +1497,16 @@ function buildAgentStage(agent) {
 	// the loading state reads as "this avatar, arriving" rather than an empty box.
 	// It fades out once the GLB is framed. Falls back to the CSS gradient alone
 	// when the agent has no thumbnail.
-	if (agent.avatar_thumbnail_url) {
+	// The poster is a blurred backdrop behind the 3D stage, so it never needs the
+	// full-size thumbnail; the proxy also keeps a retired art host from leaving
+	// the stage flat.
+	const posterUrl = proxiedImageURL(agent.avatar_thumbnail_url || '', agent.id || '', { width: 480 });
+	if (posterUrl) {
 		stage.appendChild(
 			el('div', {
 				class: 'ld-agent-stage-poster',
 				'aria-hidden': 'true',
-				style: `background-image:url('${encodeURI(agent.avatar_thumbnail_url)}')`,
+				style: `background-image:url('${encodeURI(posterUrl)}')`,
 			}),
 		);
 	}

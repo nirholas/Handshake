@@ -13,6 +13,7 @@
 import { initWalletButton, getConnectedWallet, getConnectedWalletAddress } from './wallet.js';
 import { log } from './shared/log.js';
 import { updateValue, ring, playRings, setLiveDot } from './ui-juice.js';
+import { proxiedImageURL } from './ipfs.js';
 
 const $ = (id) => document.getElementById(id);
 const API = '/api/clash';
@@ -434,8 +435,12 @@ function openRallyDock() {
 	$('cl-rally-symbol').textContent = e.symbol;
 	$('cl-rally-hold').textContent = e.usd ? `holding ${fmtUsd(e.usd)}` : `holder · ${short(e.wallet)}`;
 	const img = $('cl-rally-img');
-	if (e.image) {
-		img.src = e.image;
+	// Faction art is the coin's own logo, hosted wherever its creator put it, so
+	// it goes through the same-origin proxy: a rate-limited gateway would
+	// otherwise leave the rally dock with a broken tile and a console error.
+	const rallyArt = proxiedImageURL(e.image || '', e.token || '', { width: 128 });
+	if (rallyArt) {
+		img.src = rallyArt;
 		img.style.display = '';
 	} else img.style.display = 'none';
 	updateRallyStats();

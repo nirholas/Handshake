@@ -22,6 +22,7 @@ import './coin-buy.css';
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
 import { createSafetyPanel } from '../shared/safety-panel.js';
 import { createSmartMoneyPanel } from '../shared/smart-money-panel.js';
+import { proxiedImageURL } from '../ipfs.js';
 
 const WSOL = 'So11111111111111111111111111111111111111112';
 const USDC_MINT = {
@@ -85,6 +86,13 @@ function fmtQuote(n, denom) {
 
 function shortAddr(a) {
 	return a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '';
+}
+
+// The buy sheet shows the coin's own logo, which lives on whichever host its
+// creator used. The same-origin proxy keeps a rate-limited gateway from leaving
+// a broken tile in a purchase flow, and sizes the art to the sheet.
+function coinArt(coin) {
+	return proxiedImageURL(coin?.image || '', coin?.mint || '', { width: 128 });
 }
 
 /**
@@ -246,7 +254,9 @@ class TradeModal {
 		this.stagePill = el('span', { class: 'cc-buy-stage', role: 'status', 'aria-live': 'polite', hidden: true });
 
 		const head = el('div', { class: 'cc-buy-head' }, [
-			this.coin.image ? el('img', { class: 'cc-buy-img', src: this.coin.image, alt: '' }) : el('div', { class: 'cc-buy-img cc-buy-img-ph', text: '◎' }),
+			coinArt(this.coin)
+				? el('img', { class: 'cc-buy-img', src: coinArt(this.coin), alt: '' })
+				: el('div', { class: 'cc-buy-img cc-buy-img-ph', text: '◎' }),
 			el('div', { class: 'cc-buy-titles' }, [
 				el('div', { class: 'cc-buy-name', text: this.coin.name || 'Trade coin' }),
 				el('div', { class: 'cc-buy-sub' }, [
