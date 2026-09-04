@@ -238,7 +238,7 @@ function renderArticlePage(item) {
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>${escapeHtml(item.title)} — ${escapeHtml(SITE_NAME)}</title>
 <meta name="description" content="${escapeAttr(item.summary)}"/>
 <link rel="canonical" href="${escapeAttr(item.permalink)}"/>
@@ -263,6 +263,12 @@ ${item.tags?.map((t) => `<meta property="article:tag" content="${escapeAttr(t)}"
 ${jsonLdArticle(item)}
 </script>
 <style>${pageCss()}</style>
+<!-- The site-wide mobile sheet: tap-target floor, safe-area padding, the
+     horizontal-overflow guard. These pages are written straight into public/,
+     so Vite's mobile-ergonomics injector (which only runs over Rollup HTML
+     inputs) never reaches them and it has to be linked here by hand. Last in
+     <head> so it wins on equal specificity, as its own header promises. -->
+<link rel="stylesheet" href="/mobile.css"/>
 </head>
 <body>
 ${topbarHtml()}
@@ -313,7 +319,7 @@ ${item.tags?.length ? `\t\t\t\t\t<div class="tag-list">${item.tags.map((t) => `<
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>News &amp; Announcements — ${escapeHtml(SITE_NAME)}</title>
 <meta name="description" content="Product launches, integrations, and announcements from three.ws — 3D AI agent avatars on-chain."/>
 <link rel="canonical" href="${SITE_ORIGIN}${NEWS_PATH_PREFIX}"/>
@@ -327,6 +333,12 @@ ${item.tags?.length ? `\t\t\t\t\t<div class="tag-list">${item.tags.map((t) => `<
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:site" content="${TWITTER_HANDLE}"/>
 <style>${pageCss()}</style>
+<!-- The site-wide mobile sheet: tap-target floor, safe-area padding, the
+     horizontal-overflow guard. These pages are written straight into public/,
+     so Vite's mobile-ergonomics injector (which only runs over Rollup HTML
+     inputs) never reaches them and it has to be linked here by hand. Last in
+     <head> so it wins on equal specificity, as its own header promises. -->
+<link rel="stylesheet" href="/mobile.css"/>
 </head>
 <body>
 ${topbarHtml()}

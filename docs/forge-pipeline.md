@@ -170,6 +170,33 @@ Async jobs get an opaque HMAC-signed token (`f1.<payload>.<sig>`, `api/_lib/forg
 
 **Storage is two-layer.** GPU workers write raw output to GCS (`gs://$GCS_BUCKET/raw-meshes/...`), and provider URLs generally expire within about an hour. `materializeCreation` therefore mirrors the mesh and reference image into Cloudflare R2 (`api/_lib/r2.js`) and stores the durable CDN URL in `glb_url`. Anything user-facing must reference the R2 URL, never the raw provider URL.
 
+### The delivery variant: what a phone downloads is not what a download gives you
+
+A raw generation is 1.25 to 3.5 MB of unquantized vertex data and embedded PNG skins. On a mid-tier phone over slow 4G (1.6 Mbps) that is ten to twenty seconds before the first frame, which is most of what made the model pages and the marketplace grid unusable on a handset.
+
+So every finished mesh gets a second object, the **web-delivery variant**: meshopt geometry plus WebP textures capped at 2048 px on the long edge, produced by `deliveryCompressionOptions()` in [api/_lib/glb-compress.js](../api/_lib/glb-compress.js). Six real production forge outputs sampled on 2026-09-04 compressed like this:
+
+| source | original | variant | saved |
+|---|---|---|---|
+| geometry-only mesh | 3.00 MB | 0.52 MB | 83% |
+| geometry-only mesh | 1.25 MB | 0.38 MB | 70% |
+| textured mesh | 2.94 MB | 0.51 MB | 83% |
+| textured mesh | 1.70 MB | 0.11 MB | 94% |
+| textured mesh | 2.64 MB | 0.22 MB | 92% |
+| textured mesh | 3.34 MB | 0.67 MB | 80% |
+
+Three rules govern it, and none of them are optional:
+
+1. **It is a second object, never a replacement.** `glb_url` stays exactly the bytes the caller's `output_format` asked for. `web_glb_url` (migration `20260904120000_forge_web_glb.sql`, with `web_glb_key` and `web_size_bytes`) is the variant. Viewers take `web_glb_url`; **every download link and every third-party API consumer takes `glb_url`**, so nobody with a bare `GLTFLoader` is handed an `EXT_meshopt_compression` file they cannot decode, and nobody downloading an asset they will edit gets a texture-capped copy.
+2. **Null means "serve the original".** A creation forged before this existed, one whose compression pass has not run, and one already small enough that a second object would not pay for itself all carry `web_glb_url = null`. Every reader treats that as `glb_url`, so there is no separate "not ready" state to handle.
+3. **It is built after the row is already `done`.** `buildWebVariant()` is fire-and-forget, exactly like the physics grade beside it. The pass costs 0.6 to 5.6 s of CPU and the person waiting on their generation must never wait on it, nor lose a finished model to a compression bug or an instance recycle.
+
+Meshes that predate the variant are drained by [api/cron/forge-web-variants.js](../api/cron/forge-web-variants.js) (every 10 minutes, `FORGE_WEB_VARIANT_BATCH` rows per tick, newest first, because the newest models are the ones being opened on a phone). It reads the stored original, writes the variant to a second key, and never rewrites the original object; a row that yields no gain has `web_glb_key` pointed at the original key so it leaves the pending index while `web_glb_url` stays null.
+
+**The decoder ships from our own origin.** `EXT_meshopt_compression` needs a decoder that `<model-viewer>` loads as a classic script, and that URL used to be a public CDN. It is now `/vendor/meshopt_decoder.js`, vendored from the `meshoptimizer` package by `npm run vendor:meshopt` and pinned byte-for-byte by `tests/meshopt-vendor.test.js`. A hard dependency of the format we serve by default cannot have worse availability than the site itself, and the extra DNS plus TLS handshake sat on the critical path of the first 3D frame. The viewer also listens for a decode failure and retries once against `glb_url`, so a browser that genuinely cannot decode the variant gets a slower load rather than a dead page.
+
+**Texture dimensions come from the encoder, not from a header parse.** `@gltf-transform`'s own `textureCompress({ resize })` derives its target from a minimal PNG header reader, and three of the six meshes above carry a PNG it reads as 65536x4292542531, which made the whole pass throw `Expected positive integer for width but received 0` and lost the geometry win with it. `recompressTextures()` reads dimensions from sharp, which is the thing about to decode the bytes, and isolates every texture in its own try/catch so one unreadable skin costs that skin and nothing else.
+
 ## 7. GPU workers
 
 Workers are Python FastAPI services on Cloud Run (scale-to-zero L4 GPUs unless noted), documented worker-by-worker in `workers/README.md`. All share one contract: `POST /infer` returns `{task_id}`, `GET /tasks/:id` returns progress and finally a `result_gcs_url`, authenticated by the shared bearer `GCP_RECONSTRUCTION_KEY`. `api/_providers/gcp.js` maps modes to worker URLs.
