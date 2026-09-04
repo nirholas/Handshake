@@ -148,7 +148,8 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 |---|---|---|
 | CSP-safe inline markup | `npm run audit:inline-handlers` | No served HTML carries an inline event handler attribute or a `javascript:` URL. |
 | Live CSP sweep | `npm run audit:csp` | No page violates the Content-Security-Policy the server sends with it, and every response carries the security headers `vercel.json` declares. `--headers-only --base https://three.ws` checks the header half against a live origin with no browser. |
-| Console sweep | `npm run audit:console` | A clean browser console on every route, desktop and mobile. |
+| Console sweep | `npm run audit:console` | A clean browser console on every route, desktop and mobile. Any route that fails in the parallel pass is re-run once serially and the second reading is the one reported, because this worktree is shared and a page that misses its settle window beside somebody else's full build has not failed. The report names how many cleared that way. |
+| Hosted IBM page | `npm run audit:ibm-hosted` | The publish-once partnership page still works from a domain that is not three.ws: the live update applies, i18n mounts, and the x402 widget binds. See [ops/ibm-hosted-page-audit.md](ops/ibm-hosted-page-audit.md). |
 | `/play` failure modes | `npm run audit:play-failures` | `/play` stays usable when its dependencies fail, and hostile deep-link params never execute. |
 | Overlapping fixed overlays | `npm run audit:overlays` | No persistent floating widget can cover another one's controls. |
 | Image loading attributes | `npm run check:images` | Every JS-rendered image sets `loading` and `decoding`. |

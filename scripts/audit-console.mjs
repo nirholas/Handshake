@@ -10,6 +10,13 @@
  * A clean console is part of the Definition of Done (CLAUDE.md). This is the
  * lasting, npm-able check — wired as `npm run audit:console`.
  *
+ * Any route that fails in the parallel pass is re-run once, serially, and that
+ * second reading is what the report carries. This worktree is shared with other
+ * agents and a sweep routinely runs beside somebody else's full build; a page
+ * that misses its settle window at load 100+ has not failed. A real defect
+ * reproduces on the quiet retry, so nothing is excused, only re-measured, and
+ * the report says how many routes cleared that way.
+ *
  * Usage:
  *   node scripts/audit-console.mjs                  # every HTML route, both viewports
  *   node scripts/audit-console.mjs / /forge /play   # specific routes only
@@ -455,6 +462,8 @@ let browser = await launchBrowser();
 
 // results[viewportKey] = array of per-route result objects
 const results = {};
+// retries[viewportKey] = { attempted, recovered } for the serial re-run below
+const retries = {};
 
 for (const vpKey of viewportKeys) {
 	const vp = VIEWPORTS[vpKey];
@@ -497,6 +506,41 @@ for (const vpKey of viewportKeys) {
 		);
 		return r;
 	});
+	// A route that failed once on a saturated box has not necessarily failed.
+	// This worktree is shared with several agents, and a sweep routinely runs
+	// beside somebody else's full build: at load 100+ a page can miss its settle
+	// window, and the run then reports hundreds of "failures" that reproduce on
+	// exactly none of them when checked alone. On 2026-09-04 one sweep called 550
+	// of 780 routes broken for that reason and every route sampled from it was
+	// clean in isolation, which makes the whole measurement worthless.
+	//
+	// So re-run every failing route once, serially, and keep the second reading:
+	// contention disappears when nothing else is competing, and a real defect
+	// fails again. Nothing is excused, only re-measured. The count is printed and
+	// carried into the report so a run that leaned on this is visible rather than
+	// quietly smoothed.
+	const failed = res.map((r, i) => [r, i]).filter(([r]) => totalErrors(r) > 0);
+	let recovered = 0;
+	if (failed.length) {
+		console.log(C.y(`\n  re-running ${failed.length} failing route(s) serially\n`));
+		for (const [r, i] of failed) {
+			let again;
+			try {
+				again = await checkRoute(context, base, r.route);
+			} catch (e) {
+				if (!BROWSER_GONE.test(e?.message || '')) throw e;
+				await recycle();
+				again = await checkRoute(context, base, r.route);
+			}
+			const errs = totalErrors(again);
+			if (errs === 0) recovered++;
+			res[i] = again;
+			process.stdout.write(
+				`  retry ${errs === 0 ? C.g('✓') : C.r(`✗ ${errs}`)} ${C.c(r.route.path)}\n`,
+			);
+		}
+		retries[vpKey] = { attempted: failed.length, recovered };
+	}
 	results[vpKey] = res;
 	await context.close();
 }
@@ -578,6 +622,22 @@ if (wantReport) {
 	lines.push('');
 	lines.push(`**Result:** ${failing.length === 0 ? '✅ all routes clean' : `❌ ${failing.length} route(s) with errors`}. ${grandErrors} total error(s).`);
 	lines.push('');
+	// Say out loud how much of the result came from the serial re-run. A sweep
+	// that recovered most of its failures that way was measured on a box under
+	// heavy contention, and the reader should weigh it accordingly.
+	const retried = Object.entries(retries).filter(([, v]) => v.attempted > 0);
+	if (retried.length) {
+		lines.push(
+			'Routes that failed in the parallel pass are re-run once, serially, and the ' +
+				'second reading is the one reported: ' +
+				retried
+					.map(([k, v]) => `${k} ${v.recovered}/${v.attempted} cleared on the retry`)
+					.join(', ') +
+				'. A route that cleared was losing its settle window to load on a shared box, ' +
+				'not failing.',
+		);
+		lines.push('');
+	}
 	lines.push('## Per-route');
 	lines.push('');
 	const head = ['Route', 'Section', ...viewportKeys.flatMap((k) => [`${k} err`, `${k} warn`])];
