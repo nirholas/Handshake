@@ -8,7 +8,7 @@ Related docs: [nvidia-inception.md](./nvidia-inception.md) (membership overview)
 
 ## Status: product record filed, public listing not live (2026-08-14)
 
-The portal shows the product row (`three.ws | Shipping | GPU Accelerated`), but a search for `three.ws` on the public catalog returns 0 results. That is expected, not a bug: **the portal record and the public catalog are two different systems.**
+The portal shows the product row (`three.ws | Shipping | GPU Accelerated`), but a search for `three.ws` on the public catalog returns 0 results. **Re-verified 2026-09-04:** still 0 results on the public catalog, and the portal record is still the uncorrected one below (Used: cuBLAS, CUDA Python, CUDA Toolkit, cuDNN; Considering: DeepVariant NIM, Riva, TensorRT, Triton, Omniverse Kit, Audio2Face), so neither step 1 nor step 2 has happened yet. That is expected, not a bug: **the portal record and the public catalog are two different systems.**
 
 - **Portal > Profile > Products** makes the company benefits-eligible and feeds NVIDIA's internal recommendation engine. The portal's own wording is "we **may** feature it in the personalized recommendations we share with our customers."
 - **The public catalog** ([marketplace.nvidia.com/en-us/enterprise/applications](https://marketplace.nvidia.com/en-us/enterprise/applications/), filtered view for startups at [nvidia.com/en-gb/accelerated-applications/inception](https://www.nvidia.com/en-gb/accelerated-applications/inception/)) is curated and published by NVIDIA. Submissions are reviewed on a rolling basis and approval is subject to availability and fit. Nothing in the portal auto-publishes.
@@ -83,7 +83,7 @@ Also do not claim the **video-to-scene world scanner** or the **texture worker**
 - **CUDA** with custom-compiled extensions (nvdiffrast, diffoctreerast, diff-gaussian-rasterization, torchmcubes)
 - **NVIDIA Kaolin** (TRELLIS worker)
 - **NIM APIs** (integrate.api.nvidia.com): Nemotron Super and Nano LLMs, Nemotron Nano VL vision, NV-EmbedQA-E5-v5 embeddings, Mistral 4B reranking, NemoGuard 8B content safety
-- **NVCF**: microsoft/trellis text-to-3D (the free default forge lane) and FLUX.1-schnell text-to-image
+- **NVCF**: microsoft/trellis text-to-3D (the free default forge lane) and FLUX.1-dev text-to-image (the hosted FLUX.1-schnell preview was retired, so do not claim schnell)
 - **NVIDIA Riva**: Magpie multilingual TTS and Riva ASR over NVCF gRPC
 - **NVIDIA Audio2Face-3D**: audio-driven ARKit blendshape facial animation, live at three.ws/demos/audio2face
 - **RTX PRO 6000 Blackwell**: validated (sm_120 builds) for the heavy image-to-3D lane; not the default production GPU
