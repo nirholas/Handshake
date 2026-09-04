@@ -183,6 +183,9 @@
 		"i18n:repair": "node scripts/i18n-translate.mjs --repair",
 		"i18n:backfill": "node scripts/i18n-backfill.mjs",
 		"changelog:gaps": "node scripts/changelog-gaps.mjs",
+		"announce:rank": "node scripts/announce-rank.mjs",
+		"announce:media": "node scripts/capture-doc-media.mjs --spec data/announce-media.json --out public/announce/img --manifest public/announce/media-manifest.json",
+		"check:announce": "node scripts/check-announce.mjs",
 		"changelog:push": "node scripts/changelog-telegram.mjs",
 		"changelog:push:x": "node scripts/changelog-x.mjs",
 		"tweet": "node scripts/post-tweet.mjs",
@@ -442,7 +445,8 @@
 		"home:instance:down": "node scripts/home-test-instance.mjs --down --name lane",
 		"test:home:live": "HOME_LIVE=1 vitest run packages/home-bridge tests/home-store.test.js",
 		"home:matrix": "node scripts/home-version-matrix.mjs",
-		"test:home:e2e": "node --env-file=.env.local ./node_modules/@playwright/test/cli.js test --config=playwright.home.config.js"
+		"test:home:e2e": "node --env-file=.env.local ./node_modules/@playwright/test/cli.js test --config=playwright.home.config.js",
+		"deck:inception": "node scripts/build-inception-deck.mjs"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.5.0",

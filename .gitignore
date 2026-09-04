@@ -564,3 +564,22 @@ public/models/voice/runtime/
 
 # Playwright/agent walk screenshots. Scratch output, never commit.
 .shots/
+
+# Announcement media captured from a surface that renders live third-party
+# market data. The frames are real and the pipeline needs them, but committing
+# one bakes whatever tickers were on screen into the repo, which is the
+# operating rules' commit gate on crypto projects other than $THREE. They stay
+# out of the tree (and out of a concurrent agent's `git add -A` sweep) until the
+# owner approves that specific frame; approval is recorded on the shot in
+# data/announce-media.json as thirdPartyMarketDataApproved.
+public/announce/img/activity-*
+
+# The announcement ledger, held out of the tree pending owner approval. Its
+# entries copy descriptions verbatim out of data/pages.json and packages/*, and
+# a handful of those name crypto projects other than $THREE. Nothing there is
+# new to the repo (every string already ships in a committed file), but the gate on
+# other-coin content is the owner's to lift, not an agent's to assume. Ignored
+# rather than merely untracked so a concurrent `git add -A` sweep cannot commit
+# it on someone else's behalf. Regenerate any time with
+# `npm run announce:rank -- --write --probe`; delete this rule once approved.
+data/announcements.json

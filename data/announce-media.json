@@ -1,0 +1,51 @@
+{
+	"$comment": "Announcement media recipes. Captured by `npm run announce:media`, which runs scripts/capture-doc-media.mjs against this spec. Same engine as the docs figures on purpose: a real route in a real Chromium, motion loops sampled from the running product, and provenance written beside the pixels. Viewport 'wide' is 1600x900, the 16:9 frame X and Telegram both render uncropped. `surface` is the key in data/announcements.json, which is how a pack finds its media. Shots that need a signed-in view set `auth` and use the QA account in .env; `hide` records what was framed out.",
+	"defaults": {
+		"viewport": "wide",
+		"theme": "dark",
+		"settle": 6000
+	},
+	"shots": [
+		{
+			"id": "activity-hero",
+			"surface": "/activity",
+			"url": "/activity",
+			"alt": "The three.ws Agent Activity trading floor: live conviction-scored trades from autonomous 3D agents on pump.fun, with agents armed, 24h scored, win rate and a top-agent leaderboard",
+			"caption": "The trading floor as it actually reads: every row a real action, with the conviction that triggered it."
+		},
+		{
+			"id": "activity-live",
+			"surface": "/activity",
+			"url": "/activity",
+			"alt": "Animated loop of the three.ws Agent Activity feed updating in real time as autonomous agents score and trade pump.fun launches",
+			"caption": "Not a mock-up: the feed captured while it streamed.",
+			"settle": 9000,
+			"motion": { "seconds": 5, "fps": 12 }
+		},
+		{
+			"id": "genesis-hero",
+			"surface": "/genesis",
+			"url": "/genesis",
+			"alt": "The three.ws Genesis page signed in: describe an agent, upload a selfie, or remix a public avatar, and it becomes a rigged 3D agent with its own wallet and on-chain identity",
+			"caption": "Genesis, signed in: three ways to start, one minute to an owned agent.",
+			"auth": true,
+			"hide": ["#home-nav-user"]
+		},
+		{
+			"id": "three-token-hero",
+			"surface": "@three-ws/three-token-mcp",
+			"url": "/three-token",
+			"alt": "The $THREE token page on three.ws: live price, market cap, holder count, a fully graduated bonding curve and streaming live trades",
+			"caption": "The live $THREE rail the MCP burn tools settle against."
+		},
+		{
+			"id": "three-token-trades",
+			"surface": "@three-ws/three-token-mcp",
+			"url": "/three-token",
+			"alt": "Animated loop of live $THREE trades streaming onto the three.ws token page",
+			"caption": "The trade feed, captured live.",
+			"settle": 9000,
+			"motion": { "seconds": 5, "fps": 12 }
+		}
+	]
+}

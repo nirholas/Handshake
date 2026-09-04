@@ -55,11 +55,38 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import sharp from 'sharp';
 
+/** Read AUDIT_EMAIL / AUDIT_PASSWORD out of .env the way the rest of scripts/ does. */
+function loadDotEnv(file) {
+	const full = path.join(ROOT_DIR, file);
+	if (!existsSync(full)) return;
+	for (const line of readFileSync(full, 'utf8').split('\n')) {
+		const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+		if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+	}
+}
+
 const run = promisify(execFile);
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SPEC_FILE = path.join(ROOT, 'data/doc-media.json');
-const OUT_DIR = path.join(ROOT, 'public/docs/img');
-const MANIFEST_FILE = path.join(ROOT, 'public/docs/media-manifest.json');
+const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = ROOT_DIR;
+loadDotEnv('.env.local');
+loadDotEnv('.env');
+
+/** Read a --name value straight off argv. Needed above the CLI block below, which parses argv into the richer opt(). */
+function optRaw(name, fallback) {
+	const i = process.argv.indexOf(`--${name}`);
+	return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
+}
+// Where a run reads its recipes and writes its pixels. The defaults are the
+// docs' own figures; --spec/--out/--manifest point the same engine at another
+// set. Announcement media (data/announce-media.json) uses that: it wants the
+// identical guarantees (a real route in a real browser, a motion loop of the
+// running product, provenance next to the bytes) and duplicating the engine to
+// get them would mean two capture paths drifting apart.
+const SPEC_FILE = path.join(ROOT, optRaw('spec', 'data/doc-media.json'));
+const OUT_DIR = path.join(ROOT, optRaw('out', 'public/docs/img'));
+const MANIFEST_FILE = path.join(ROOT, optRaw('manifest', 'public/docs/media-manifest.json'));
+/** The web path the written files answer on, derived from OUT_DIR so a manifest never points at the wrong folder. */
+const PUBLIC_SRC = `/${path.relative(path.join(ROOT, 'public'), OUT_DIR).split(path.sep).join('/')}`;
 
 // ── CLI ───────────────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2);
@@ -84,6 +111,29 @@ const VIEWPORTS = {
 	mobile: { width: 390, height: 844 },
 	square: { width: 900, height: 900 },
 };
+
+// Site chrome that follows the visitor across every route and parks itself over
+// a corner of the viewport. Removing the nodes once after load is not enough:
+// the feature-discovery card is injected on a timer and reappeared during the
+// settle, so the first announcement captures shipped with a "have you tried
+// Forge" promo over the subject. A stylesheet installed before any script runs
+// holds regardless of when a node appears, and the removal below still handles
+// anything that ignores CSS.
+const SITE_CHROME = [
+	'#tws-corner-stack',
+	'.tws-disc-card',
+	'.tws-atlas-hint',
+	'.twx-i18n-fab',
+	// The walk companion roams every route and parks itself over the lower
+	// right. It is one of our own features, which is exactly why it cannot sit
+	// in a frame announcing a different one.
+	'.walk-companion',
+	'.walk-trail-layer',
+	'.walk-c2w-fx',
+	'#cookie-banner',
+	'.cookie-banner',
+	'[data-consent-banner]',
+];
 
 const SCALE = 2;
 /** Cap the emitted pixel width. Beyond this the extra bytes buy nothing in a doc column. */
@@ -199,12 +249,11 @@ async function preparePage(page, shot) {
 	// over whatever the reader was told to look at. Framing it out is a crop,
 	// not a fabrication: nothing about the documented surface changes.
 	await page
-		.evaluate(() => {
-			const chrome = ['#tws-corner-stack', '#cookie-banner', '.cookie-banner', '[data-consent-banner]'];
+		.evaluate((chrome) => {
 			for (const selector of chrome) {
 				for (const node of document.querySelectorAll(selector)) node.remove();
 			}
-		})
+		}, [...SITE_CHROME, ...(shot.hide || [])])
 		.catch(() => {});
 	await applyActions(page, shot.actions);
 	await page.waitForTimeout(shot.settle ?? 3500);
@@ -334,13 +383,60 @@ async function writeMotion(page, shot, subject, outPath) {
 	}
 }
 
+/**
+ * One signed-in session, reused by every `auth: true` shot.
+ *
+ * Signed out, an authenticated surface shows its gate, and a gate is the one
+ * thing an announcement must not show: the first Genesis capture was a "Sign in
+ * to claim your agent" banner over empty inputs, which is a true picture of the
+ * page and a false picture of the product. The QA account in .env
+ * (AUDIT_EMAIL / AUDIT_PASSWORD) is a real production account, so what these
+ * shots show is the real signed-in product with that account's own data.
+ *
+ * Returns null when the credentials are absent, and the caller then skips those
+ * shots loudly rather than shipping a gate.
+ */
+let authStatePromise = null;
+function authState(browser) {
+	if (authStatePromise) return authStatePromise;
+	authStatePromise = (async () => {
+		const email = process.env.AUDIT_EMAIL;
+		const password = process.env.AUDIT_PASSWORD;
+		if (!email || !password) return null;
+		const context = await browser.newContext({ viewport: VIEWPORTS.wide, deviceScaleFactor: 1 });
+		const page = await context.newPage();
+		try {
+			await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+			// By id, not by input type: /login also renders a passwordless widget
+			// whose own input[type=email] comes first in the DOM.
+			await page.waitForSelector('#email', { timeout: 30000 });
+			await page.fill('#email', email);
+			await page.fill('#password', password);
+			await page.click('form button[type="submit"]');
+			await page.waitForURL((url) => !/\/login/.test(url.pathname), { timeout: 45000 });
+			return await context.storageState();
+		} catch (err) {
+			console.error(`capture-doc-media: sign-in failed (${String(err.message || err).split('\n')[0]})`);
+			return null;
+		} finally {
+			await context.close();
+		}
+	})();
+	return authStatePromise;
+}
+
 async function captureShot(browser, shot, commit) {
 	const viewport = VIEWPORTS[shot.viewport || 'desktop'];
+	const storageState = shot.auth ? await authState(browser) : null;
+	if (shot.auth && !storageState) {
+		throw new Error('shot needs a signed-in session; set AUDIT_EMAIL and AUDIT_PASSWORD in .env');
+	}
 	const context = await browser.newContext({
 		viewport,
 		deviceScaleFactor: SCALE,
 		colorScheme: shot.theme === 'light' ? 'light' : 'dark',
 		reducedMotion: shot.motion ? 'no-preference' : 'reduce',
+		...(storageState ? { storageState } : {}),
 	});
 	// The site persists its own theme; set it before any script runs so the
 	// first paint is already the theme the shot asked for.
@@ -351,6 +447,16 @@ async function captureShot(browser, shot, commit) {
 			/* storage disabled: the colorScheme hint above still applies */
 		}
 	}, shot.theme === 'light' ? 'light' : 'dark');
+	await context.addInitScript((selectors) => {
+		const css = `${selectors.join(',')}{display:none !important}`;
+		const install = () => {
+			const style = document.createElement('style');
+			style.textContent = css;
+			document.head?.appendChild(style);
+		};
+		if (document.head) install();
+		else document.addEventListener('DOMContentLoaded', install, { once: true });
+	}, [...SITE_CHROME, ...(shot.hide || [])]);
 
 	const page = await context.newPage();
 	// Stills and loops both ship as WebP: a UI screenshot at quality 90 is
@@ -370,12 +476,14 @@ async function captureShot(browser, shot, commit) {
 		const sha256 = createHash('sha256').update(readFileSync(outPath)).digest('hex');
 		return {
 			id: shot.id,
-			src: `/docs/img/${shot.id}.webp`,
+			src: `${PUBLIC_SRC}/${shot.id}.webp`,
 			alt: shot.alt,
 			caption: shot.caption || null,
 			route: shot.url,
 			viewport: shot.viewport || 'desktop',
 			animated: Boolean(shot.motion),
+			authenticated: Boolean(shot.auth),
+			hidden: shot.hide && shot.hide.length ? shot.hide : undefined,
 			capturedAt: new Date().toISOString(),
 			capturedFrom: BASE,
 			commit,

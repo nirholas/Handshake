@@ -64,6 +64,13 @@ const asJson = flag('--json');
 const doWrite = flag('--write');
 const topN = Number(arg('--top', 30));
 
+// Descriptions are copied verbatim out of package.json and pages.json, and a
+// lot of them carry an em-dash. They are the raw material an announcement gets
+// drafted from, so the glyph is normalized here rather than caught later in
+// every draft: the house style bans it everywhere, this file included.
+const DASHES = new RegExp('\\s*[\\u2014\\u2013]\\s*', 'g');
+const clean = (text) => String(text || '').replace(DASHES, ', ').trim();
+
 // --- inventory --------------------------------------------------------------
 
 // Sections of data/pages.json that hold product surfaces. 'learn' and 'blog'
@@ -82,8 +89,8 @@ function pageInventory() {
 				key: page.path,
 				kind: 'page',
 				section: section.id,
-				title: page.title,
-				description: page.description || '',
+					title: clean(page.title),
+				description: clean(page.description),
 				added: page.added || null,
 				sitemapPriority: typeof page.priority === 'number' ? page.priority : 0.5,
 				showcase: Boolean(page.showcase),
@@ -108,13 +115,13 @@ function dirInventory(base, kind, keyPrefix) {
 				const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 				if (pkg.private === true && kind === 'package') continue;
 				title = pkg.name || title;
-				description = pkg.description || '';
+				description = clean(pkg.description);
 			} catch { /* an unparseable package.json still leaves a real directory */ }
 		}
 		if (!description && existsSync(join(dir, name.name, 'README.md'))) {
 			const readme = readFileSync(join(dir, name.name, 'README.md'), 'utf8');
 			const line = readme.split('\n').find((l) => l.trim() && !l.startsWith('#'));
-			description = (line || '').trim().slice(0, 240);
+			description = clean(line).slice(0, 240);
 		}
 		out.push({
 			key: kind === 'package' ? title : `${base}/${name.name}`,
