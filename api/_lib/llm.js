@@ -62,6 +62,23 @@ const GROQ_MODEL = 'qwen/qwen3.8-27b';
 // Smaller model, so it sits at the END of the free section — every 70B-class
 // provider gets tried before the chain steps down in capability.
 const GROQ_INSTANT_MODEL = 'openai/gpt-oss-20b';
+// Third Groq rung, on a third independent per-model token pool. Groq meters
+// tokens PER MODEL at 8,000 tokens/minute, which is roughly three fact-check
+// stance calls before the rung 429s for the rest of the minute: that ceiling,
+// not any outage, is why a burst of real work fell straight past a healthy Groq
+// and down a chain whose next five rungs were dead. Each model id is a separate
+// 8k bucket, so pooling three of them triples the burst Groq absorbs before the
+// chain steps outside it. 120B rides directly behind the primary rung because
+// it is the larger model; the 20B instant lane stays at the back of the free
+// section, where a step DOWN in capability belongs.
+//
+// Measured 2026-09-04 off x-ratelimit-limit-tokens. groq/compound-mini
+// advertises 70,000 instead and looks like the obvious pick, but it is an
+// agentic model that internally routes to llama-3.3-70b-versatile, whose
+// 100,000 tokens/DAY org cap was already 99.9% spent: it 429s in production
+// while reporting a nearly-full per-minute budget. Do not add it on the
+// strength of that header.
+const GROQ_LARGE_MODEL = 'openai/gpt-oss-120b';
 // Same Llama 3.3 70B on Cerebras' free tier (cloud.cerebras.ai) — optional
 // rung, active when CEREBRAS_API_KEY is configured.
 const CEREBRAS_MODEL = 'llama-3.3-70b';
@@ -509,6 +526,13 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			key: env.GROQ_API_KEY,
 			url: 'https://api.groq.com/openai/v1/chat/completions',
 			model: GROQ_MODEL,
+		}));
+		// Same key, separate per-model token bucket. See GROQ_LARGE_MODEL.
+		chain.push(openaiCompatProvider({
+			name: 'groq#120b',
+			key: env.GROQ_API_KEY,
+			url: 'https://api.groq.com/openai/v1/chat/completions',
+			model: GROQ_LARGE_MODEL,
 		}));
 	}
 	// Same 70B family on Cerebras' free tier — a distinct quota pool from Groq,

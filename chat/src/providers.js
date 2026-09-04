@@ -18,9 +18,8 @@ import {
 // app now replaces this seed with the live list as soon as it loads, and falls
 // back to a live id rather than to this array (see resolveDefaultModel).
 export const BUILTIN_MODELS = [
-	{ id: 'openai/gpt-oss-20b:free', name: 'GPT OSS 20B', provider: 'Built-in', modality: 'text->text' },
-	{ id: 'nvidia/nemotron-3-super-120b-a12b:free', name: 'Nemotron 3 Super 120B', provider: 'Built-in', modality: 'text->text' },
 	{ id: 'google/gemma-4-31b-it:free', name: 'Gemma 4 31B', provider: 'Built-in', modality: 'text->text' },
+	{ id: 'nvidia/nemotron-3-super-120b-a12b:free', name: 'Nemotron 3 Super 120B', provider: 'Built-in', modality: 'text->text' },
 	{ id: 'inclusionai/ling-3.0-flash:free', name: 'Ling 3.0 Flash', provider: 'Built-in', modality: 'text->text' },
 	{ id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'Nemotron 3 Ultra 550B', provider: 'Built-in', modality: 'text->text' },
 ];

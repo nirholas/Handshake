@@ -220,7 +220,7 @@ const PROVIDER_DEFAULT_MODEL = {
 	gemini: 'gemini-2.5-flash',
 	vertex: 'google/gemini-2.5-flash',
 	groq: 'qwen/qwen3.8-27b',
-	openrouter: 'openai/gpt-oss-20b:free',
+	openrouter: 'google/gemma-4-31b-it:free',
 	nvidia: 'meta/llama-3.3-70b-instruct',
 	mistral: 'mistral-small-latest',
 	openai: 'gpt-4o-mini',
