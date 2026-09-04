@@ -82,7 +82,7 @@
 			if (!env) throw new Error(`unknown environment "${envId}"`);
 
 			const sheet = document.getElementById('sheet');
-			document.getElementById('title').textContent = `${env.name} — ${MATERIAL_PRESET_NAMES.length} presets`;
+			document.getElementById('title').textContent = `${env.name}: ${MATERIAL_PRESET_NAMES.length} presets`;
 
 			// One shared renderer, drawn once per preset and copied into that
 			// preset's own 2D canvas: 20 live WebGL contexts exceed the browser's
@@ -141,7 +141,7 @@
 				out.getContext('2d').drawImage(renderer.domElement, 0, 0);
 				const caption = document.createElement('figcaption');
 				const p = MATERIAL_PRESETS[name];
-				caption.textContent = `${p.label} — m ${p.metalness ?? 0}, r ${p.roughness ?? 0}`;
+				caption.textContent = `${p.label}: m ${p.metalness ?? 0}, r ${p.roughness ?? 0}`;
 				figure.append(out, caption);
 				sheet.append(figure);
 			}

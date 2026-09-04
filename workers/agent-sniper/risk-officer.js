@@ -60,7 +60,7 @@ const MAX_CONCURRENT = Math.max(1, Number(process.env.SNIPER_RISK_OFFICER_MAX_CO
 // enabled and falls through the free lanes otherwise. That satisfies the
 // prefer-GCP-over-paid-third-parties rule, and it keeps the officer independent
 // of the buy-side judge, which routes its own `strat.llm_model` through
-// OpenRouter — a second opinion from the same weights is an echo, not a review.
+// OpenRouter, and a second opinion from the same weights is an echo, not a review.
 //
 // Naming a model here (env, or a strategy's `risk_officer_model`) routes the
 // review through OpenRouter first and keeps the platform chain as the backstop.

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Material preset contact sheets — renders every `@three-ws/viewer-presets`
+ * Material preset contact sheets: renders every `@three-ws/viewer-presets`
  * material preset under EVERY environment the platform viewer ships
  * (src/environments.js: None, Neutral/RoomEnvironment, Venice Sunset,
  * Footprint Court) and writes one PNG per environment.
