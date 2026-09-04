@@ -35,6 +35,22 @@ let _browserPromise = null;
 async function getBrowser() {
 	if (_browserPromise) return _browserPromise;
 	_browserPromise = (async () => {
+		// A workstation already has a chromium (the one Playwright installs for the
+		// test suite). Pointing at it keeps this renderer runnable locally without
+		// downloading the 100 MB serverless pack, which is what makes an evidence
+		// run (scripts/avatar-likeness-audit.mjs) possible off a Cloud Run box.
+		// Same env var and same contract as embed-doctor.js. Unset in production,
+		// so the serverless pack below stays the deployed path.
+		const local = process.env.CHROMIUM_EXECUTABLE_PATH;
+		if (local) {
+			const { default: puppeteer } = await import('puppeteer-core');
+			return puppeteer.launch({
+				args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'],
+				defaultViewport: { width: 1024, height: 1024, deviceScaleFactor: 1 },
+				executablePath: local,
+				headless: true,
+			});
+		}
 		const [{ default: puppeteer }, { default: chromium }] = await Promise.all([
 			import('puppeteer-core'),
 			import('@sparticuz/chromium-min'),
