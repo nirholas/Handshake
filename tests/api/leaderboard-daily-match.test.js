@@ -183,4 +183,39 @@ describe('GET /api/leaderboard/daily-match: standings', () => {
 			{ agent_id: A2, name: 'Agent b2', type: 'trade', source_skill: null, at: '2026-08-13T03:00:00.000Z' },
 		]);
 	});
+
+	it('reads the feed from every source the board scores, not just agent_actions', async () => {
+		await call();
+		// Call 2 is the ticker. Reading only agent_actions used to leave an agent
+		// that shipped a launch, a trade or a sale ranked on a board sitting next
+		// to an empty "Live output" panel, which read as a broken page.
+		const feedSql = sqlCalls[2].text;
+		for (const table of [
+			'agent_actions',
+			'pump_agent_mints',
+			'agent_sniper_positions',
+			'pump_agent_trades',
+			'skill_purchases',
+		]) {
+			expect(feedSql).toContain(table);
+		}
+		// Same UTC-day window and public-agent filter as the standings aggregate.
+		expect(feedSql).toContain("date_trunc('day', now() at time zone 'utc')");
+		expect(feedSql).toContain('i.is_public = true');
+	});
+
+	it('maps a feed built from mixed sources into one uniform ticker shape', async () => {
+		sqlQueue.push([]);
+		sqlQueue.push([]);
+		sqlQueue.push([
+			{ agent_id: A1, name: 'Agent b1', type: 'launch', source_skill: 'THREE', created_at: '2026-08-13T05:00:00.000Z' },
+			{ agent_id: A2, name: 'Agent b2', type: 'sale', source_skill: 'create-3d-avatar', created_at: '2026-08-13T04:30:00.000Z' },
+			{ agent_id: A1, name: 'Agent b1', type: 'buy', source_skill: null, created_at: '2026-08-13T04:00:00.000Z' },
+		]);
+
+		const { body } = await call();
+		expect(body.data.recent.map((r) => r.type)).toEqual(['launch', 'sale', 'buy']);
+		expect(body.data.recent[2].source_skill).toBeNull();
+		expect(body.data.recent[0].at).toBe('2026-08-13T05:00:00.000Z');
+	});
 });
