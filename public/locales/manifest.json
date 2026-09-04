@@ -42,6 +42,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "ar",
+			"name": "العربية",
+			"dir": "rtl"
+		},
+		{
 			"code": "hi",
 			"name": "हिन्दी",
 			"dir": "ltr"
@@ -62,6 +67,16 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "th",
+			"name": "ไทย",
+			"dir": "ltr"
+		},
+		{
+			"code": "fil",
+			"name": "Filipino",
+			"dir": "ltr"
+		},
+		{
 			"code": "zh-TW",
 			"name": "繁體中文",
 			"dir": "ltr"
@@ -69,6 +84,16 @@
 		{
 			"code": "it",
 			"name": "Italiano",
+			"dir": "ltr"
+		},
+		{
+			"code": "nl",
+			"name": "Nederlands",
+			"dir": "ltr"
+		},
+		{
+			"code": "mr",
+			"name": "मराठी",
 			"dir": "ltr"
 		},
 		{
