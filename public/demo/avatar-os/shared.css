@@ -11,7 +11,7 @@
 	--accent: #ffffff;
 	--accent-2: #ffffff;
 	--danger: #f87171;
-	--ok: #4ade80;
+	--ok: var(--success);
 }
 
 * {
