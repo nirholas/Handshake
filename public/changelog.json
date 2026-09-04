@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T07:38:28.380Z",
+	"generated_at": "2026-09-04T07:47:05.181Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -68,6 +68,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Opening the homepage, Create and Discover no longer loads 3D you never asked to see",
+			"summary": "Three pages were doing heavy 3D work before anyone had scrolled to it. The homepage hero picked whichever featured avatar the list returned first, which meant a 4.6 MB model downloading and decoding while the page was still trying to become usable; it now picks the richest avatar that fits a size budget, which cut the hero to 2.1 MB without changing what the stage shows. Discover was fetching an entire 3D viewer engine on every visit even though almost every card in the directory is a still thumbnail, and now fetches it only when a card that really has a 3D model comes near the screen. The Create page did the same for one preview card that already waited for your cursor, and now waits for it too, with the poster on screen in the meantime so the card looks the same. The walking companion also stopped booting on top of a page that is still loading: it waits for the page to settle first, then turns up as before.",
+			"link": "/discover",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{

@@ -55,6 +55,14 @@
 			<description>Paying to reach a stranger has meant paying first and hoping. The money left your wallet the moment the payment cleared, and if the person never replied, that was that. Doors can now take escrowed knocks instead: your payment sits in a vault on Solana that the recipient cannot touch until they actually answer you. If they answer, they are paid. If they decline, you get everything back and are charged nothing, because reading something and passing on it is not a service. And if they simply never respond before the window they set, anyone at all can trigger the refund and every cent comes back to you, so it does not depend on you remembering to chase it. three.ws holds no key that can move that money, and neither does anyone else. Door owners can turn the lane on in their knock settings and choose how long they get to reply, from an hour to a month.</description>
 		</item>
 		<item>
+			<title>Opening the homepage, Create and Discover no longer loads 3D you never asked to see</title>
+			<link>https://three.ws/discover</link>
+			<guid isPermaLink="false">2026-09-04:Opening the homepage, Create and Discover no longer loads 3D you never asked to see</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Three pages were doing heavy 3D work before anyone had scrolled to it. The homepage hero picked whichever featured avatar the list returned first, which meant a 4.6 MB model downloading and decoding while the page was still trying to become usable; it now picks the richest avatar that fits a size budget, which cut the hero to 2.1 MB without changing what the stage shows. Discover was fetching an entire 3D viewer engine on every visit even though almost every card in the directory is a still thumbnail, and now fetches it only when a card that really has a 3D model comes near the screen. The Create page did the same for one preview card that already waited for your cursor, and now waits for it too, with the poster on screen in the meantime so the card looks the same. The walking companion also stopped booting on top of a page that is still loading: it waits for the page to settle first, then turns up as before.</description>
+		</item>
+		<item>
 			<title>Run an escrowed door from your own wallet, and see what the chain actually says</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-04:Run an escrowed door from your own wallet, and see what the chain actually says</guid>

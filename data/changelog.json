@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-04",
+			"title": "Opening the homepage, Create and Discover no longer loads 3D you never asked to see",
+			"summary": "Three pages were doing heavy 3D work before anyone had scrolled to it. The homepage hero picked whichever featured avatar the list returned first, which meant a 4.6 MB model downloading and decoding while the page was still trying to become usable; it now picks the richest avatar that fits a size budget, which cut the hero to 2.1 MB without changing what the stage shows. Discover was fetching an entire 3D viewer engine on every visit even though almost every card in the directory is a still thumbnail, and now fetches it only when a card that really has a 3D model comes near the screen. The Create page did the same for one preview card that already waited for your cursor, and now waits for it too, with the poster on screen in the meantime so the card looks the same. The walking companion also stopped booting on top of a page that is still loading: it waits for the page to settle first, then turns up as before.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/discover"
+		},
+		{
+			"date": "2026-09-04",
 			"title": "The friends panel tells you when it cannot reach the server, instead of saying you have no friends",
 			"summary": "When the friends list could not be loaded, the panel showed the same screen it shows a brand new player: \"No friends yet\", with a button inviting you to go and add someone. That reads as though your friends were gone, when the truth was only that we could not look. It now says plainly that the connection dropped, that nothing was lost, and offers a Try again button that really does retry, and if the list had already loaded once, it stays on screen and is marked as possibly out of date rather than being thrown away. Coming back online repaints the panel straight away, even when your friends list is exactly as you left it. The panel also had a stray word \"null\" printed under the tabs every time it opened, on both the world and the walk pages, which is now gone.",
 			"tags": [

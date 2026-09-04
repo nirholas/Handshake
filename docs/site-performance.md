@@ -132,48 +132,24 @@ Measured honestly, that last one is the smallest of the three: at 1350x940 the s
 
 **A new `<model-viewer>` on a multi-viewer page ships `data-src`, or it is eager.** There is no third option, and the attribute that looks like it should handle this does not.
 
-### The site footer is the lowest thing on every page, so its 3D bot loads last
+### The element bundle is part of that cost, not just the model
 
-The rule above was written about sections. The most expensive violation of it was not a section at all: it was the decorative robot in the site footer, and it was costing more than everything the rule had already caught.
+The rule above defers the *model*. The 253 KiB module that defines `<model-viewer>` is a separate download and a separate parse, and on 2026-09-04 two pages were still paying it on every visit from a tag in `<head>`.
 
-[public/footer.js](../public/footer.js) injects `/footer.html` into any page holding `<div id="footer-container">`, which is roughly 175 pages. That markup contains `#footer-bot-canvas`, and the injector booted its renderer immediately, at `DOMContentLoaded`, down one of two branches:
+`/discover` is the clearer case. It renders a directory of 48 cards, and only the handful that carry a GLB become a viewer at all: measured against production, four of them, the first at **y=4991px** on a 940px viewport. The other 44 are static R2 thumbnails. The bundle was fetched and evaluated on every visit regardless, and a Lighthouse desktop trace attributed **28,971ms of bootup time** to it. The same page measured with the bundle absent scored **81 against 47** for the page as shipped (and did so on a *slower* sample of the shared machine, `benchmarkIndex` 709 against 958, so the gap is a floor rather than a ceiling).
 
-- A page carrying `<meta name="has-three-bundle">` (every Vite-built page) loaded `/footer-bot.js`, which builds a `WebGLRenderer`, claims a context off the shared budget in [src/webgl-budget.js](../src/webgl-budget.js), and loads `robotexpressive.glb`.
-- A plain HTML page (login, register, the dashboard, `/docs`, `/discover`) instead pulled **`model-viewer` from `ajax.googleapis.com`, a second complete 3D engine**, plus the meshopt shim and the same GLB.
+`/create` is the smaller case and the more embarrassing one. It has exactly one viewer, in the hero card, and that viewer already deferred its model with `data-src` per the rule above. The bundle was still fetched and evaluated on load, **8,246ms of bootup**, to build a WebGL renderer for a card most visitors never touch.
 
-Measured against production on 2026-08-15, that decoration was the single largest main-thread consumer on the page it landed on:
+Both now load the element on demand, through the CDN failover chain in [src/shared/model-viewer-loader.js](../src/shared/model-viewer-loader.js) that the hardcoded `<script>` tags never had:
 
-| Page | Branch | Cost, eager |
-|---|---|---|
-| `/forge` | `footer-bot.js` | **19,654ms** of bootup, more than the page's own bundle (1,473ms) |
-| `/docs` | `model-viewer` | 839ms of bootup and 253 KiB transferred, on a 701 KiB page |
-| `/create` | `footer-bot.js` | 107 KiB GLB plus a WebGL context, on a page already running Three.js |
+- `/create` asks for it from `promoteSource()` in [src/shared/attended-rotation.js](../src/shared/attended-rotation.js), the same first attention that promotes `data-src`. Every `data-src` viewer on the platform inherits this.
+- `/discover` asks for it when a card that actually carries a GLB comes within a screen of the viewport, in [public/discover/discover.js](../public/discover/discover.js).
 
-`loading="lazy"` on the `<model-viewer>` element did not help, and could not: it defers the *model*, while the 253 KiB module that defines the element had already been fetched and evaluated.
+**An undefined custom element paints nothing, so the box has to be dressed for that window.** `<model-viewer>` cannot show its own `poster` before it upgrades, so a `:not(:defined)` rule keeps each box the exact size the upgraded viewer will occupy and fills it: `/create` paints the same poster image as a background, `/discover` paints the card's surface tone. Verified in a browser at 1350x940: the `/create` viewer measures 278x238 before the hover and 278x238 after, and the bundle count goes 0 before, 1 after. On `/discover`, 0 at rest with the first 3D card at y=4991, 1 once it is scrolled into view, and the element upgrades and loads its GLB.
 
-Both branches now sit behind `whenNearViewport()` in the same file, an `IntersectionObserver` on `.h-footer-avatar` at `rootMargin: '600px 0px'`, so the bot loads a screenful before the footer arrives and is rendered by the time it is on screen. Browsers without `IntersectionObserver` load it on the first scroll instead, so it still appears on the way down rather than never.
+The meshopt shim stays eager on both pages, and has to. `public/model-viewer-meshopt.js` is a 2 KiB classic script that intercepts `customElements.define()`, so it registers its decoder whenever the bundle turns up; every server-baked GLB needs that decoder set before the first load starts.
 
-Verified by loading the real production pages twice in the same browser, the second time with only `/footer.js` swapped for the working-tree file, then scrolling to the footer to confirm the bot still arrives:
-
-| Page | Transferred, before | after | Long tasks, before | after | Footer bot loaded on open | after scrolling |
-|---|---|---|---|---|---|---|
-| `/docs` | 675 KiB | **426 KiB** | 62ms | **17ms** | yes | yes |
-| `/forge` | 7,379 KiB | 7,283 KiB | 426ms | **138ms** | yes | yes |
-| `/create` | 2,215 KiB | **1,528 KiB** | 8,422ms | **2,510ms** | yes | yes |
-
-Deferring it also fixes an ordering bug nobody had filed. The footer bot reserved a WebGL context at `DOMContentLoaded`, ahead of the `<agent-3d>` instances the visitor came to look at; on a page near the browser's context limit the decoration could win and a real avatar lose. Now the content claims contexts first and the footer takes what is left, which is what `reserveWebGLContext()` was always for. The bot's own failure path already degrades to an empty canvas, so losing that race is silent and harmless.
-
-**Anything injected into a shared chrome partial follows this rule too.** A cost paid in the footer is a cost paid on every page on the site, which makes it the most expensive place on the platform to be careless.
-
-**Before you gate something, check where it actually is.** Paste this into DevTools:
-
-```js
-['dragon-canvas-wrap', 'home-forge', 'home-pose'].forEach((id) => {
-  const el = document.getElementById(id);
-  if (el) console.log(id, Math.round(el.getBoundingClientRect().top + scrollY),
-    'trigger at', innerHeight + 200);
-});
-```
+**A page that renders no viewer downloads no viewer.** Check what a page actually mounts before you put a 3D engine in its `<head>`.
 
 ## 5. Media is lazy, sized by CSS, and decoded off the main thread
 
@@ -246,6 +222,75 @@ Verified against the live page's own CSS by replacing the row's contents and mea
 | 320px | 244px | 295px | **51px** | 295px | 295px | **0px** |
 
 **A static placeholder is a space reservation before it is copy.** If JavaScript is going to replace it, size the placeholder like the thing that replaces it, and make the replacement fit.
+
+## 7. The hero's model is chosen inside a byte budget
+
+**Invariant: code that picks a GLB for a fixed slot picks it by size, not by whatever the feed returns first.**
+
+The homepage hero calls `/api/avatars/featured` and rendered the first entry that resolved. That list is curated by editorial flag and view count, and its members range from a **90 KB prop to a 10.7 MB scan**. On 2026-09-04 the first entry was a 4.6 MB model, which is 4.6 MB of download, parse and GPU upload landing on the critical path of every homepage visit, while the page is still trying to become interactive. A Lighthouse desktop trace measured **29,660ms of total blocking time**, against **9,649ms** for the same page with only `*.glb` withheld. The hero was two thirds of the page's blocking time and 4.6 MB of its 6.9 MB.
+
+Nothing about that was a scheduling problem. The hero is the above-the-fold LCP element and is correctly eager (see rule 4's exception); the defect was that no one chose how heavy it was allowed to be.
+
+[api/avatars/featured.js](../api/avatars/featured.js) now reports each candidate's `size_bytes`, the column the detail endpoint already returned, so the choice is made from one response instead of a detail fetch per candidate. `resolveFeaturedGlb()` in [src/home-live-agents.js](../src/home-live-agents.js) takes the **largest** candidate inside a 2.5 MB budget, which is the richest model the page can afford, and falls back to the smallest when nothing fits, because an over-budget hero that renders beats an empty stage. Candidates the API reports no size for keep their curated order behind the sized ones; over-budget candidates stay in the list as fallbacks, so an outage of the affordable ones still fills the stage.
+
+Verified against the live featured list: the old code took a 3.71 MB model, the new code takes a 2.06 MB rigged, textured, animated humanoid, and every one of the twelve candidates is still reachable in order with no duplicates.
+
+**The budget is a product lever, not just a performance one.** It is `HERO_GLB_BUDGET_BYTES`, one named constant, and raising it is a decision about how much of the first visit the hero is allowed to spend. Curating a heavier avatar into the featured list no longer silently makes that decision for everyone.
+
+## 8. Deferred work waits for a quiet main thread, not for a deadline
+
+**Invariant: a feature deferred for performance reasons resumes when the thread is actually free. `requestIdleCallback(fn, { timeout })` is a deadline, and it fires whether or not the thread ever went idle.**
+
+The walk companion auto-summons for a first-time visitor: it loads Three.js core and addons (616 KiB), an avatar GLB, the shared clip library (`idle.json` alone is 421 KiB) and starts a WebGL render loop. It was scheduled `setTimeout(2000)` after `load`, then `requestIdleCallback(summon, { timeout: 4000 })`. The timeout is the bug. On a page that is still executing its own long tasks the callback fires anyway, so the companion's boot does not run *instead* of the page's work, it runs *on top of* it and both get slower. A Lighthouse desktop trace attributed **25,468ms of bootup on `/forge`** to `walk-companion.js`, the single largest entry on that page, and the same page measured with the companion off scored **71 against 43**.
+
+[public/nav.js](../public/nav.js) now waits for real quiet: a `PerformanceObserver` on `longtask` entries, and the summon runs on the first idle callback after 1.2s with no long task. If the page never goes quiet within 20s the companion is simply not summoned there, and that is the intended outcome rather than a failure. The visitor's choice stays unrecorded, so the next page they open (or the nav's Walk button) summons it then. The promise is that their agent turns up on its own, not that it turns up while the page is still loading. Browsers without the `longtask` entry type (Safari) keep the old single deferred callback, because there is no way for them to tell busy from idle.
+
+Verified in a browser against the dev server: `/create` and `/forge` still auto-summon (`walk:companion:enabled` becomes `1`, `walk-companion.js` is fetched, `window.__walkCompanion` exists), and a measurement of the same pages puts the first 1.2s quiet gap at **1,386ms after `load` on `/forge`**, so the wait costs a healthy page almost nothing and only bites the pages that were being hurt.
+
+**The same shape is worth auditing wherever it appears.** Rule 2's PostHog snippet uses a 2s deadline for the same reason, and it is a defensible trade there: analytics has a blind spot to cap, and 89 KiB is an order of magnitude less than a 3D engine. The rule is not "never use a timeout", it is "know which one you are writing, and size the deadline against what fires when it expires."
+
+### The site footer is the lowest thing on every page, so its 3D bot loads last
+
+The rule above was written about sections. The most expensive violation of it was not a section at all: it was the decorative robot in the site footer, and it was costing more than everything the rule had already caught.
+
+[public/footer.js](../public/footer.js) injects `/footer.html` into any page holding `<div id="footer-container">`, which is roughly 175 pages. That markup contains `#footer-bot-canvas`, and the injector booted its renderer immediately, at `DOMContentLoaded`, down one of two branches:
+
+- A page carrying `<meta name="has-three-bundle">` (every Vite-built page) loaded `/footer-bot.js`, which builds a `WebGLRenderer`, claims a context off the shared budget in [src/webgl-budget.js](../src/webgl-budget.js), and loads `robotexpressive.glb`.
+- A plain HTML page (login, register, the dashboard, `/docs`, `/discover`) instead pulled **`model-viewer` from `ajax.googleapis.com`, a second complete 3D engine**, plus the meshopt shim and the same GLB.
+
+Measured against production on 2026-08-15, that decoration was the single largest main-thread consumer on the page it landed on:
+
+| Page | Branch | Cost, eager |
+|---|---|---|
+| `/forge` | `footer-bot.js` | **19,654ms** of bootup, more than the page's own bundle (1,473ms) |
+| `/docs` | `model-viewer` | 839ms of bootup and 253 KiB transferred, on a 701 KiB page |
+| `/create` | `footer-bot.js` | 107 KiB GLB plus a WebGL context, on a page already running Three.js |
+
+`loading="lazy"` on the `<model-viewer>` element did not help, and could not: it defers the *model*, while the 253 KiB module that defines the element had already been fetched and evaluated.
+
+Both branches now sit behind `whenNearViewport()` in the same file, an `IntersectionObserver` on `.h-footer-avatar` at `rootMargin: '600px 0px'`, so the bot loads a screenful before the footer arrives and is rendered by the time it is on screen. Browsers without `IntersectionObserver` load it on the first scroll instead, so it still appears on the way down rather than never.
+
+Verified by loading the real production pages twice in the same browser, the second time with only `/footer.js` swapped for the working-tree file, then scrolling to the footer to confirm the bot still arrives:
+
+| Page | Transferred, before | after | Long tasks, before | after | Footer bot loaded on open | after scrolling |
+|---|---|---|---|---|---|---|
+| `/docs` | 675 KiB | **426 KiB** | 62ms | **17ms** | yes | yes |
+| `/forge` | 7,379 KiB | 7,283 KiB | 426ms | **138ms** | yes | yes |
+| `/create` | 2,215 KiB | **1,528 KiB** | 8,422ms | **2,510ms** | yes | yes |
+
+Deferring it also fixes an ordering bug nobody had filed. The footer bot reserved a WebGL context at `DOMContentLoaded`, ahead of the `<agent-3d>` instances the visitor came to look at; on a page near the browser's context limit the decoration could win and a real avatar lose. Now the content claims contexts first and the footer takes what is left, which is what `reserveWebGLContext()` was always for. The bot's own failure path already degrades to an empty canvas, so losing that race is silent and harmless.
+
+**Anything injected into a shared chrome partial follows this rule too.** A cost paid in the footer is a cost paid on every page on the site, which makes it the most expensive place on the platform to be careless.
+
+**Before you gate something, check where it actually is.** Paste this into DevTools:
+
+```js
+['dragon-canvas-wrap', 'home-forge', 'home-pose'].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) console.log(id, Math.round(el.getBoundingClientRect().top + scrollY),
+    'trigger at', innerHeight + 200);
+});
+```
 
 ---
 
