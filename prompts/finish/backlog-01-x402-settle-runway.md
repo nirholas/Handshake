@@ -2,11 +2,35 @@
 
 Read [00-INDEX.md](backlog-00-INDEX.md) first.
 
-> ## Status, re-measured 2026-09-02 (read this before the body below)
+> ## Re-measured 2026-09-04: three agent-doable defects were still here
 >
-> Every agent-doable line of this order is now shipped. What remains is capital,
-> and it is owner-owned. The body below is kept for its diagnosis method, but
-> four of its factual claims have been overtaken; do not act on them:
+> The 2026-09-02 header below said only capital remained. That was wrong in a way
+> that mattered: capital would have landed on the wrong wallet. Fixed and shipped
+> in the tree on 2026-09-04 (`0559bc23f`), evidence per item in
+> [PROGRESS.md](backlog-PROGRESS.md):
+>
+> 1. **A thin top-up funded the wrong wallet.** `planTopUps` ranked targets by
+>    absolute deficit, and the relayer/treasury bundle's deficit (0.983 SOL) is
+>    five times the ring payer's (0.179 SOL), so 0.1, 0.2 or even 0.5 SOL sent to
+>    the master went entirely to the bundle and left the payer under its 0.002 SOL
+>    hard floor. The x402 sponsor and payer specs now carry `settleCritical` and
+>    are funded first. **0.1 SOL now restarts settlement; before, nothing under
+>    ~1 SOL would have.**
+> 2. **`?dry=1` on `economy-rebalance` executed live swaps** (its only non-signing
+>    path was being disarmed, and production is armed). It now honors the flag.
+> 3. **The rebalancer re-planned an impossible swap every 30 minutes.** The ring
+>    payer cannot fund the 1,855,569-lamport rent for the wSOL account its own
+>    `usdc->sol` swap creates, so it holds 4.18 USDC it cannot spend. That is now
+>    an honest `below_swap_rent:<have><<need>` skip instead of a failing broadcast.
+>
+> Also as of 2026-09-04: **`/api/healthz` answers HTTP 500 in production**
+> (`Cannot find module '/app/services/home-relay/src/token.js'`), so the outcome
+> line of this order cannot be read at all until the next deploy. That is fixed in
+> the tree by `d668ceece`, not by anything here.
+>
+> What remains is capital and the deploy, both owner-owned. The body below is kept
+> for its diagnosis method, but four of its factual claims have been overtaken; do
+> not act on them:
 >
 > 1. **The two config levers are already applied in production.**
 >    `GET /api/x402/runway-lab` reports `runway_days: 1` and the 2026-08-01
@@ -39,9 +63,10 @@ Read [00-INDEX.md](backlog-00-INDEX.md) first.
 > agent wallets `at_or_below_floor`, 2 unreadable at stage `recover`, 0 SOL
 > reclaimed. Send SOL to the economy master
 > `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`, never to per-agent wallets:
-> 0.1 SOL lifts the sponsor back over its floors and restarts settlement,
-> 2 SOL clears the fleet's whole 1.47 SOL deficit with weeks of runway. That is
-> stop-and-ask gate 1 and it is the owner's call.
+> 0.1 SOL lifts the sponsor back over its floors and, with the 2026-09-04 ordering
+> fix deployed, reaches the ring payer that the refusals actually name and
+> restarts settlement; 2 SOL clears the fleet's whole 1.47 SOL deficit with weeks
+> of runway. That is stop-and-ask gate 1 and it is the owner's call.
 >
 > Shipped against this order: the caller-side fee admission gate
 > (`assessFeeAdmission`), the governor config recurrence guard
