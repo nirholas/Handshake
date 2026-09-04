@@ -1,6 +1,6 @@
 {
 	"startedAt": "2026-09-04T08:22:27.364Z",
-	"finishedAt": null,
+	"finishedAt": "2026-09-04T08:50:48.303Z",
 	"baseUrl": "https://three.ws",
 	"cases": {
 		"a": {
@@ -240,6 +240,35 @@
 					"error": null,
 					"meanScore": null,
 					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/fd66c368-97b8-4afb-822c-d820a19a8e40.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/668505a1-34e6-4f0d-81c5-0cacd5882b96.jpg",
+					"creationId": "fd66c368-97b8-4afb-822c-d820a19a8e40",
+					"generationMs": 126436,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/f9f648d7-2a94-4f03-9278-af835aa984d4.glb",
+					"rigMs": 18239,
+					"meanScore": null,
+					"dimMeans": null
 				}
 			},
 			"directed": null,
@@ -256,7 +285,58 @@
 				"before": {
 					"id": "before",
 					"tierRequested": "standard",
-					"views": {}
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/9da72645-bcaf-4a81-a8eb-e862ab746bc5.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/85ace1b0-e742-40bb-a64c-5a7624096d7c.jpg",
+					"creationId": "9da72645-bcaf-4a81-a8eb-e862ab746bc5",
+					"generationMs": 541639,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ef150e6a-db8a-4a13-a3c0-5ef0bf2fc8ec.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/ca4b69bc-9c1f-448b-9649-6fe9b17f508d.jpg",
+					"creationId": "ef150e6a-db8a-4a13-a3c0-5ef0bf2fc8ec",
+					"generationMs": 94487,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/259b7184-f623-455b-afae-e4af207dffc0.glb",
+					"rigMs": 13272,
+					"meanScore": null,
+					"dimMeans": null
 				}
 			},
 			"directed": null,
@@ -273,7 +353,38 @@
 				"before": {
 					"id": "before",
 					"tierRequested": "standard",
-					"views": {}
+					"views": {},
+					"error": "job f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqTXpNekJoWmpObUxUTTNPVFF0TkdVMVpDMWhZMk0wTFdNMllqSXdabUkzT0RVeE15SXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.ilvkHkQbRUftrmQMUb9Vgmcab024zqEqv1sswtQ5YaU did not finish within 900000ms",
+					"generationMs": 914674
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/dc1ba014-76d3-47d2-ac62-0b4bd6f67a14.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/190a2102-58b7-4b8d-99d9-c0ffb5ea82f7.jpg",
+					"creationId": "dc1ba014-76d3-47d2-ac62-0b4bd6f67a14",
+					"generationMs": 112123,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/6509a3f8-e627-46c3-81e7-51b99bf8171a.glb",
+					"rigMs": 24651,
+					"meanScore": null,
+					"dimMeans": null
 				}
 			},
 			"directed": null,

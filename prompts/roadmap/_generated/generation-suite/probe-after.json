@@ -1,0 +1,411 @@
+{
+  "base": "https://three.ws",
+  "at": "2026-09-04T08:57:46.070Z",
+  "results": [
+    {
+      "name": "catalog",
+      "endpoint": "GET /api/forge?catalog",
+      "ok": true,
+      "detail": "11 backends, 3 tiers"
+    },
+    {
+      "name": "health",
+      "endpoint": "GET /api/forge?health",
+      "ok": false,
+      "detail": "not ok: trellis=unconfigured",
+      "llm": "down"
+    },
+    {
+      "name": "text-to-3d",
+      "endpoint": "POST /api/forge",
+      "ok": false,
+      "detail": "job queued: {\"job_id\":\"f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNkltVTNZbVkwWkRNNExXWTBaakV0TkRFd055MWlOelk1TFdZd01EQXdZV1UzT0dVMk"
+    },
+    {
+      "name": "image-upload",
+      "endpoint": "POST /api/forge-upload",
+      "ok": true,
+      "detail": "presigned R2 upload issued"
+    },
+    {
+      "name": "image-to-3d",
+      "endpoint": "POST /api/forge",
+      "ok": true,
+      "detail": "1591136 B glb, 1 primitives",
+      "artifact": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/4d5c9628475e/12a45473-e7ca-42be-89b3-09f978573ab5.glb"
+    },
+    {
+      "name": "auto-rig",
+      "endpoint": "POST /api/forge?action=rig",
+      "ok": true,
+      "detail": "1 skin(s), 52 joints, 22 primitives",
+      "artifact": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/4d5c9628475e/fc8aa251-43da-4082-b3aa-c7cf3cc9fa2d.glb"
+    },
+    {
+      "name": "remesh",
+      "endpoint": "/api/forge-remesh",
+      "ok": true,
+      "detail": "79328 B glb, 1 primitives, 0 materials",
+      "artifact": "https://storage.googleapis.com/three-ws-avatar-reconstructions/remesh/7e28fb4b-f681-4517-a19f-ac5e4e58be22.glb",
+      "glb": {
+        "meshes": 1,
+        "primitives": 1,
+        "nodes": 2,
+        "skins": 0,
+        "animations": 0,
+        "materials": 0,
+        "images": 0,
+        "joints": 0
+      },
+      "job": {
+        "job_id": "eyJtb2RlIjoicmVtZXNoIiwidGFza0lkIjoiN2UyOGZiNGItZjY4MS00NTE3LWExOWYtYWM1ZTRlNThiZTIyIiwiYmFzZVVybCI6Imh0dHBzOi8vcmVtZXNoLXNlcnZpY2UtbHA2NDJrM2twYS11Yy5hLnJ1bi5hcHAiLCJyZXN1bHRLZXkiOiJyZXN1bHRfdXJsIn0",
+        "status": "done",
+        "result_url": "https://storage.googleapis.com/three-ws-avatar-reconstructions/remesh/7e28fb4b-f681-4517-a19f-ac5e4e58be22.glb",
+        "texture_url": null,
+        "face_count": 3000,
+        "quad_ratio": 0,
+        "textured": false,
+        "mode": "triangle",
+        "error": null
+      }
+    },
+    {
+      "name": "stylize",
+      "endpoint": "/api/forge-stylize",
+      "ok": true,
+      "detail": "145000 B glb, 1 primitives, 0 materials",
+      "artifact": "https://storage.googleapis.com/three-ws-avatar-reconstructions/stylize/3a002555-8294-4197-b23f-367748ef405b.glb",
+      "glb": {
+        "meshes": 1,
+        "primitives": 1,
+        "nodes": 2,
+        "skins": 0,
+        "animations": 0,
+        "materials": 0,
+        "images": 0,
+        "joints": 0
+      },
+      "job": {
+        "job_id": "eyJtb2RlIjoic3R5bGl6ZSIsInRhc2tJZCI6IjNhMDAyNTU1LTgyOTQtNDE5Ny1iMjNmLTM2Nzc0OGVmNDA1YiIsImJhc2VVcmwiOiJodHRwczovL3N0eWxpemUtc2VydmljZS1scDY0Mmsza3BhLXVjLmEucnVuLmFwcCIsInJlc3VsdEtleSI6InJlc3VsdF91cmwifQ",
+        "status": "done",
+        "result_url": "https://storage.googleapis.com/three-ws-avatar-reconstructions/stylize/3a002555-8294-4197-b23f-367748ef405b.glb",
+        "face_count": 2400,
+        "error": null
+      }
+    },
+    {
+      "name": "segment",
+      "endpoint": "/api/forge-segment",
+      "ok": true,
+      "detail": "196296 B glb, 8 primitives, 0 materials",
+      "artifact": "https://storage.googleapis.com/three-ws-avatar-reconstructions/segment/2c5628d9-8cef-4bd2-bb1c-01dc0cedace8.glb",
+      "glb": {
+        "meshes": 8,
+        "primitives": 8,
+        "nodes": 9,
+        "skins": 0,
+        "animations": 0,
+        "materials": 0,
+        "images": 0,
+        "joints": 0
+      },
+      "job": {
+        "job_id": "eyJtb2RlIjoic2VnbWVudCIsInRhc2tJZCI6IjJjNTYyOGQ5LThjZWYtNGJkMi1iYjFjLTAxZGMwY2VkYWNlOCIsImJhc2VVcmwiOiJodHRwczovL3NlZ21lbnQtc2VydmljZS1scDY0Mmsza3BhLXVjLmEucnVuLmFwcCIsInJlc3VsdEtleSI6InJlc3VsdF91cmwifQ",
+        "status": "done",
+        "result_url": "https://storage.googleapis.com/three-ws-avatar-reconstructions/segment/2c5628d9-8cef-4bd2-bb1c-01dc0cedace8.glb",
+        "manifest_url": "https://storage.googleapis.com/three-ws-avatar-reconstructions/segment/2c5628d9-8cef-4bd2-bb1c-01dc0cedace8.parts.json",
+        "parts": [
+          {
+            "id": "part_01",
+            "name": "upper-left",
+            "region": "upper-left",
+            "face_count": 530,
+            "vertex_count": 292,
+            "bbox": {
+              "min": [
+                -0.2679999983310699,
+                1.0191999940395355,
+                -0.057999998331069946
+              ],
+              "max": [
+                -0.15200000166893005,
+                1.3192000059604645,
+                0.057999998331069946
+              ]
+            },
+            "centroid": [
+              -0.21,
+              1.1691999999999985,
+              -1.703362245450686e-18
+            ],
+            "volume": 0,
+            "color": "#f2a45c"
+          },
+          {
+            "id": "part_02",
+            "name": "upper",
+            "region": "upper",
+            "face_count": 5142,
+            "vertex_count": 3198,
+            "bbox": {
+              "min": [
+                -0.273799999654293,
+                -0.057800000244379035,
+                -0.11325289309024811
+              ],
+              "max": [
+                0.273799999654293,
+                1.6700000020861627,
+                0.2
+              ]
+            },
+            "centroid": [
+              0.01865050870078375,
+              0.9709146635606104,
+              0.009687109432819259
+            ],
+            "volume": 0,
+            "color": "#785cf2"
+          },
+          {
+            "id": "part_03",
+            "name": "mid-right",
+            "region": "mid-right",
+            "face_count": 530,
+            "vertex_count": 292,
+            "bbox": {
+              "min": [
+                0.1566399997472763,
+                0.7391999994039535,
+                -0.053360000252723694
+              ],
+              "max": [
+                0.26336000025272366,
+                1.0192000005960464,
+                0.053360000252723694
+              ]
+            },
+            "centroid": [
+              0.2100000000000002,
+              0.8792000000000013,
+              8.307775975200645e-20
+            ],
+            "volume": 0,
+            "color": "#6bf25c"
+          },
+          {
+            "id": "part_04",
+            "name": "mid-left",
+            "region": "mid-left",
+            "face_count": 530,
+            "vertex_count": 292,
+            "bbox": {
+              "min": [
+                -0.26336000025272366,
+                0.7391999994039535,
+                -0.053360000252723694
+              ],
+              "max": [
+                -0.1566399997472763,
+                1.0192000005960464,
+                0.053360000252723694
+              ]
+            },
+            "centroid": [
+              -0.21000000000000052,
+              0.8792000000000011,
+              4.377613687104012e-19
+            ],
+            "volume": 0,
+            "color": "#f25c97"
+          },
+          {
+            "id": "part_05",
+            "name": "lower-right",
+            "region": "lower-right",
+            "face_count": 530,
+            "vertex_count": 292,
+            "bbox": {
+              "min": [
+                0.06330000340938569,
+                0.3970000011920929,
+                -0.06669999659061432
+              ],
+              "max": [
+                0.19669999659061432,
+                0.8369999988079071,
+                0.06669999659061432
+              ]
+            },
+            "centroid": [
+              0.13000000000000006,
+              0.616999999999999,
+              3.511617833161341e-18
+            ],
+            "volume": 0,
+            "color": "#5cc3f2"
+          },
+          {
+            "id": "part_06",
+            "name": "lower-left",
+            "region": "lower-left",
+            "face_count": 530,
+            "vertex_count": 292,
+            "bbox": {
+              "min": [
+                -0.19669999659061432,
+                0.3970000011920929,
+                -0.06669999659061432
+              ],
+              "max": [
+                -0.06330000340938569,
+                0.8369999988079071,
+                0.06669999659061432
+              ]
+            },
+            "centroid": [
+              -0.13000000000000006,
+              0.6169999999999989,
+              3.358535417713092e-18
+            ],
+            "volume": 0,
+            "color": "#eff25c"
+          },
+          {
+            "id": "part_07",
+            "name": "bottom-right",
+            "region": "bottom-right",
+            "face_count": 530,
+            "vertex_count": 292,
+            "bbox": {
+              "min": [
+                0.07489999860525132,
+                -0.02299999344348913,
+                -0.05510000139474869
+              ],
+              "max": [
+                0.1851000013947487,
+                0.396999993443489,
+                0.05510000139474869
+              ]
+            },
+            "centroid": [
+              0.13000000000000003,
+              0.187,
+              -6.144781551266029e-19
+            ],
+            "volume": 0,
+            "color": "#c95cf2"
+          },
+          {
+            "id": "part_08",
+            "name": "bottom-left",
+            "region": "bottom-left",
+            "face_count": 530,
+            "vertex_count": 292,
+            "bbox": {
+              "min": [
+                -0.1851000013947487,
+                -0.02299999344348913,
+                -0.05510000139474869
+              ],
+              "max": [
+                -0.07489999860525132,
+                0.396999993443489,
+                0.05510000139474869
+              ]
+            },
+            "centroid": [
+              -0.12999999999999984,
+              0.18699999999999975,
+              -1.245494298878024e-18
+            ],
+            "volume": 0,
+            "color": "#5cf29d"
+          }
+        ],
+        "part_count": 8,
+        "source_faces": 8852,
+        "method": "connected",
+        "warnings": [
+          "capped to 8 parts; 194 smaller fragments were combined"
+        ],
+        "error": null
+      }
+    },
+    {
+      "name": "rembg",
+      "endpoint": "/api/forge-rembg",
+      "ok": true,
+      "detail": "326057 B png",
+      "artifact": "https://storage.googleapis.com/three-ws-avatar-reconstructions/rembg/e012dfbe-00f5-467c-b55b-a4b2265ab7c5.png",
+      "job": {
+        "job_id": "eyJtb2RlIjoicmVtYmciLCJ0YXNrSWQiOiJlMDEyZGZiZS0wMGY1LTQ2N2MtYjU1Yi1hNGIyMjY1YWI3YzUiLCJiYXNlVXJsIjoiaHR0cHM6Ly9yZW1iZy1zZXJ2aWNlLWxwNjQyazNrcGEtdWMuYS5ydW4uYXBwIiwicmVzdWx0S2V5IjoicmVzdWx0X3VybCJ9",
+        "status": "done",
+        "result_url": "https://storage.googleapis.com/three-ws-avatar-reconstructions/rembg/e012dfbe-00f5-467c-b55b-a4b2265ab7c5.png",
+        "error": null
+      }
+    },
+    {
+      "name": "text-to-motion",
+      "endpoint": "POST /api/forge-motion",
+      "ok": true,
+      "detail": "23 tracks, 90 frames @ 30 fps",
+      "artifact": "https://storage.googleapis.com/three-ws-avatar-reconstructions/motion-clips/mdm/e276fa4a-a985-4f2a-a141-80e29ab4e0c7.json"
+    },
+    {
+      "name": "retexture (probe)",
+      "endpoint": "GET /api/studio/retexture-region",
+      "ok": true,
+      "detail": "capability probe HTTP 400"
+    },
+    {
+      "name": "retexture",
+      "endpoint": "POST /api/studio/retexture-region",
+      "ok": false,
+      "detail": "HTTP 501: {\"error\":\"region_retex_unconfigured\",\"error_description\":\"Region retexture requires the GCP texture worker. Set GCP_RECONSTRUCTION_KEY and GCP_TEXTURE_URL.\",\"reason\":\"GCP_TEXTURE_URL is not set\"}"
+    },
+    {
+      "name": "talking-avatar",
+      "endpoint": "POST /api/avatar/video-generate",
+      "ok": false,
+      "detail": "worker not deployed: worker_unconfigured (LONGCAT_WORKER_URL unset)"
+    },
+    {
+      "name": "x402 challenge",
+      "endpoint": "POST /api/x402/forge",
+      "ok": true,
+      "detail": "402 with 1 accept(s): solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/undefined"
+    },
+    {
+      "name": "x402 catalog",
+      "endpoint": "GET /.well-known/x402.json",
+      "ok": false,
+      "detail": "HTTP 500"
+    },
+    {
+      "name": "mcp-3d tools/list",
+      "endpoint": "POST /api/mcp-3d",
+      "ok": true,
+      "detail": "36 tools"
+    },
+    {
+      "name": "mcp-3d tools/call",
+      "endpoint": "getting_started",
+      "ok": true,
+      "detail": "getting_started → 1 content block(s)"
+    },
+    {
+      "name": "mcp-studio tools/list",
+      "endpoint": "POST /api/mcp-studio",
+      "ok": true,
+      "detail": "11 tools"
+    },
+    {
+      "name": "mcp-studio tools/call",
+      "endpoint": "look_at_model",
+      "ok": false,
+      "detail": "look_at_model → 0 content block(s)"
+    }
+  ]
+}
