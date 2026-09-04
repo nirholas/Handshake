@@ -76,6 +76,11 @@ const SKIP = [
 	// not-implemented throw) that no edit of ours can reach. The sources in
 	// site/ are still scanned.
 	/^packages\/metaplex-agent-mcp\/docs\//,
+	// Third-party bundles we vendor to serve from our own origin (e.g. the
+	// meshopt decoder). The bytes are upstream's, license header included, so
+	// holding them to house prose rules reports the vendor's copyright line as
+	// commented-out code. Our own code that loads them is still scanned.
+	/^public\/vendor\//,
 	/\.min\.(js|css)$/,
 	/package-lock\.json$/,
 	/\.(png|jpg|jpeg|gif|webp|glb|gltf|bin|woff2?|ttf|mp4|wasm|ico|svg)$/i,
