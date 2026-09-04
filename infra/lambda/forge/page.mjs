@@ -41,7 +41,7 @@ export function buildPage({ seed, traits, origin }) {
 <meta name="twitter:description" content="${esc(desc)}" />
 <meta name="twitter:image" content="${esc(ogUrl)}" />
 <link rel="canonical" href="${esc(pageUrl)}" />
-<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
 <style>
   :root { --bg:#05060a; --panel:#0c0e16; --panel-2:#10131e; --line:#1d2231; --line-2:#2a3146;
     --text:#eaeef7; --muted:#868da1; --accent:#7c5cff; --accent-2:#19d6a8; --radius:16px;

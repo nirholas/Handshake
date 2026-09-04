@@ -354,15 +354,16 @@ any surface that rides it. The agent-facing REST endpoints (`/api/3d/generate`,
 The inline widget loads Google's `<model-viewer>` from one pinned URL in
 [`api/_lib/model-viewer-cdn.js`](../api/_lib/model-viewer-cdn.js), which is also
 the origin the widget's `openai/widgetCSP` allowlists, so the script tag and its
-CSP entry cannot drift apart. That module pins 3.5.0 for every server-rendered
-embed, the build the rest of the platform's embeddable bundles ship, so a host
-page that already loaded one three.ws embed reuses the same module instead of
-registering a second, conflicting custom element. The standalone
-[`/viewer`](../public/viewer.html) page and the Vite-bundled first-party pages
-deliberately sit on 4.0.0 instead: they own their whole document and have no
-custom-element collision to avoid. The header comment in
-`api/_lib/model-viewer-cdn.js` names all three pins and why each surface takes
-the build it takes. The `/api/ar` launcher no longer inlines a
+CSP entry cannot drift apart. That module pins the one build every three.ws
+surface loads, so a host page that already has a three.ws embed reuses the same
+module instead of registering a second, conflicting custom element. The
+standalone [`/viewer`](../public/viewer.html) page and the Vite-bundled
+first-party pages ship the same version and differ only in how they fetch it:
+a top-level document can carry an SRI hash, a template-interpolated embed and a
+runtime CDN failover chain cannot. The header comment in
+`api/_lib/model-viewer-cdn.js` names all three delivery rungs, and
+`npm run check:model-viewer` fails the build if one of them drifts off the
+shared version. The `/api/ar` launcher no longer inlines a
 `<model-viewer>` of its own: Android gets a Scene Viewer intent, and every other
 device (and every live avatar) is sent on to `/ar/view`, a Vite-bundled page
 that generates a real USDZ from the GLB on the device so iPhone gets genuine

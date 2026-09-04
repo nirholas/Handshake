@@ -10,36 +10,32 @@
 // can offer AR modes but can never generate the ios-src USDZ Quick Look
 // actually needs.)
 //
-// Why 3.5.0 and not the newest release: the widget runs inside someone else's
-// frame (ChatGPT's sandboxed iframe). 3.5.0 is the build the rest of the
-// platform's embeddable bundles ship (public/agenc/embed.js,
-// public/ar-forge.html, public/spatial-mcp/), so an embedding page that already
-// loaded model-viewer for one three.ws embed reuses the exact same module
-// instead of registering a second, conflicting <model-viewer> custom element.
-//
-// The standalone browser viewer (public/viewer.html) is deliberately NOT on this
-// pin. It is a first-party top-level page, not an embed, so it takes 4.0.0 with
-// an SRI hash from Google's own CDN: it owns its whole document, has no
-// custom-element collision to avoid, and can afford the stricter integrity check
-// that a template-interpolated embed cannot carry as cheaply. That split is by
-// surface and is intentional; see the comment at the top of public/viewer.html.
-//
-// So `grep -rn "model-viewer@"` maps to exactly three intentional pins, one per
-// surface class, and nothing else should introduce a fourth:
-//   1. THIS module, 3.5.0 via jsdelivr: every server-rendered embed that runs
+// Why every surface is on ONE version: an embed and a first-party page can end
+// up in the same document, and the second `customElements.define('model-viewer',
+// ...)` in a document throws. Two three.ws surfaces on two different builds is
+// therefore a live collision hazard, so the platform pins a single build
+// everywhere and the pins differ only in DELIVERY, never in version:
+//   1. THIS module, jsdelivr, no SRI: every server-rendered embed that runs
 //      inside a host page's frame (the ChatGPT widget), plus the static embed
 //      bundles that ship the same build (public/agenc/embed.js,
-//      public/ar-forge.html, public/spatial-mcp/, pages/daily.html).
-//   2. public/viewer.html, 4.0.0 with SRI from Google's CDN: the one
-//      standalone, top-level viewer document.
-//   3. src/shared/model-viewer-loader.js, 4.0.0 across three CDNs: the
+//      public/ar-forge.html, public/spatial-mcp/, pages/daily.html). A
+//      template-interpolated embed cannot carry an integrity hash as cheaply as
+//      a hand-authored document can, which is the only reason this rung has none.
+//   2. public/viewer.html and the static first-party pages, Google's CDN with
+//      an SRI hash: top-level documents that own their whole page and can
+//      afford the stricter integrity check.
+//   3. src/shared/model-viewer-loader.js, three CDNs in a failover chain: the
 //      Vite-bundled first-party pages (/forge and the pickers), where a blocked
 //      CDN must fall through to the next host instead of leaving an inert box.
-// 2 and 3 are the same 4.0.0 build on first-party pages; only the delivery
-// differs (one document can carry an SRI hash, a runtime chain cannot).
+//      A runtime chain cannot carry one SRI hash, so it carries none.
+//
+// scripts/check-model-viewer-version.mjs holds that invariant: it fails if any
+// reference in the tree names a different version from the rest, if one version
+// is served with two different integrity hashes, or if the vendored copy under
+// pages/ibm/vendor/ stops matching the pinned build.
 
-/** The pinned model-viewer version for the server-rendered embed surfaces. */
-export const MODEL_VIEWER_VERSION = '3.5.0';
+/** The pinned model-viewer version. One build platform-wide; see above. */
+export const MODEL_VIEWER_VERSION = '4.0.0';
 
 /** CDN origin the embed surfaces load model-viewer from (must be CSP-allowlisted). */
 export const MODEL_VIEWER_CDN_ORIGIN = 'https://cdn.jsdelivr.net';

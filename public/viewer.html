@@ -12,15 +12,17 @@
 <meta property="og:type" content="website" />
 <!-- Meshopt decoder must register before <model-viewer> starts loading (Forge GLBs are meshopt-compressed). Classic script → runs during parse, before the model-viewer module. -->
 <script src="/model-viewer-meshopt.js"></script>
-<!-- This standalone browser viewer pins model-viewer 4.0.0 with SRI from Google's CDN.
-     It is a first-party top-level page that owns its whole document, so it can take the
-     newer build and afford the integrity check. The server-rendered EMBED surface
-     (the ChatGPT widget in api/_mcp-studio/component.js) runs inside someone else's frame
-     and takes its pin from api/_lib/model-viewer-cdn.js, which is also the origin that
-     widget's CSP allowlists. /api/ar no longer inlines a model-viewer at all: it 302s to
-     /ar/view, a bundled page, because Quick Look needs a generated USDZ a server-rendered
-     HTML string cannot produce. Both remaining pins are explicit; the split is by surface,
-     and the reasoning for each lives in that module. -->
+<!-- This standalone browser viewer loads model-viewer 4.0.0 with SRI from Google's CDN.
+     Every three.ws surface is on that one build, because two builds in one document make
+     the second customElements.define('model-viewer') throw. What differs per surface is
+     DELIVERY, not version: a top-level document like this one owns its whole page and can
+     afford the integrity check, while the server-rendered EMBED surface (the ChatGPT
+     widget in api/_mcp-studio/component.js) runs inside someone else's frame and takes
+     its URL from api/_lib/model-viewer-cdn.js, which is also the origin that widget's CSP
+     allowlists. /api/ar no longer inlines a model-viewer at all: it 302s to /ar/view, a
+     bundled page, because Quick Look needs a generated USDZ a server-rendered HTML string
+     cannot produce. That module names every delivery rung; scripts/check-model-viewer-version.mjs
+     fails the build if any of them drifts off the shared version. -->
 <script
   type="module"
   src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
