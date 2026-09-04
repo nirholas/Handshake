@@ -1627,8 +1627,13 @@ a:focus-visible{outline-offset:3px}
   </div>
 </footer>
 
-<!-- x402 drop-in payment modal (Phantom/MetaMask wallet flow + 402 retry) -->
-<script type="module" src="https://three.ws/x402.js"></script>
+<!-- x402 drop-in payment modal (Phantom/MetaMask wallet flow + 402 retry).
+     Same-origin on purpose: the copyable snippet above shows the absolute
+     https://three.ws/x402.js an external embedder needs, but this page ships
+     with the file, and loading its own copy across an origin means every
+     non-production origin (a preview deploy, a local run, an audit sweep)
+     gets the script CORS-blocked and the paid demos below never arm. -->
+<script type="module" src="/x402.js"></script>
 <!-- <agent-3d> web component — the whole 3D agent framework in one tag. Lazy-boots when scrolled into view. -->
 <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 

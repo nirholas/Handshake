@@ -30,12 +30,26 @@ const SRC = join(ROOT, 'pages/ibm/hello.live.html');
 const OUT = join(ROOT, 'pages/ibm/hello.html');
 const LIVE_URL = 'https://three.ws/ibm/hello.live';
 
+const SITE_ORIGIN = 'https://three.ws';
+
 const EXEC_TYPES = new Set(['', 'module', 'text/javascript', 'application/javascript']);
 const INERT_TYPE = 'application/ibm-baked';
 
 function attr(attrs, name) {
 	const m = attrs.match(new RegExp(name + '\\s*=\\s*("([^"]*)"|\'([^\']*)\'|([^\\s>]+))', 'i'));
 	return m ? (m[2] ?? m[3] ?? m[4] ?? '') : '';
+}
+
+// The live page loads its own assets same-origin ('/x402.js'), which is what
+// keeps it working on every origin three.ws itself is served from: production,
+// a preview deploy, a local run, an audit sweep. The baked page is the opposite
+// case. It is published once onto somebody else's domain, where a root-relative
+// src resolves against THEIR origin and 404s, so every asset it names has to
+// carry ours. Baking is the moment that difference is known, so it is where the
+// rewrite belongs, rather than forcing the live page to hardcode an origin it is
+// not always served from.
+function absolutize(src) {
+	return src.startsWith('/') && !src.startsWith('//') ? SITE_ORIGIN + src : src;
 }
 
 // Replace each executable <script> in the body with an inert twin that preserves
@@ -51,7 +65,7 @@ function inertizeBodyScripts(bodyInner) {
 		// is bulletproof regardless of how the source was authored.
 		const safe = code.replace(/<\/script/gi, '<\\/script');
 		const data = ['type="' + INERT_TYPE + '"', 'data-ibm-type="' + type + '"'];
-		if (src) data.push('data-ibm-src="' + src.replace(/"/g, '&quot;') + '"');
+		if (src) data.push('data-ibm-src="' + absolutize(src).replace(/"/g, '&quot;') + '"');
 		return '<script ' + data.join(' ') + '>' + safe + '</script>';
 	});
 }
