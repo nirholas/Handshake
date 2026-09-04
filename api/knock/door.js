@@ -12,6 +12,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
+import { KNOCK_ESCROW_PROGRAM_ID } from '../_lib/knock/escrow.js';
 import { formatUsdc, normalizeHandle } from '../_lib/knock/policy.js';
 import { publicDoorByHandle } from '../_lib/knock/store.js';
 
@@ -58,6 +59,32 @@ export function publicShape(row) {
 		// doors answer 402 first and settle before the message is accepted.
 		endpoint: free ? `${env.APP_ORIGIN}/api/knock/send` : `${env.APP_ORIGIN}/api/x402/knock?to=${encodeURIComponent(row.username)}`,
 		protocol: free ? 'http' : 'x402',
+		// The escrowed lane, advertised only when this door takes it. A caller
+		// that cannot escrow ignores the field and uses `endpoint` as before;
+		// one that can now knows the option exists without a second request,
+		// which is the difference between a lane nobody discovers and a lane
+		// agents actually use.
+		escrow: escrowShape(row),
+	};
+}
+
+/**
+ * What a stranger needs to know to knock with escrow, or null when this door
+ * does not take it.
+ *
+ * `window_hours` is what the owner is promising to answer within, and the
+ * guarantee line says what happens if they do not, because that promise is the
+ * entire reason to pick this lane over paying up front.
+ */
+function escrowShape(row) {
+	if (!row.escrow_enabled) return null;
+	return {
+		endpoint: `${env.APP_ORIGIN}/api/knock/escrowed`,
+		program: KNOCK_ESCROW_PROGRAM_ID,
+		network: 'solana',
+		window_hours: Number(row.escrow_window_hours ?? 24),
+		guarantee:
+			'Your payment is held on-chain and pays out only if this door answers you. If it refuses, or the window closes, every unit comes back to you and anyone can trigger that refund.',
 	};
 }
 
