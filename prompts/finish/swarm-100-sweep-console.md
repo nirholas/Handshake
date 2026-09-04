@@ -24,24 +24,69 @@ Every claim below rots; step 0 re-measures, and what you measure wins.
 - Before committing, run: npm run check:rules -- --paths <files you touched>.
   It must exit 0.
 
-## Step 0: re-derive the current state
+## State on 2026-09-04 (measured, not claimed)
 
-Run the sweep's own command first and work from its output, not from any
-memory of what used to fail:
+A full sweep ran that day with the page-side fixes below already in place. The
+desktop pass measured **770 of 780 routes clean**. Every one of the ten
+remaining routes was traced to a named cause, and **none of them is open page
+code**: each is either already fixed on `main` and waiting for a production
+deploy, or a page that is correct on the origin it actually runs on.
+
+Fixed and committed that day (page code, root causes):
+
+| Route | Cause | Fix |
+|---|---|---|
+| `/launches` | The shared coin card painted token art straight from a public gateway that now answers 429 behind a sunset notice. One paint logged 89 blocked requests. | `src/pump/coin-status-card.js` routes art through `/api/img` (gateway retry, painted-size resize, deterministic placeholder). `src/launches.js` does the same for agent thumbnails. Commit `795becc00`. |
+| `/creations` | Gallery models were read straight from the asset bucket, whose CORS policy allowlists the production origin by name, so model-viewer died with "Failed to fetch" on every other origin. | New `proxiedModelURL` in `src/ipfs.js` routes them through `/api/glb`; `src/model-diff.js` dropped its private copy of the rule; covered by `tests/ipfs-image-url-safety.test.js`. Commit `795becc00`. |
+| `/ibm/x402-demo`, `/ibm/hello.live` | Both pages loaded their own `x402.js` by absolute URL, so the browser refused it on any origin but production and the paid demos never armed. | They load `/x402.js` now; the copyable snippet still shows the absolute URL an embedder needs. `scripts/build-ibm-shell.mjs` absolutizes root-relative asset URLs when baking the publish-once page, which also repaired its language switcher. Commits `b1f6db3be`, `6cf18771d`. |
+
+Waiting on the production deploy, not on code (verified by running this repo's
+own API server and re-requesting each endpoint, see step 0):
+
+| Route | What the sweep sees | Where the fix already is |
+|---|---|---|
+| `/fees` | 7 chain-icon 404s from the upstream icon host | `cc5dbb211` repairs the URLs and falls back to a neutral disc |
+| `/markets`, `/markets/news` | `/api/news/image` 404s | `f32c2987f` answers 204 for an article that simply has no picture |
+| `/oracle-lab` | `/api/oracle/model` 500 | `272b659fc`, and the endpoint answers 200 against this tree |
+| `/smart-home`, `/smart-home/plan`, `/smart-home/satellite`, `/smart-home/privacy` | `/api/home` 404 | `e6a32da61`; the handler exists here and answers 401 signed out, as designed |
+
+`/ibm/hello` is the one route that is correct as it stands: it is the
+publish-once page IBM hosts on its own domain, so it deliberately fetches
+`https://three.ws/ibm/hello.live` and its assets by absolute URL. On a localhost
+sweep those reads are cross-origin and refused; on the origin the page is
+actually served from they are same-origin. Do not "fix" it by making those
+relative, which is what breaks the IBM-hosted copy.
+
+## Step 0: re-derive the current state
 
     npm run audit:console
 
-Capture the full output to the session scratchpad; do not work from an
-excerpt.
+Capture the full output to the session scratchpad; do not work from an excerpt.
+
+Then separate deploy lag from page defects before you touch any page code, or
+you will spend the session chasing production's staleness. The dev server
+proxies `/api/*` to https://three.ws, so an API finding measures the DEPLOYED
+code, not this tree. Point the proxy at the repo's own server instead:
+
+    node --env-file-if-exists=.env --env-file-if-exists=.env.local server/index.mjs &
+    DEV_API_PROXY=http://localhost:8080 npx vite --port 3211 --strictPort &
+    AUDIT_BASE=http://localhost:3211 npm run audit:console
+
+A finding that clears under that run is deploy lag: record it and move on. The
+reverse also holds, so judge it both ways: endpoints whose credentials live only
+on the deployed service answer `not_configured` (503) locally and are fine in
+production.
 
 ## Task
 
-Run the console audit across pages. Every console error is a defect: fix it at root in the page or module that throws. Warnings from our own code get fixed too; third-party warnings we cannot control get documented in the report.
+Run the console audit across pages. Every console error is a defect: fix it at
+root in the page or module that throws. Warnings from our own code get fixed
+too; third-party warnings we cannot control get documented in the report.
 
-Fix everything found in this sweep's scope. Findings that belong to a
-different surface entirely (and would take this session off its one task) go
-in the report as named follow-ups instead; everything in scope gets fixed
-here, at root, with no masking.
+Fix everything found in this sweep's scope. Findings that belong to a different
+surface entirely (and would take this session off its one task) go in the report
+as named follow-ups instead; everything in scope gets fixed here, at root, with
+no masking.
 
 ## Definition of done
 
@@ -51,6 +96,12 @@ here, at root, with no masking.
       quarantined to get to green.
 - [ ] npm run check:rules -- --paths <touched files> exits 0; npm test passes
       if code changed.
+
+**The one line that cannot pass without an owner:** the sweep exits 0 only once
+production serves the four deploy-lag fixes above. That is the ship order
+(`production-100-01-ship-readiness.md`), owner-gated, and it is the whole
+remainder of this file. Re-run step 0 after the next deploy; if the four rows
+clear, this order is done and the file retires.
 
 ## Never blocked
 
@@ -63,6 +114,7 @@ here, at root, with no masking.
 | A surface needs a signed-in user | Register a fresh account through the real /register flow against the real API and use it. Never mock the session. |
 | A defect sits in code you did not touch | Fix it if it blocks a Definition of done line (root cause it, never mask it). Otherwise note it in the report and continue. |
 | An unrelated test is red | Same rule. Never pipe npm test through tail; it masks exit codes. |
+| `ENOSPC` mid-run, or a build dying with exit 144 | The shared disk is full. `npm run clean:worktrees` (add `--apply`), and never delete a worktree holding uncommitted work. The sweep writes nothing large, but Vite's optimizer cache does. |
 
 ## Close out (required)
 
