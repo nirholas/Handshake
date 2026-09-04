@@ -336,6 +336,87 @@ function checkRequired(files) {
 	return { failures, skipped };
 }
 
+// ── Runtime import graph ─────────────────────────────────────────────────────
+// The REQUIRED list above is hand-maintained, so it only ever catches an
+// omission somebody already paid for once. This walks the real thing instead:
+// every relative import reachable from the code the container executes
+// (server/ and api/), asserting each target survives the ignore rules.
+//
+// That is exactly the failure that took /api/healthz, /api/status, /api/mcp,
+// /api/wk (so every /.well-known/* discovery route) and every /api/home/* route
+// down together on revision 00413: one import of services/home-relay/src/token.js
+// out of a directory the allowlist never re-included. Node resolves an ESM graph
+// eagerly, so a single unresolvable leaf 500s every endpoint that transitively
+// imports it, with a generic envelope that names nothing.
+//
+// Only a specifier that resolves to a file PRESENT in this tree can fail here.
+// An unresolvable one is skipped on purpose: import-shaped text inside a
+// generated-code template is a string, not an edge, and must not fail a build.
+const IMPORT_RE =
+	/^[ \t]*(?:import[ \t][^'"\n]*?from[ \t]*|import[ \t]*|export[ \t][^'"\n]*?from[ \t]*)['"](\.[^'"\n]*)['"]/gm;
+const DYNAMIC_IMPORT_RE = /\bimport\([ \t]*['"](\.[^'"\n]*)['"][ \t]*\)/g;
+
+const ENTRY_ROOTS = ['server', 'api'];
+
+/** Resolve a relative specifier the way Node's ESM loader would, or null. */
+function resolveSpecifier(fromRel, spec) {
+	const base = path.posix.join(path.posix.dirname(fromRel), spec);
+	for (const candidate of [base, `${base}.js`, `${base}.mjs`, `${base}/index.js`]) {
+		const normalized = path.posix.normalize(candidate);
+		if (normalized.startsWith('..')) return null; // escapes the repo entirely
+		const abs = path.join(REPO_ROOT, normalized);
+		if (existsSync(abs) && statSync(abs).isFile()) return normalized;
+	}
+	return null;
+}
+
+function checkImportGraph(files) {
+	const uploaded = new Set(files);
+	const onDisk = (rel) => {
+		const abs = path.join(REPO_ROOT, rel);
+		return existsSync(abs) && statSync(abs).isFile();
+	};
+	const seen = new Set();
+	const missing = [];
+	const queue = files.filter(
+		(f) =>
+			ENTRY_ROOTS.some((root) => f.startsWith(`${root}/`)) && /\.(?:js|mjs)$/.test(f),
+	);
+	for (const entry of queue) seen.add(entry);
+
+	while (queue.length) {
+		const current = queue.pop();
+		let source;
+		try {
+			source = readFileSync(path.join(REPO_ROOT, current), 'utf8');
+		} catch {
+			continue;
+		}
+		const specs = new Set();
+		for (const m of source.matchAll(IMPORT_RE)) specs.add(m[1]);
+		for (const m of source.matchAll(DYNAMIC_IMPORT_RE)) specs.add(m[1]);
+		for (const spec of specs) {
+			const target = resolveSpecifier(current, spec);
+			if (!target) continue; // not a real edge in this tree; see note above
+			if (!uploaded.has(target)) {
+				if (onDisk(target)) missing.push({ from: current, spec, target });
+				continue; // excluded: do not walk into it, the image will not have it
+			}
+			if (seen.has(target)) continue;
+			seen.add(target);
+			queue.push(target);
+		}
+	}
+	// One line per excluded target, naming a single importer: a shared leaf is
+	// pulled in by dozens of files and the fix is identical for all of them.
+	const byTarget = new Map();
+	for (const hit of missing) {
+		if (!byTarget.has(hit.target)) byTarget.set(hit.target, { ...hit, importers: 0 });
+		byTarget.get(hit.target).importers++;
+	}
+	return { walked: seen.size, missing: [...byTarget.values()].sort((a, b) => a.target.localeCompare(b.target)) };
+}
+
 function summarise(files) {
 	const byTop = new Map();
 	for (const file of files) {
@@ -378,6 +459,7 @@ function main() {
 
 	const { secrets, cleared } = findForbidden(files);
 	const { failures, skipped } = checkRequired(files);
+	const graph = checkImportGraph(files);
 
 	if (skipped.length) {
 		console.log(
@@ -419,6 +501,26 @@ function main() {
 		);
 	} else {
 		console.log('  required:   every required build input survives the ignore rules');
+	}
+
+	if (graph.missing.length) {
+		failed = true;
+		console.error(
+			`\nFAIL: ${graph.missing.length} module(s) imported by server/ or api/ would be EXCLUDED:`,
+		);
+		for (const hit of graph.missing) {
+			console.error(`  ${hit.target}`);
+			console.error(`    imported as '${hit.spec}' from ${hit.from}${hit.importers > 1 ? ` (+${hit.importers - 1} more)` : ''}`);
+		}
+		console.error(
+			'\n  Fix: add a `!/<dir>/` re-include to .gcloudignore. Node resolves the ESM\n' +
+				'  graph eagerly, so each of these takes down EVERY endpoint that transitively\n' +
+				'  imports it, as a generic 500 that names nothing.',
+		);
+	} else {
+		console.log(
+			`  imports:    ${graph.walked} module(s) reachable from server/ + api/, all present in the upload`,
+		);
 	}
 
 	if (failed) {
