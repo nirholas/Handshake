@@ -162,6 +162,11 @@ class WalkCompanion {
 		stack.reserve(CORNER_RESERVE_KEY, {
 			height: bottom + height,
 			width: width > 0 ? right + width : 0,
+			// The host is a bottom-anchored fixed box, which is exactly the shape
+			// the stack's dock probe looks for. Handing it over means the claim is
+			// counted once (here) instead of twice, which is what used to lift the
+			// stack into the middle of a phone screen.
+			el: this.host,
 		});
 	}
 
