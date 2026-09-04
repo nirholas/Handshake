@@ -71,19 +71,45 @@
 		if (!glb) throw new Error('no model url');
 		return glb;
 	}
+	// How large a GLB the hero is allowed to be. The hero avatar is fetched,
+	// parsed and uploaded to the GPU while the page is still trying to become
+	// interactive, so its file size is a first-order performance decision rather
+	// than a detail of whichever avatar happens to be curated first. The featured
+	// list mixes 90 KB props with a 10.7 MB scan, and taking its first entry put
+	// a 4.6 MB model on the critical path of every homepage visit: Lighthouse
+	// desktop measured 29.7 s of total blocking time, against 9.6 s for the same
+	// page with the GLB withheld. Two megabytes still buys a rigged, textured,
+	// animated humanoid; it does not buy a raw photogrammetry capture.
+	const HERO_GLB_BUDGET_BYTES = 2_500_000;
+
 	// The curated hero avatar can disappear (deleted, or a fresh deploy whose
 	// DB row hasn't been seeded yet) — fall back to a real featured avatar so
 	// the stage is never just an error card.
 	async function resolveFeaturedGlb() {
-		// Preferred: a curated featured avatar via the detail endpoint (richest
-		// metadata). Wrapped so a flaky/unavailable detail route never strands
-		// the hero — we drop to the explore pool below instead.
+		// Preferred: a curated featured avatar. /api/avatars/featured reports each
+		// candidate's size_bytes, so the pick is made from that one response and
+		// only the winner's detail record is fetched. Within the budget we take
+		// the LARGEST candidate (the richest model the page can afford), and if
+		// nothing fits we take the smallest, because an over-budget hero that
+		// renders beats an empty stage. Wrapped so a flaky/unavailable route never
+		// strands the hero: we drop to the explore pool below instead.
 		try {
 			const r = await fetch(`${location.origin}/api/avatars/featured?limit=12`);
 			if (r.ok) {
 				const d = await r.json();
 				const list = Array.isArray(d.avatars) ? d.avatars : [];
-				for (const a of list) {
+				const sized = list.filter((a) => Number(a.size_bytes) > 0);
+				let ordered = list;
+				if (sized.length) {
+					const affordable = sized.filter((a) => Number(a.size_bytes) <= HERO_GLB_BUDGET_BYTES);
+					// Candidates the API reported no size for keep their curated order
+					// at the back: unknown weight is worth trying, just not first.
+					ordered = affordable.length
+						? affordable.slice().sort((a, b) => Number(b.size_bytes) - Number(a.size_bytes))
+						: sized.slice().sort((a, b) => Number(a.size_bytes) - Number(b.size_bytes));
+					ordered = ordered.concat(list.filter((a) => !ordered.includes(a)));
+				}
+				for (const a of ordered) {
 					try { return await fetchAvatarGlb(a.id); } catch (_) { /* try next */ }
 				}
 			}

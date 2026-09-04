@@ -483,6 +483,15 @@
 				height: 100%;
 				--poster-color: transparent;
 			}
+			/* Before the element bundle upgrades the tag, model-viewer cannot paint
+			   its own `poster`, so the card would open as an empty box. Paint the
+			   same poster image as the element's background for exactly that
+			   window: the card looks finished from first paint, and the rule stops
+			   applying the moment the element is defined. */
+			.hero-card-preview model-viewer:not(:defined) {
+				display: block;
+				background: center / contain no-repeat url('/avatars/default-poster.webp');
+			}
 
 			.recommended-badge {
 				position: absolute;
@@ -1234,16 +1243,19 @@
 				}
 			}
 		</style>
-		<!-- Deferred, and placed BEFORE the model-viewer module: defer scripts and
-		     module scripts execute in document order, so the meshopt shim still
-		     registers its decoder before model-viewer's define runs. -->
+		<!-- The meshopt decoder shim stays eager: it is a 2 KB classic script that
+		     intercepts customElements.define(), so it registers its decoder
+		     whenever the element bundle turns up. -->
 		<script src="/model-viewer-meshopt.js" defer></script>
-		<script
-			type="module"
-			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
-			integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw"
-			crossorigin="anonymous"
-		></script>
+		<!-- The <model-viewer> element bundle is NOT loaded here. This page has one
+		     viewer, in the hero card, and that viewer already defers its model with
+		     `data-src` until someone hovers, focuses or taps the card. The 253 KB
+		     bundle was still fetched and evaluated on every visit to build a WebGL
+		     renderer for it: 8.2 s of main-thread time in a Lighthouse desktop
+		     trace, spent on a card most visitors never touch. It now loads on the
+		     same first attention that promotes `data-src`, through
+		     src/shared/attended-rotation.js, and the poster below holds the card's
+		     appearance until then. -->
 		<script>
 			(function () {
 				var cleared = false;

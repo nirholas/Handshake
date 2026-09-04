@@ -22,7 +22,7 @@ export default wrap(async (req, res) => {
 	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 30, 1), 60);
 
 	const rows = await sql`
-		SELECT id, name, slug, visibility, created_at, featured, view_count
+		SELECT id, name, slug, visibility, created_at, featured, view_count, size_bytes
 		FROM avatars
 		WHERE deleted_at IS NULL
 		  AND visibility = 'public'
@@ -40,6 +40,13 @@ export default wrap(async (req, res) => {
 			visibility: r.visibility,
 			featured: r.featured === true,
 			has_thumbnail: true,
+			// The GLB's size on disk. A caller that renders one of these avatars
+			// pays for it on its own critical path (the homepage hero decodes the
+			// model while the page is still trying to become interactive), and this
+			// list mixes 90 KB props with 10 MB scans. Publishing the number here
+			// lets a caller choose within a performance budget from one request
+			// instead of fetching every candidate's detail record to find out.
+			size_bytes: r.size_bytes == null ? null : Number(r.size_bytes),
 			thumb_url: `${env.APP_ORIGIN}/api/avatars/${r.id}/thumb`,
 			created_at: r.created_at,
 		})),

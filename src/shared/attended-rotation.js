@@ -22,6 +22,16 @@
 //
 // Only elements authored with `auto-rotate` are touched, so marking a viewer is
 // opt-in and reversible.
+//
+// A `data-src` viewer also defers the <model-viewer> ELEMENT BUNDLE, not just
+// its model: a page whose only viewer is a decorative card has no reason to
+// build a WebGL renderer during load. First attention asks
+// model-viewer-loader.js for the element and sets `src` in the same breath, so
+// the bundle and the GLB arrive together and the card upgrades once. The loader
+// is shared and idempotent, so on a page that already loaded the element this
+// resolves without a request.
+
+import { ensureModelViewerOrFallback } from './model-viewer-loader.js';
 
 // Long enough to read as a deliberate turn (a 20deg/s viewer sweeps ~240
 // degrees), short enough that an unattended tab stops working.
@@ -54,10 +64,30 @@ export function attendRotation(el, { settleMs = DEFAULT_SETTLE_MS, attention = n
 	if (el.dataset.attendedRotateBound === '1') return noop;
 	el.dataset.attendedRotateBound = '1';
 
+	// A viewer can also defer its model until someone engages with it: author it
+	// with `data-src` instead of `src` and give it a poster. Decoding a GLB is
+	// one long, unbreakable main-thread task (852 ms for /create's 748 KB base
+	// avatar), so a card that may never be looked at should not spend it during
+	// page load. The poster shows the finished frame either way.
+	const promoteSource = () => {
+		if (!el.dataset.src || el.getAttribute('src')) return;
+		el.setAttribute('src', el.dataset.src);
+		delete el.dataset.src;
+		// The attribute is read when the element upgrades, so ordering is free:
+		// whether the bundle is already here or still in flight, this viewer ends
+		// up loading exactly the model it was authored with. On failure the loader
+		// swaps in the poster, which is the frame this card was showing anyway.
+		ensureModelViewerOrFallback(el.parentNode || document);
+	};
+
 	// Reduced motion: never spin. The model still renders, poses, and answers
-	// camera controls; it just does not move on its own.
+	// camera controls; it just does not move on its own. That promise was only
+	// half true for a `data-src` viewer: nothing ever promoted its source, so a
+	// visitor who asks for reduced motion got a poster and no model, for good.
+	// Load it here instead: a still model is the whole point of the setting.
 	if (prefersReducedMotion()) {
 		el.removeAttribute('auto-rotate');
+		promoteSource();
 		return noop;
 	}
 
@@ -81,16 +111,6 @@ export function attendRotation(el, { settleMs = DEFAULT_SETTLE_MS, attention = n
 		settled = false;
 		if (settleMs > 0) timer = setTimeout(() => { settled = true; apply(); }, settleMs);
 		apply();
-	};
-	// A viewer can also defer its model until someone engages with it: author it
-	// with `data-src` instead of `src` and give it a poster. Decoding a GLB is
-	// one long, unbreakable main-thread task (852 ms for /create's 748 KB base
-	// avatar), so a card that may never be looked at should not spend it during
-	// page load. The poster shows the finished frame either way.
-	const promoteSource = () => {
-		if (!el.dataset.src || el.getAttribute('src')) return;
-		el.setAttribute('src', el.dataset.src);
-		delete el.dataset.src;
 	};
 	const attend = () => { attended = true; promoteSource(); arm(); };
 	const release = (e) => {

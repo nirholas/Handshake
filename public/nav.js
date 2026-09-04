@@ -842,6 +842,26 @@ const WALK_AUTO_KEY = 'walk:companion:auto';
 const WALK_AUTO_SKIP =
 	/^\/(play|walk|club|tour|world|scan|arena|pose|splat|capture|timeline)(\/|$)|^\/create\/(selfie|video)/;
 
+// How long the main thread has to stay clear of long tasks before the companion
+// is allowed to boot, and how long we keep waiting for that to happen.
+//
+// Summoning the companion means loading Three.js, an avatar GLB, the shared
+// clip library and a WebGL render loop. On a page that is still executing its
+// own long tasks that work does not run instead of the page's, it runs on top
+// of it, and both get slower: the companion took 3.4 s of /forge's total
+// blocking time and the page scored 43, against 71 for the same page measured
+// with the companion off. The old schedule made that collision the normal case,
+// because `requestIdleCallback(..., { timeout: 4000 })` fires the callback
+// whether or not the thread ever went idle.
+//
+// So wait for real quiet instead of a deadline. If the page never gets quiet
+// the companion simply is not summoned on it: the visitor's choice is still
+// unrecorded, so the next page they open (or the nav's Walk button) summons it
+// then. The feature's promise is that their agent shows up on its own, not that
+// it shows up while the page is still loading.
+const WALK_AUTO_QUIET_MS = 1200;
+const WALK_AUTO_GIVE_UP_MS = 20_000;
+
 function initCompanionAutoStart() {
 	// Every check lives inside the deferred callback: boot() can run while this
 	// script is still evaluating (late injection), and the WALK_ENABLED_KEY
@@ -865,10 +885,53 @@ function initCompanionAutoStart() {
 		ensureWalkCompanion();
 		window.dispatchEvent(new CustomEvent('walk-companion:change'));
 	};
-	const idle = () =>
-		'requestIdleCallback' in window ? requestIdleCallback(summon, { timeout: 4000 }) : setTimeout(summon, 1500);
-	if (document.readyState === 'complete') setTimeout(idle, 2000);
-	else window.addEventListener('load', () => setTimeout(idle, 2000), { once: true });
+
+	// Resolve once no `longtask` entry has been observed for WALK_AUTO_QUIET_MS,
+	// or reject by resolving false once WALK_AUTO_GIVE_UP_MS has passed. A
+	// browser without the longtask entry type (Safari) has no way to tell busy
+	// from idle, so it keeps the previous behaviour: one deferred idle callback.
+	const whenQuiet = (onQuiet) => {
+		const Observer = window.PerformanceObserver;
+		const types = (Observer && Observer.supportedEntryTypes) || [];
+		if (!Observer || types.indexOf('longtask') === -1) {
+			setTimeout(onQuiet, WALK_AUTO_QUIET_MS);
+			return;
+		}
+		let quietTimer = 0;
+		let giveUpTimer = 0;
+		let observer = null;
+		const stop = () => {
+			clearTimeout(quietTimer);
+			clearTimeout(giveUpTimer);
+			if (observer) observer.disconnect();
+		};
+		const armQuiet = () => {
+			clearTimeout(quietTimer);
+			quietTimer = setTimeout(() => {
+				stop();
+				onQuiet();
+			}, WALK_AUTO_QUIET_MS);
+		};
+		try {
+			observer = new Observer(armQuiet);
+			observer.observe({ type: 'longtask', buffered: true });
+		} catch (_) {
+			// Observing longtask can throw on browsers that list the type but do
+			// not implement it. Fall back to the timer rather than never booting.
+			setTimeout(onQuiet, WALK_AUTO_QUIET_MS);
+			return;
+		}
+		giveUpTimer = setTimeout(stop, WALK_AUTO_GIVE_UP_MS);
+		armQuiet();
+	};
+
+	const start = () =>
+		whenQuiet(() => {
+			if ('requestIdleCallback' in window) requestIdleCallback(summon, { timeout: 4000 });
+			else summon();
+		});
+	if (document.readyState === 'complete') start();
+	else window.addEventListener('load', start, { once: true });
 }
 
 function initWalkToggle(root) {

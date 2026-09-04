@@ -17,6 +17,7 @@
  */
 
 import { createListControls } from '../../src/shared/list-controls.js';
+import { ensureModelViewerOrFallback } from '../../src/shared/model-viewer-loader.js';
 import { skeletonHTML, emptyStateHTML, errorStateHTML } from '../../src/shared/state-kit.js';
 
 const CHAINS = [
@@ -231,8 +232,7 @@ if ('IntersectionObserver' in window && els.sentinel) {
 	io.observe(els.sentinel);
 }
 
-// Attended rotation, the same policy as src/shared/attended-rotation.js (this
-// file ships from public/ verbatim, so it cannot import it). A card turns when
+// Attended rotation, the same policy as src/shared/attended-rotation.js. A card turns when
 // it scrolls into view, settles once it has turned far enough to read as 3D,
 // and turns again on hover or focus. Before this every card in the grid rotated
 // for the life of the tab, and model-viewer blits each element's pixels every
@@ -288,6 +288,57 @@ function observeCardTurns() {
 		if (mv.dataset.turnObserved === '1') continue;
 		mv.dataset.turnObserved = '1';
 		cardTurnObserver.observe(mv);
+	}
+}
+
+// ── The <model-viewer> element bundle, fetched only when a 3D card needs it ──
+//
+// index.html no longer ships the 253 KB bundle on every visit. Most cards in
+// this directory are static R2 thumbnails, so on a typical page the element is
+// never used at all, and when it is used it is usually for a card the visitor
+// has to scroll to. Loading it up front cost the page its interactivity:
+// Lighthouse desktop attributed 29 s of main-thread time to the bundle and
+// scored /discover 47, against 81 for the same page measured with the bundle
+// absent.
+//
+// So the bundle is requested the first time a card that actually carries a GLB
+// comes within a screen of the viewport. Requesting it early relative to the
+// card keeps the upgrade invisible: the element is defined before the card is
+// close enough for its poster to matter, and `loading="lazy"` on the viewer
+// still decides when the GLB itself is fetched. The loader is shared, so
+// concurrent calls collapse into one request, and it carries the CDN failover
+// chain the hardcoded script tag never had.
+let viewerBundleRequested = false;
+function requestViewerBundle() {
+	if (viewerBundleRequested) return;
+	viewerBundleRequested = true;
+	ensureModelViewerOrFallback(els.grid);
+}
+const viewerLoadObserver =
+	'IntersectionObserver' in window
+		? new IntersectionObserver(
+				(entries) => {
+					for (const entry of entries) {
+						if (!entry.isIntersecting) continue;
+						viewerLoadObserver.unobserve(entry.target);
+						requestViewerBundle();
+					}
+				},
+				{ rootMargin: '100% 0px' },
+			)
+		: null;
+function observeViewerLoads() {
+	// No IntersectionObserver: there is no way to tell which cards are near, so
+	// the first 3D card on the page is enough to justify the bundle.
+	if (!viewerLoadObserver) {
+		if (els.grid.querySelector(MV_SEL)) requestViewerBundle();
+		return;
+	}
+	if (viewerBundleRequested) return;
+	for (const mv of els.grid.querySelectorAll(MV_SEL)) {
+		if (mv.dataset.bundleObserved === '1') continue;
+		mv.dataset.bundleObserved = '1';
+		viewerLoadObserver.observe(mv);
 	}
 }
 
@@ -405,6 +456,7 @@ async function loadPage() {
 			els.grid.appendChild(renderCard(item));
 		}
 		observeCardTurns();
+		observeViewerLoads();
 		state.cursor = data.nextCursor;
 		els.loadMore.hidden = !state.cursor;
 

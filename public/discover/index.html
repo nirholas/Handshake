@@ -33,15 +33,34 @@
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
-		<!-- Deferred, and placed BEFORE the model-viewer module: defer scripts and
-		     module scripts execute in document order, so the meshopt shim still
-		     registers its decoder before model-viewer's define runs. -->
+		<!-- The meshopt decoder shim stays eager. It is a 2 KB classic script that
+		     intercepts customElements.define(), so it wins the race against the
+		     element bundle no matter when that bundle arrives, and every
+		     server-baked GLB needs its decoder registered before the first load
+		     starts. -->
 		<script src="/model-viewer-meshopt.js" defer></script>
-		<script
-			type="module"
-			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"
-		></script>
+		<!-- The <model-viewer> element bundle is NOT loaded here. It is 253 KB of
+		     module JavaScript that builds a WebGL renderer on the main thread, and
+		     most of this directory renders static R2 thumbnails: an entire page of
+		     results can go by without one 3D card. Loading it on every visit cost
+		     /discover its interactivity. Lighthouse desktop attributed 29 s of
+		     main-thread time to it and scored the page 47, against 81 for the same
+		     page measured without it. discover.js now asks
+		     src/shared/model-viewer-loader.js for the element the moment a card
+		     that actually has a GLB comes near the viewport, which also brings the
+		     CDN failover chain this hardcoded tag never had. -->
 		<style>
+			/* Until the element bundle upgrades the tag, `model-viewer` is an unknown
+			   inline element. Keep its box exactly the size the upgraded viewer will
+			   occupy (the thumb is already aspect-ratio locked, so nothing shifts)
+			   and fill it with the same surface tone the card uses, so a 3D card
+			   reads as a loading tile rather than a hole. */
+			.explore-card-thumb model-viewer.explore-card-mv:not(:defined) {
+				display: block;
+				width: 100%;
+				height: 100%;
+				background: rgba(255, 255, 255, 0.03);
+			}
 			.explore-card-thumb model-viewer.explore-card-mv {
 				width: 100%;
 				height: 100%;
