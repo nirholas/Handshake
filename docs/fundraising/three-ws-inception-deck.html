@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>three.ws | Pre-Seed | NVIDIA Inception Capital Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+	:root {
+		--bg: #08090d;
+		--panel: rgba(255, 255, 255, 0.035);
+		--panel-2: rgba(255, 255, 255, 0.06);
+		--stroke: rgba(255, 255, 255, 0.10);
+		--stroke-strong: rgba(255, 255, 255, 0.18);
+		--ink: #f2f3f5;
+		--ink-dim: #8d93a1;
+		--ink-dimmer: #5f6573;
+		--accent: #ffffff;
+		--green: #4ade80;
+		--gold: #ffd700;
+		--gold-rgb: 255, 215, 0;
+		--font-display: 'Space Grotesk', system-ui, sans-serif;
+		--font-body: 'Inter', system-ui, sans-serif;
+		--font-mono: 'JetBrains Mono', ui-monospace, monospace;
+	}
+
+	* { box-sizing: border-box; }
+
+	html, body {
+		margin: 0;
+		padding: 0;
+		background: #000;
+		color: var(--ink);
+		font-family: var(--font-body);
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.slide {
+		position: relative;
+		width: 1280px;
+		height: 720px;
+		padding: 64px 76px;
+		background:
+			radial-gradient(1100px 520px at 84% -14%, rgba(255, 255, 255, 0.055), transparent 62%),
+			radial-gradient(760px 420px at -8% 106%, rgba(255, 255, 255, 0.035), transparent 60%),
+			var(--bg);
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		page-break-after: always;
+		break-after: page;
+	}
+	.slide:last-child { page-break-after: auto; break-after: auto; }
+
+	.slide::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background-image:
+			linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+		background-size: 64px 64px;
+		mask-image: radial-gradient(900px 600px at 50% 38%, #000 30%, transparent 82%);
+		-webkit-mask-image: radial-gradient(900px 600px at 50% 38%, #000 30%, transparent 82%);
+		pointer-events: none;
+	}
+
+	.slide > * { position: relative; z-index: 1; }
+
+	.eyebrow {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--ink-dim);
+		margin: 0 0 20px;
+	}
+
+	h1 {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 84px;
+		line-height: 0.98;
+		letter-spacing: -0.035em;
+		margin: 0;
+	}
+
+	h2 {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 46px;
+		line-height: 1.06;
+		letter-spacing: -0.025em;
+		margin: 0 0 10px;
+	}
+
+	.sub {
+		font-size: 21px;
+		line-height: 1.5;
+		color: var(--ink-dim);
+		margin: 0 0 34px;
+		max-width: 940px;
+	}
+
+	.body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+	.top { flex: 0 0 auto; }
+
+	.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+	.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+	.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+	.card {
+		background: var(--panel);
+		border: 1px solid var(--stroke);
+		border-radius: 16px;
+		padding: 26px 26px 24px;
+	}
+
+	.card h3 {
+		font-family: var(--font-display);
+		font-size: 21px;
+		font-weight: 600;
+		letter-spacing: -0.012em;
+		margin: 0 0 9px;
+	}
+
+	.card p {
+		font-size: 16px;
+		line-height: 1.55;
+		color: var(--ink-dim);
+		margin: 0;
+	}
+
+	.num {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		color: var(--ink-dimmer);
+		display: block;
+		margin-bottom: 12px;
+		letter-spacing: 0.14em;
+	}
+
+	.stat { text-align: left; }
+	.stat .v {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 52px;
+		letter-spacing: -0.03em;
+		line-height: 1;
+		display: block;
+	}
+	.stat .k {
+		font-size: 14px;
+		color: var(--ink-dim);
+		margin-top: 11px;
+		line-height: 1.45;
+		display: block;
+	}
+
+	ul.lede { margin: 0; padding: 0; list-style: none; }
+	ul.lede li {
+		font-size: 22px;
+		line-height: 1.45;
+		padding: 17px 0 17px 30px;
+		border-top: 1px solid var(--stroke);
+		position: relative;
+		color: var(--ink);
+	}
+	ul.lede li:last-child { border-bottom: 1px solid var(--stroke); }
+	ul.lede li::before {
+		content: "";
+		position: absolute;
+		left: 2px;
+		top: 29px;
+		width: 9px;
+		height: 9px;
+		border-radius: 2px;
+		background: var(--ink-dimmer);
+	}
+	ul.lede li span { color: var(--ink-dim); }
+
+	.pill {
+		display: inline-block;
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--ink);
+		border: 1px solid var(--stroke-strong);
+		border-radius: 999px;
+		padding: 7px 14px;
+		margin: 0 8px 8px 0;
+	}
+
+	.foot {
+		position: absolute;
+		left: 76px;
+		right: 76px;
+		bottom: 30px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--ink-dimmer);
+		border-top: 1px solid rgba(255, 255, 255, 0.06);
+		padding-top: 14px;
+		z-index: 2;
+	}
+
+	.mono { font-family: var(--font-mono); }
+	.green { color: var(--green); }
+	.gold { color: var(--gold); }
+	.dim { color: var(--ink-dim); }
+
+	.flow { display: flex; align-items: stretch; gap: 0; }
+	.flow .step {
+		flex: 1;
+		background: var(--panel);
+		border: 1px solid var(--stroke);
+		border-radius: 14px;
+		padding: 22px 20px;
+		margin-right: 14px;
+	}
+	.flow .step:last-child { margin-right: 0; }
+	.flow .step .t {
+		font-family: var(--font-display);
+		font-size: 19px;
+		font-weight: 600;
+		margin-bottom: 8px;
+	}
+	.flow .step .d { font-size: 14px; line-height: 1.5; color: var(--ink-dim); }
+	.flow .step .n {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--ink-dimmer);
+		letter-spacing: 0.14em;
+		display: block;
+		margin-bottom: 12px;
+	}
+
+	table.spec { width: 100%; border-collapse: collapse; }
+	table.spec td {
+		padding: 15px 0;
+		border-top: 1px solid var(--stroke);
+		font-size: 17px;
+		vertical-align: top;
+	}
+	table.spec tr:last-child td { border-bottom: 1px solid var(--stroke); }
+	table.spec td.k { width: 300px; color: var(--ink); font-weight: 500; }
+	table.spec td.v { color: var(--ink-dim); line-height: 1.5; }
+	table.spec tr.hi td { border-top-color: rgba(var(--gold-rgb), 0.38); }
+	table.spec tr.hi td.k { color: var(--gold); }
+	table.spec tr.hi td.v { color: rgba(255, 231, 128, 0.86); }
+	table.spec tr.hi + tr td, table.spec tr.hi:last-child td { border-bottom-color: rgba(var(--gold-rgb), 0.38); }
+
+	.title-mark {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 22px;
+		letter-spacing: -0.01em;
+	}
+
+	.big-quote {
+		font-family: var(--font-display);
+		font-size: 40px;
+		line-height: 1.22;
+		letter-spacing: -0.02em;
+		max-width: 1000px;
+		margin: 0;
+	}
+
+	.ask-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 26px; }
+	.bar {
+		height: 8px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.10);
+		overflow: hidden;
+		margin: 16px 0 12px;
+	}
+	.bar > i { display: block; height: 100%; background: var(--ink); border-radius: 999px; }
+	.alloc {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--ink-dimmer);
+		margin-top: 16px;
+	}
+	.alloc b {
+		font-family: var(--font-display);
+		font-size: 24px;
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		color: var(--ink);
+	}
+</style>
+</head>
+<body>
+
+<!-- 1. Title -->
+<section class="slide">
+	<div class="top"><div class="title-mark">three.ws</div></div>
+	<div class="body">
+		<p class="eyebrow">Pre-seed &middot; 2026</p>
+		<h1>Give your<br>AI a body.</h1>
+		<p class="sub" style="margin-top:30px;font-size:23px;max-width:820px;">One sentence becomes a rigged, animated 3D character that runs in any browser, with an LLM brain, an on-chain identity, and a one-line embed.</p>
+		<div>
+			<span class="pill">Live at three.ws</span>
+			<span class="pill">Apache-2.0</span>
+			<span class="pill">Self-hosted NVIDIA fleet</span>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>NVIDIA Inception Capital Connect</span></div>
+</section>
+
+<!-- 2. Problem -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">01 &middot; Problem</p>
+		<h2>Every AI product is a text box.</h2>
+		<p class="sub">Embodiment is the obvious next interface, and it is locked behind a pipeline almost nobody can staff.</p>
+	</div>
+	<div class="body">
+		<div class="grid-3">
+			<div class="card"><span class="num">THE ARTIST</span><h3>A 3D artist you do not have</h3><p>Modeling, UVs, texturing and rigging a single usable character is days of specialist work, before anything moves.</p></div>
+			<div class="card"><span class="num">THE ENGINE</span><h3>An engine your users will not install</h3><p>Unity and Unreal builds mean downloads, app stores and platform review. The web is where your users already are.</p></div>
+			<div class="card"><span class="num">THE GLUE</span><h3>Six weeks of integration</h3><p>Rig conventions, animation retargeting, lip-sync, LLM tool calls and state. Every team rebuilds all of it from zero.</p></div>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>02 / 15</span></div>
+</section>
+
+<!-- 3. Insight -->
+<section class="slide">
+	<div class="top"><p class="eyebrow">02 &middot; Insight</p></div>
+	<div class="body">
+		<p class="big-quote">The browser is already a 3D runtime.<br><span class="dim">WebGL 2.0 and glTF ship on every device your customer owns. No plugin, no install, no server-side upload. What was missing was everything upstream of the render: the model, the rig, the motion, and the mind.</span></p>
+		<div class="grid-4" style="margin-top:44px;">
+			<div class="card"><h3>Render</h3><p>WebGL 2.0, three.js, full Draco, KTX2 and Meshopt decompression client side.</p></div>
+			<div class="card"><h3>Generate</h3><p>Text, photos or a sketch into a textured GLB on our own GPU fleet.</p></div>
+			<div class="card"><h3>Animate</h3><p>Auto-rig and retarget onto any humanoid skeleton convention, no allowlist.</p></div>
+			<div class="card"><h3>Embody</h3><p>An LLM brain with tools, memory and morph-target expression in real time.</p></div>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>03 / 15</span></div>
+</section>
+
+<!-- 4. Product -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">03 &middot; Product</p>
+		<h2>Prompt to embedded character in one flow.</h2>
+		<p class="sub">Every stage is live in production today, and each one hands off to the next without an export step.</p>
+	</div>
+	<div class="body">
+		<div class="flow">
+			<div class="step"><span class="n">01</span><div class="t">Forge</div><div class="d">Text, one to six photos, or a sketch becomes a textured GLB in about 30 to 90 seconds. Free draft tier, no account.</div></div>
+			<div class="step"><span class="n">02</span><div class="t">Rig</div><div class="d">Auto-rigging adds a humanoid skeleton and retargets a pre-baked clip library onto it.</div></div>
+			<div class="step"><span class="n">03</span><div class="t">Embody</div><div class="d">Attach an LLM brain: tools, gestures, memory, lip-sync and emotion through morph targets.</div></div>
+			<div class="step"><span class="n">04</span><div class="t">Embed</div><div class="d">One line of HTML. The <span class="mono">&lt;agent-3d&gt;</span> web component drops into any page or framework.</div></div>
+		</div>
+		<div class="card" style="margin-top:24px;">
+			<p class="mono" style="font-size:15px;color:var(--ink);line-height:1.7;margin:0;">$ curl -X POST https://three.ws/api/forge -d '{"prompt": "a brass steampunk owl, full body", "tier": "standard"}'<br><span class="dim">&rarr; { "job_id": "...", "status": "queued" }&nbsp;&nbsp;&nbsp;&nbsp;# free, no API key, no account</span></p>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>04 / 15</span></div>
+</section>
+
+<!-- 5. Demo -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">04 &middot; Demo</p>
+		<h2>What we will show you live.</h2>
+		<p class="sub">All four run in a browser tab. Nothing in this deck needs a staged environment to reproduce.</p>
+	</div>
+	<div class="body">
+		<div class="grid-2">
+			<div class="card"><span class="num">THREE.WS/FORGE</span><h3>A sentence becomes an object</h3><p>Type it, watch the job run across our generation lanes, download the GLB. Three quality tiers from 12k to 200k polygons with PBR textures.</p></div>
+			<div class="card"><span class="num">THREE.WS/CREATE/PROMPT</span><h3>A sentence becomes a character</h3><p>The same prompt, rigged and animation-ready. It walks, idles and gestures without a single line of animation code.</p></div>
+			<div class="card"><span class="num">&lt;AGENT-3D&gt;</span><h3>The character on someone else's site</h3><p>One HTML tag. It renders, listens, thinks with an LLM, calls tools, and expresses emotion on the model in real time.</p></div>
+			<div class="card"><span class="num">THREE.WS/COMPANION</span><h3>The character off the web entirely</h3><p>A desktop companion that walks across the screen and speaks the notifications that clear your bar, and stays quiet for the rest.</p></div>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>05 / 15</span></div>
+</section>
+
+<!-- 6. Moat -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">05 &middot; Defensibility</p>
+		<h2>We own the pipeline, not a reseller agreement.</h2>
+		<p class="sub">Eight generation and transformation models run on hardware we operate, with health-checked failover between lanes. A competitor reselling one vendor API inherits that vendor's price, latency and outages.</p>
+	</div>
+	<div class="body">
+		<div class="grid-2">
+			<div class="card">
+				<h3>Self-hosted generation lanes</h3>
+				<p style="margin-bottom:14px;">Text, image and sketch to 3D, plus motion and scene reconstruction, each on its own GPU service.</p>
+				<div><span class="pill">TRELLIS</span><span class="pill">TripoSG</span><span class="pill">Hunyuan3D</span><span class="pill">TripoSR</span><span class="pill">text2motion</span><span class="pill">video2motion</span><span class="pill">video2scene</span></div>
+			</div>
+			<div class="card">
+				<h3>Transformation workers</h3>
+				<p style="margin-bottom:14px;">The stages that turn a raw mesh into something a product can actually ship.</p>
+				<div><span class="pill">auto-rig</span><span class="pill">retexture</span><span class="pill">restyle</span><span class="pill">remesh</span><span class="pill">segment</span><span class="pill">garment</span><span class="pill">background removal</span></div>
+			</div>
+		</div>
+		<div class="card" style="margin-top:22px;">
+			<p style="color:var(--ink);font-size:17px;">Every lane is health-checked and every lane has a failover. A single upstream outage degrades one path, never the product.</p>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>06 / 15</span></div>
+</section>
+
+<!-- 7. NVIDIA -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">06 &middot; Infrastructure</p>
+		<h2>Built on NVIDIA, tuned by us.</h2>
+		<p class="sub">GPU capacity is the input cost of this business, so we treat capacity routing as product engineering rather than an ops chore.</p>
+	</div>
+	<div class="body">
+		<div class="grid-3">
+			<div class="card stat"><span class="v">L4</span><span class="k">The workhorse. Our generation and transformation lanes run on NVIDIA L4 across multiple Cloud Run regions.</span></div>
+			<div class="card stat"><span class="v">RTX PRO<br>6000</span><span class="k">The heavy lane. High-tier geometry and texture work that does not fit the L4 envelope.</span></div>
+			<div class="card stat"><span class="v">Multi<br>region</span><span class="k">Capacity is a distribution problem, not a supply problem. Unused regional grants are the cheapest capacity there is.</span></div>
+		</div>
+		<div class="card" style="margin-top:24px;">
+			<h3>One command audits and rebalances the fleet</h3>
+			<p>Our capacity tool reads every GPU region's grant, holders and headroom, ranks the actions by time to effect, and ports a starved service to a region with free capacity in minutes without a rebuild. It is covered by tests, not tribal knowledge.</p>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>07 / 15</span></div>
+</section>
+
+<!-- 8. Distribution -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">07 &middot; Distribution</p>
+		<h2>We are where developers already are.</h2>
+		<p class="sub">Four independent surfaces, each reaching a different buyer, all serving the same pipeline.</p>
+	</div>
+	<div class="body">
+		<div class="grid-4">
+			<div class="card stat"><span class="v">795</span><span class="k">Public routes on three.ws, every one generated from a single registry that also feeds the sitemap and llms.txt.</span></div>
+			<div class="card stat"><span class="v">90</span><span class="k">Published npm packages under the <span class="mono">@three-ws</span> scope: SDKs, the web component, the MCP server, the companion client.</span></div>
+			<div class="card stat"><span class="v">MCP</span><span class="k">A 3D Studio MCP server in the public registry. Claude and Cursor generate, rig and animate mid-conversation.</span></div>
+			<div class="card stat"><span class="v">x402</span><span class="k">A listed pay-per-call generation API. Autonomous agents pay in USDC with no key and no account.</span></div>
+		</div>
+		<div class="card" style="margin-top:24px;">
+			<h3>The agent-to-agent channel is real revenue, not a demo</h3>
+			<p>Generation priced at $0.05 draft, $0.15 standard, $0.50 high. Polling is free, retried payments are idempotent, and no caller ever double-pays. An AI agent can buy a 3D model from us without a human in the loop.</p>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>08 / 15</span></div>
+</section>
+
+<!-- 9. Open source -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">08 &middot; Go-to-market</p>
+		<h2>Open source is the funnel.</h2>
+		<p class="sub">The entire stack is public under Apache-2.0: viewer, agent runtime, contracts, backend and web component. Developers adopt what they can read, fork and self-host, and they buy the capacity and the guarantees.</p>
+	</div>
+	<div class="body">
+		<div class="grid-3">
+			<div class="card stat"><span class="v">1,351</span><span class="k">Test files in the repository. Quality is enforced mechanically, not asserted in a deck.</span></div>
+			<div class="card stat"><span class="v">Apache<br>2.0</span><span class="k">Commercial-friendly by design. Fork it, self-host it, ship products on it.</span></div>
+			<div class="card stat"><span class="v">Public<br>changelog</span><span class="k">Every user-visible change ships with an entry, delivered to the community automatically on deploy.</span></div>
+		</div>
+		<div class="card" style="margin-top:24px;">
+			<p style="color:var(--ink);font-size:17px;">A first contribution goes from clone to open pull request in about fifteen minutes, with a worked example. Every good-first-issue names the file to change and the command that proves it worked.</p>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>09 / 15</span></div>
+</section>
+
+<!-- 10. Business model -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">09 &middot; Business model</p>
+		<h2 style="font-size:42px;">Free to try, metered to use, contracted to depend on.</h2>
+	</div>
+	<div class="body">
+		<table class="spec">
+			<tr><td class="k">Free draft tier</td><td class="v">No account, no key. It exists to make the first generation frictionless and the second one wanted. This is acquisition, and it is deliberately unprofitable.</td></tr>
+			<tr><td class="k">Metered generation</td><td class="v">Higher tiers and native-geometry lanes priced per generation. Human customers pay by account; autonomous agents pay per call in USDC over x402 with no onboarding at all.</td></tr>
+			<tr><td class="k">On-chain and creator revenue</td><td class="v">Protocol-level creator fees from activity the platform originates. Non-recurring and volume-correlated, but it has already proven that this audience pays.</td></tr>
+			<tr class="hi"><td class="k">Enterprise embed tier</td><td class="v">The contracted, recurring layer this round funds: SSO, an availability SLA, private and customer-fine-tuned models, on-prem and VPC deployment, and support. Customers are asking for it today.</td></tr>
+		</table>
+	</div>
+	<div class="foot"><span>three.ws</span><span>10 / 15</span></div>
+</section>
+
+<!-- 11. Traction -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">10 &middot; Traction</p>
+		<h2>Shipping, live, and already earning.</h2>
+	</div>
+	<div class="body">
+		<div class="grid-3">
+			<div class="card stat"><span class="v green">~$400K</span><span class="k">Cumulative on-chain creator-fee revenue to date. Non-recurring and volume-correlated, and proof the market pays.</span></div>
+			<div class="card stat"><span class="v">Live</span><span class="k">Production on Google Cloud Run behind a global load balancer. <span class="mono">GET /api/version</span> returns the exact commit serving right now.</span></div>
+			<div class="card stat"><span class="v">Daily</span><span class="k">Continuous deploys with a public changelog. The community sees what shipped within minutes of it shipping.</span></div>
+		</div>
+		<div class="grid-2" style="margin-top:22px;">
+			<div class="card"><h3>Backed on infrastructure</h3><p>Selected for the Google for Startups Cloud Program, Web3 tier: up to $200,000 of cloud credit over two years. Our GPU fleet runs on it.</p></div>
+			<div class="card"><h3>Listed where agents shop</h3><p>Published in the MCP registry and listed on x402scan, so both AI assistants and autonomous agents can discover and pay us without a sales call.</p></div>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>11 / 15</span></div>
+</section>
+
+<!-- 12. Market -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">11 &middot; Market</p>
+		<h2>Anything with a chat box eventually wants a face.</h2>
+		<p class="sub">We sell into three buyers with the same pipeline, which is why one infrastructure investment compounds across all of them.</p>
+	</div>
+	<div class="body">
+		<div class="grid-3">
+			<div class="card"><span class="num">BUYER 01</span><h3>AI product teams</h3><p>Support agents, tutors, concierges and companions that need a body their users can see, on the web, without an install.</p></div>
+			<div class="card"><span class="num">BUYER 02</span><h3>Brands and creators</h3><p>A mascot, a spokesperson or a storefront character, generated in minutes instead of commissioned over six weeks.</p></div>
+			<div class="card"><span class="num">BUYER 03</span><h3>Autonomous agents</h3><p>The newest buyer and the one with no procurement cycle. An agent with a wallet buys a generation per call, priced in USDC.</p></div>
+		</div>
+		<div class="card" style="margin-top:24px;">
+			<p style="color:var(--ink);font-size:17px;">The third buyer is the one incumbents cannot serve. Selling to an agent requires no account, no key, no invoice and no seat. Our API has settled that transaction in production.</p>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>12 / 15</span></div>
+</section>
+
+<!-- 13. Why now -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">12 &middot; Why now</p>
+		<h2>Three curves crossed at once.</h2>
+	</div>
+	<div class="body">
+		<div class="grid-3">
+			<div class="card"><span class="num">2024 &rarr; 2026</span><h3>Generation crossed usable</h3><p>Open 3D generation models went from research artifacts to meshes a product can ship. We run them ourselves, so every upstream improvement lands as our margin.</p></div>
+			<div class="card"><span class="num">WEBGL 2.0</span><h3>The browser got fast enough</h3><p>Compressed glTF, KTX2 textures and modern GPUs mean a rigged character renders on a phone. The install barrier is simply gone.</p></div>
+			<div class="card"><span class="num">AGENT WALLETS</span><h3>Software started paying</h3><p>Agents now hold wallets and settle payments without a human. A machine buyer that can pay per call is a customer segment that did not exist two years ago.</p></div>
+		</div>
+		<div class="card" style="margin-top:24px;">
+			<p style="color:var(--ink);font-size:17px;">A team that starts today has to build the generation fleet, the rig-agnostic animation layer, the agent runtime and the payment rail. We have all four in production.</p>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>13 / 15</span></div>
+</section>
+
+<!-- 14. Ask -->
+<section class="slide">
+	<div class="top">
+		<p class="eyebrow">13 &middot; The ask</p>
+		<h2>Pre-seed, under $1M.</h2>
+		<p class="sub">The round converts proven usage into contracted, recurring revenue. Twelve months of runway against three specific milestones.</p>
+	</div>
+	<div class="body">
+		<div class="ask-row" style="margin-top:18px;">
+			<div class="card">
+				<h3>GPU capacity</h3>
+				<div class="alloc"><b>45%</b><span>of the round</span></div><div class="bar" style="margin-top:10px;"><i style="width:45%"></i></div>
+				<p>Warm capacity across regions so a generation takes seconds at a hundred times today's volume. Latency is the top reason a trial does not convert.</p>
+			</div>
+			<div class="card">
+				<h3>Two engineers</h3>
+				<div class="alloc"><b>35%</b><span>of the round</span></div><div class="bar" style="margin-top:10px;"><i style="width:35%"></i></div>
+				<p>Ship the enterprise embed tier: SSO, an availability SLA, private and fine-tuned models, and VPC or on-prem deployment.</p>
+			</div>
+			<div class="card">
+				<h3>Go to market</h3>
+				<div class="alloc"><b>20%</b><span>of the round</span></div><div class="bar" style="margin-top:10px;"><i style="width:20%"></i></div>
+				<p>Developer relations and design partners for the customers already asking, converting open-source adoption into signed contracts.</p>
+			</div>
+		</div>
+		<div class="card" style="margin-top:20px;">
+			<p style="color:var(--ink);font-size:17px;">We are looking for an investor who understands GPU infrastructure and developer platforms, not only consumer 3D.</p>
+		</div>
+	</div>
+	<div class="foot"><span>three.ws</span><span>14 / 15</span></div>
+</section>
+
+<!-- 15. Contact -->
+<section class="slide">
+	<div class="top"><div class="title-mark">three.ws</div></div>
+	<div class="body">
+		<p class="eyebrow">14 &middot; Team and contact</p>
+		<h2 style="font-size:60px;">Give your AI a body.</h2>
+		<p class="sub" style="font-size:20px;max-width:820px;">Founder-led and shipping daily. The whole stack that this deck describes is public: read the code before you take the meeting.</p>
+		<table class="spec" style="margin-top:6px;">
+			<tr><td class="k">Product</td><td class="v mono">https://three.ws</td></tr>
+			<tr><td class="k">Try it now</td><td class="v mono">https://three.ws/forge</td></tr>
+			<tr><td class="k">Source</td><td class="v mono">https://github.com/nirholas/three.ws</td></tr>
+			<tr><td class="k">Live commit</td><td class="v mono">https://three.ws/api/version</td></tr>
+		</table>
+	</div>
+	<div class="foot"><span>Pre-seed &middot; NVIDIA Inception Capital Connect</span><span>15 / 15</span></div>
+</section>
+
+</body>
+</html>
