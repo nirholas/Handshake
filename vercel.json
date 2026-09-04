@@ -240,6 +240,22 @@
 			"continue": true
 		},
 		{
+			"src": "/(x402|risk-ack|load-module|x402-discover|x402-pay-core|x402-paywall|i18n)\\.js",
+			"headers": {
+				"access-control-allow-origin": "*",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"continue": true
+		},
+		{
+			"src": "/ibm/hello\\.live",
+			"headers": {
+				"access-control-allow-origin": "*",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"continue": true
+		},
+		{
 			"src": "/cdn/(.+)",
 			"dest": "/api/cdn-object?key=$1"
 		},
