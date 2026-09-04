@@ -134,10 +134,11 @@ describe('MMD (MikuMikuDance) Japanese skeleton', () => {
 
 ### Now do one that is actually open
 
-MMD is done, so do not re-submit it. Pick a convention that still returns `null` and give it the same four-part treatment (alias map, tests, Rig Doctor fingerprint, docs row). Two are verified open and waiting, each with the file, the bones, and the verification command spelled out:
+MMD is done, so do not re-submit it. Pick a convention that still returns `null` and give it the same four-part treatment (alias map, tests, Rig Doctor fingerprint, docs row). Three are verified open and waiting, each with the file, the bones, and the verification command spelled out:
 
 - [#110](https://github.com/nirholas/three.ws/issues/110): Apple / ARKit rigs, which suffix every joint with `_joint` (`hips_joint`, `left_arm_joint`). 0 of 10 joints map today.
 - [#111](https://github.com/nirholas/three.ws/issues/111): Kinect rigs, which put the side word last (`ShoulderLeft`, `ElbowLeft`, `SpineBase`). 0 of 10 map today.
+- [#112](https://github.com/nirholas/three.ws/issues/112): Reallusion Character Creator 3/4, whose numbered spine chain (`CC_Base_Spine01`, `CC_Base_Spine02`) returns `null` while the rest of the CC skeleton already maps. A smaller gap than the other two, and a good first one if you want the shape of the change without the full ten joints.
 
 Comment on the one you are taking, then:
 

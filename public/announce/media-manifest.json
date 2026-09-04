@@ -1,6 +1,6 @@
 {
 	"generatedBy": "scripts/capture-doc-media.mjs",
-	"generatedAt": "2026-09-04T18:17:41.963Z",
+	"generatedAt": "2026-09-04T18:29:12.207Z",
 	"shots": {
 		"activity-hero": {
 			"id": "activity-hero",
@@ -55,6 +55,23 @@
 			"commit": "4a80c8498",
 			"sha256": "6fd46eb6f9176edd492b30ce822a11b7bc9b92e86bf25d1890457bc166bf24b5",
 			"bytes": 55852,
+			"width": 1800,
+			"height": 1013
+		},
+		"rig-doctor-hero": {
+			"id": "rig-doctor-hero",
+			"src": "/announce/img/rig-doctor-hero.webp",
+			"alt": "three.ws Rig Doctor: drop in any humanoid GLB and it names the skeleton convention, then lists joint by joint which bones will animate and which will not move",
+			"caption": "Rig Doctor tells you which joints will not move before you ever load a clip.",
+			"route": "/rig-doctor",
+			"viewport": "wide",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-09-04T18:29:11.891Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "0733340b4",
+			"sha256": "60ef882c910c682b25407775960fca8580756ff7d8402ceca94b4aa76e163981",
+			"bytes": 53084,
 			"width": 1800,
 			"height": 1013
 		},

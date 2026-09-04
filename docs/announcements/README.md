@@ -59,3 +59,4 @@ node scripts/post-tweet.mjs --file docs/announcements/<slug>.post.txt --dry-run
 | Pack | Surface | Stage |
 |---|---|---|
 | [genesis.md](./genesis.md) | [`/genesis`](https://three.ws/genesis) | drafted, awaiting approval to post |
+| [open-source-friday.md](./open-source-friday.md) | [`/rig-doctor`](https://three.ws/rig-doctor) | drafted, awaiting approval to post |

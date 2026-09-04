@@ -1,0 +1,1 @@
+Approved for GitHub's Open Source Friday. Rig Doctor knows 11 rig conventions. Teaching it the 12th is an open first issue, and we merge it live on stream: three.ws/rig-doctor

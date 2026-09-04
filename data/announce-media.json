@@ -20,7 +20,10 @@
 			"alt": "Animated loop of the three.ws Agent Activity feed updating in real time as autonomous agents score and trade pump.fun launches",
 			"caption": "Not a mock-up: the feed captured while it streamed.",
 			"settle": 9000,
-			"motion": { "seconds": 5, "fps": 12 }
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
 		},
 		{
 			"id": "genesis-hero",
@@ -29,7 +32,9 @@
 			"alt": "The three.ws Genesis page signed in: describe an agent, upload a selfie, or remix a public avatar, and it becomes a rigged 3D agent with its own wallet and on-chain identity",
 			"caption": "Genesis, signed in: three ways to start, one minute to an owned agent.",
 			"auth": true,
-			"hide": ["#home-nav-user"]
+			"hide": [
+				"#home-nav-user"
+			]
 		},
 		{
 			"id": "three-token-hero",
@@ -45,7 +50,17 @@
 			"alt": "Animated loop of live $THREE trades streaming onto the three.ws token page",
 			"caption": "The trade feed, captured live.",
 			"settle": 9000,
-			"motion": { "seconds": 5, "fps": 12 }
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
+		},
+		{
+			"id": "rig-doctor-hero",
+			"surface": "/rig-doctor",
+			"url": "/rig-doctor",
+			"alt": "three.ws Rig Doctor: drop in any humanoid GLB and it names the skeleton convention, then lists joint by joint which bones will animate and which will not move",
+			"caption": "Rig Doctor tells you which joints will not move before you ever load a clip."
 		}
 	]
 }
