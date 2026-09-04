@@ -1,6 +1,6 @@
 
 > 3d-agent@1.5.2 gate
-> npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas && npm run check:ios-icons
+> npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:mcp-listing && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas && npm run check:ios-icons && npm run check:macos-icon && npm run check:apple-widget
 
 
 > 3d-agent@1.5.2 check:conflicts
@@ -26,7 +26,7 @@ check:fetch-timeouts: every external fetch, and every fetch under api/, is bound
 > 3d-agent@1.5.2 check:tdz-bootstrap
 > node scripts/check-tdz-bootstrap.mjs
 
-check:tdz-bootstrap: no bootstrap-before-state ordering in 1595 browser module(s)
+check:tdz-bootstrap: no bootstrap-before-state ordering in 1604 browser module(s)
 
 > 3d-agent@1.5.2 check:event
 > node scripts/check-event-window.mjs
@@ -58,28 +58,165 @@ All cron expressions are valid (offline mode: live jobs not compared).
 
  RUN  v4.1.9 /workspaces/three.ws
 
- ❯ tests/api/healthz.test.js (0 test)
 
-⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  7 passed (7)
+      Tests  86 passed (86)
+   Start at  08:17:40
+   Duration  5.03s (transform 5.62s, setup 0ms, import 14.07s, tests 3.50s, environment 1ms)
 
- FAIL  tests/api/healthz.test.js [ tests/api/healthz.test.js ]
-Error: no database in test
- ❯ Proxy.sql tests/api/healthz.test.js:15:21
-     13| // test non-deterministically.
-     14| vi.mock('../../api/_lib/db.js', () => ({
-     15|  sql: () => { throw new Error('no database in test'); },
-       |                     ^
-     16|  isDbUnavailableError: () => false,
-     17|  isDbCapacityError: () => false,
- ❯ api/_lib/home/store.js:49:25
- ❯ api/_lib/home/runtime.js:31:1
+[test-gate] ✓ all critical-path tests passed
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+> 3d-agent@1.5.2 test:gate-3d
+> vitest run tests/glb-canonicalize.test.js tests/animation-retarget.test.js tests/animation-retarget-rest-pollution.test.js tests/viewer-framing.test.js
 
 
- Test Files  1 failed | 6 passed (7)
-      Tests  73 passed (73)
-   Start at  07:14:56
-   Duration  15.36s (transform 3.45s, setup 0ms, import 36.85s, tests 2.61s, environment 1ms)
+ RUN  v4.1.9 /workspaces/three.ws
 
-[test-gate] ✗ critical-path tests failed, blocking deploy
+
+ Test Files  4 passed (4)
+      Tests  559 passed (559)
+   Start at  08:17:47
+   Duration  1.97s (transform 1.03s, setup 0ms, import 2.89s, tests 1.26s, environment 1ms)
+
+
+> 3d-agent@1.5.2 audit:mcp
+> node scripts/audit-mcp-manifests.mjs
+
+[audit:mcp] 50 MCP manifests consistent
+
+> 3d-agent@1.5.2 audit:mcp-golden
+> node scripts/audit-mcp-golden.mjs
+
+[audit:mcp-golden] 307 hosted MCP tool contracts match the golden fixture
+
+> 3d-agent@1.5.2 audit:mcp-safety
+> node scripts/audit-mcp-safety.mjs
+
+[audit:mcp-safety] 307 MCP tool annotations verified against handler behavior across 248 files, 6 reviewed exemption(s)
+
+> 3d-agent@1.5.2 audit:mcp-catalog
+> node scripts/build-mcp-catalog.mjs --check
+
+[audit:mcp-catalog] catalog matches source: 307 tools across 40 servers
+
+> 3d-agent@1.5.2 audit:mcp-listing
+> node scripts/build-mcp-listing-source.mjs --check
+
+[mcp-listing-source] up to date: 50 servers (7 remote, 43 stdio)
+
+> 3d-agent@1.5.2 audit:routes
+> node scripts/verify-routes.mjs --strict
+
+Route verify: 794 catalog pages, 1317 main routes, 1 post-filesystem routes.
+  modeled dist files: 2938 · canonical-covered: 794 · literal page routes checked for shadows: 580
+  filesystem boundary (handle:filesystem) present: yes
+
+✓ static checks pass: every catalog page reachable, unknown paths → designed 404, no shadowed page routes.
+
+> 3d-agent@1.5.2 audit:handlers
+> node scripts/audit-empty-handlers.mjs
+
+✓ audit-empty-handlers: all API handlers export a body (2199 checked)
+
+> 3d-agent@1.5.2 audit:pages
+> node scripts/audit-page-index.mjs --strict
+
+Route audit: 166 auditable page routes, 794 documented in pages.json.
+✓ Every auditable page route is documented.
+
+> 3d-agent@1.5.2 audit:links
+> node scripts/audit-links.mjs
+
+Link audit: scanned 2256 files
+
+Broken internal links : 0
+
+Stub hrefs (#, void(0)) : 0
+
+Dangling routes (→ missing file) : 0
+
+External links collected : 556
+  (run with --external to probe liveness)
+
+Dynamic targets skipped : 1377
+
+> 3d-agent@1.5.2 audit:docs
+> node scripts/audit-docs.mjs
+
+docs audit: clean (1526 markdown files checked).
+
+> 3d-agent@1.5.2 audit:upstreams
+> node scripts/audit-upstreams.mjs
+
+audit:upstreams: 225 outbound call sites across 79 upstreams (A:0 B:54 C:92 D:79 F:0)
+audit:upstreams: no regressions
+
+> 3d-agent@1.5.2 check:tutorials
+> node scripts/sync-tutorial-pages.mjs
+
+manifest entries: 70  markdown files: 70
+pages.json: every tutorial is registered
+
+> 3d-agent@1.5.2 audit:hidden-guard
+> node scripts/audit-hidden-guard.mjs
+
+✓ audit-hidden-guard: all 382 pages resolve the [hidden] guard
+
+> 3d-agent@1.5.2 audit:inline-handlers
+> node scripts/audit-inline-handlers.mjs
+
+inline-handler audit: clean (2172 files, roots: pages, public, src)
+
+> 3d-agent@1.5.2 audit:x402-catalog
+> node scripts/audit-x402-catalog.mjs
+
+✓ audit-x402-catalog: all 98 x402 endpoints are documented
+
+> 3d-agent@1.5.2 audit:tokens
+> node scripts/audit-token-drift.mjs
+
+✓ token drift unchanged: 0 hardcoded token-hex(es) (baseline 0).
+
+> 3d-agent@1.5.2 audit:guards
+> node scripts/audit-guards.mjs
+
+[audit-guards] OK: 57 guards registered, every stage claim verified (gate:27 build:gcp:5 pre-push:2 manual:26 prebuild:3)
+
+> 3d-agent@1.5.2 audit:tour-atlas
+> node scripts/build-tour-atlas.mjs --check
+
+audit:tour-atlas: 263 stops, all anchored and photographed (35 curated, 228 generic).
+
+> 3d-agent@1.5.2 check:ios-icons
+> node ios/scripts/make-icons.mjs --check
+
+[ios-icons] ok   app icon (1024px)
+[ios-icons] ok   splash (2732px)
+[ios-icons] ok   splash (dark) (2732px)
+[ios-icons] ok   splash (alt) (2732px)
+
+> 3d-agent@1.5.2 check:macos-icon
+> node apple/scripts/make-macos-icon.mjs --check
+
+[macos-icon] ok 10 icons match the brand mark
+
+> 3d-agent@1.5.2 check:apple-widget
+> node scripts/check-apple-widget.mjs
+
+[apple-widget] ok   9 shared sources and 2 widget sources present
+[apple-widget] ok   project.pbxproj resolves all 87 object ids
+[apple-widget] ok   project.pbxproj braces balance
+[apple-widget] ok   every apple/ path in project.pbxproj resolves
+[apple-widget] ok   the iOS widget target is wired and embedded
+[apple-widget] ok   every shared source is a member of the iOS targets that need it
+[apple-widget] ok   the iOS project defines the three Glance build settings on both targets
+[apple-widget] ok   the macOS project builds and embeds the same sources
+[apple-widget] ok   6 plists carry the keys the widget reads
+[apple-widget] ok   the Swift client calls the endpoint with the query the server reads
+[apple-widget] ok   the unlinked card sends an Apple device to the Apple hand-off
+[apple-widget] ok   the client reads 6 of the 9 headers the server sets
+[apple-widget] ok   GlanceState covers all 4 server states
+[apple-widget] ok   sizes and scales agree with the server (small, medium, large at 2 and 3x)
+[apple-widget] ok   the deep link and the token shape match the server
+[apple-widget] 15 checks passed
+EXIT=0
