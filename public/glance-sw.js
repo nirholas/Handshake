@@ -10,12 +10,12 @@
 // worker the widget lifecycle and expects it to supply BOTH the card and the
 // data it binds:
 //
-//   activate        this worker took over        -> re-render pinned slots
-//   widgetinstall   the user pinned the widget   -> register refresh, render
-//   widgetresume    the board woke up            -> render from cache, refresh
-//   widgetclick     the host nudged an instance   -> refresh on demand
-//   widgetuninstall the user removed it          -> drop the cached payload
-//   periodicsync    the platform granted a tick  -> refresh every pinned widget
+//   activate        this worker took over       -> re-render pinned slots
+//   widgetinstall   the user pinned the widget  -> register refresh, render
+//   widgetresume    the board woke up           -> render from cache, refresh
+//   widgetclick     the host nudged an instance -> refresh on demand
+//   widgetuninstall the user removed it         -> drop the refresh and the payload
+//   periodicsync    the platform granted a tick -> refresh every pinned widget
 //
 // The data comes from /api/glance/mine, which answers per session cookie, so a
 // signed-out board renders a real "sign in" card instead of an error. The last
@@ -279,4 +279,3 @@ self.addEventListener('periodicsync', (event) => {
 // fake `self`) and for debugging from the service worker console.
 self.__threewsGlancePayload = glancePayload;
 self.__threewsGlanceRender = renderGlanceWidget;
-self.__threewsGlanceTemplate = loadTemplate;
