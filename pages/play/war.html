@@ -18,8 +18,30 @@
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Wars+arena%3A+two+communities%2C+one+battlefield&amp;d=The+live+Coin+Wars+arena.+Enlist+at+your+coin+world%27s+war+portal%2C+fight+the+rival+community+to+the+kill+cap%2C+and+the+result+lands+on+the+Elo+ladder.+You+fight&amp;p=%2Fplay%2Fwar" />
 	<link rel="canonical" href="https://three.ws/play/war" />
 	<link rel="icon" href="/favicon.ico" />
-	<link rel="preload" href="/animations/manifest.json" as="fetch" crossorigin />
-	<link rel="preload" href="/avatars/default.glb" as="fetch" crossorigin />
+	<!-- The arena's two heaviest first-paint assets, preloaded only when this
+	     link actually carries a pairing. src/play/war.js returns early with "No
+	     battle to join" when match/ticket/coin are missing (a shared, expired, or
+	     hand-typed link), and a static preload on that path downloads a manifest
+	     and a 700 KB avatar the page never reads, which is what the browser
+	     reports as "preloaded ... but not used". Injecting from the head keeps
+	     the head start on the real path: this runs before the module graph below
+	     is even fetched. `crossorigin` stays because both consumers request in CORS mode
+	     (fetch() defaults to it; three's FileLoader builds a Request, which does
+	     too), so dropping it would silently orphan the preload instead. -->
+	<script>
+		(function () {
+			var q = new URLSearchParams(location.search);
+			if (!q.get('match') || !q.get('ticket') || !q.get('coin')) return;
+			['/animations/manifest.json', '/avatars/default.glb'].forEach(function (href) {
+				var l = document.createElement('link');
+				l.rel = 'preload';
+				l.as = 'fetch';
+				l.crossOrigin = 'anonymous';
+				l.href = href;
+				document.head.appendChild(l);
+			});
+		})();
+	</script>
 	<meta name="robots" content="index, follow, max-image-preview:large" />
 
 	<meta property="og:locale" content="en_US">
