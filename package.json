@@ -320,6 +320,8 @@
 		"build:extension": "node scripts/build-extension-icons.mjs && node scripts/build-extension.mjs",
 		"build:extension:prod": "node scripts/build-extension-icons.mjs && node scripts/build-extension.mjs --prod",
 		"optimize:glb": "node scripts/optimize-glb.mjs",
+		"validate:glb": "node scripts/validate-glb.mjs",
+		"inspect:glb": "node scripts/inspect-glb-geometry.mjs",
 		"compress:glbs": "node scripts/compress-glbs.mjs",
 		"vendor:meshopt": "node scripts/vendor-meshopt-decoder.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",

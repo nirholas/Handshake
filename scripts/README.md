@@ -48,6 +48,68 @@ extensions (clearcoat, transmission, sheen, ior, anisotropy, volume) are
 present. This is the ground truth for auditing whether a forge lane emits a
 full PBR set or just albedo, without opening the GLB in a 3D editor by hand.
 
+### `inspect-glb-geometry.mjs`: meshes, attributes, and container extensions
+
+```sh
+node scripts/inspect-glb-geometry.mjs public/avatars/default.glb
+node scripts/inspect-glb-geometry.mjs public/avatars/          # a whole directory
+node scripts/inspect-glb-geometry.mjs --json a.glb b.glb
+```
+
+The mesh-side companion to the two PBR inspectors above. Prints mesh and skin
+names, per-primitive vertex attributes, vertex/index counts, and the `POSITION`
+component type, plus `extensionsUsed` / `extensionsRequired`.
+
+Three questions it answers that the material inspectors cannot: a primitive with
+no `NORMAL` renders flat-shaded and one with no `TEXCOORD_0` cannot receive any
+texture a forge lane derives for it, so an "it came back untextured" report is
+often an attribute problem; a `POSITION` that is not `FLOAT` means the mesh is
+quantized (`KHR_mesh_quantization`, usually beside `EXT_meshopt_compression`),
+which is why every mesh-consuming worker decodes before it reads; and mesh and
+skin names are what a rig mapper matches on, so an avatar that will not drive the
+shared clip library is diagnosed here first.
+
+### `validate-glb.mjs`: Khronos glTF-Validator over a file, a directory, or a URL
+
+```sh
+node scripts/validate-glb.mjs public/avatars/default.glb
+npm run validate:glb -- public/avatars/          # every model in a directory
+npm run validate:glb -- --verbose model.glb      # warnings and infos too
+npm run validate:glb -- --json out/ > report.json
+```
+
+The PBR inspectors answer "what does this model carry"; this answers "is it
+legal glTF at all", which is a different failure. A GLB can carry a complete
+texture set and still be rejected by a strict viewer because a derived WebP map
+was written without declaring `EXT_texture_webp`, an accessor's min/max
+disagrees with its data, or a normalized attribute uses a component type the
+spec forbids. Those show as a blank model in a third-party embed and as nothing
+at all in our own forgiving viewer.
+
+Errors print by default and warnings/infos behind `--verbose`. A `.gltf` with
+external buffers resolves them relative to the file. Exit code is 1 when any
+model reports a validation error, so it works as a gate on a pipeline that
+writes GLBs.
+
+### `derive-pbr-classes.mjs`: run the PBR derive pass across every material class
+
+```sh
+node scripts/derive-pbr-classes.mjs model.glb
+node scripts/derive-pbr-classes.mjs model.glb --classes=glass,person --out=/tmp/pbr
+node scripts/derive-pbr-classes.mjs model.glb --json
+```
+
+[`api/_lib/glb-pbr-derive.js`](../api/_lib/glb-pbr-derive.js) fills a model's
+missing PBR channels from a material class: skin gets sheen and a pulled-down
+specular, glass gets transmission and an IOR, car paint gets a clearcoat. The
+class is normally picked from the generation prompt, which makes a change to the
+class table or to the classifier easy to ship and hard to see. This runs one
+input GLB through each class in turn and prints the table it applied next to
+what the pass actually derived.
+
+With `--out` each class writes `<out>/<basename>.<class>.glb`, ready to open in
+the viewer or hand to `inspect-glb-materials.mjs` for the channel matrix.
+
 ### `set-r2-cors.mjs` — apply the bucket CORS policy
 
 Runs the canonical CORS policy against the R2 bucket holding all media
