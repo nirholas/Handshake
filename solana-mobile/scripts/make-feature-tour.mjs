@@ -128,9 +128,14 @@ const ACTS = {
 		/* Walked into from another act: take the app's own route there, through
 		   the nav drawer. Started here with --acts=market: just open the page. */
 		if (page.url().startsWith(origin) && !page.url().includes('/marketplace')) {
-			await hand.tapOn('#nav-toggle', { expect: 'a[href="/marketplace"]' });
+			/* Scoped to #nav-drawer on purpose. The desktop nav renders its own
+			   copy of this link inside the Discover mega menu, which is display:
+			   none at the Seeker's width, and an unscoped selector resolves to
+			   that hidden copy and waits on it forever. */
+			const drawerLink = '#nav-drawer a[href="/marketplace"]';
+			await hand.tapOn('#nav-toggle', { expect: drawerLink });
 			await hand.hold(500);
-			await hand.tapOn('a[href="/marketplace"]', { expect: '#market-search' });
+			await hand.tapOn(drawerLink, { expect: '#market-search' });
 		}
 		await visit('/marketplace', { ready: '#market-search', settle: 4200 });
 		await hand.tapIfPresent('.walk-companion-close', { after: 400 });
