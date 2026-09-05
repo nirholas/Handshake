@@ -79,6 +79,18 @@ in the Telegram variant.
 No account is tagged. Nothing external is load-bearing here: the site is ours, the narration lane
 is ours, and a tag we cannot defend costs more than the 4.5x it would buy.
 
+## The long-form post
+
+The owner asked for a version that explains what three.ws is, not just that it was filmed. That is
+a Premium long post (the 280 wall does not apply to it), and it walks the platform in the film's
+own chapter order so the text doubles as a chapter guide. Every feature named is a page in
+`data/pages.json`, every number is that page's own description (107 rigged characters, 192 news
+feeds, 660,000 archived articles, $0.10 a fact check), and the three tags are load-bearing
+partnerships the site itself states on `/openai`, `/nvidia`, and `/`.
+
+Postable file: [`product-demo.long.txt`](./product-demo.long.txt), about 4,000 characters. Attach
+the same mp4.
+
 ## Delivery: which file to attach
 
 The archive says an uploaded video measured 0.71x against a still, so this is the rare pack where
