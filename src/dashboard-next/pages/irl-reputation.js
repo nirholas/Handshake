@@ -59,7 +59,7 @@ export function mountReputationPanel(card, { reputation, agentId, pinId } = {}) 
 	const asset    = reputation?.asset || null;
 	const network  = reputation?.network || 'mainnet';
 	const passport = `/agents/${encodeURIComponent(agentId)}`;
-	const irlHref  = pinId ? `/irl?highlight=${encodeURIComponent(pinId)}` : '/irl';
+	const irlHref  = pinId ? `/irl?pin=${encodeURIComponent(pinId)}` : '/irl';
 
 	// Collapsible section, inserted right after the stat chips.
 	const section = document.createElement('div');

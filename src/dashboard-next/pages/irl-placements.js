@@ -29,6 +29,8 @@ import { loadInto } from '../../shared/async-state.js';
 import { loadLeaflet, reverseGeocode } from '../../shared/leaflet-loader.js';
 import { mountReputationPanel } from './irl-reputation.js';
 import { openMyDataPanel } from '../../irl/privacy-center.js';
+import { renderQRToSVG } from '../../erc8004/qr.js';
+import { buildVisitUrl, buildSignUrl } from '../../irl/visit-link.js';
 
 // ── Services / x402 skill pricing ───────────────────────────────────────────
 // Canonical prices live in agent_skill_prices and feed the x402 manifest +
@@ -130,7 +132,7 @@ function placeFor(lat, lng) {
 	return reverseGeocode(lat, lng);
 }
 
-const INTERACTION_ICON = { view: '👁', tap: '👆', message: '💬', pay: '💸' };
+const INTERACTION_ICON = { view: '👁', tap: '👆', message: '💬', pay: '💸', talk: '🗣' };
 
 // Mints we can name in a pay row. $THREE + Solana USDC come from CURRENCIES;
 // Base USDC (an EVM 0x mint) is matched case-insensitively. Anything else renders
@@ -172,6 +174,7 @@ function ixHeadline(ix) {
 		return amt ? `Someone paid ${esc(amt)}` : 'Someone paid your agent';
 	}
 	if (ix.type === 'tap')     return 'Tapped your agent';
+	if (ix.type === 'talk')    return 'Talked with your agent in person';
 	if (ix.type === 'message') return isOwnerReply(ix) ? 'You replied' : 'Someone left a message';
 	return 'Someone viewed your agent';
 }
@@ -273,6 +276,17 @@ const STYLE = `
 .irl-modal-x:hover, .irl-modal-x:focus-visible { color: var(--nxt-ink); }
 .irl-modal-x:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 2px; }
 .irl-modal-body { padding: 6px 18px 18px; overflow-y: auto; }
+/* Visit link modal: QR + link + what a visitor sees */
+.irl-visit-grid { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 18px; align-items: start; padding-top: 12px; }
+.irl-visit-qr { width: 168px; aspect-ratio: 1; border-radius: 12px; background: #fff; padding: 8px; border: 1px solid var(--nxt-stroke); }
+.irl-visit-qr svg { width: 100%; height: 100%; display: block; }
+.irl-visit-url { display: flex; gap: 8px; align-items: center; margin: 0 0 12px; }
+.irl-visit-url input { flex: 1 1 auto; min-width: 0; font: 12.5px/1.2 var(--font-mono, ui-monospace, monospace); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--nxt-stroke); background: var(--nxt-bg-0, transparent); color: var(--nxt-ink); }
+.irl-visit-steps { margin: 0 0 14px; padding-left: 18px; color: var(--nxt-ink-dim); font-size: 13px; line-height: 1.5; }
+.irl-visit-steps li + li { margin-top: 4px; }
+.irl-visit-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.irl-visit-note { margin: 12px 0 0; font-size: 12px; color: var(--nxt-ink-faint); line-height: 1.5; }
+@media (max-width: 520px) { .irl-visit-grid { grid-template-columns: 1fr; justify-items: center; } }
 .irl-svc-sec { padding-top: 14px; }
 .irl-svc-sec-h { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--nxt-ink-faint); margin-bottom: 10px; }
 .irl-svc-count { color: var(--nxt-ink-dim); }
@@ -560,7 +574,9 @@ function cardHtml(pin, ixList) {
 			<div class="irl-actions">
 				<button class="irl-action" data-outfit="${esc(pin.id)}">Change outfit</button>
 				<button class="irl-action" data-loc-toggle>Move on map</button>
-				<a class="irl-action" href="/irl?highlight=${esc(pin.id)}" target="_blank" rel="noopener">View in IRL ↗</a>
+				<button class="irl-action" data-visit="${esc(pin.id)}" type="button">Visit link</button>
+				<a class="irl-action" href="/irl?pin=${esc(pin.id)}" target="_blank" rel="noopener">View in IRL ↗</a>
+				<a class="irl-action" href="/irl/sign?pin=${esc(pin.id)}" target="_blank" rel="noopener">Print a sign ↗</a>
 				<button class="irl-action remove" data-remove="${esc(pin.id)}">Remove</button>
 			</div>
 		</div>
@@ -840,6 +856,7 @@ const IX_TOAST = {
 	pay: '💸 Someone just paid your agent',
 	message: '💬 New message from a visitor',
 	tap: '👆 Someone tapped your agent',
+	talk: '🗣 Someone is talking with your agent',
 	view: '👁 Someone is viewing your agent',
 };
 function flashInteraction(ix) {
@@ -850,7 +867,7 @@ function flashInteraction(ix) {
 		card.classList.add('irl-flash');
 		card.addEventListener('animationend', () => card.classList.remove('irl-flash'), { once: true });
 	}
-	if (ix.type === 'pay' || ix.type === 'message') {
+	if (ix.type === 'pay' || ix.type === 'message' || ix.type === 'talk') {
 		const who = ix.avatar_name ? ` · ${ix.avatar_name}` : '';
 		irlToast((IX_TOAST[ix.type] || 'New IRL interaction') + who);
 	}
@@ -1059,6 +1076,13 @@ function wireCardEvents(list, pins) {
 			return;
 		}
 
+		// Visit link: the scannable handoff for a street demo: QR + copy + print sign.
+		if (e.target.closest('[data-visit]')) {
+			const pin = pins.find((p) => p.id === id);
+			if (pin) openVisitLinkModal(pin);
+			return;
+		}
+
 		// Remove
 		const removeBtn = e.target.closest('[data-remove]');
 		if (removeBtn) {
@@ -1124,6 +1148,74 @@ function wireCardEvents(list, pins) {
 			captionEl.click();
 		}
 	});
+}
+
+// ── Visit link modal ───────────────────────────────────────────────────────
+// The scannable handoff for a real-world demo: a passer-by scans the QR, lands on
+// /irl?pin=<id>, and the page names this agent until it appears in range. Neither
+// link carries a coordinate; the agent still shows only through the presence-
+// gated nearby read, so the link is safe to print and post anywhere.
+function openVisitLinkModal(pin) {
+	const name = pin.avatar_name || 'Placed agent';
+	const visitUrl = buildVisitUrl(pin.id, location.origin);
+	const signUrl = buildSignUrl(pin.id, location.origin);
+	const root = makeNode(`<div class="irl-modal-root">
+		<div class="irl-modal-back"></div>
+		<div class="irl-modal" role="dialog" aria-modal="true" aria-label="Visit link for ${esc(name)}">
+			<div class="irl-modal-head">
+				<div class="irl-modal-titles">
+					<div class="irl-modal-title">Visit link</div>
+					<div class="irl-modal-sub">${esc(name)} · scan to meet it at the spot</div>
+				</div>
+				<button class="irl-modal-x" data-close type="button" aria-label="Close">×</button>
+			</div>
+			<div class="irl-modal-body">
+				<div class="irl-visit-grid">
+					<div class="irl-visit-qr" role="img" aria-label="QR code for the visit link" data-qr></div>
+					<div>
+						<div class="irl-visit-url">
+							<input type="text" readonly value="${esc(visitUrl)}" aria-label="Visit link" data-url />
+							<button class="irl-action" data-copy type="button">Copy</button>
+						</div>
+						<ol class="irl-visit-steps">
+							<li>A visitor scans it and allows camera and location.</li>
+							<li>Within 60 m of the spot, <b>${esc(name)}</b> appears in their camera and its card opens.</li>
+							<li>They tap it for the profile, wallet, tip QR and services; iPhone gets "See it in AR".</li>
+						</ol>
+						<div class="irl-visit-actions">
+							<a class="irl-btn primary" href="${esc(signUrl)}" target="_blank" rel="noopener">Print a sign ↗</a>
+							<a class="irl-action" href="${esc(visitUrl)}" target="_blank" rel="noopener">Open on this device ↗</a>
+						</div>
+						<p class="irl-visit-note">No coordinate in the link. Anyone who is not standing there sees only the agent's name and a prompt to walk up.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>`);
+	root.querySelector('[data-qr]').innerHTML = renderQRToSVG(visitUrl, { scale: 4, margin: 1 });
+	document.body.appendChild(root);
+	document.body.style.overflow = 'hidden';
+	const close = () => {
+		root.remove();
+		document.body.style.overflow = '';
+		document.removeEventListener('keydown', onKey, true);
+	};
+	const onKey = (ev) => { if (ev.key === 'Escape') close(); };
+	document.addEventListener('keydown', onKey, true);
+	root.querySelector('[data-close]').addEventListener('click', close);
+	root.querySelector('.irl-modal-back').addEventListener('click', close);
+	const copyBtn = root.querySelector('[data-copy]');
+	copyBtn.addEventListener('click', async () => {
+		try {
+			await navigator.clipboard.writeText(visitUrl);
+			copyBtn.textContent = 'Copied';
+		} catch {
+			root.querySelector('[data-url]').select();
+			copyBtn.textContent = 'Select + copy';
+		}
+		setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1800);
+	});
+	setTimeout(() => copyBtn.focus(), 0);
 }
 
 function makeNode(html) {

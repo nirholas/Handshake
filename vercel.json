@@ -1586,6 +1586,10 @@
 			"dest": "/marketplace-walk.html"
 		},
 		{
+			"src": "/irl/sign/?",
+			"dest": "/irl-sign.html"
+		},
+		{
 			"src": "/irl/s/([^/]+)/?",
 			"dest": "/api/irl/share/[token]?token=$1"
 		},

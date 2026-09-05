@@ -146,6 +146,12 @@ URL: https://three.ws/irl
 
 Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.
 
+### Printable IRL sign
+
+URL: https://three.ws/irl/sign
+
+Print a sign for a placed IRL agent: its name, thumbnail and a QR of the visit link. Scan it at the spot to open IRL, walk up, and meet the 3D AI agent in AR. Carries no coordinate.
+
 ### How location works on IRL
 
 URL: https://three.ws/irl-privacy

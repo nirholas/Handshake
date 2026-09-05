@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<title>Meet this agent in AR: printable IRL sign | three.ws</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="description" content="A printable sign for a placed IRL agent. Scan the QR to open three.ws IRL on your phone, walk up, and meet the 3D AI agent standing at this spot in AR." />
+	<meta name="robots" content="noindex, follow" />
+	<link rel="canonical" href="https://three.ws/irl/sign" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:title" content="Meet this agent in AR | three.ws IRL" />
+	<meta property="og:description" content="Scan to open three.ws IRL, walk up, and meet the 3D AI agent standing here." />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Meet+this+agent+in+AR&amp;d=Scan+to+open+three.ws+IRL%2C+walk+up%2C+and+meet+the+3D+AI+agent+standing+here.&amp;p=%2Firl%2Fsign" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<link rel="stylesheet" href="/tokens.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		:root { color-scheme: light dark; }
+		html, body { margin: 0; background: var(--bg, #0b0e15); color: var(--ink, #eef2f8); font-family: var(--font-body, system-ui, -apple-system, sans-serif); }
+		[hidden] { display: none !important; }
+		.sg-wrap { max-width: 900px; margin: 0 auto; padding: 28px 18px 64px; }
+
+		/* Screen chrome: controls that never print. */
+		.sg-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 20px; }
+		.sg-bar-title { font-weight: 700; font-size: 15px; letter-spacing: -.01em; margin-right: auto; }
+		.sg-bar-sub { font-size: 12.5px; color: var(--ink-muted, #9aa7bb); flex-basis: 100%; }
+		.sg-btn { min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(125,211,252,0.4); background: rgba(125,211,252,0.12); color: #bfe6ff; font: 600 13px/1 inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: background .15s ease, transform .1s ease; }
+		.sg-btn:hover { background: rgba(125,211,252,0.22); }
+		.sg-btn:active { transform: scale(.98); }
+		.sg-btn:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+		.sg-btn.primary { background: #7dd3fc; color: #06131c; border-color: #7dd3fc; }
+		.sg-btn.primary:hover { background: #a5e1ff; }
+		.sg-seg { display: inline-flex; border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; overflow: hidden; }
+		.sg-seg button { min-height: 38px; padding: 0 12px; border: 0; background: transparent; color: inherit; font: 600 12.5px/1 inherit; cursor: pointer; }
+		.sg-seg button[aria-pressed="true"] { background: rgba(255,255,255,0.14); }
+		.sg-seg button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: -2px; }
+
+		/* The sign itself: white, high contrast, and readable from two metres. */
+		.sg-sheet { background: #fff; color: #0b0e15; border-radius: 22px; padding: clamp(24px, 5vw, 48px); box-shadow: 0 24px 70px rgba(0,0,0,0.45); display: grid; gap: clamp(18px, 3vw, 28px); }
+		.sg-kicker { display: inline-flex; align-items: center; gap: 8px; font: 700 12px/1 inherit; letter-spacing: .12em; text-transform: uppercase; color: #0369a1; }
+		.sg-kicker-dot { width: 8px; height: 8px; border-radius: 50%; background: #0ea5e9; }
+		.sg-head { display: flex; align-items: center; gap: 18px; }
+		.sg-thumb { width: clamp(72px, 12vw, 112px); height: clamp(72px, 12vw, 112px); flex: 0 0 auto; border-radius: 24px; background: #e6f4fd; display: grid; place-items: center; font-size: 34px; overflow: hidden; }
+		.sg-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+		.sg-name { margin: 0; font-size: clamp(30px, 6vw, 52px); font-weight: 800; letter-spacing: -.03em; line-height: 1.02; }
+		.sg-tag { margin: 6px 0 0; font-size: clamp(15px, 2.4vw, 19px); color: #334155; }
+		.sg-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(18px, 4vw, 40px); align-items: center; }
+		.sg-qr { width: clamp(200px, 32vw, 320px); aspect-ratio: 1; border-radius: 16px; border: 3px solid #0b0e15; padding: 8px; background: #fff; }
+		.sg-qr svg { width: 100%; height: 100%; display: block; }
+		.sg-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; counter-reset: step; }
+		.sg-steps li { display: flex; gap: 14px; align-items: flex-start; font-size: clamp(16px, 2.6vw, 22px); line-height: 1.3; }
+		.sg-steps li::before { counter-increment: step; content: counter(step); flex: 0 0 34px; height: 34px; border-radius: 50%; background: #0b0e15; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 16px; }
+		.sg-bio { margin: 0; font-size: clamp(14px, 2vw, 17px); color: #475569; line-height: 1.5; }
+		.sg-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 13px; color: #475569; }
+		.sg-url { font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace); font-size: 12.5px; color: #0b0e15; word-break: break-all; }
+		.sg-brand { font-weight: 800; letter-spacing: -.02em; color: #0b0e15; }
+
+		/* Poster orientation flips the layout so the QR dominates a vertical page. */
+		.sg-sheet.is-poster .sg-body { grid-template-columns: 1fr; justify-items: center; text-align: left; }
+		.sg-sheet.is-poster .sg-qr { width: min(70vw, 440px); }
+
+		/* Screen-only states. */
+		.sg-state { padding: 48px 24px; text-align: center; color: var(--ink-muted, #9aa7bb); }
+		.sg-state h1 { margin: 0 0 8px; font-size: 22px; color: var(--ink, #eef2f8); letter-spacing: -.02em; }
+		.sg-state p { margin: 0 0 18px; max-width: 460px; margin-inline: auto; line-height: 1.5; }
+		.sg-skel { height: 420px; border-radius: 22px; background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.12), rgba(255,255,255,0.05)); background-size: 200% 100%; animation: sg-shimmer 1.4s ease-in-out infinite; }
+		@keyframes sg-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) { .sg-skel { animation: none; } }
+
+		@media (max-width: 640px) {
+			.sg-body { grid-template-columns: 1fr; justify-items: center; }
+			.sg-qr { width: min(72vw, 320px); }
+		}
+
+		@page { margin: 12mm; }
+		@media print {
+			html, body { background: #fff !important; color: #0b0e15 !important; }
+			.sg-wrap { max-width: none; padding: 0; }
+			.sg-bar, .sg-state { display: none !important; }
+			.sg-sheet { box-shadow: none; border-radius: 0; padding: 0; min-height: calc(100vh - 24mm); }
+			.sg-sheet.is-poster .sg-qr { width: 120mm; }
+			.sg-qr { width: 90mm; }
+			a { color: inherit; text-decoration: none; }
+		}
+	</style>
+</head>
+<body>
+	<main class="sg-wrap">
+		<div class="sg-bar" id="sg-bar" hidden>
+			<span class="sg-bar-title">Printable IRL sign</span>
+			<div class="sg-seg" role="group" aria-label="Sign layout">
+				<button type="button" data-layout="landscape" aria-pressed="true">Sign</button>
+				<button type="button" data-layout="poster" aria-pressed="false">Poster</button>
+			</div>
+			<a class="sg-btn" id="sg-open" href="/irl" target="_blank" rel="noopener">Open the visit link ↗</a>
+			<button type="button" class="sg-btn" id="sg-copy">Copy visit link</button>
+			<button type="button" class="sg-btn primary" id="sg-print">Print</button>
+			<span class="sg-bar-sub">Tape this where the agent stands. The link never carries a coordinate: the agent only appears to someone standing within 60 m of the spot.</span>
+		</div>
+
+		<div id="sg-loading" class="sg-skel" aria-hidden="true"></div>
+
+		<section id="sg-state" class="sg-state" hidden></section>
+
+		<section id="sg-sheet" class="sg-sheet" hidden aria-label="Printable sign">
+			<span class="sg-kicker"><span class="sg-kicker-dot" aria-hidden="true"></span>A 3D AI agent lives here</span>
+			<div class="sg-head">
+				<div class="sg-thumb" id="sg-thumb" aria-hidden="true">✦</div>
+				<div>
+					<h1 class="sg-name" id="sg-name">Agent</h1>
+					<p class="sg-tag">Scan to meet it in AR, on this exact spot.</p>
+				</div>
+			</div>
+			<div class="sg-body">
+				<ol class="sg-steps">
+					<li>Scan the code with your phone camera. No app, no account.</li>
+					<li>Allow camera and location, then look around. It appears within a few steps of here.</li>
+					<li>Tap it: profile, wallet, and services. iPhone: "See it in AR" stands it on the floor.</li>
+				</ol>
+				<div class="sg-qr" id="sg-qr" role="img" aria-label="QR code that opens this agent's visit link"></div>
+			</div>
+			<p class="sg-bio" id="sg-bio" hidden></p>
+			<div class="sg-foot">
+				<span class="sg-url" id="sg-url"></span>
+				<span class="sg-brand">three.ws / irl</span>
+			</div>
+		</section>
+	</main>
+	<script type="module" src="/src/irl-sign.js"></script>
+</body>
+</html>

@@ -75,6 +75,8 @@ import { deriveVerticalFovDeg, DEFAULT_DIAG_FOV_DEG } from './irl/camera-fov.js'
 import { pinBandAction } from './irl/proximity-band.js';
 import { gpsAccuracyBucket, easeGpsTransition, GPS_TRANSITION_MS } from './irl/gps-lifecycle.js';
 import { pickLabelHit } from './irl/tap-pick.js';
+import { initPinTalk } from './irl/pin-talk.js';
+import { arLaneFor, arButtonCopy, arLaunchUrl, quickLookBannerFor, pinDisplayName } from './irl/pin-ar.js';
 import {
 	shouldCueArrival,
 	relativeBearing,
@@ -89,6 +91,8 @@ import { GlassesBridge } from './irl/glasses/bridge.js';
 import { openGlassesConnect } from './irl/glasses/connect-ui.js';
 import { loadLeaflet } from './shared/leaflet-loader.js';
 import { initDiscovery } from './irl/discovery.js';
+import { parseVisitTarget } from './irl/visit-link.js';
+import { mountVisitBanner } from './irl/visit-banner.js';
 import { initIrlDrops } from './shared/irl-drops.js';
 import { walletChipEl, hasWallet } from './shared/agent-wallet-chip.js';
 import { buildSolanaPayUri } from './shared/solana-pay.js';
@@ -133,7 +137,12 @@ const POP_AMOUNT        = 0.04;  // peak +Y scale during the pop (1.0 → 1.04 �
 // ── URL params ────────────────────────────────────────────────────────────
 const params = new URLSearchParams(location.search);
 const avatarIdParam  = params.get('avatar')    || '';
-const highlightPinId = params.get('highlight') || '';
+// A visitor who scanned a sign at a real spot arrives on /irl?pin=<id> (the older
+// ?highlight= alias means the same). Once that pin loads nearby it flashes and its
+// card opens, once; until then src/irl/visit-banner.js names who they came to meet.
+const visitPinId     = parseVisitTarget(location.search).pinId;
+let _visitFocusDone  = false;
+let visitBanner      = null;
 // Deep-focus a specific agent's pin (from an agent profile's "View in IRL" link):
 // once that agent's pin loads nearby, flash it and open its inspect card. Fires
 // once so it doesn't re-open the sheet on every nearby refresh.
@@ -1517,6 +1526,7 @@ async function placeAgentHere() {
 }
 
 const discovery = initDiscovery({ onPlace: placeAgentHere });
+if (visitPinId) visitBanner = mountVisitBanner({ pinId: visitPinId, onPlace: placeAgentHere });
 
 // ── Designed guidance sheet ───────────────────────────────────────────────
 // iOS Safari has no WebXR, so the whole world-lock rides on motion + GPS
@@ -2263,6 +2273,7 @@ function onGPSError(err) {
 	if (denied) {
 		_gpsAcquiring = false;
 		setPermissionState('location', 'denied');
+		visitBanner?.setState('no-gps');
 		updateNearbyBadge();
 	} else {
 		// Transient failure (indoor timeout, momentary signal loss). watchPosition does
@@ -3130,7 +3141,7 @@ function showXrError(err) {
 	}
 }
 
-async function enterFloorAnchor() {
+async function enterFloorAnchor({ viewPin = null } = {}) {
 	// Block while a prior camera/XR handoff is still settling — a fast double-tap, or
 	// a tap during disableAR → session start, must not start a second session or
 	// re-acquire the camera underneath this one.
@@ -3140,6 +3151,17 @@ async function enterFloorAnchor() {
 	// session — never a half-built one.)
 	if (xrSession) { await xrSession.end(); return; }
 	_arTransitioning = true;
+	// View-only mode ("View in AR" on a discovered pin): the session stands THAT
+	// pin's already-mounted model on a detected surface instead of the viewer's own
+	// avatar rig, and persists nothing. The durable placement stays the owner's pin;
+	// WebXRSession restores the group's saved transform on exit, so the agent walks
+	// back to its GPS spot the moment the session ends.
+	const viewOnly = !!viewPin;
+	const viewName = viewOnly ? pinDisplayName(viewPin) : '';
+	if (viewOnly) {
+		xrViewer.content = viewPin.group;
+		avatarRig.visible = false;
+	}
 	// immersive-ar owns the rear camera and the full screen; release the
 	// getUserMedia passthrough first so the two don't contend for the camera.
 	// Remember whether the user was in camera-AR so we can put them back there on
@@ -3163,19 +3185,34 @@ async function enterFloorAnchor() {
 	try {
 		xrSession = new WebXRSession(xrViewer, {
 			domOverlayRoot: xrOverlay,
-			onHit: (has) => setXrResting(has ? 'Looks good — tap to place, pinch to resize' : SEARCHING_HINT),
+			onHit: (has) => setXrResting(has
+				? (viewOnly ? `Looks good. Tap to stand ${viewName} here, pinch to resize` : 'Looks good. Tap to place, pinch to resize')
+				: SEARCHING_HINT),
 			// Tracking loss / recovery is a transient, higher-priority overlay on the
 			// resting hint — recoverable, self-clearing, never a dead reticle.
 			onTracking: (ok) => { xrHintState.trackingLost = !ok; renderXrHint(); },
 			// Backgrounding (lock, call, app switch) pauses the session; show a
 			// resume hint and restore the resting line when foregrounded again.
 			onVisibility: (visible) => { xrHintState.paused = !visible; renderXrHint(); },
-			onAnchored: (pose, meta) => onFloorAnchored(pose, meta),
+			onAnchored: viewOnly
+				? () => { setXrConfirmed(true); setXrResting(`${viewName} is standing here. Walk around, then Exit to return`); }
+				: (pose, meta) => onFloorAnchored(pose, meta),
 			// Two-finger pinch resizes the agent live; the final value persists onto
 			// the placed pin (or rides into the tap's pin when sized before placing).
-			onScale: (scale, meta) => onXrScaled(scale, meta),
+			// A view-only stand-in is sized for this session only.
+			onScale: viewOnly
+				? (scale) => setXrResting(`Size ${Math.round(scale * 100)}%. Pinch to resize`)
+				: (scale, meta) => onXrScaled(scale, meta),
 			onEnd: () => {
 				xrSession = null;
+				if (viewOnly) {
+					// The session already restored the pin group's pre-AR transform;
+					// hand the rig slot back to the viewer's own avatar and release the
+					// full-model hold the view took out.
+					xrViewer.content = avatarRig;
+					avatarRig.visible = true;
+					pinFullResident(viewPin, false);
+				}
 				// Drop any anchor still waiting on a GPS fix — the user left this
 				// placement, so don't surprise them with a pin saved after they walk
 				// away (parity with the gyro path's arActive gate).
@@ -3205,10 +3242,17 @@ async function enterFloorAnchor() {
 			},
 		});
 		await xrSession.start();
-		setStatus('Floor anchoring on — find the floor, then tap to place your agent');
+		setStatus(viewOnly
+			? `Find the floor, then tap to stand ${viewName} in front of you`
+			: 'Floor anchoring on. Find the floor, then tap to place your agent');
 	} catch (err) {
 		log.error('[irl] WebXR start failed:', err);
 		failedStart = true;
+		if (viewOnly) {
+			xrViewer.content = avatarRig;
+			avatarRig.visible = true;
+			pinFullResident(viewPin, false);
+		}
 		// A session that created its XRSession but threw mid-setup never reached
 		// setAnimationLoop, so its 'end' (→ onEnd) won't fire on its own. Tear it down
 		// explicitly so we don't leak a live immersive session, and reset the renderer
@@ -3477,6 +3521,109 @@ async function enterQuickLookPlacement() {
 	} finally {
 		if (anchorBtn) { anchorBtn.classList.remove('is-active'); anchorBtn.disabled = false; }
 	}
+}
+
+// ── View in AR: any discovered pin, on the device's real AR stack ───────────
+//
+// The placement button above only ever opened the viewer's OWN agent. A visitor
+// who walks up to somebody else's pin can now stand THAT agent on their real
+// floor: iOS bakes the pin's GLB to an animated USDZ and opens ARKit Quick Look;
+// Android with WebXR enters the same hit-test session as placement, view-only,
+// with the pin's mounted model as the content; everything else opens the
+// device-aware /api/ar launch page in a new tab. Lane routing and URL building
+// are pure (src/irl/pin-ar.js); this block owns the side effects.
+
+// Keep a pin's full skinned model resident regardless of distance/budget rank
+// (enforceLOD reads the flag). Used while a conversation is open (lips need the
+// mesh) and for the duration of a view-only WebXR session.
+function pinFullResident(pin, on) {
+	if (!pin) return;
+	pin._pinnedFull = !!on;
+	if (on && pin.group) applyBand(pin, 'full');
+}
+
+// Resolve (and cache on the pin) a USDZ blob URL for its GLB, idle clip baked in.
+async function resolvePinQuickLookUrl(pin) {
+	if (pin._usdzUrl && pin._usdzUrlFor === pin.avatar_url) return pin._usdzUrl;
+	const glbUrl = new URL(pin.avatar_url, location.origin).toString();
+	const res = await fetch(glbUrl);
+	if (!res.ok) throw new Error(`GLB fetch failed: ${res.status}`);
+	const usdzBlob = await bakeQuickLookUsdz(await res.blob());
+	if (pin._usdzUrl && pin._usdzUrl.startsWith('blob:')) URL.revokeObjectURL(pin._usdzUrl);
+	pin._usdzUrl = URL.createObjectURL(usdzBlob);
+	pin._usdzUrlFor = pin.avatar_url;
+	return pin._usdzUrl;
+}
+
+async function enterQuickLookForPin(pin, btn) {
+	const name = pinDisplayName(pin);
+	if (btn) { btn.disabled = true; btn.classList.add('is-active'); }
+	setStatus(`Preparing ${name} for AR…`, { loading: true, sticky: true });
+	try {
+		const usdzUrl = await resolvePinQuickLookUrl(pin);
+		// The banner is the one piece of page UI Apple allows inside the sealed
+		// viewer; its tap is the only in-AR signal we get back, and here it means
+		// "I want to talk to this one": reopen the sheet with the conversation live.
+		openQuickLook(withQuickLookBanner(usdzUrl, quickLookBannerFor(pin)), {
+			onBannerTap: () => { openPinSheet(pin); pinTalk.open(pin); },
+		});
+		setStatus(`Opening AR. Point at the floor to stand ${name} in your space; tap the banner to talk.`, { sticky: true });
+	} catch (err) {
+		log.error('[irl] pin Quick Look prep failed:', err);
+		setStatus(`Couldn't prepare ${name} for AR. It is still right here in your camera view.`, { error: true, sticky: true });
+	} finally {
+		if (btn) { btn.disabled = false; btn.classList.remove('is-active'); }
+	}
+}
+
+// Wait for the pin's full skinned model (a far pin may be a dot or an impostor
+// when tapped). Bounded: a slow CDN must not hang the button forever.
+function waitForPinModel(pin, timeoutMs = 15000) {
+	if (pin.glbLoaded && pin.model) return Promise.resolve(true);
+	return new Promise((resolve) => {
+		const started = performance.now();
+		const poll = () => {
+			if (pin.glbLoaded && pin.model) return resolve(true);
+			if (!pin.group || performance.now() - started > timeoutMs) return resolve(false);
+			setTimeout(poll, 120);
+		};
+		poll();
+	});
+}
+
+async function enterViewInXR(pin, btn) {
+	const name = pinDisplayName(pin);
+	if (btn) { btn.disabled = true; btn.classList.add('is-active'); }
+	pinFullResident(pin, true);
+	setStatus(`Loading ${name}…`, { loading: true, sticky: true });
+	try {
+		const ready = await waitForPinModel(pin);
+		if (!ready) {
+			pinFullResident(pin, false);
+			setStatus(`${name} is still loading. Try View in AR again in a moment.`, { warn: true, sticky: true });
+			return;
+		}
+		closeInspectSheet();
+		_refinePin = null;
+		await enterFloorAnchor({ viewPin: pin });
+	} finally {
+		if (btn) { btn.disabled = false; btn.classList.remove('is-active'); }
+	}
+}
+
+// The sheet's View in AR action, routed per device capability.
+function viewPinInAR(pin, btn) {
+	if (!pin?.avatar_url) return;
+	const lane = arLaneFor(_placementCapability);
+	if (lane === 'quicklook') return enterQuickLookForPin(pin, btn);
+	if (lane === 'webxr') return enterViewInXR(pin, btn);
+	const url = arLaunchUrl(pin, location.origin);
+	if (!url) {
+		setStatus('This agent\'s model can\'t be opened in the AR viewer from here.', { warn: true, sticky: true });
+		return;
+	}
+	postInteraction({ pinId: pin.id, type: 'tap', agentId: pin.agent_id ?? null }).catch(() => {});
+	window.open(url, '_blank', 'noopener');
 }
 
 // One button, capability-routed: iOS opens AR Quick Look; WebXR devices enter the
@@ -3847,6 +3994,8 @@ function disposePin(p) {
 	disposeImpostor(p);
 	if (p.group)   { scene.remove(p.group); disposeObject3D(p.group); }
 	if (p.labelEl) p.labelEl.remove();
+	// A Quick Look USDZ baked for this pin (View in AR) is a blob URL; free it.
+	if (p._usdzUrl && p._usdzUrl.startsWith('blob:')) { URL.revokeObjectURL(p._usdzUrl); p._usdzUrl = null; }
 }
 
 // Drop one nearby pin from the scene now — disposing its GPU resources — instead
@@ -4146,6 +4295,7 @@ function bandDistance(pin) {
 
 async function loadNearbyPins() {
 	if (!gpsState.ready) return;
+	visitBanner?.setState('searching');
 	// The proximity poll is the SOLE pin-discovery transport: the server returns the
 	// agents within a tight radius of our live position (no roster, no map). We ask for
 	// the wider read (NEARBY_READ_RADIUS = the 60 m cap) so an agent on the discovery
@@ -4232,9 +4382,16 @@ async function loadNearbyPins() {
 		// doesn't own (a room placed without a compass that may render rotated here).
 		maybePromptRoomAlign();
 
-		// Flash pin label if ?highlight= matches
-		if (highlightPinId) {
-			flashPinLabel(nearbyPins.find(p => p.id === highlightPinId));
+		// Visit link (?pin= / ?highlight=): the agent the visitor came to meet just
+		// arrived in range. Flash it, open its card, retire the banner. Once only.
+		if (visitPinId && !_visitFocusDone) {
+			const target = nearbyPins.find(p => p.id === visitPinId);
+			if (target) {
+				_visitFocusDone = true;
+				flashPinLabel(target);
+				openPinSheet(target);
+				visitBanner?.setState('found');
+			}
 		}
 
 		// Deep-focus this agent's pin if ?agent= matches one that just loaded — flash
@@ -4876,6 +5033,8 @@ function renderMyPins(pins, listEl) {
 			${p.caption ? `<div class="irl-pin-caption">${_escHtml(p.caption)}</div>` : ''}
 			<div class="irl-pin-meta">${_pinMetaLine(p)}</div>
 		</div>
+		<a class="irl-pin-sign" href="/irl/sign?pin=${_escHtml(p.id)}" target="_blank" rel="noopener"
+		   aria-label="Print a sign for this agent so passers-by can find it">Sign</a>
 		<button class="irl-pin-del" data-del="${_escHtml(p.id)}" type="button" aria-label="Delete this pin">${TRASH_SVG}</button>
 	</div>`).join('');
 }
@@ -5613,6 +5772,9 @@ function _applyCard(card, pin) {
 		}
 	}
 
+	// The conversation speaks with the card's richer name/bio for its persona.
+	pinTalk.setCard(card, pin);
+
 	// Prefer the card's resolved x402 endpoint for the footer Pay button.
 	if (card.x402_endpoint) {
 		const payBtn = document.getElementById('irl-sheet-pay');
@@ -5656,6 +5818,7 @@ async function loadAgentCard(pin) {
 
 function closeInspectSheet() {
 	_cardAbort?.abort();
+	pinTalk.close();
 	document.getElementById('irl-sheet')?.classList.remove('is-open');
 	document.getElementById('irl-sheet-backdrop')?.classList.remove('is-open');
 	_activePin = null;
@@ -5885,6 +6048,29 @@ function openPinSheet(pin) {
 		payBtn.dataset.endpoint = pin.x402_endpoint ?? '';
 	}
 
+	// Talk: a live spoken conversation with THIS agent (src/irl/pin-talk.js). Tapping
+	// a different agent ends the previous conversation (audio included) before the
+	// new sheet renders; re-tapping the same one keeps its transcript.
+	if (_activePin && _activePin.id !== pin.id) pinTalk.close();
+	const talkBtn = document.getElementById('irl-sheet-talk');
+	if (talkBtn) {
+		talkBtn.onclick = () => pinTalk.toggle(pin);
+		talkBtn.setAttribute('aria-expanded', pinTalk.isOpenFor(pin) ? 'true' : 'false');
+		talkBtn.classList.toggle('is-active', pinTalk.isOpenFor(pin));
+	}
+
+	// View in AR: stand this agent on the visitor's real floor through the device's
+	// native AR stack (Quick Look / WebXR / the /api/ar launch page). Any pin with
+	// a model, not just your own.
+	const arBtn = document.getElementById('irl-sheet-ar');
+	if (arBtn) {
+		const copy = arButtonCopy(arLaneFor(_placementCapability));
+		arBtn.hidden = !pin.avatar_url;
+		arBtn.textContent = copy.label;
+		arBtn.setAttribute('aria-label', copy.aria);
+		arBtn.onclick = () => viewPinInAR(pin, arBtn);
+	}
+
 	// Calibrate (A3) — only the owner of this pin can fine-tune its real-world
 	// spot. The server re-checks ownership; this is the discoverable entry point
 	// alongside the long-press gesture.
@@ -6043,6 +6229,25 @@ window.addEventListener('keydown', (e) => {
 	if (e.key === 'Escape' && document.getElementById('irl-sheet')?.classList.contains('is-open')) {
 		closeInspectSheet();
 	}
+});
+
+// Talk panel (src/irl/pin-talk.js): the live conversation inside the pin sheet.
+// The mouth binds to the pin's mounted model; every user turn fans the same
+// ambient 'message' reaction co-located viewers already see for a left note, and
+// the opening line of a conversation lands once in the owner's IRL feed as a
+// 'talk' interaction (never the transcript). While a conversation is open the
+// pin's full model stays resident so the lips have a mesh to move.
+const pinTalk = initPinTalk({
+	getModel: (pin) => (pin?.glbLoaded && pin.model) ? pin.model : null,
+	onTurn: (pin, { first }) => {
+		if (!pin?.id) return;
+		if (first) {
+			postInteraction({ pinId: pin.id, type: 'talk', agentId: pin.agent_id ?? null }).catch(() => {});
+		}
+		irlNet?.interaction({ type: 'message', pinId: pin.id, agentId: pin.agent_id ?? '' });
+		if (!_streamOnline) playEmote(pin, 'message');
+	},
+	onOpenChange: (pin, open) => pinFullResident(pin, open),
 });
 
 // Per-service "Use" CTA → x402 payment; the error-state Retry re-fetches the card.
@@ -6509,12 +6714,18 @@ function enforceLOD() {
 	for (let i = 0; i < _lodList.length; i++) {
 		const pin = _lodList[i];
 		const d = pin._lodDist;
-		let band = bandFor(d, pin._lod);
+		// A pin the viewer is talking to or standing in AR needs its full skinned
+		// model regardless of distance or budget rank: lips and a floor-anchored
+		// stand-in both need the mesh, not an impostor. Released by pinFullResident().
+		let band = pin._pinnedFull ? 'full' : bandFor(d, pin._lod);
 
 		// Concurrency + draw-budget demotion: full → impostor when out of GLB slots
 		// or over the draw ceiling. Nearest-first ordering spends the budget on the
-		// agents the viewer is closest to.
-		if (band === 'full') {
+		// agents the viewer is closest to. A pinned pin takes its slot unconditionally
+		// (it is the one the viewer is engaging with); the pins after it absorb the cut.
+		if (pin._pinnedFull) {
+			fullBudget--; draws += 6;
+		} else if (band === 'full') {
 			const cost = draws + 6;
 			if (fullBudget > 0 && cost <= budget.draw) { fullBudget--; draws = cost; }
 			else band = 'impostor';

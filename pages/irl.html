@@ -1326,10 +1326,12 @@
 		}
 		.irl-sheet-actions {
 			display: flex;
+			flex-wrap: wrap;
 			gap: 10px;
 		}
 		.irl-sheet-btn {
-			flex: 1;
+			flex: 1 1 calc(50% - 5px);
+			min-width: 120px;
 			padding: 12px 16px;
 			border-radius: 12px;
 			border: 1px solid rgba(255,255,255,0.12);
@@ -1344,6 +1346,125 @@
 		.irl-sheet-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.22); }
 		.irl-sheet-btn-primary { background: rgba(52,211,153,0.18); border-color: rgba(52,211,153,0.4); color: #34d399; }
 		.irl-sheet-btn-primary:hover { background: rgba(52,211,153,0.28); }
+		/* Talk leads the actions: the conversation is the point of walking up. */
+		.irl-sheet-btn-talk {
+			background: rgba(139,92,246,0.20);
+			border-color: rgba(139,92,246,0.45);
+			color: var(--accent-violet, #c4b5fd);
+		}
+		.irl-sheet-btn-talk:hover { background: rgba(139,92,246,0.30); border-color: rgba(139,92,246,0.6); }
+		.irl-sheet-btn-talk.is-active { background: rgba(139,92,246,0.36); border-color: rgba(196,181,253,0.7); color: #ede9fe; }
+		.irl-sheet-btn:active { transform: translateY(1px); }
+
+		/* ── Talk panel (src/irl/pin-talk.js) ──────────────────────────────── */
+		.irl-talk {
+			margin-top: 14px;
+			padding: 12px;
+			border-radius: 14px;
+			border: 1px solid rgba(139,92,246,0.28);
+			background: linear-gradient(180deg, rgba(139,92,246,0.10), rgba(139,92,246,0.04));
+			animation: irl-talk-in .24s cubic-bezier(.22,.61,.36,1);
+		}
+		.irl-talk[hidden] { display: none; }
+		@keyframes irl-talk-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+		.irl-talk-log {
+			max-height: 34vh;
+			min-height: 56px;
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			padding: 2px 2px 6px;
+			scrollbar-width: thin;
+		}
+		.irl-talk-empty {
+			margin: 6px 4px;
+			font-size: 13px;
+			color: #a5b4c8;
+			line-height: 1.45;
+		}
+		.irl-talk-msg {
+			max-width: 88%;
+			padding: 9px 12px;
+			border-radius: 14px;
+			font-size: 14px;
+			line-height: 1.45;
+			color: #e8edf6;
+			word-break: break-word;
+			animation: irl-talk-in .2s ease-out;
+		}
+		.irl-talk-msg.is-user {
+			align-self: flex-end;
+			background: rgba(139,92,246,0.28);
+			border: 1px solid rgba(139,92,246,0.4);
+			border-bottom-right-radius: 5px;
+		}
+		.irl-talk-msg.is-agent {
+			align-self: flex-start;
+			background: rgba(255,255,255,0.07);
+			border: 1px solid rgba(255,255,255,0.10);
+			border-bottom-left-radius: 5px;
+		}
+		.irl-talk-who {
+			display: block;
+			font-size: 11px;
+			font-weight: 700;
+			letter-spacing: .04em;
+			text-transform: uppercase;
+			color: #a78bfa;
+			margin-bottom: 2px;
+		}
+		.irl-talk-partial {
+			margin: 0 4px 6px;
+			font-size: 13px;
+			font-style: italic;
+			color: #c4b5fd;
+			min-height: 1em;
+		}
+		.irl-talk-partial[hidden] { display: none; }
+		.irl-talk-row { display: flex; gap: 8px; align-items: center; }
+		.irl-talk-form { display: flex; gap: 8px; flex: 1; min-width: 0; }
+		.irl-talk-hold {
+			position: relative;
+			flex-shrink: 0;
+			width: 52px; height: 52px;
+			border-radius: 50%;
+			border: 1px solid rgba(139,92,246,0.55);
+			background: rgba(139,92,246,0.22);
+			color: #ede9fe;
+			display: grid; place-items: center;
+			cursor: pointer;
+			touch-action: none;
+			-webkit-touch-callout: none;
+			-webkit-user-select: none; user-select: none;
+			transition: background .15s, border-color .15s, transform .12s;
+		}
+		.irl-talk-hold svg { width: 22px; height: 22px; position: relative; z-index: 1; }
+		.irl-talk-hold:hover { background: rgba(139,92,246,0.32); }
+		.irl-talk-hold:active, .irl-talk-hold.is-active { background: rgba(139,92,246,0.55); border-color: #c4b5fd; transform: scale(1.04); }
+		.irl-talk-hold.is-busy { opacity: .55; }
+		.irl-talk-hold[hidden] { display: none; }
+		/* Live mic level: the ring swells with the voice, driven by --irl-mic-level (0..1). */
+		.irl-talk-hold-ring {
+			position: absolute; inset: -4px;
+			border-radius: 50%;
+			border: 2px solid rgba(196,181,253,0.55);
+			opacity: 0;
+			transform: scale(calc(1 + var(--irl-mic-level, 0) * 0.55));
+			transition: opacity .15s;
+		}
+		.irl-talk-hold.is-active .irl-talk-hold-ring { opacity: 1; }
+		.irl-talk[data-state="speaking"] .irl-talk-hold { animation: irl-talk-speaking 1.2s ease-in-out infinite; }
+		@keyframes irl-talk-speaking { 0%,100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); } 50% { box-shadow: 0 0 0 8px rgba(139,92,246,0.18); } }
+		.irl-talk-state { margin-top: 8px; font-size: 12.5px; color: #a78bfa; min-height: 1em; }
+		.irl-talk-state.is-error { color: #f87171; }
+		.irl-talk-state[hidden] { display: none; }
+		@media (prefers-reduced-motion: reduce) {
+			.irl-talk, .irl-talk-msg { animation: none; }
+			.irl-talk[data-state="speaking"] .irl-talk-hold { animation: none; box-shadow: 0 0 0 4px rgba(139,92,246,0.18); }
+			.irl-talk-hold-ring { transition: none; transform: none; }
+		}
 		.irl-sheet-close {
 			width: 32px;
 			height: 32px;
@@ -1554,6 +1675,12 @@
 		.irl-pin-place.is-approx { color: #93c5fd; background: rgba(96,165,250,0.13); border-color: rgba(96,165,250,0.3); }
 		.irl-pin-caption { font-size: 12.5px; color: #9ca3af; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 		.irl-pin-meta { font-size: 11.5px; color: #9ca3af; margin-top: 3px; }
+		/* "Sign" — opens /irl/sign preselected on this pin. A placed agent is
+		   undiscoverable until something in the physical world points at it, so the
+		   printable sign sits right next to the pin it belongs to. */
+		.irl-pin-sign { flex-shrink: 0; padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(126,200,227,0.28); background: rgba(126,200,227,0.10); color: #7ec8e3; font: 600 12px inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap; }
+		.irl-pin-sign:hover { background: rgba(126,200,227,0.20); border-color: rgba(126,200,227,0.5); }
+		.irl-pin-sign:focus-visible { outline: 2px solid #7ec8e3; outline-offset: 2px; }
 		.irl-pin-del { flex-shrink: 0; padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(248,113,113,0.2); background: rgba(248,113,113,0.08); color: #f87171; font: 600 12px inherit; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
 		.irl-pin-del:hover { background: rgba(248,113,113,0.18); }
 		.irl-pin-del:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
@@ -2198,6 +2325,7 @@
 		   on the dark sheets clears non-text contrast comfortably. */
 		.irl-sheet-close:focus-visible,
 		.irl-sheet-btn:focus-visible,
+		.irl-talk-hold:focus-visible,
 		.irl-msg-send:focus-visible,
 		.irl-agent-row:focus-visible,
 		#irl-caption-confirm:focus-visible,
@@ -2594,12 +2722,34 @@
 	<!-- Placement exposure badge (H4) — owner-only: exact spot vs deliberately blurred -->
 	<p id="irl-sheet-placement" class="irl-sheet-placement" hidden></p>
 	<div class="irl-sheet-actions">
+		<button id="irl-sheet-talk" class="irl-sheet-btn irl-sheet-btn-talk" type="button" aria-expanded="false" aria-controls="irl-talk" data-i18n="irl.talk">Talk</button>
+		<button id="irl-sheet-ar" class="irl-sheet-btn" type="button" aria-label="View this agent in AR" data-i18n="irl.view_in_ar">View in AR</button>
 		<button id="irl-sheet-pay" class="irl-sheet-btn irl-sheet-btn-primary" type="button" hidden data-i18n="irl.pay_via_x402">Pay via x402</button>
 		<button id="irl-sheet-calibrate" class="irl-sheet-btn" type="button" hidden data-i18n="irl.calibrate_position">Calibrate position</button>
 		<button id="irl-sheet-align-room" class="irl-sheet-btn" type="button" hidden data-i18n="irl.align_this_room">Align this room</button>
 		<button id="irl-sheet-refine" class="irl-sheet-btn" type="button" hidden data-i18n="irl.refine_on_floor">Refine on floor</button>
 		<button id="irl-sheet-view" class="irl-sheet-btn" type="button" data-i18n="irl.view_profile">View profile</button>
 	</div>
+	<!-- Talk: a live spoken conversation with the agent standing in front of you.
+	     Hold the mic or type; the reply is voiced and the 3D model's mouth follows
+	     the audio. Wired by src/irl/pin-talk.js on top of the same TalkController
+	     that powers talk mode on /avatars/:id. Hidden until the Talk action opens it. -->
+	<section id="irl-talk" class="irl-talk" hidden aria-label="Talk to this agent" data-state="idle">
+		<div id="irl-talk-log" class="irl-talk-log" role="log" aria-live="polite" aria-relevant="additions"></div>
+		<div id="irl-talk-partial" class="irl-talk-partial" aria-hidden="true" hidden></div>
+		<div class="irl-talk-row">
+			<button id="irl-talk-hold" class="irl-talk-hold" type="button" aria-label="Hold to talk" title="Hold to talk">
+				<span class="irl-talk-hold-ring" aria-hidden="true"></span>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+			</button>
+			<form id="irl-talk-form" class="irl-talk-form" autocomplete="off">
+				<input id="irl-talk-input" class="irl-msg-input" type="text" maxlength="500" enterkeyhint="send"
+					placeholder="Say something…" aria-label="Say something to this agent" autocomplete="off" />
+				<button id="irl-talk-send" class="irl-msg-send" type="submit" data-i18n="irl.send_2">Send</button>
+			</form>
+		</div>
+		<div id="irl-talk-state" class="irl-talk-state" role="status" hidden></div>
+	</section>
 	<!-- Leave a message — POSTs an interaction the owner sees in their dashboard feed -->
 	<form id="irl-sheet-msg" class="irl-sheet-msg">
 		<input id="irl-msg-input" class="irl-msg-input" type="text" maxlength="280"

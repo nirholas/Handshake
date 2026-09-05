@@ -198,10 +198,18 @@
 				{
 					"path": "/irl",
 					"title": "IRL",
-					"description": "Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.",
+					"description": "Pin a 3D AI agent at a real place and meet the ones around you. Walk up, see it through your camera, talk to it out loud, view it in AR on your own floor, and pay it on the spot.",
 					"priority": 0.75,
 					"changefreq": "monthly",
 					"added": "2026-06-13"
+				},
+				{
+					"path": "/irl/sign",
+					"title": "Printable IRL sign",
+					"description": "Print a sign for a placed IRL agent: its name, thumbnail and a QR of the visit link. Scan it at the spot to open IRL, walk up, and meet the 3D AI agent in AR. Carries no coordinate.",
+					"priority": 0.4,
+					"changefreq": "yearly",
+					"added": "2026-09-05"
 				},
 				{
 					"path": "/irl-privacy",

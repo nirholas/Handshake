@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-05T15:06:35.041Z",
+	"generated_at": "2026-09-05T16:12:13.200Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -58,6 +58,16 @@
 		},
 		{
 			"date": "2026-09-05",
+			"type": "launch",
+			"title": "Printable IRL sign",
+			"summary": "Print a sign for a placed IRL agent: its name, thumbnail and a QR of the visit link. Scan it at the spot to open IRL, walk up, and meet the 3D AI agent in AR. Carries no coordinate.",
+			"link": "/irl/sign",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-05",
 			"type": "update",
 			"title": "3D models now open, animate and report on themselves inside VS Code",
 			"summary": "A new three.ws extension makes .glb and .gltf files first-class in the editor. Double-click one and it renders in an editor tab instead of showing binary-file-not-shown: orbit it, play its animation clips on a scrub bar, flip on the wireframe or the skeleton, and save the view as a PNG next to the model. A report panel counts triangles, textures, bones and extensions and says what to fix, using the same inspector as the validation page, running on your machine so the model is never uploaded to be measured. Compressed avatars decode locally, so it all works offline. From the command palette you can also generate a model or an avatar from a sentence on the free lane, rig a static model for animation, browse and import recent community creations, and drop in an agent-3d embed snippet with the current library version and its integrity hash already pinned.",
@@ -92,6 +102,17 @@
 		{
 			"date": "2026-09-05",
 			"type": "update",
+			"title": "Invite people to an IRL agent with a visit link and a printable sign",
+			"summary": "Every agent you have placed in the real world now has a visit link and a sign you can print and tape to the spot. Someone who scans it opens IRL with a banner naming the agent they came to meet, and the moment they are close enough the agent appears in their camera, flashes, and opens its card by itself: bio, reputation, wallet, tip QR, services, and a message box. That card also gained See it in AR. On iPhone it stands the agent on the real floor in Quick Look, animated, and the banner inside AR brings you straight back to the tip panel; other phones open the AR launcher. The link never contains a location, so you can post it anywhere and the agent still only shows to people who are actually there. Find it under Visit link on each placement in your dashboard.",
+			"link": "/irl",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
 			"title": "Machine Atlas: two working machines built in the browser from code, with no 3D model files",
 			"summary": "A new Labs surface at /assembly renders a nine-cylinder radial aero engine and a coupled steam locomotive without loading a single model file. Both are generated when the page opens: bore and stroke set the crank throw, the crank throw sets the crankcase diameter, and every fin, rail section and propeller blade is a profile revolved, extruded or lofted at runtime. Move any dimension slider and the geometry is rebuilt in front of you. The motion is solved rather than animated, so the pistons follow the exact slider-crank and the locomotive's valve gear closes a real four-bar chain every frame, which means a rod length that cannot physically reach simply refuses to move. Pull either machine apart with the explode slider, switch to the structure view to see the mesh, hover any part to name it, hide whole subassemblies, and read the actual generating calls in the Source panel, printed from the values you set. Every configuration has its own link, and any of them can be exported as a GLB or saved as a PNG frame.",
 			"link": "/assembly",
@@ -108,6 +129,28 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "Seven background jobs that were never running now run",
+			"summary": "Seven scheduled jobs were declared in the platform config but had no matching job on the scheduler, so they had never fired: the companion poll, feedback triage, print-order syncing, the home health alert, the home-relay sweep, web-variant generation for the forge, and the oracle refit. Three of them shipped with live features behind them, which meant those features quietly did nothing on a timer. All seven are now created and enabled on their declared schedules, and a drift check confirms every declared job exists and matches.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "The site header now stays put when you scroll",
+			"summary": "The navigation bar was set to stick to the top of the window but never actually did: it scrolled away with the page on every route, at every screen size, so reaching the menu meant scrolling all the way back up. The bar was mounted inside a wrapper exactly its own height, and a sticky element can only travel inside its parent, so it had nowhere to go. The header now stays on screen wherever you scroll, on phones and desktop alike.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

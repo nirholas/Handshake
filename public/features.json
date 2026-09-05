@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-05T15:06:35.031Z",
+	"generated_at": "2026-09-05T16:12:13.190Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -231,6 +231,16 @@
 					"title": "IRL",
 					"description": "Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.",
 					"added": "2026-06-13",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/irl/sign",
+					"title": "Printable IRL sign",
+					"description": "Print a sign for a placed IRL agent: its name, thumbnail and a QR of the visit link. Scan it at the spot to open IRL, walk up, and meet the 3D AI agent in AR. Carries no coordinate.",
+					"added": "2026-09-05",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
