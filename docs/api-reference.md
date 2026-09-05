@@ -46,6 +46,118 @@ Rate-limited responses return HTTP 429 with `{ "error": "...", "code": "RATE_LIM
 
 ---
 
+## Asset Catalog API
+
+One search across every ready-made asset three.ws publishes: the CC0 object/prop library, the ready-made character library, and the motion-clip library. **No authentication, no API key, no payment.** Open CORS, cached at the edge for 5 minutes.
+
+The same join and the same code generation back the free MCP tools (`search_catalog`, `get_catalog_item`, `get_item_source`) and the `@three-ws/assets` CLI, so all three surfaces answer identically.
+
+### Search the catalog
+
+```
+GET /api/catalog?q=wooden+chair&kind=object&limit=12&offset=0
+```
+
+| Parameter | Notes |
+| --- | --- |
+| `q` | Free text over titles, names, tags, and categories |
+| `kind` | `object`, `character`, or `animation` |
+| `category` | Exact category, from a previous response's `facets.categories` |
+| `tag` | Exact tag, from `facets.tags` |
+| `limit` | 1 to 50 (default 12) |
+| `offset` | Page offset; use `next_offset` from the previous response |
+
+Every word of `q` must match somewhere, which keeps a two-word query precise. If nothing matches all of them, the search retries on any of them and sets `relaxed: true`, so a phrase never dead-ends silently.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"items": [
+		{
+			"id": "object:painted_wooden_chair_01",
+			"kind": "object",
+			"name": "painted_wooden_chair_01",
+			"title": "Painted Wooden Chair 01",
+			"categories": ["furniture", "seating"],
+			"tags": ["chair", "wood", "painted"],
+			"license": "CC0",
+			"format": "glb",
+			"url": "https://cdn.three.ws/objects/polyhaven/glb/painted_wooden_chair_01.glb",
+			"thumb": "https://cdn.three.ws/objects/polyhaven/thumbs/painted_wooden_chair_01.png",
+			"bytes": 491572
+		}
+	],
+	"matched": 10,
+	"relaxed": false,
+	"total": 3492,
+	"offset": 0,
+	"next_offset": 12,
+	"facets": {
+		"kinds": { "object": 10 },
+		"categories": [{ "value": "furniture", "count": 8 }],
+		"tags": [{ "value": "chair", "count": 6 }]
+	},
+	"generated_at": { "object": "2026-07-21T13:16:14.305Z" }
+}
+```
+
+`total` is the whole catalog; `matched` is how many the query hit. A character adds `rigged`, `skins`, `baked_animations`, and `source`; a motion clip adds `duration_seconds`, `loop`, and `format: "three-animation-clip-json"`.
+
+**Errors:** `400 validation_error` for an unknown `kind` or a non-integer/out-of-range `limit` or `offset`, validated before any storage read.
+
+---
+
+### Get one item with its source
+
+```
+GET /api/catalog?id=object:painted_wooden_chair_01
+```
+
+Returns the item, the site links that browse/preview/edit it, up to six related items of the same kind, and paste-ready source in every framework that applies.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"item": { "id": "object:painted_wooden_chair_01", "kind": "object" },
+	"links": {
+		"browse": "https://three.ws/objects",
+		"preview": "https://three.ws/app#model=...&kind=object",
+		"ar": "https://three.ws/ar/studio?src=...",
+		"download": "https://cdn.three.ws/objects/..."
+	},
+	"related": [{ "id": "object:bar_chair_round_01", "title": "Bar Chair Round 01" }],
+	"frameworks": ["model-viewer", "three", "agent-3d", "react"],
+	"snippets": {
+		"model-viewer": {
+			"language": "html",
+			"code": "<model-viewer src=\"https://cdn.three.ws/...\" ...></model-viewer>",
+			"notes": ["This is the exact renderer and build the three.ws browse grids use."]
+		}
+	}
+}
+```
+
+`frameworks[0]` is the recommended one for that kind: `model-viewer` for a prop, `agent-3d` for a rigged character, `three` for a motion clip. The `agent-3d` snippet is pinned to the exact published component version with its Subresource Integrity hash, never `latest`.
+
+A bare name (`painted_wooden_chair_01`) also resolves. An unknown id returns `404 not_found` with a `hint` naming the search call to make instead.
+
+---
+
+### From the command line
+
+```bash
+npx @three-ws/assets search wooden chair --kind object
+npx @three-ws/assets add object:painted_wooden_chair_01
+```
+
+`add` downloads the asset into `public/three-ws/` and prints the snippet rewritten to point at the local copy. See [packages/assets-cli/README.md](../packages/assets-cli/README.md).
+
+---
+
 ## Agents API
 
 ### List agents

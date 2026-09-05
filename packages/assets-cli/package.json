@@ -1,0 +1,53 @@
+{
+  "name": "@three-ws/assets",
+  "version": "0.1.0",
+  "description": "Find a ready-made 3D prop, rigged character, or motion clip on three.ws and add it to your project with the code that renders it. Free and public: no account, no API key, no payment.",
+  "keywords": [
+    "three.ws",
+    "3d",
+    "glb",
+    "gltf",
+    "cc0",
+    "assets",
+    "cli",
+    "three.js",
+    "model-viewer",
+    "animation",
+    "avatar",
+    "props"
+  ],
+  "author": "three.ws <support@three.ws> (https://three.ws)",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/assets-cli"
+  },
+  "type": "module",
+  "bin": {
+    "three-ws-assets": "./src/cli.js"
+  },
+  "main": "./src/cli.js",
+  "exports": {
+    ".": "./src/cli.js",
+    "./api": "./src/api.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
