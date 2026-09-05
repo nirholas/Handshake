@@ -651,7 +651,15 @@ export class Narrator {
 	 * a mix, which keeps it sample accurate over an hour-long tour.
 	 */
 	buildTrack(out, totalMs) {
-		if (!this.clips.length) return null;
+		/* A chapter with a voice track and a chapter without one cannot be joined
+		   by a stream copy, so a chapter that somehow spoke no line still gets a
+		   silent track of its own length rather than no audio stream at all. */
+		if (!this.enabled) return null;
+		if (!this.clips.length) {
+			ffmpeg(['-f', 'lavfi', '-t', (totalMs / 1000).toFixed(3),
+				'-i', 'anullsrc=r=44100:cl=mono', '-c:a', 'pcm_s16le', out]);
+			return out;
+		}
 		const work = path.join(this.dir, `.track-${createHash('sha1').update(out).digest('hex').slice(0, 8)}`);
 		mkdirSync(work, { recursive: true });
 		const parts = [];
