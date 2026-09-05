@@ -172,6 +172,8 @@
 		"build:dapp-store-previews": "node solana-mobile/scripts/make-screenshots.mjs",
 		"seeker:screencast": "node solana-mobile/scripts/make-screencast.mjs",
 		"seeker:feature-tour": "node solana-mobile/scripts/make-feature-tour.mjs --authed",
+		"demo:video": "node scripts/make-product-demo.mjs --authed",
+		"demo:video:highlights": "node scripts/make-product-demo.mjs --authed --route=highlights",
 		"render:pumpfun-verified": "node scripts/render-pumpfun-verified.mjs",
 		"build:ibm-shell": "node scripts/build-ibm-shell.mjs",
 		"i18n": "npm run i18n:extract && npm run i18n:translate",

@@ -106,141 +106,185 @@ function lineFor(stop) {
  * with the real page: nothing here fakes a result, and a selector that has gone
  * missing surfaces as a skipped stop rather than a still frame.
  */
+/*
+ * A hand-written act for a flagship surface: the real interaction a presenter
+ * would perform, with the lines they would say while performing it. `beat`
+ * speaks a line and waits it out, so the film is never clicking in silence and
+ * never talking over a page that has not arrived yet.
+ *
+ * Nothing here fakes a result. A selector that has gone missing surfaces as a
+ * skipped stop in the run report rather than as a still frame in the film.
+ */
 const ACTS = {
-	'/': async (p) => {
-		await p.hover('.nav-trigger:has-text("Build")', { hold: 1300 });
-		await p.hover('.nav-trigger:has-text("Discover")', { hold: 1300 });
+	'/': async (p, { beat }) => {
+		await p.hover('.nav-trigger:has-text("Build")', { hold: 1200 });
+		await beat('The whole platform hangs off three menus. Build is where you make things.');
+		await p.hover('.nav-trigger:has-text("Discover")', { hold: 1200 });
+		await beat('Discover is where you find what everybody else has already made.');
 		await p.page.keyboard.press('Escape').catch(() => {});
-		await p.readDown(700, { ms: 1500 });
-		await p.type('#hero-forge-input', 'a brass astrolabe on a walnut stand', { cps: 17, settle: 900 });
-		await p.readThrough({ budgetMs: 5000 });
-	},
-
-	'/what-is': async (p) => { await p.readThrough({ budgetMs: 7000 }); },
-
-	'/discover': async (p) => {
-		await p.type('input[placeholder*="Search by name"]', 'agent', { cps: 13, settle: 1400 });
-		await p.clickIfPresent('button.tws-lc-chip:has-text("All agents")', { after: 1600 });
-		await p.readDown(760, { ms: 1500 });
-	},
-
-	'/marketplace': async (p) => {
-		await p.type('#market-search', 'knight', { cps: 12, settle: 1600 });
-		await p.clickIfPresent('button.market-chip:has-text("Avatars")', { after: 1800 });
-		await p.readDown(820, { ms: 1600 });
-		await p.hover('#market-grid a.title.card-profile-link', { hold: 900 });
-	},
-
-	'/create-agent': async (p) => {
-		await p.readThrough({ budgetMs: 6000 });
-	},
-
-	'/create/prompt': async (p) => {
-		await p.type('#prompt', 'a medieval knight in battered steel plate, weathered red cloak', { cps: 16, settle: 900 });
-		const fired = await p.clickIfPresent('#generate-btn', { after: 2200 });
-		if (!fired) return;
-		/* The real pipeline, at its real pace. The film watches the progress the
-		   page reports for as long as the budget allows and then moves on; the
-		   build keeps running on the server either way. */
-		const deadline = Date.now() + 42_000;
-		while (Date.now() < deadline) {
-			if (await p.page.locator('.step[data-step="done"].active').isVisible().catch(() => false)) break;
-			if (await p.page.locator('#build-error.show').isVisible().catch(() => false)) break;
-			await sleep(700);
-		}
-		if (await p.page.locator('#done-model').isVisible().catch(() => false)) {
-			await sleep(2500);
-			await p.dragAcross('#done-model', { dx: 260, ms: 1300 });
-		}
-	},
-
-	'/forge': async (p) => {
-		await p.type('#prompt', 'a worn leather armchair, studio lit', { cps: 16, settle: 700 });
-		await p.clickIfPresent('#tab-image', { after: 1500 });
-		await p.clickIfPresent('#tab-sketch', { after: 1500 });
-		await p.clickIfPresent('#tab-text', { after: 1200 });
-		await p.readDown(900, { ms: 1600 });
-		await p.clickIfPresent('button.showcase-sort-btn:has-text("Top this week")', { after: 1800 });
-	},
-
-	'/pose': async (p) => {
-		await p.dragAcross('#pose-canvas', { dx: 320, ms: 1400 });
-		await p.clickIfPresent('button.mode-btn:has-text("IK")', { after: 1200 });
-		await p.type('#pose-bone-search', 'arm', { cps: 10, settle: 1200 });
-	},
-
-	'/playground': async (p) => {
-		await p.dragAcross('#viewer', { dx: 340, ms: 1400 });
-		await p.clickIfPresent('button.pill:has-text("Midnight")', { after: 1400 });
-		await p.clickIfPresent('button.pill:has-text("Warm")', { after: 1400 });
-		await p.clickIfPresent('#copy-embed', { after: 1400 });
-	},
-
-	'/brain': async (p) => {
-		await p.type('#brDescribeInput', 'a sharp crypto trader who speaks in plain English', { cps: 16, settle: 900 });
-		await p.clickIfPresent('#brBuildPersonaBtn', { after: 3200 });
-		await p.clickIfPresent('button.br-tab:has-text("Playground")', { after: 2000 });
-	},
-
-	'/chat': async (p) => {
-		const box = 'textarea[placeholder*="Type a message"]';
-		if (!(await p.page.locator(box).count())) return;
-		await p.type(box, 'What can you build for me?', { cps: 15, settle: 500 });
-		await p.page.keyboard.press('Enter');
-		await p.page.waitForTimeout(1200);
-		for (let i = 0; i < 22; i += 1) {
-			const answered = await p.page.evaluate(() => document.body.innerText.length).catch(() => 0);
-			if (answered > 1200) break;
-			await sleep(700);
-		}
-		await sleep(3500);
-	},
-
-	'/agents': async (p) => {
-		await p.type('#ag-search', 'trader', { cps: 12, settle: 1500 });
-		await p.readDown(700, { ms: 1400 });
-	},
-
-	'/pay': async (p) => {
-		await p.clickIfPresent('button.chain-tab:has-text("BNB")', { after: 1500 });
-		await p.clickIfPresent('button.chain-tab:has-text("Solana")', { after: 1500 });
-		await p.type('#prompt', 'validate https://example.com', { cps: 16, settle: 900 });
-		await p.readThrough({ budgetMs: 4000 });
-	},
-
-	'/launch': async (p) => { await p.readThrough({ budgetMs: 7000 }); },
-
-	'/markets': async (p) => {
-		await p.readDown(900, { ms: 1600 });
-		await p.clickIfPresent('button.nw-star', { after: 1200 });
-		await p.readDown(1100, { ms: 1700 });
-	},
-
-	'/holo': async (p) => {
-		await p.clickIfPresent('button.hs-chip:has-text("$THREE")', { after: 1400 });
-		await p.slideTo('#peelRange', 0.72, { ms: 1500 });
-		await p.slideTo('#peelRange', 0.12, { ms: 1200 });
-	},
-
-	'/labs': async (p) => {
-		await p.clickIfPresent('button.labs-filter:has-text("x402")', { after: 1600 });
-		await p.clickIfPresent('button.labs-filter:has-text("All")', { after: 1200 });
-		await p.readDown(820, { ms: 1600 });
-	},
-
-	'/diorama': async (p) => {
-		await p.clickIfPresent('button.dio-chip', { after: 1600 });
-		await p.type('#compose-input', 'a cliffside lighthouse in a storm', { cps: 16, settle: 900 });
-		await p.readDown(600, { ms: 1400 });
-	},
-
-	'/walk': async (p) => {
-		await p.readDown(760, { ms: 1500 });
-		await p.clickIfPresent('#wl-copy', { after: 1400 });
+		await p.type('#hero-forge-input', 'a brass astrolabe on a walnut stand', { cps: 17, settle: 700 });
+		await beat('The front page has a forge in it. Describe an object, and a real textured 3D model comes back in about a minute. No sign up.');
 		await p.readThrough({ budgetMs: 4500 });
 	},
 
-	'/profile': async (p) => { await p.readThrough({ budgetMs: 6000 }); },
+	'/what-is': async (p, { beat }) => {
+		await p.readThrough({ budgetMs: 5000 });
+		await beat('A 3D agent is three things at once: a body you can see, a brain you can talk to, and a wallet it can spend from.');
+	},
+
+	'/discover': async (p, { beat }) => {
+		await p.type('input[placeholder*="Search by name"]', 'agent', { cps: 13, settle: 1200 });
+		await beat('Every agent here is registered on chain, on Solana and on the E R C 8004 registries, so the directory is not ours to fake.');
+		await p.clickIfPresent('button.tws-lc-chip:has-text("All agents")', { after: 1500 });
+		await p.readDown(760, { ms: 1500 });
+	},
+
+	'/marketplace': async (p, { beat }) => {
+		await p.type('#market-search', 'knight', { cps: 12, settle: 1400 });
+		await beat('Those cards are live 3D models, not thumbnails. Every one of them is rendering in the browser right now.');
+		await p.clickIfPresent('button.market-chip:has-text("Avatars")', { after: 1600 });
+		await p.readDown(820, { ms: 1600 });
+		await p.hover('#market-grid a.title.card-profile-link', { hold: 800 });
+	},
+
+	'/create-agent': async (p, { beat }) => {
+		await p.readThrough({ budgetMs: 5000 });
+		await beat('Name, body, skills, personality, voice, wallet. Six steps, and the agent exists at its own address on the web.');
+	},
+
+	'/create/prompt': async (p, { beat }) => {
+		await p.type('#prompt', 'a medieval knight in battered steel plate, weathered red cloak', { cps: 16, settle: 700 });
+		const fired = await p.clickIfPresent('#generate-btn', { after: 2000 });
+		if (!fired) {
+			await beat('One sentence in, a rigged humanoid out. The pipeline generates the mesh, textures it, and fits a skeleton to it.');
+			return;
+		}
+		await beat('That is the real pipeline running: a mesh generated from the words, textured, then rigged with a humanoid skeleton so it can be animated.');
+		const deadline = Date.now() + 60_000;
+		let spoke = false;
+		while (Date.now() < deadline) {
+			if (await p.page.locator('.step[data-step="done"].active').isVisible().catch(() => false)) break;
+			if (await p.page.locator('#build-error.show').isVisible().catch(() => false)) break;
+			if (!spoke && Date.now() > deadline - 42_000) {
+				spoke = true;
+				await beat('It takes about a minute. The progress you are watching is the job reporting its own stages, not a loading animation.');
+			}
+			await sleep(700);
+		}
+		if (await p.page.locator('#done-model').isVisible().catch(() => false)) {
+			await sleep(2000);
+			await p.dragAcross('#done-model', { dx: 260, ms: 1300 });
+			await beat('There it is, turning under the cursor. That model is yours to download, embed, or sell.');
+		}
+	},
+
+	'/forge': async (p, { beat }) => {
+		await p.type('#prompt', 'a worn leather armchair, studio lit', { cps: 16, settle: 600 });
+		await beat('The Forge is the same engine without the skeleton: any object, not just humanoids.');
+		await p.clickIfPresent('#tab-image', { after: 1300 });
+		await beat('It takes photographs too.');
+		await p.clickIfPresent('#tab-sketch', { after: 1300 });
+		await beat('Or a sketch. Several generation engines sit behind these tabs, each with live health status, and the request goes to whichever one is up.');
+		await p.clickIfPresent('#tab-text', { after: 1100 });
+		await p.readDown(900, { ms: 1600 });
+		await p.clickIfPresent('button.showcase-sort-btn:has-text("Top this week")', { after: 1600 });
+	},
+
+	'/pose': async (p, { beat }) => {
+		await p.dragAcross('#pose-canvas', { dx: 320, ms: 1400 });
+		await beat('Any avatar on the platform can be posed here, bone by bone.');
+		await p.clickIfPresent('button.mode-btn:has-text("IK")', { after: 1100 });
+		await beat('Forward kinematics for single joints, inverse kinematics when you want to drag a hand and let the arm follow.');
+		await p.type('#pose-bone-search', 'arm', { cps: 10, settle: 1000 });
+	},
+
+	'/playground': async (p, { beat }) => {
+		await p.dragAcross('#viewer', { dx: 340, ms: 1400 });
+		await beat('This is the embed, running exactly as it would on your own site.');
+		await p.clickIfPresent('button.pill:has-text("Midnight")', { after: 1200 });
+		await p.clickIfPresent('button.pill:has-text("Warm")', { after: 1200 });
+		await beat('Lighting, background, shadow, auto rotate: every option here is an attribute on the tag.');
+		await p.clickIfPresent('#copy-embed', { after: 1200 });
+		await beat('And that is the snippet. Two lines of HTML, and the avatar is on your page.');
+	},
+
+	'/brain': async (p, { beat }) => {
+		await p.type('#brDescribeInput', 'a sharp crypto trader who speaks in plain English', { cps: 16, settle: 700 });
+		await beat('Describe the personality you want and the platform writes the system prompt for it.');
+		await p.clickIfPresent('#brBuildPersonaBtn', { after: 3000 });
+		await p.clickIfPresent('button.br-tab:has-text("Playground")', { after: 1800 });
+		await beat('The playground sends one prompt to several models at once, side by side, with latency and token counts, so you can pick the brain on evidence.');
+	},
+
+	'/chat': async (p, { beat }) => {
+		const box = 'textarea[placeholder*="Type a message"]';
+		if (!(await p.page.locator(box).count())) return;
+		await p.type(box, 'What can you build for me?', { cps: 15, settle: 400 });
+		await p.page.keyboard.press('Enter');
+		await beat('That is a real model answering, with tools and skills attached to it, and a wallet it can pay with.');
+		await sleep(2500);
+		await p.readDown(400, { ms: 900 });
+	},
+
+	'/agents': async (p, { beat }) => {
+		await p.type('#ag-search', 'trader', { cps: 12, settle: 1300 });
+		await beat('Every agent anyone has built on three dot w s, searchable, each with its own page.');
+		await p.readDown(700, { ms: 1400 });
+	},
+
+	'/pay': async (p, { beat }) => {
+		await beat('This is machine to machine payment. An A P I answers a request with a price instead of a refusal, and the agent pays it.');
+		await p.clickIfPresent('button.chain-tab:has-text("BNB")', { after: 1300 });
+		await p.clickIfPresent('button.chain-tab:has-text("Solana")', { after: 1300 });
+		await p.type('#prompt', 'validate https://example.com', { cps: 16, settle: 700 });
+		await beat('Solana first, in U S D C, settling in under a second and costing a fraction of a cent.');
+		await p.readThrough({ budgetMs: 3500 });
+	},
+
+	'/launch': async (p, { beat }) => {
+		await p.readThrough({ budgetMs: 5000 });
+		await beat('An agent can have its own coin, minted on pump dot fun from inside the platform, with the agent as the thing it is attached to.');
+	},
+
+	'/markets': async (p, { beat }) => {
+		await p.readDown(900, { ms: 1600 });
+		await beat('Live prices, news, screeners and on chain intelligence, so an agent that trades has something to trade on.');
+		await p.clickIfPresent('button.nw-star', { after: 1100 });
+		await p.readDown(1100, { ms: 1700 });
+	},
+
+	'/holo': async (p, { beat }) => {
+		await p.clickIfPresent('button.hs-chip:has-text("$THREE")', { after: 1300 });
+		await p.slideTo('#peelRange', 0.72, { ms: 1500 });
+		await beat('Every pixel of that foil is procedural. No image assets, no video, just shaders running in the page.');
+		await p.slideTo('#peelRange', 0.12, { ms: 1200 });
+	},
+
+	'/labs': async (p, { beat }) => {
+		await p.clickIfPresent('button.labs-filter:has-text("x402")', { after: 1500 });
+		await beat('Labs is the drawer everything experimental lives in, and most of it ends up shipping.');
+		await p.clickIfPresent('button.labs-filter:has-text("All")', { after: 1100 });
+		await p.readDown(820, { ms: 1600 });
+	},
+
+	'/diorama': async (p, { beat }) => {
+		await p.clickIfPresent('button.dio-chip', { after: 1500 });
+		await p.type('#compose-input', 'a cliffside lighthouse in a storm', { cps: 16, settle: 700 });
+		await beat('Same idea as the forge, but for whole scenes: describe a little world and it gets built around you.');
+		await p.readDown(600, { ms: 1400 });
+	},
+
+	'/walk': async (p, { beat }) => {
+		await p.readDown(760, { ms: 1500 });
+		await beat('Your avatar can walk across any website that carries the tag, not just ours. It is a script tag and a model URL.');
+		await p.clickIfPresent('#wl-copy', { after: 1300 });
+		await p.readThrough({ budgetMs: 3500 });
+	},
+
+	'/docs': async (p, { beat }) => {
+		await p.readThrough({ budgetMs: 4500 });
+		await beat('Every surface in this film has an A P I, an S D K, and a page in here explaining it.');
+	},
 };
 
 /**
@@ -331,19 +375,29 @@ try {
 		log(`chapter ${ci + 1}/${chapters.length}: ${chapter.title} (${chapter.stops.length} stops)`);
 
 		/* Open on the chapter's first page so the title card sits over the real
-		   product rather than over a blank tab. */
+		   product rather than over a blank tab. The card carries the words while
+		   they are spoken, so the caption bar stays out of its way. */
 		const first = chapter.stops[0];
 		await page.goto(`${ORIGIN}${first.path}`, { waitUntil: 'domcontentloaded', timeout: 60_000 }).catch(() => {});
 		await page.waitForTimeout(2600);
 		await p.ready();
-		await p.chapter(`Chapter ${ci + 1}`, chapter.title, say(chapter.intro).slice(0, 190));
+		await p.showCursor(false);
 		if (ci === 0) {
-			const until = await narrator.say(p, say(OPENING), { kicker: 'three.ws' });
+			/* The opening already welcomes the viewer, so chapter one does not
+			   also read the guide's own welcome line back to them. */
+			await p.chapter('', 'three.ws', say(OPENING));
+			const until = await narrator.say(p, say(OPENING), { caption: false });
 			await narrator.settle(until);
+			await p.chapter('Chapter 1', chapter.title, '');
+			await sleep(2600);
 		} else {
-			await sleep(3000);
+			const intro = say(chapter.intro);
+			await p.chapter(`Chapter ${ci + 1}`, chapter.title, intro);
+			const introUntil = await narrator.say(p, intro, { caption: false });
+			await narrator.settle(introUntil);
 		}
 		await p.chapter('', '', '');
+		await p.showCursor(true);
 		await sleep(700);
 
 		for (const [si, stop] of chapter.stops.entries()) {
@@ -360,8 +414,16 @@ try {
 				await page.waitForLoadState('load', { timeout: 20_000 }).catch(() => {});
 				await sleep(stop.highlight ? 1800 : 900);
 				await p.ready();
-				const act = ACTS[stop.path] || ((ctxp) => genericAct(ctxp, stop));
-				await act(p, stop);
+				/* A line spoken from inside an act: the presenter keeps talking
+				   while they click, which is what keeps the film from clicking
+				   in silence on the surfaces that take a while to show. */
+				const beat = async (text) => {
+					const line = say(text);
+					const done = await narrator.say(p, line, { kicker: chapter.title });
+					await narrator.settle(done, { tail: 260 });
+				};
+				const act = ACTS[stop.path] || ((pp, c) => genericAct(pp, c.stop));
+				await act(p, { stop, beat, page });
 				await narrator.settle(until);
 				log(`  ${at} ${stop.path}`);
 			} catch (err) {
@@ -374,9 +436,11 @@ try {
 
 		if (ci === chapters.length - 1) {
 			await p.caption('', '');
-			await p.chapter('three.ws', 'Build one yourself', 'three.ws');
-			const until = await narrator.say(p, say(CLOSING), { kicker: '' });
-			await narrator.settle(until, { tail: 1200 });
+			await p.badge('');
+			await p.showCursor(false);
+			await p.chapter('', 'three.ws', say(CLOSING));
+			const until = await narrator.say(p, say(CLOSING), { caption: false });
+			await narrator.settle(until, { tail: 1400 });
 		}
 
 		const spanMs = Date.now() - t0;
