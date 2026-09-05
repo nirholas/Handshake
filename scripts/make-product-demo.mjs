@@ -113,13 +113,29 @@ function describe(stop) {
 	return rest.replace(/^[.?!,:;\s]+/, '').trim();
 }
 
+/** Trim to a clause that can be read aloud and ends like a sentence. */
+function clause(text, max) {
+	let out = text.trim();
+	if (out.length > max) {
+		const cut = out.slice(0, max);
+		const brk = Math.max(cut.lastIndexOf(', '), cut.lastIndexOf('; '), cut.lastIndexOf(': '));
+		out = brk > max * 0.5 ? cut.slice(0, brk) : cut.replace(/\s+\S*$/, '');
+	}
+	/* A description that reads "sign in American Sign Language:" is mid-thought.
+	   Ending the line on that colon leaves the caption hanging and makes the
+	   synthesizer pause for a list that never comes. */
+	out = out.replace(/[\s,;:]+$/, '');
+	return /[.!?]$/.test(out) ? out : `${out}.`;
+}
+
 /** A quick stop gets one sentence; a highlight gets the whole line. */
 function lineFor(stop) {
 	const desc = describe(stop);
-	if (stop.highlight) return `${stop.title}. ${desc}`.slice(0, 320);
-	const first = desc.split(/(?<=[.!?:])\s+/)[0] || desc;
-	const short = first.length > 108 ? `${first.slice(0, 105).replace(/[\s,;:]+\S*$/, '')}.` : first;
-	return `${stop.title}. ${short}`;
+	/* "What is three.ws?" is already a sentence; it does not want a second stop. */
+	const head = /[.!?:]$/.test(stop.title) ? stop.title : `${stop.title}.`;
+	if (stop.highlight) return `${head} ${clause(desc, 300)}`;
+	const first = desc.split(/(?<=[.!?])\s+/)[0] || desc;
+	return `${head} ${clause(first, 130)}`;
 }
 
 /* ── acts ───────────────────────────────────────────────────────────────── */
