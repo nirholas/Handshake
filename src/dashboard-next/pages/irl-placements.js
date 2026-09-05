@@ -576,7 +576,6 @@ function cardHtml(pin, ixList) {
 				<button class="irl-action" data-loc-toggle>Move on map</button>
 				<button class="irl-action" data-visit="${esc(pin.id)}" type="button">Visit link</button>
 				<a class="irl-action" href="/irl?pin=${esc(pin.id)}" target="_blank" rel="noopener">View in IRL ↗</a>
-				<a class="irl-action" href="/irl/sign?pin=${esc(pin.id)}" target="_blank" rel="noopener">Print a sign ↗</a>
 				<button class="irl-action remove" data-remove="${esc(pin.id)}">Remove</button>
 			</div>
 		</div>
