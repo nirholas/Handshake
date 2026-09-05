@@ -1,5 +1,5 @@
 /**
- * Machine Atlas (/assembly) — geometry and kinematics.
+ * Machine Atlas (/assembly): geometry and kinematics.
  *
  * These machines have no model files behind them, so the only thing standing
  * between a slider and a broken frame is the maths. Two classes of failure are

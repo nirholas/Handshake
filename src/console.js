@@ -1,4 +1,4 @@
-// Agent Console (/console) — a handheld with a live 3D agent inside the screen.
+// Agent Console (/console): a handheld with a live 3D agent inside the screen.
 //
 // The screen is a real /walk-embed iframe, so the body walking around in there
 // is the same renderer, retargeting and animation library the rest of the

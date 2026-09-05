@@ -1,4 +1,4 @@
-/* Agent Console (/console) — a real handheld with a live 3D agent in the screen.
+/* Agent Console (/console): a real handheld with a live 3D agent in the screen.
 
    Every page-chrome value comes from public/tokens.css. The device itself is
    physical media, not a page surface: its shell colours, plastics and button
@@ -227,7 +227,7 @@
 	-webkit-tap-highlight-color: transparent;
 }
 
-/* Shell themes. Physical plastic, not page surfaces — so these are literals. */
+/* Shell themes. Physical plastic, not page surfaces, so these are literals. */
 .cn-device[data-shell='graphite'] {
 	--sh-body: linear-gradient(168deg, #34363c 0%, #26282d 44%, #1a1c20 100%);
 	--sh-hi: rgba(255, 255, 255, 0.16);
