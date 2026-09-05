@@ -10,6 +10,8 @@ export const TOOLS = Object.freeze({
 	model: 'forge_free',
 	avatar: 'text_to_avatar',
 	rig: 'rig_mesh',
+	refine: 'refine_model',
+	check: 'check_job',
 });
 
 /**

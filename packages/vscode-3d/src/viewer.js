@@ -2,12 +2,16 @@
 // panel for models that live on a URL.
 //
 // The host owns the file: it reads the bytes, runs the inspector, and streams
-// the report to the webview. The webview owns the picture.
+// the report to the webview. The webview owns the picture, and sends back what
+// only a running scene can produce: a retargeted clip to bake, a turntable, a
+// render for the quality check.
 
 import * as vscode from 'vscode';
 import { reportFor } from './inspect.js';
-import { trackPanel } from './active-panel.js';
+import { notify, trackPanel } from './active-panel.js';
 import { uniqueName } from './naming.js';
+import { writeClipIntoGlb } from './bake-clip.js';
+import { clipSlug } from './animations.js';
 
 export const VIEW_TYPE = 'threews3d.modelViewer';
 
@@ -45,7 +49,6 @@ export class ModelViewerProvider {
 			localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media'), dir],
 		};
 		panel.webview.html = viewerHtml(panel.webview, this.context.extensionUri);
-		trackPanel(panel);
 
 		const src = panel.webview.asWebviewUri(document.uri).toString();
 		const wire = attachViewer(this.context, panel, {
@@ -55,6 +58,7 @@ export class ModelViewerProvider {
 			output: this.output,
 			readBytes: () => vscode.workspace.fs.readFile(document.uri),
 		});
+		trackPanel(panel);
 
 		// Regenerate the model on disk and the open viewer catches up on its own.
 		const watcher = vscode.workspace.createFileSystemWatcher(
@@ -69,11 +73,11 @@ export class ModelViewerProvider {
 }
 
 /** Open a model that lives on an http(s) URL in its own panel. */
-export function openRemoteModel(context, links, output, url, title) {
+export function openRemoteModel(context, links, output, url, title, column = vscode.ViewColumn.Active) {
 	const panel = vscode.window.createWebviewPanel(
 		VIEW_TYPE,
 		title || 'three.ws 3D',
-		vscode.ViewColumn.Active,
+		column,
 		{
 			enableScripts: true,
 			retainContextWhenHidden: true,
@@ -81,7 +85,6 @@ export function openRemoteModel(context, links, output, url, title) {
 		},
 	);
 	panel.webview.html = viewerHtml(panel.webview, context.extensionUri);
-	trackPanel(panel);
 	const wire = attachViewer(context, panel, {
 		src: url,
 		remoteUrl: url,
@@ -98,6 +101,31 @@ export function openRemoteModel(context, links, output, url, title) {
 			return new Uint8Array(await res.arrayBuffer());
 		},
 	});
+	trackPanel(panel);
+	panel.onDidDispose(() => wire.dispose());
+	return panel;
+}
+
+/**
+ * Open a model that lives outside the workspace (a committed version pulled
+ * from git) beside the current editor.
+ */
+export function openLocalModel(context, links, output, uri, title, column = vscode.ViewColumn.Beside) {
+	const dir = vscode.Uri.joinPath(uri, '..');
+	const panel = vscode.window.createWebviewPanel(VIEW_TYPE, title, column, {
+		enableScripts: true,
+		retainContextWhenHidden: true,
+		localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media'), dir],
+	});
+	panel.webview.html = viewerHtml(panel.webview, context.extensionUri);
+	const wire = attachViewer(context, panel, {
+		src: panel.webview.asWebviewUri(uri).toString(),
+		resource: uri,
+		links,
+		output,
+		readBytes: () => vscode.workspace.fs.readFile(uri),
+	});
+	trackPanel(panel);
 	panel.onDidDispose(() => wire.dispose());
 	return panel;
 }
@@ -113,9 +141,13 @@ function attachViewer(context, panel, { src, resource, remoteUrl, links, output,
 		if (!disposed) panel.webview.postMessage(message);
 	};
 
+	// What the commands need to know about this viewer.
+	panel.threews = { resource, remoteUrl, readBytes, stats: null, fileSize: 0, post, pending: new Map() };
+
 	const sendReport = async () => {
 		try {
 			const bytes = await readBytes();
+			panel.threews.fileSize = bytes.byteLength;
 			if (bytes.byteLength > MAX_INSPECT_BYTES) return;
 			const { rows, suggestions } = await reportFor(bytes);
 			post({ type: 'report', rows, suggestions });
@@ -128,10 +160,23 @@ function attachViewer(context, panel, { src, resource, remoteUrl, links, output,
 		if (msg?.type === 'ready') {
 			post({ type: 'load', src });
 			sendReport();
+		} else if (msg?.type === 'loaded') {
+			panel.threews.stats = msg.stats || null;
+			notify();
 		} else if (msg?.type === 'error') {
 			output.appendLine(`viewer: ${msg.message}`);
 		} else if (msg?.type === 'snapshot') {
-			await saveSnapshot(msg.dataUrl, resource, output);
+			await saveBeside(msg.dataUrl, { resource, output, ext: '.png', suffix: '', what: 'Snapshot' });
+		} else if (msg?.type === 'turntable') {
+			await saveBeside(msg.dataUrl, { resource, output, ext: '.gif', suffix: '-turntable', what: 'Turntable' });
+		} else if (msg?.type === 'bake-clip') {
+			await bakeClip(msg, { resource, readBytes, links, output });
+		} else if (msg?.type === 'clip-result') {
+			const waiter = panel.threews.pending.get(msg.requestId);
+			if (waiter) {
+				panel.threews.pending.delete(msg.requestId);
+				waiter(msg);
+			}
 		} else if (msg?.type === 'action') {
 			await runAction(msg.action, { resource, remoteUrl });
 		}
@@ -151,46 +196,112 @@ function attachViewer(context, panel, { src, resource, remoteUrl, links, output,
 
 async function runAction(action, { resource, remoteUrl }) {
 	const target = resource || (remoteUrl ? vscode.Uri.parse(remoteUrl) : undefined);
-	if (action === 'openInBrowser') {
-		await vscode.commands.executeCommand('threews3d.openInBrowser', target);
-	} else if (action === 'embed') {
-		await vscode.commands.executeCommand('threews3d.insertEmbed', target);
-	} else if (action === 'rig') {
-		await vscode.commands.executeCommand('threews3d.rigModel', target);
+	const commands = {
+		openInBrowser: 'threews3d.openInBrowser',
+		embed: 'threews3d.insertEmbed',
+		rig: 'threews3d.rigModel',
+		animate: 'threews3d.animate',
+		refine: 'threews3d.refineModel',
+		quality: 'threews3d.checkQuality',
+		optimize: 'threews3d.optimizeModel',
+		compare: 'threews3d.compareWithHead',
+	};
+	if (commands[action]) await vscode.commands.executeCommand(commands[action], target);
+}
+
+/**
+ * Ask the webview for something only the running scene can produce and wait
+ * for its answer (a `clip-result` message carrying the same requestId).
+ *
+ * @param {vscode.WebviewPanel} panel
+ * @param {object} message
+ * @param {number} [timeoutMs]
+ * @returns {Promise<any>}
+ */
+export function request(panel, message, timeoutMs = 30_000) {
+	const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+	return new Promise((resolve) => {
+		panel.threews.pending.set(requestId, resolve);
+		panel.threews.post({ ...message, requestId });
+		setTimeout(() => {
+			if (panel.threews.pending.delete(requestId)) {
+				resolve({ ok: false, coverage: 0, matched: 0, total: 0, message: 'the viewer did not answer' });
+			}
+		}, timeoutMs);
+	});
+}
+
+/**
+ * Send a clip to the webview and wait for it to say whether the rig took it.
+ * @param {vscode.WebviewPanel} panel
+ * @param {{ clip: object, label: string, loop: boolean }} payload
+ * @returns {Promise<{ ok: boolean, coverage: number, matched: number, total: number, message?: string }>}
+ */
+export function playClipIn(panel, payload) {
+	return request(panel, { type: 'play-clip', ...payload });
+}
+
+/** Write the retargeted clip into a copy of the model, next to it. */
+async function bakeClip(msg, { resource, readBytes, links, output }) {
+	const label = String(msg.label || msg.clip?.name || 'clip');
+	try {
+		const bytes = await readBytes();
+		const result = await writeClipIntoGlb(bytes, msg.clip, { name: label });
+		const folder = resource ? vscode.Uri.joinPath(resource, '..') : await defaultFolder();
+		const stem = `${resource ? path(resource).replace(/\.(glb|gltf)$/i, '') : 'model'}-${clipSlug(label)}`;
+		const target = await freeName(folder, stem, '.glb');
+		await vscode.workspace.fs.writeFile(target, result.bytes);
+		if (resource) {
+			const meta = links.meta(resource);
+			if (meta) await links.set(target, meta.url, { prompt: meta.prompt });
+		}
+		output.appendLine(`baked "${label}" into ${target.fsPath} (${result.channels} channels${result.dropped.length ? `, ${result.dropped.length} tracks had no node` : ''})`);
+		const open = await vscode.window.showInformationMessage(
+			`Saved ${path(target)} with the "${label}" clip baked in.`,
+			'Open',
+		);
+		if (open === 'Open') await vscode.commands.executeCommand('vscode.openWith', target, VIEW_TYPE);
+	} catch (err) {
+		output.appendLine(`bake failed: ${err?.message || err}`);
+		vscode.window.showErrorMessage(`three.ws 3D: baking the clip failed. ${err?.message || err}`);
 	}
 }
 
-/** Write the webview's PNG next to the model (or into the workspace root). */
-async function saveSnapshot(dataUrl, resource, output) {
-	const match = /^data:image\/png;base64,(.+)$/.exec(String(dataUrl || ''));
+/** Write a data: URL image next to the model (or into the workspace root). */
+async function saveBeside(dataUrl, { resource, output, ext, suffix, what }) {
+	const match = /^data:image\/(png|gif);base64,(.+)$/.exec(String(dataUrl || ''));
 	if (!match) {
-		vscode.window.showErrorMessage('three.ws 3D: the snapshot came back empty.');
+		vscode.window.showErrorMessage(`three.ws 3D: the ${what.toLowerCase()} came back empty.`);
 		return;
 	}
-	const bytes = Buffer.from(match[1], 'base64');
-	const folder = resource
-		? vscode.Uri.joinPath(resource, '..')
-		: vscode.workspace.workspaceFolders?.[0]?.uri;
-	if (!folder) {
-		vscode.window.showErrorMessage('three.ws 3D: open a folder to save a snapshot into.');
+	const bytes = Buffer.from(match[2], 'base64');
+	let folder;
+	try {
+		folder = resource ? vscode.Uri.joinPath(resource, '..') : await defaultFolder();
+	} catch (err) {
+		vscode.window.showErrorMessage(`three.ws 3D: ${err.message}`);
 		return;
 	}
-	const stem = resource ? path(resource).replace(/\.(glb|gltf)$/i, '') : 'model';
+	const stem = `${resource ? path(resource).replace(/\.(glb|gltf)$/i, '') : 'model'}${suffix}`;
+	const target = await freeName(folder, stem, ext);
+	await vscode.workspace.fs.writeFile(target, bytes);
+	output.appendLine(`${what.toLowerCase()} written to ${target.fsPath}`);
+	const open = await vscode.window.showInformationMessage(`${what} saved as ${path(target)}`, 'Open');
+	if (open === 'Open') await vscode.commands.executeCommand('vscode.open', target);
+}
+
+async function defaultFolder() {
+	const folder = vscode.workspace.workspaceFolders?.[0]?.uri;
+	if (!folder) throw new Error('open a folder to save into.');
+	return folder;
+}
+
+async function freeName(folder, stem, ext) {
 	const taken = await vscode.workspace.fs.readDirectory(folder).then(
 		(entries) => new Set(entries.map(([name]) => name.toLowerCase())),
 		() => new Set(),
 	);
-	const target = vscode.Uri.joinPath(
-		folder,
-		uniqueName(stem, '.png', (name) => taken.has(name.toLowerCase())),
-	);
-	await vscode.workspace.fs.writeFile(target, bytes);
-	output.appendLine(`snapshot written to ${target.fsPath}`);
-	const open = await vscode.window.showInformationMessage(
-		`Snapshot saved as ${path(target)}`,
-		'Open',
-	);
-	if (open === 'Open') await vscode.commands.executeCommand('vscode.open', target);
+	return vscode.Uri.joinPath(folder, uniqueName(stem, ext, (name) => taken.has(name.toLowerCase())));
 }
 
 function path(uri) {
@@ -208,6 +319,8 @@ export function viewerHtml(webview, extensionUri) {
 		environment: setting('environment', 'studio'),
 		showGrid: setting('showGrid', true),
 		autoRotate: setting('autoRotate', false),
+		turntableFrames: setting('turntableFrames', 36),
+		turntableSize: setting('turntableSize', 480),
 	};
 	// wasm-unsafe-eval: the meshopt, Draco, and Basis decoders are WebAssembly.
 	// blob: workers: Draco and KTX2 build their worker from a blob at runtime.
@@ -245,6 +358,11 @@ export function viewerHtml(webview, extensionUri) {
 	external buffers needs those files next to it in the workspace.</p>
 </div>
 
+<div id="busy" hidden role="status" aria-live="polite">
+	<div class="spinner" aria-hidden="true"></div>
+	<span id="busy-label"></span>
+</div>
+
 <aside id="report" hidden aria-label="Model report">
 	<h2>Model report</h2>
 	<dl id="report-body"></dl>
@@ -256,6 +374,7 @@ export function viewerHtml(webview, extensionUri) {
 		<button id="play" data-action="play" aria-pressed="true" title="Play or pause the animation">Pause</button>
 		<input id="scrub" type="range" min="0" max="1" step="0.001" value="0" aria-label="Animation time">
 		<select id="clips" hidden aria-label="Animation clip"></select>
+		<button id="bake" data-action="bake" hidden title="Write this library clip into a copy of the model so it plays in any engine">Bake clip</button>
 	</span>
 	<button data-toggle="grid" aria-pressed="${config.showGrid ? 'true' : 'false'}" title="Show the ground grid">Grid</button>
 	<button data-toggle="wireframe" aria-pressed="false" title="Draw the mesh as a wireframe">Wireframe</button>
@@ -263,7 +382,14 @@ export function viewerHtml(webview, extensionUri) {
 	<button data-toggle="rotate" aria-pressed="${config.autoRotate ? 'true' : 'false'}" title="Orbit the camera automatically">Rotate</button>
 	<button data-action="reset" title="Frame the model again">Reset view</button>
 	<button data-toggle="report" aria-pressed="false" title="Triangles, materials, textures, rig, and optimization notes">Report</button>
+	<span class="sep" aria-hidden="true"></span>
+	<button data-action="animate" title="Try any of 2,800 library animations on this rig, or describe a motion in words">Animate</button>
+	<button data-action="refine" title="Describe a change and generate a new version anchored to this model">Refine</button>
+	<button data-action="quality" title="Ask a vision model to score this render for realism and completeness">Check quality</button>
+	<button data-action="optimize" title="Dedup, weld, resample and meshopt-compress a copy for the web">Optimize</button>
+	<span class="sep" aria-hidden="true"></span>
 	<button data-action="snapshot" title="Save the current view as a PNG next to the model">Snapshot</button>
+	<button data-action="turntable" title="Save a looping turntable GIF next to the model">Turntable</button>
 	<button data-action="embed" title="Insert an &lt;agent-3d&gt; embed snippet">Embed</button>
 	<button data-action="rig" title="Add a humanoid skeleton with the three.ws rigger">Rig</button>
 	<button data-action="openInBrowser" title="Open this model in the three.ws viewer">three.ws</button>

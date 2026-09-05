@@ -24,6 +24,7 @@ const extension = require('../dist/extension.cjs');
 const context = {
 	subscriptions: [],
 	extensionUri: vscode.Uri.file('/ext'),
+	globalStorageUri: vscode.Uri.file('/global'),
 	workspaceState: (() => {
 		const store = new Map();
 		return { get: (k, d) => (store.has(k) ? store.get(k) : d), update: (k, v) => (store.set(k, v), Promise.resolve()) };
@@ -70,8 +71,85 @@ test('the viewer webview is nonce-gated and loads only local assets', async () =
 	assert.ok(html.includes("'wasm-unsafe-eval'"), 'the wasm decoders would be blocked');
 	assert.ok(!/src="http(s)?:\/\/(?!fake\.vscode-cdn\.net)/.test(html), 'the webview loads a remote asset');
 	assert.ok(html.includes('id="toolbar"'));
+	for (const action of ['animate', 'refine', 'quality', 'optimize', 'turntable', 'bake', 'snapshot', 'embed', 'rig']) {
+		assert.ok(html.includes(`data-action="${action}"`), `toolbar lacks ${action}`);
+	}
 	assert.ok(panel.webview.options.enableScripts);
 	assert.equal(panel.webview.options.localResourceRoots.length, 2);
+});
+
+test('the webview bundle carries the retargeter and the GIF encoder, and no CDN URL', () => {
+	const bundle = readFileSync(new URL('../media/viewer.js', import.meta.url), 'utf8');
+	assert.ok(bundle.includes('retargetClip'), 'the retargeter is not bundled');
+	assert.ok(bundle.includes('GIF89a'), 'the GIF encoder is not bundled');
+	assert.ok(!/https:\/\/(cdn|unpkg|cdnjs|jsdelivr)\./.test(bundle), 'the webview reaches a CDN');
+});
+
+test('the host bundle does not carry the native sharp module', () => {
+	const bundle = readFileSync(new URL('../dist/extension.cjs', import.meta.url), 'utf8');
+	assert.ok(!bundle.includes('node_modules/sharp/'), 'sharp was bundled into the extension host');
+	assert.ok(bundle.includes('texture resizing is not available inside the editor'));
+});
+
+test('language features register for HTML and the frameworks people embed from', () => {
+	const languages = new Set(state.providers.hovers[0].selector.map((s) => s.language));
+	for (const id of ['html', 'javascriptreact', 'typescriptreact', 'vue', 'svelte', 'astro', 'markdown']) {
+		assert.ok(languages.has(id), `${id} has no hover provider`);
+	}
+	assert.equal(state.providers.codeActions.length, 1);
+	assert.equal(state.providers.completions.length, 1);
+	assert.equal(state.providers.codeLenses.length, 1);
+	assert.equal(state.statusBarItems.length, 1);
+	assert.equal(state.statusBarItems[0].shown, false, 'the status bar shows with no viewer open');
+});
+
+test('opening an HTML file with a broken embed produces diagnostics with quick fixes', async () => {
+	const doc = new vscode.TextDocument(
+		vscode.Uri.file('/workspace/index.html'),
+		'html',
+		'<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>\n<agent-3d modee="floating"></agent-3d>\n',
+	);
+	state.documents.push(doc);
+	state.openDocument.fire(doc);
+	// Diagnostics are debounced and the release lookup may hit the network; wait for either.
+	for (let i = 0; i < 60 && !state.diagnostics.has(doc.uri.toString()); i++) await new Promise((r) => setTimeout(r, 100));
+	const diagnostics = state.diagnostics.get(doc.uri.toString());
+	assert.ok(diagnostics, 'no diagnostics were published');
+	const codes = diagnostics.map((d) => d.code).sort();
+	assert.ok(codes.includes('no-source'), codes.join());
+	assert.ok(codes.includes('no-size'), codes.join());
+	assert.ok(codes.includes('unknown-attribute'), codes.join());
+	assert.ok(codes.includes('unpinned-library'), codes.join());
+	for (const d of diagnostics) assert.equal(d.source, 'three.ws');
+
+	const { provider } = state.providers.codeActions[0];
+	const actions = provider.provideCodeActions(doc, null, { diagnostics });
+	const titles = actions.map((a) => a.title);
+	assert.ok(titles.includes('Rename to mode'), titles.join(' | '));
+	assert.ok(titles.includes('Add an inline size (400×500)'), titles.join(' | '));
+	const rename = actions.find((a) => a.title === 'Rename to mode');
+	assert.equal(rename.edit.edits[0].text, 'mode');
+
+	const hover = state.providers.hovers[0].provider.provideHover(doc, doc.positionAt(doc.getText().indexOf('<agent-3d') + 3));
+	assert.match(hover.contents.value, /live three\.ws agent/);
+
+	const completions = state.providers.completions[0].provider.provideCompletionItems(doc, doc.positionAt(doc.getText().indexOf('modee')));
+	assert.ok(completions.some((c) => c.label === 'src'));
+	assert.ok(completions.some((c) => c.label === 'body'));
+
+	const lenses = state.providers.codeLenses[0].provider.provideCodeLenses(doc);
+	assert.ok(lenses.some((l) => l.command.title.includes('Pin the library version')));
+	assert.ok(lenses.some((l) => l.command.title === 'Embedding guide'));
+
+	state.closeDocument.fire(doc);
+	assert.ok(!state.diagnostics.has(doc.uri.toString()));
+});
+
+test('a document with no embed gets no diagnostics and is never scanned', async () => {
+	const doc = new vscode.TextDocument(vscode.Uri.file('/workspace/plain.html'), 'html', '<div>hello</div>');
+	state.openDocument.fire(doc);
+	await new Promise((r) => setTimeout(r, 400));
+	assert.ok(!state.diagnostics.has(doc.uri.toString()));
 });
 
 test('the viewer hands the webview the model as soon as it is ready', async () => {

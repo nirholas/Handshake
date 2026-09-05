@@ -94,10 +94,10 @@ export function clipSlug(label) {
  *
  * @param {string} origin
  * @param {string} prompt
- * @param {{ signal?: AbortSignal, durationSeconds?: number, onStatus?: (message: string) => void }} [opts]
+ * @param {{ signal?: AbortSignal, durationSeconds?: number, onStatus?: (message: string) => void, pollMs?: number }} [opts]
  * @returns {Promise<{ clipUrl: string, clip: object }>}
  */
-export async function generateMotion(origin, prompt, { signal, durationSeconds = 4, onStatus } = {}) {
+export async function generateMotion(origin, prompt, { signal, durationSeconds = 4, onStatus, pollMs = MOTION_POLL_MS } = {}) {
 	const base = normalizeOrigin(origin);
 	const start = await fetch(new URL('/api/forge-motion', base).href, {
 		method: 'POST',
@@ -119,7 +119,7 @@ export async function generateMotion(origin, prompt, { signal, durationSeconds =
 	const poll = new URL('/api/forge-motion', base);
 	poll.searchParams.set('job', started.job_id);
 	while (Date.now() < deadline) {
-		await sleep(MOTION_POLL_MS, signal);
+		await sleep(pollMs, signal);
 		const status = await getJson(poll.href, { signal, what: 'the motion job' });
 		if (status?.status === 'failed') {
 			throw new Error(status.error || 'the motion model could not animate that prompt');

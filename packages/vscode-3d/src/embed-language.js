@@ -152,26 +152,31 @@ export function attributeAt(embed, offset) {
 	return embed.attrs.find((a) => offset >= a.start && offset <= a.end) || null;
 }
 
-/** Where in an embed the cursor sits: 'name' (typing an attribute), 'value' of an attribute, or null. */
+/**
+ * Where in an embed the cursor sits: naming an attribute, inside an
+ * attribute's value, or nowhere relevant. Works on a tag the user is still
+ * typing (no closing `>` yet), which is when completion matters most.
+ *
+ * @returns {{ kind: 'name', embed: { attrs: Attr[] } } | { kind: 'value', attr: { name: string }, def: object|null } | null}
+ */
 export function completionContext(text, offset) {
-	for (const embed of findEmbeds(text)) {
-		if (offset <= embed.tagEnd || offset > embed.end) continue;
-		for (const a of embed.attrs) {
-			if (a.value !== null && offset > a.nameEnd && offset <= a.end) {
-				const def = ATTRIBUTES.find((d) => d.name === a.name.toLowerCase());
-				return { kind: 'value', attr: a, def: def || null, embed };
-			}
-		}
-		const before = text.slice(embed.attrsStart, offset);
-		if (/[\s]$/.test(before) || /[\s][^\s="']*$/.test(before)) return { kind: 'name', embed };
-	}
-	// An unterminated tag the user is still typing.
 	const open = text.lastIndexOf('<agent-3d', offset);
-	if (open !== -1 && text.indexOf('>', open) === -1 || (open !== -1 && text.indexOf('>', open) >= offset)) {
-		const before = text.slice(open + '<agent-3d'.length, offset);
-		if (/[\s][^\s="']*$/.test(before) || /[\s]$/.test(before)) {
-			return { kind: 'name', embed: { start: open, tagEnd: open + '<agent-3d'.length, attrsStart: open + '<agent-3d'.length, end: offset, attrs: parseAttrs(before, open + '<agent-3d'.length) } };
-		}
+	if (open === -1) return null;
+	const attrsStart = open + '<agent-3d'.length;
+	if (offset < attrsStart) return null;
+	// A `>` between the tag and the cursor means the cursor is past this tag.
+	const close = text.indexOf('>', attrsStart);
+	if (close !== -1 && close < offset) return null;
+	const chunk = text.slice(attrsStart, offset);
+	// Inside an open quote: `mode="fl` or `mode='`.
+	const inValue = /([^\s"'<>\/=]+)\s*=\s*(["'])([^"']*)$/.exec(chunk);
+	if (inValue) {
+		const name = inValue[1].toLowerCase();
+		return { kind: 'value', attr: { name }, def: ATTRIBUTES.find((d) => d.name === name) || null };
+	}
+	// After whitespace (or a partial attribute name after whitespace): naming.
+	if (/\s$/.test(chunk) || /\s[^\s="'<>]*$/.test(chunk)) {
+		return { kind: 'name', embed: { start: open, tagEnd: attrsStart, attrsStart, end: offset, attrs: parseAttrs(chunk, attrsStart) } };
 	}
 	return null;
 }

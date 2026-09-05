@@ -13,6 +13,8 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { GIFEncoder, applyPalette, quantize } from 'gifenc';
+import { retargetClipToObject } from '../../../src/animation-retarget.js';
 
 const vscode = acquireVsCodeApi();
 const stage = document.getElementById('stage');
@@ -29,6 +31,9 @@ const els = {
 	report: document.getElementById('report'),
 	reportBody: document.getElementById('report-body'),
 	stats: document.getElementById('stats'),
+	bake: document.getElementById('bake'),
+	busy: document.getElementById('busy'),
+	busyLabel: document.getElementById('busy-label'),
 };
 
 const config = window.__THREEWS_CONFIG__ || {};
@@ -41,6 +46,9 @@ const state = {
 	wireframe: false,
 	playing: true,
 	radius: 1,
+	// Library clips retargeted onto this rig live beside the file's own clips;
+	// only these can be baked back into the model.
+	libraryClips: new Map(),
 };
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -141,6 +149,8 @@ function clearModel() {
 	state.mixer = null;
 	state.action = null;
 	state.clips = [];
+	state.libraryClips = new Map();
+	els.bake.hidden = true;
 }
 
 function materialsOf(mesh) {
@@ -235,18 +245,27 @@ function applyGrid(show) {
 
 function setupAnimations(clips) {
 	state.clips = clips;
-	els.playback.hidden = clips.length === 0;
-	els.clips.innerHTML = '';
-	if (!clips.length) return;
+	if (!clips.length) {
+		els.playback.hidden = true;
+		els.clips.innerHTML = '';
+		return;
+	}
 	state.mixer = new THREE.AnimationMixer(state.model);
-	clips.forEach((clip, i) => {
+	rebuildClipPicker();
+	playClip(0);
+}
+
+function rebuildClipPicker() {
+	els.clips.innerHTML = '';
+	state.clips.forEach((clip, i) => {
 		const option = document.createElement('option');
 		option.value = String(i);
-		option.textContent = `${clip.name || `clip ${i + 1}`} (${clip.duration.toFixed(2)}s)`;
+		const tag = state.libraryClips.has(clip) ? ' · library' : '';
+		option.textContent = `${clip.name || `clip ${i + 1}`} (${clip.duration.toFixed(2)}s)${tag}`;
 		els.clips.appendChild(option);
 	});
-	els.clips.hidden = clips.length < 2;
-	playClip(0);
+	els.playback.hidden = state.clips.length === 0;
+	els.clips.hidden = state.clips.length < 2;
 }
 
 function playClip(index) {
@@ -254,9 +273,64 @@ function playClip(index) {
 	if (!clip || !state.mixer) return;
 	state.action?.fadeOut(0.2);
 	state.action = state.mixer.clipAction(clip);
+	const library = state.libraryClips.get(clip);
+	if (library && !library.loop) {
+		state.action.setLoop(THREE.LoopOnce, 1);
+		state.action.clampWhenFinished = true;
+	} else {
+		state.action.setLoop(THREE.LoopRepeat, Infinity);
+	}
 	state.action.reset().fadeIn(0.2).play();
 	state.action.paused = !state.playing;
 	els.scrub.max = String(clip.duration);
+	els.clips.value = String(index);
+	els.bake.hidden = !library;
+}
+
+/**
+ * Retarget a library clip (authored on the canonical humanoid skeleton) onto
+ * the loaded model with the platform's retargeter, add it to the picker, and
+ * play it. Answers the host with the coverage so it can explain a refusal.
+ */
+function playLibraryClip({ requestId, clip, label, loop }) {
+	const reply = (result) => vscode.postMessage({ type: 'clip-result', requestId, ...result });
+	if (!state.model) return reply({ ok: false, coverage: 0, matched: 0, total: 0, message: 'no model is loaded' });
+	let parsed;
+	try {
+		parsed = THREE.AnimationClip.parse(clip);
+	} catch (err) {
+		return reply({ ok: false, coverage: 0, matched: 0, total: 0, message: `the clip could not be parsed: ${err?.message || err}` });
+	}
+	let result;
+	try {
+		result = retargetClipToObject(parsed, state.model);
+	} catch (err) {
+		return reply({ ok: false, coverage: 0, matched: 0, total: 0, message: err?.message || String(err) });
+	}
+	if (!result.clip) {
+		return reply({ ok: false, coverage: result.coverage, matched: result.matched, total: result.total });
+	}
+	result.clip.name = label || parsed.name;
+	if (!state.mixer) state.mixer = new THREE.AnimationMixer(state.model);
+	// Replace an earlier take of the same clip instead of piling up copies.
+	const previous = state.clips.findIndex((c) => state.libraryClips.has(c) && c.name === result.clip.name);
+	if (previous !== -1) {
+		state.libraryClips.delete(state.clips[previous]);
+		state.clips.splice(previous, 1);
+	}
+	state.clips.push(result.clip);
+	state.libraryClips.set(result.clip, { loop: Boolean(loop), label: result.clip.name });
+	rebuildClipPicker();
+	if (!state.playing) togglePlay();
+	playClip(state.clips.length - 1);
+	reply({ ok: true, coverage: result.coverage, matched: result.matched, total: result.total });
+}
+
+function bakeCurrentClip() {
+	const clip = state.action?.getClip();
+	const library = clip && state.libraryClips.get(clip);
+	if (!library) return;
+	vscode.postMessage({ type: 'bake-clip', clip: THREE.AnimationClip.toJSON(clip), label: library.label });
 }
 
 function sceneStats(gltf) {
@@ -346,9 +420,11 @@ els.toolbar.addEventListener('click', (event) => {
 		if (toggle === 'report') els.report.hidden = !on;
 		return;
 	}
-	if (action === 'reset') resetView();
-	if (action === 'snapshot') sendSnapshot();
-	if (action === 'play') togglePlay();
+	if (action === 'reset') return resetView();
+	if (action === 'snapshot') return sendSnapshot();
+	if (action === 'turntable') return sendTurntable();
+	if (action === 'play') return togglePlay();
+	if (action === 'bake') return bakeCurrentClip();
 	if (action) vscode.postMessage({ type: 'action', action });
 });
 
@@ -372,11 +448,107 @@ function sendSnapshot() {
 	vscode.postMessage({ type: 'snapshot', dataUrl: renderer.domElement.toDataURL('image/png') });
 }
 
+/** A render sized for a vision model: the current view, at most 768px wide. */
+function sendQualityRender(requestId) {
+	renderer.render(scene, camera);
+	const source = renderer.domElement;
+	const scale = Math.min(1, 768 / Math.max(source.width, source.height));
+	const canvas = document.createElement('canvas');
+	canvas.width = Math.max(1, Math.round(source.width * scale));
+	canvas.height = Math.max(1, Math.round(source.height * scale));
+	canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+	vscode.postMessage({ type: 'clip-result', requestId, ok: true, dataUrl: canvas.toDataURL('image/png') });
+}
+
+function setBusy(label) {
+	els.busy.hidden = !label;
+	els.busyLabel.textContent = label || '';
+}
+
+/**
+ * Render a full orbit around the model into a looping GIF.
+ *
+ * Frames render off-screen into a square target at the configured size so the
+ * result is independent of the panel's aspect ratio, and the animation (if one
+ * is playing) is stepped in lockstep so a walk cycle turns with the model.
+ */
+async function sendTurntable() {
+	if (!state.model) return;
+	const frames = Math.max(8, Math.min(120, Number(config.turntableFrames) || 36));
+	const size = Math.max(128, Math.min(1024, Number(config.turntableSize) || 480));
+	const delay = 60;
+	setBusy(`Rendering turntable… 0/${frames}`);
+
+	const target = new THREE.WebGLRenderTarget(size, size, { colorSpace: THREE.SRGBColorSpace });
+	const pixels = new Uint8Array(size * size * 4);
+	const flipped = new Uint8ClampedArray(size * size * 4);
+	const gif = GIFEncoder();
+	const orbit = new THREE.PerspectiveCamera(camera.fov, 1, camera.near, camera.far);
+	const focus = controls.target.clone();
+	const offset = camera.position.clone().sub(focus);
+	const radius = Math.hypot(offset.x, offset.z);
+	const startAngle = Math.atan2(offset.x, offset.z);
+	const wasPaused = state.action?.paused;
+	const clipDuration = state.action?.getClip().duration || 0;
+	const savedTime = state.action?.time || 0;
+
+	try {
+		for (let i = 0; i < frames; i++) {
+			const angle = startAngle + (i / frames) * Math.PI * 2;
+			orbit.position.set(focus.x + Math.sin(angle) * radius, camera.position.y, focus.z + Math.cos(angle) * radius);
+			orbit.lookAt(focus);
+			if (state.action && state.mixer) {
+				state.action.paused = false;
+				state.action.time = (savedTime + (i / frames) * clipDuration) % (clipDuration || 1);
+				state.mixer.update(0);
+			}
+			renderer.setRenderTarget(target);
+			renderer.render(scene, orbit);
+			renderer.readRenderTargetPixels(target, 0, 0, size, size, pixels);
+			renderer.setRenderTarget(null);
+			// GL reads bottom-up; GIF rows go top-down.
+			for (let y = 0; y < size; y++) {
+				flipped.set(pixels.subarray((size - 1 - y) * size * 4, (size - y) * size * 4), y * size * 4);
+			}
+			const palette = quantize(flipped, 256, { format: 'rgb565' });
+			const index = applyPalette(flipped, palette, 'rgb565');
+			gif.writeFrame(index, size, size, { palette, delay, repeat: 0 });
+			setBusy(`Rendering turntable… ${i + 1}/${frames}`);
+			// Yield so the busy label paints and the panel stays responsive.
+			await new Promise((r) => requestAnimationFrame(r));
+		}
+		gif.finish();
+		const bytes = gif.bytes();
+		let binary = '';
+		for (let i = 0; i < bytes.length; i += 0x8000) {
+			binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+		}
+		vscode.postMessage({ type: 'turntable', dataUrl: `data:image/gif;base64,${btoa(binary)}` });
+	} catch (err) {
+		vscode.postMessage({ type: 'error', message: `turntable failed: ${err?.message || err}` });
+	} finally {
+		target.dispose();
+		if (state.action) {
+			state.action.time = savedTime;
+			state.action.paused = Boolean(wasPaused);
+			state.mixer.update(0);
+		}
+		setBusy('');
+	}
+}
+
 window.addEventListener('message', (event) => {
 	const msg = event.data;
 	if (msg?.type === 'load') load(msg.src);
 	if (msg?.type === 'report') renderReport(msg.rows || [], msg.suggestions || []);
 	if (msg?.type === 'snapshot') sendSnapshot();
+	if (msg?.type === 'turntable') sendTurntable();
+	if (msg?.type === 'play-clip') playLibraryClip(msg);
+	if (msg?.type === 'render') sendQualityRender(msg.requestId);
+	if (msg?.type === 'toggle-report') {
+		const button = els.toolbar.querySelector('[data-toggle="report"]');
+		button?.click();
+	}
 });
 
 const observer = new ResizeObserver(() => resize());

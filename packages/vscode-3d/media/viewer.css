@@ -225,3 +225,37 @@ body {
 #error[hidden] {
 	display: none;
 }
+
+#toolbar .sep {
+	width: 1px;
+	align-self: stretch;
+	margin: 2px 2px;
+	background: var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.35));
+}
+
+#busy {
+	position: absolute;
+	top: var(--pad);
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 12px;
+	background: var(--vscode-editorWidget-background);
+	border: 1px solid var(--vscode-editorWidget-border, transparent);
+	border-radius: var(--radius);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+	font-size: 0.92em;
+	transition: opacity 0.15s ease;
+}
+
+#busy .spinner {
+	width: 14px;
+	height: 14px;
+}
+
+#busy[hidden],
+#bake[hidden] {
+	display: none;
+}

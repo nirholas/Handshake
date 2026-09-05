@@ -49,6 +49,10 @@ const host = {
 	format: 'cjs',
 	target: 'node18',
 	external: ['vscode'],
+	// ndarray-pixels (a texture dependency of @gltf-transform/functions) imports
+	// the native `sharp` binary on Node. Nothing here resizes textures, and a
+	// native module cannot ship in a .vsix, so it is aliased to a stub.
+	alias: { sharp: './src/shims/sharp.js' },
 	sourcemap: !production,
 	minify: production,
 	logLevel: 'info',

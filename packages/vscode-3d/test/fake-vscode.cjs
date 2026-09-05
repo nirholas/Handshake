@@ -77,6 +77,93 @@ class RelativePattern {
 	}
 }
 
+class Position {
+	constructor(line, character) {
+		this.line = line;
+		this.character = character;
+	}
+}
+
+class Range {
+	constructor(start, end) {
+		this.start = start;
+		this.end = end;
+	}
+}
+
+class Diagnostic {
+	constructor(range, message, severity) {
+		this.range = range;
+		this.message = message;
+		this.severity = severity;
+	}
+}
+
+class CodeAction {
+	constructor(title, kind) {
+		this.title = title;
+		this.kind = kind;
+	}
+}
+
+class WorkspaceEdit {
+	constructor() {
+		this.edits = [];
+	}
+	replace(uri, range, text) {
+		this.edits.push({ uri, range, text });
+	}
+}
+
+class Hover {
+	constructor(contents, range) {
+		this.contents = contents;
+		this.range = range;
+	}
+}
+
+class CompletionItem {
+	constructor(label, kind) {
+		this.label = label;
+		this.kind = kind;
+	}
+}
+
+class SnippetString {
+	constructor(value) {
+		this.value = value;
+	}
+}
+
+class CodeLens {
+	constructor(range, command) {
+		this.range = range;
+		this.command = command;
+	}
+}
+
+/** A text document the language features can run over. */
+class TextDocument {
+	constructor(uri, languageId, text) {
+		this.uri = uri;
+		this.languageId = languageId;
+		this.text = text;
+	}
+	getText() {
+		return this.text;
+	}
+	offsetAt(position) {
+		const lines = this.text.split('\n');
+		let offset = 0;
+		for (let i = 0; i < position.line; i++) offset += lines[i].length + 1;
+		return offset + position.character;
+	}
+	positionAt(offset) {
+		const before = this.text.slice(0, offset).split('\n');
+		return new Position(before.length - 1, before[before.length - 1].length);
+	}
+}
+
 function watcher() {
 	return {
 		onDidCreate: () => ({ dispose() {} }),
@@ -95,6 +182,14 @@ const state = {
 	config: {},
 	files: [],
 	fileBytes: new Map(),
+	statusBarItems: [],
+	diagnostics: new Map(),
+	providers: { codeActions: [], hovers: [], completions: [], codeLenses: [] },
+	documents: [],
+	openDocument: new EventEmitter(),
+	changeDocument: new EventEmitter(),
+	closeDocument: new EventEmitter(),
+	changeConfiguration: new EventEmitter(),
 };
 
 const vscode = {
@@ -104,12 +199,52 @@ const vscode = {
 	ThemeIcon,
 	MarkdownString,
 	RelativePattern,
+	Position,
+	Range,
+	Diagnostic,
+	CodeAction,
+	WorkspaceEdit,
+	Hover,
+	CompletionItem,
+	SnippetString,
+	CodeLens,
+	TextDocument,
+	Disposable: {
+		from: (...items) => ({ dispose: () => items.forEach((d) => d?.dispose?.()) }),
+	},
 	TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
-	ViewColumn: { Active: -1 },
-	ProgressLocation: { Notification: 15 },
+	ViewColumn: { Active: -1, Beside: -2 },
+	ProgressLocation: { Notification: 15, Window: 10 },
 	ConfigurationTarget: { Global: 1 },
+	StatusBarAlignment: { Left: 1, Right: 2 },
+	DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2, Hint: 3 },
+	CodeActionKind: { QuickFix: 'quickfix' },
+	CompletionItemKind: { Property: 9, EnumMember: 19 },
+	QuickPickItemKind: { Separator: -1, Default: 0 },
+	languages: {
+		createDiagnosticCollection(name) {
+			const collection = {
+				name,
+				set: (uri, items) => state.diagnostics.set(uri.toString(), items),
+				delete: (uri) => state.diagnostics.delete(uri.toString()),
+				dispose() {},
+			};
+			return collection;
+		},
+		registerCodeActionsProvider: (selector, provider) => (state.providers.codeActions.push({ selector, provider }), { dispose() {} }),
+		registerHoverProvider: (selector, provider) => (state.providers.hovers.push({ selector, provider }), { dispose() {} }),
+		registerCompletionItemProvider: (selector, provider) => (state.providers.completions.push({ selector, provider }), { dispose() {} }),
+		registerCodeLensProvider: (selector, provider) => (state.providers.codeLenses.push({ selector, provider }), { dispose() {} }),
+	},
 	window: {
 		activeTextEditor: undefined,
+		createStatusBarItem() {
+			const item = { shown: false, show: () => (item.shown = true), hide: () => (item.shown = false), dispose() {} };
+			state.statusBarItems.push(item);
+			return item;
+		},
+		setStatusBarMessage: () => ({ dispose() {} }),
+		createQuickPick: () => ({ items: [], show() {}, hide() {}, dispose() {}, onDidAccept: () => ({ dispose() {} }), onDidHide: () => ({ dispose() {} }) }),
 		createOutputChannel(name) {
 			const channel = { name, lines: [], appendLine: (l) => channel.lines.push(l), show() {}, dispose() {} };
 			state.outputs.push(channel);
@@ -155,6 +290,14 @@ const vscode = {
 		}),
 		findFiles: () => Promise.resolve(state.files),
 		createFileSystemWatcher: watcher,
+		get textDocuments() {
+			return state.documents;
+		},
+		onDidOpenTextDocument: (fn) => state.openDocument.event(fn),
+		onDidChangeTextDocument: (fn) => state.changeDocument.event(fn),
+		onDidCloseTextDocument: (fn) => state.closeDocument.event(fn),
+		onDidChangeConfiguration: (fn) => state.changeConfiguration.event(fn),
+		openTextDocument: ({ language, content }) => Promise.resolve(new TextDocument(Uri.parse(`untitled://doc-${Date.now()}`), language, content)),
 		asRelativePath: (uri) => String(uri.path || uri).replace('/workspace/', ''),
 		fs: {
 			stat: () => Promise.resolve({ size: 1024 }),
