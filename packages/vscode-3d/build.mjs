@@ -38,6 +38,27 @@ async function copyDecoders() {
 	}
 }
 
+// Repo-shared sources (src/gltf-inspect.js, src/animation-retarget.js, the
+// glb-diff package) sit outside this directory, so on their own they resolve
+// `three` and glTF-Transform from the repository root's node_modules and the
+// bundle ends up with two copies of each: a megabyte of dead weight in the
+// webview and two class hierarchies for the same objects. This plugin routes
+// every import of those libraries to this package's own copy.
+const SHARED = /^(three|@gltf-transform\/(core|extensions|functions)|meshoptimizer)(\/.*)?$/;
+const dedupe = {
+	name: 'dedupe-shared-deps',
+	setup(build) {
+		build.onResolve({ filter: SHARED }, async (args) => {
+			if (args.pluginData?.dedupe) return null;
+			return build.resolve(args.path, {
+				kind: args.kind,
+				resolveDir: process.cwd(),
+				pluginData: { dedupe: true },
+			});
+		});
+	},
+};
+
 /** @type {import('esbuild').BuildOptions} */
 const host = {
 	entryPoints: ['src/extension.js'],
@@ -53,6 +74,7 @@ const host = {
 	// the native `sharp` binary on Node. Nothing here resizes textures, and a
 	// native module cannot ship in a .vsix, so it is aliased to a stub.
 	alias: { sharp: './src/shims/sharp.js' },
+	plugins: [dedupe],
 	sourcemap: !production,
 	minify: production,
 	logLevel: 'info',
@@ -66,6 +88,7 @@ const webview = {
 	platform: 'browser',
 	format: 'iife',
 	target: 'es2020',
+	plugins: [dedupe],
 	sourcemap: !production,
 	minify: production,
 	logLevel: 'info',
