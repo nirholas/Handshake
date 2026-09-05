@@ -1,0 +1,55 @@
+{
+	"generatedAt": "2026-09-05T05:29:30.373Z",
+	"origin": "https://three.ws",
+	"route": "highlights",
+	"authed": true,
+	"narrator": {
+		"lane": "edge",
+		"voice": "en-US-AndrewMultilingualNeural"
+	},
+	"stage": "1920x1080@30",
+	"stops": 18,
+	"recorded": 18,
+	"seconds": 1006,
+	"bytes": 79534514,
+	"film": "marketing/product-demo/three-ws-demo-highlights.mp4",
+	"chapters": [
+		{
+			"id": "main",
+			"title": "Main",
+			"file": "marketing/product-demo/three-ws-demo-highlights-01-main.mp4",
+			"seconds": 202
+		},
+		{
+			"id": "build",
+			"title": "Build",
+			"file": "marketing/product-demo/three-ws-demo-highlights-02-build.mp4",
+			"seconds": 310
+		},
+		{
+			"id": "crypto",
+			"title": "Crypto",
+			"file": "marketing/product-demo/three-ws-demo-highlights-03-crypto.mp4",
+			"seconds": 102
+		},
+		{
+			"id": "labs",
+			"title": "Labs",
+			"file": "marketing/product-demo/three-ws-demo-highlights-04-labs.mp4",
+			"seconds": 270
+		},
+		{
+			"id": "agent-tools",
+			"title": "Agent Tools",
+			"file": "marketing/product-demo/three-ws-demo-highlights-05-agent-tools.mp4",
+			"seconds": 57
+		},
+		{
+			"id": "learn",
+			"title": "Learn",
+			"file": "marketing/product-demo/three-ws-demo-highlights-06-learn.mp4",
+			"seconds": 65
+		}
+	],
+	"skipped": []
+}
