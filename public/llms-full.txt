@@ -971,9 +971,9 @@ URL: https://three.ws/cz
 
 Connect a wallet, sign one line, and take ownership of the pre-registered CZ agent, then copy its embed snippet.
 
-### Agent Console
+### Pocket Console
 
-URL: https://three.ws/console
+URL: https://three.ws/pocket
 
 A handheld console with a live 3D agent inside the screen. Steer it with the D-pad, swap cartridges for any public agent, and embed the whole console anywhere with one line of HTML.
 
@@ -3963,6 +3963,12 @@ three.ws sells dozens of pay-per-call services over x402. Building them is half 
 URL: https://three.ws/docs/x402-ring-economy
 
 A self-contained agent-to-agent payment loop where platform-controlled wallets pay the platform's own paid endpoints in real stablecoin, settled by the platform's own facilitator. No user funds are involved.
+
+### Docs · The $THREE micro-buy loop
+
+URL: https://three.ws/docs/three-microbuy
+
+Many tiny, real on-chain buys of $THREE per minute, each triggered by and paid through a settled pay-per-call payment. It exists to put continuous, verifiable buy pressure behind the platform's own token.
 
 ### Docs · IBM watsonx and Granite
 
