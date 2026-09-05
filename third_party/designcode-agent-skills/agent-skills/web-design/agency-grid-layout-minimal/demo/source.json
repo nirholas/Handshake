@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:40:35.585Z",
+  "skill": {
+    "id": "agency-grid-layout-minimal",
+    "label": "Agency Grid Layout Minimal",
+    "usage_count": 657,
+    "url": "https://neuform.ai/skill/agency-grid-layout-minimal"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "c93f68fa-ad9d-4ef4-bc03-d5385c8ec71c",
+    "slug": "freelance-designer-growth-partner",
+    "title": "Freelance Designer & Growth Partner",
+    "url": "https://neuform.ai/pages/freelance-designer-growth-partner/index.html",
+    "view_count": 731,
+    "favorite_count": 21,
+    "remix_count": 14
+  },
+  "html": {
+    "original_sha256": "429704fb6d8f7ef8456dd7b51efc89d5768184c644e5ba3727554b97d5be2d03",
+    "bundled_sha256": "092e96287c8202d543d7933c1ba6479c430b279ed6f604dd1a40a7a6c23f8e24",
+    "runtime_dependencies": [],
+    "hardened_sha256": "6389b52fe6736e31d242372c7db3ecdfda1e9d6f53147d7da17a897191d3e7a2",
+    "sandboxed_sha256": "e40b8d26e3081ab6d7992d2a54ea97ff08773c8f35eed1fb4880a1c74d3b1c9e",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 282854,
+        "file": "assets/page-01-0d868fef-f560-45ca-ab35-5dad4fc29059-3840w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/0d868fef-f560-45ca-ab35-5dad4fc29059_3840w.webp"
+      },
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 71520,
+        "file": "../../../../assets/runtime/runtime-027051effa47-gsap-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js",
+        "kind": "runtime-script",
+        "sha256": "efc85c7eb141819717cda0033484a84b1c890d13b02e355a2fec79d424b20e7a"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

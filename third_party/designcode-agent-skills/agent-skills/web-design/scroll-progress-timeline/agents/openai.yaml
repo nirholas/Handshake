@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scroll Progress Timeline"
+  short_description: "Turn flexible step data into a scroll story"
+  default_prompt: "Use $scroll-progress-timeline to turn this ordered process into a responsive progress-line scroll story."

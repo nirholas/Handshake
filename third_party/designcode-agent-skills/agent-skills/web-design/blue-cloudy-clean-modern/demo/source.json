@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:40:34.703Z",
+  "skill": {
+    "id": "blue-cloudy-clean-modern",
+    "label": "Blue Cloudy Clean Modern",
+    "usage_count": 179,
+    "url": "https://neuform.ai/skill/blue-cloudy-clean-modern"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "df908c30-0ff0-4526-904a-5b599fc83833",
+    "slug": "platform-capabilities",
+    "title": "Platform Capabilities",
+    "url": "https://neuform.ai/pages/platform-capabilities/index.html",
+    "view_count": 351,
+    "favorite_count": 33,
+    "remix_count": 3
+  },
+  "html": {
+    "original_sha256": "b3aaaa31461e0488d17ca65e59fe15eb92d559f862b1abe1e4d334e25444ce6b",
+    "bundled_sha256": "98966addf85a48c3b2d116267c295b6e8475b5859af6b4624f90b49eec8ba963",
+    "runtime_dependencies": [
+      "https://fonts.googleapis.com",
+      "https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap",
+      "https://fonts.gstatic.com"
+    ],
+    "hardened_sha256": "a3487af2639c1c0320268c884be9e416f48fb7a10a63d3c634671594308715dd",
+    "sandboxed_sha256": "76137223e114d4b62228c0bea1c60abcd2feb3b63f0fe80c68110cb4b9616e07",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

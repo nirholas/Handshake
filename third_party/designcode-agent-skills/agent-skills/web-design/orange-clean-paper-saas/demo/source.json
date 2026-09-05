@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:41:04.441Z",
+  "skill": {
+    "id": "orange-clean-paper-saas",
+    "label": "Orange Clean Paper SaaS",
+    "usage_count": 388,
+    "url": "https://neuform.ai/skill/orange-clean-paper-saas"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "4447bc3b-5e17-46ec-8d87-2a6ae279bfe8",
+    "slug": "paperflow-design-layout",
+    "title": "PaperFlow Design Layout",
+    "url": "https://neuform.ai/pages/paperflow-design-layout/index.html",
+    "view_count": 542,
+    "favorite_count": 41,
+    "remix_count": 7
+  },
+  "html": {
+    "original_sha256": "4341fc8dc5ceec9e220c3508bc9f9a103986a03d751b517dafe5efa5bd669bec",
+    "bundled_sha256": "5af0fc92d2031dde95a7f0b67d0574e1a875ded62cfb969808d691c9074391f1",
+    "runtime_dependencies": [
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+    ],
+    "hardened_sha256": "1430edbca6e6e21aa6e34fb6d2800855d200ec311957225d936d7f4d00548ab9",
+    "sandboxed_sha256": "7bd2ab66deb463f2fd4a03fb5ae4fad4d3a8fe6eed1a7a34d22628f5eef5202c",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 42667,
+        "file": "../../../../assets/runtime/runtime-689ca8dda44c-scrolltrigger-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js",
+        "kind": "runtime-script",
+        "sha256": "65f6c13748b0c8d8f9eabd0373a130ac293b3f16bf34aaa946d953980372b932"
+      },
+      {
+        "bytes": 71520,
+        "file": "../../../../assets/runtime/runtime-027051effa47-gsap-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js",
+        "kind": "runtime-script",
+        "sha256": "efc85c7eb141819717cda0033484a84b1c890d13b02e355a2fec79d424b20e7a"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

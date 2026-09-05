@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:40:41.493Z",
+  "skill": {
+    "id": "corner-diagonals",
+    "label": "Corner Diagonals",
+    "usage_count": 337,
+    "url": "https://neuform.ai/skill/corner-diagonals"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "7812748c-5b49-4ad8-ad76-880860406fb0",
+    "slug": "auralis-neural-audio-engine",
+    "title": "Auralis - Neural Audio Engine",
+    "url": "https://neuform.ai/pages/auralis-neural-audio-engine/index.html",
+    "view_count": 1953,
+    "favorite_count": 80,
+    "remix_count": 39
+  },
+  "html": {
+    "original_sha256": "20b3fb411ebda39d7673aecba46b12fd262861676915aedfaa07587e2a55fec6",
+    "bundled_sha256": "96274ba60b97a959342b066c95074b4ddac96ff588ffec3a1db6579af3597cf4",
+    "runtime_dependencies": [
+      "https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap"
+    ],
+    "hardened_sha256": "6ebabd464b9168e47d8523e415f7a6dc1a58755e2b2ea68f9ed2b5fd2997a7fe",
+    "sandboxed_sha256": "21f51f52256cc0c08deb82e954ba0418fa8319ed9a36277902c005842b105b96",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 42667,
+        "file": "../../../../assets/runtime/runtime-689ca8dda44c-scrolltrigger-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js",
+        "kind": "runtime-script",
+        "sha256": "65f6c13748b0c8d8f9eabd0373a130ac293b3f16bf34aaa946d953980372b932"
+      },
+      {
+        "bytes": 71520,
+        "file": "../../../../assets/runtime/runtime-027051effa47-gsap-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js",
+        "kind": "runtime-script",
+        "sha256": "efc85c7eb141819717cda0033484a84b1c890d13b02e355a2fec79d424b20e7a"
+      },
+      {
+        "bytes": 603445,
+        "file": "../../../../assets/runtime/runtime-25023b521d77-three-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",
+        "kind": "runtime-script",
+        "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

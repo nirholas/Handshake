@@ -1,0 +1,2 @@
+- [Intelli live reference](https://intelli.framer.website/)
+- [Intelli template listing](https://www.framer.com/community/marketplace/templates/intelli/)

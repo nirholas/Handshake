@@ -1,0 +1,17 @@
+.threeui-background.gallery {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: #f1f1ef;
+  background-image: radial-gradient(rgba(13, 13, 13, 0.13) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+.gallery__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}

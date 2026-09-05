@@ -1,0 +1,416 @@
+.circle-buttons,
+.circle-buttons *,
+.circle-buttons *::before,
+.circle-buttons *::after {
+  box-sizing: border-box;
+}
+
+.circle-buttons {
+  --circle-button-hue: 0deg;
+  --circle-button-saturation: 1;
+  --circle-button-brightness: 1;
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  container-type: size;
+  background: #111318;
+  color-scheme: dark;
+  filter: hue-rotate(var(--circle-button-hue)) saturate(var(--circle-button-saturation)) brightness(var(--circle-button-brightness));
+}
+
+.circle-buttons--play {
+  background: #0a0a0a;
+}
+
+.circle-buttons--light {
+  background: #f4f7fb;
+  color-scheme: light;
+}
+
+.circle-buttons__atmosphere {
+  position: absolute;
+  width: min(62cqw, 440px);
+  height: min(50cqh, 240px);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.02);
+  filter: blur(54px);
+  pointer-events: none;
+}
+
+.circle-button {
+  position: relative;
+  display: grid;
+  width: clamp(56px, 8cqw, 72px);
+  aspect-ratio: 1;
+  padding: 0;
+  place-items: center;
+  overflow: visible;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transform: translateZ(0);
+  transition: transform 200ms ease-in-out, filter 200ms ease-in-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.circle-button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+  opacity: 0.48;
+}
+
+.circle-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.88);
+  outline-offset: 7px;
+}
+
+.circle-buttons--light .circle-button:focus-visible {
+  outline-color: rgba(17, 24, 39, 0.8);
+}
+
+.circle-button__aura,
+.circle-button__rim,
+.circle-button__face,
+.circle-button__details,
+.circle-button__icon {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.circle-button__face {
+  z-index: 1;
+}
+
+.circle-button__rim {
+  z-index: 2;
+}
+
+.circle-button__details {
+  z-index: 4;
+}
+
+.circle-button__icon {
+  z-index: 5;
+  display: grid;
+  place-items: center;
+}
+
+.circle-button__icon svg {
+  width: 30%;
+  height: 30%;
+  overflow: visible;
+}
+
+/* Play is the Dark Glass rectangle reduced to a circular boundary. */
+.circle-buttons--play .circle-button {
+  overflow: hidden;
+}
+
+.circle-buttons--play .circle-button__face {
+  background: rgba(23, 23, 23, 0.7);
+  box-shadow: inset 2px 4px 16px rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(50px);
+  backdrop-filter: blur(50px);
+}
+
+.circle-buttons--play .circle-button__rim {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  opacity: 0.25;
+  -webkit-mask-image: linear-gradient(170deg, #000, transparent 50%);
+  mask-image: linear-gradient(170deg, #000, transparent 50%);
+}
+
+.circle-buttons--play .circle-button__aura {
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  background: conic-gradient(from 180deg, rgba(255, 255, 255, 0.012) 180deg, rgba(255, 255, 255, 0.05) 360deg);
+  filter: blur(15px);
+  transform: translate(-50%, -50%);
+  animation: circle-button-section-orbit 3.6s linear infinite;
+  transition: opacity 500ms;
+}
+
+.circle-buttons--play .circle-button__face::after {
+  position: absolute;
+  inset: -38%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  content: "";
+  opacity: 0;
+  filter: blur(5px);
+  transform: scale(0.5);
+  transition: opacity 500ms, transform 700ms;
+  -webkit-mask-image: radial-gradient(50% 50%, #000, rgba(23, 23, 23, 0));
+  mask-image: radial-gradient(50% 50%, #000, rgba(23, 23, 23, 0));
+}
+
+.circle-buttons--play .circle-button__icon svg {
+  margin-left: 4%;
+  fill: currentColor;
+}
+
+.circle-buttons--play .circle-button:not(:disabled):hover .circle-button__aura {
+  opacity: 0;
+}
+
+.circle-buttons--play .circle-button:not(:disabled):hover .circle-button__face::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.circle-buttons--play .circle-button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.circle-buttons--light.circle-buttons--play .circle-button {
+  color: rgba(17, 24, 39, 0.7);
+}
+
+.circle-buttons--light.circle-buttons--play .circle-button__face {
+  background: rgba(232, 234, 238, 0.78);
+  box-shadow: inset 2px 4px 16px rgba(255, 255, 255, 0.72);
+}
+
+.circle-buttons--light.circle-buttons--play .circle-button__rim {
+  border-color: rgba(17, 24, 39, 0.28);
+}
+
+/* Plus carries the Launch rectangle's exact amber gradient, rim, depth, and press. */
+.circle-buttons--plus .circle-buttons__atmosphere {
+  display: none;
+}
+
+.circle-buttons--plus .circle-button {
+  color: #451a03;
+}
+
+.circle-buttons--plus .circle-button__aura {
+  inset: -4px;
+  border-radius: inherit;
+  background: rgba(245, 158, 11, 0.4);
+  opacity: 0.4;
+  filter: blur(8px);
+  transition: opacity 500ms;
+}
+
+.circle-buttons--plus .circle-button__face {
+  background: linear-gradient(to bottom, #fde68a, #fcd34d, #f59e0b);
+  box-shadow:
+    0 0 0 1px rgba(251, 191, 36, 0.5),
+    0 4px 0 #b45309,
+    0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  transition: transform 150ms, box-shadow 150ms;
+}
+
+.circle-buttons--plus .circle-button__icon svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+}
+
+.circle-buttons--plus .circle-button:not(:disabled):hover .circle-button__aura {
+  opacity: 0.75;
+}
+
+.circle-buttons--plus .circle-button:not(:disabled):active {
+  transform: translateY(2px);
+}
+
+.circle-buttons--plus .circle-button:not(:disabled):active .circle-button__face {
+  box-shadow:
+    0 0 0 1px rgba(251, 191, 36, 0.5),
+    0 2px 0 #b45309;
+}
+
+/* Mail keeps the Dot Border rectangle's transparent face and staged technical frame. */
+.circle-buttons--mail .circle-buttons__atmosphere {
+  display: none;
+}
+
+.circle-buttons--mail .circle-button {
+  color: rgba(255, 255, 255, 0.27);
+}
+
+.circle-buttons--mail .circle-button__face {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  transition: background-color 200ms ease-in-out;
+}
+
+.circle-buttons--mail .circle-button__details {
+  inset: -10px;
+  border-radius: 0;
+}
+
+.circle-buttons--mail .circle-button__details i {
+  position: absolute;
+  width: 8px;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.67);
+  opacity: 0;
+  transition: opacity 300ms ease-in-out, transform 350ms ease-in-out;
+}
+
+.circle-buttons--mail .circle-button__details i:nth-of-type(1) {
+  top: -4px;
+  left: -4px;
+  transform: translate(34px, 34px);
+}
+
+.circle-buttons--mail .circle-button__details i:nth-of-type(2) {
+  top: -4px;
+  right: -4px;
+  transform: translate(-34px, 34px);
+  transition-delay: 210ms;
+}
+
+.circle-buttons--mail .circle-button__details i:nth-of-type(3) {
+  right: -4px;
+  bottom: -4px;
+  transform: translate(-34px, -34px);
+  transition-delay: 420ms;
+}
+
+.circle-buttons--mail .circle-button__details i:nth-of-type(4) {
+  bottom: -4px;
+  left: -4px;
+  transform: translate(34px, -34px);
+  transition-delay: 630ms;
+}
+
+.circle-buttons--mail .circle-button__details b {
+  position: absolute;
+  display: block;
+  opacity: 0;
+}
+
+.circle-buttons--mail .circle-button__details b:nth-of-type(1),
+.circle-buttons--mail .circle-button__details b:nth-of-type(3) {
+  right: 0;
+  left: 0;
+  height: 1px;
+  background-image: repeating-linear-gradient(90deg, transparent 0 2px, rgba(255, 255, 255, 0.67) 2px 4px);
+  transform: scaleX(0);
+}
+
+.circle-buttons--mail .circle-button__details b:nth-of-type(1) {
+  top: 0;
+  transform-origin: top left;
+  transition: transform 350ms ease-in-out 280ms, opacity 20ms linear 280ms;
+}
+
+.circle-buttons--mail .circle-button__details b:nth-of-type(3) {
+  bottom: 0;
+  transform-origin: bottom right;
+  transition: transform 350ms ease-in-out 700ms, opacity 20ms linear 700ms;
+}
+
+.circle-buttons--mail .circle-button__details b:nth-of-type(2),
+.circle-buttons--mail .circle-button__details b:nth-of-type(4) {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgba(255, 255, 255, 0.67) 2px 4px);
+  transform: scaleY(0);
+}
+
+.circle-buttons--mail .circle-button__details b:nth-of-type(2) {
+  right: 0;
+  transform-origin: top right;
+  transition: transform 350ms ease-in-out 490ms, opacity 20ms linear 490ms;
+}
+
+.circle-buttons--mail .circle-button__details b:nth-of-type(4) {
+  left: 0;
+  transform-origin: bottom left;
+  transition: transform 350ms ease-in-out 840ms, opacity 20ms linear 840ms;
+}
+
+.circle-buttons--mail .circle-button__icon svg {
+  fill: rgba(255, 255, 255, 0.13);
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.45;
+  transition: fill 200ms ease-in-out, stroke 200ms ease-in-out;
+}
+
+.circle-buttons--mail .circle-button:not(:disabled):hover {
+  color: rgba(255, 255, 255, 0.67);
+  transform: scale(1.05);
+}
+
+.circle-buttons--mail .circle-button:not(:disabled):hover .circle-button__face,
+.circle-buttons--mail .circle-button:not(:disabled):active .circle-button__face {
+  background: #25358b;
+}
+
+.circle-buttons--mail .circle-button:not(:disabled):hover .circle-button__details i,
+.circle-buttons--mail .circle-button:not(:disabled):hover .circle-button__details b {
+  opacity: 1;
+  transform: none;
+}
+
+.circle-buttons--mail .circle-button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.circle-buttons--light.circle-buttons--mail .circle-button {
+  color: rgba(17, 24, 39, 0.38);
+}
+
+.circle-buttons--light.circle-buttons--mail .circle-button__face {
+  border-color: rgba(17, 24, 39, 0.2);
+}
+
+.circle-buttons--light.circle-buttons--mail .circle-button__details i {
+  background: rgba(17, 24, 39, 0.58);
+}
+
+.circle-buttons--light.circle-buttons--mail .circle-button__details b:nth-of-type(1),
+.circle-buttons--light.circle-buttons--mail .circle-button__details b:nth-of-type(3) {
+  background-image: repeating-linear-gradient(90deg, transparent 0 2px, rgba(17, 24, 39, 0.58) 2px 4px);
+}
+
+.circle-buttons--light.circle-buttons--mail .circle-button__details b:nth-of-type(2),
+.circle-buttons--light.circle-buttons--mail .circle-button__details b:nth-of-type(4) {
+  background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgba(17, 24, 39, 0.58) 2px 4px);
+}
+
+.circle-buttons--light.circle-buttons--mail .circle-button:not(:disabled):hover {
+  color: rgba(255, 255, 255, 0.67);
+}
+
+@keyframes circle-button-section-orbit {
+  0% { transform: translate(-50%, -50%) translateX(0) rotate(0); }
+  25% { transform: translate(-50%, -50%) translateX(-30px) rotate(90deg); }
+  50% { transform: translate(-50%, -50%) translateX(0) rotate(180deg); }
+  75% { transform: translate(-50%, -50%) translateX(30px) rotate(270deg); }
+  100% { transform: translate(-50%, -50%) translateX(0) rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circle-buttons *,
+  .circle-buttons *::before,
+  .circle-buttons *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

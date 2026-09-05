@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:40:45.496Z",
+  "skill": {
+    "id": "dither-background",
+    "label": "Dither Background",
+    "usage_count": 1375,
+    "url": "https://neuform.ai/skill/dither-background"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "2441b1de-008a-46f1-9b56-42b1cf8fd40b",
+    "slug": "alert-interface",
+    "title": "Alert Interface",
+    "url": "https://neuform.ai/pages/alert-interface/index.html",
+    "view_count": 1043,
+    "favorite_count": 32,
+    "remix_count": 12
+  },
+  "html": {
+    "original_sha256": "183249d2dc3eacfe2fc963c94c399d79a5183cb9011cadcd551d0fba0872912d",
+    "bundled_sha256": "173f38264992e035c4c98e0bb570b4ba3a6859edc3651a42af21a3b1c03cf58f",
+    "runtime_dependencies": [
+      "https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap"
+    ],
+    "hardened_sha256": "95d0856d5107c83f15a39539159bc3ea8a49332025082d609bfefa441bdbd307",
+    "sandboxed_sha256": "7cd43cddf21947985f32ffefd02d2f2f4273cf79c438b0fa9dadc089fd35b329",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

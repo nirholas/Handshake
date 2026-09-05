@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Three production modes for turning a story into a scroll-driven landing page.">
+  <title>Scroll Worlds — Three Modes</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #090b0e;
+      --paper: #f1eadc;
+      --muted: #9d9a91;
+      --line: rgba(241, 234, 220, .16);
+      --amber: #ffb23e;
+      --cyan: #6de7ff;
+      --acid: #d6ff63;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 85% 8%, rgba(109, 231, 255, .07), transparent 26rem),
+        var(--ink);
+      color: var(--paper);
+      font-family: "Arial Narrow", "Avenir Next Condensed", "Roboto Condensed", sans-serif;
+    }
+    a { color: inherit; }
+    .shell { width: min(1440px, 100%); margin: 0 auto; border-inline: 1px solid var(--line); }
+    .topbar {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--line);
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      font-size: 11px;
+    }
+    .signal { display: flex; align-items: center; gap: 10px; }
+    .signal::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 18px var(--acid); }
+    .hero {
+      min-height: 66vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, .55fr);
+      border-bottom: 1px solid var(--line);
+    }
+    .hero-copy { padding: clamp(44px, 8vw, 116px) clamp(24px, 6vw, 92px); border-right: 1px solid var(--line); }
+    .kicker { color: var(--amber); letter-spacing: .18em; text-transform: uppercase; font-size: 12px; }
+    h1 {
+      max-width: 900px;
+      margin: 22px 0 24px;
+      font: 400 clamp(52px, 9vw, 138px)/.78 Georgia, "Times New Roman", serif;
+      letter-spacing: -.07em;
+    }
+    .lede { max-width: 620px; margin: 0; color: #b9b5ab; font-size: clamp(17px, 2vw, 22px); line-height: 1.5; }
+    .hero-index { display: grid; grid-template-rows: repeat(3, 1fr); }
+    .hero-index div { display: flex; align-items: flex-end; justify-content: space-between; padding: 26px; border-bottom: 1px solid var(--line); }
+    .hero-index div:last-child { border-bottom: 0; }
+    .hero-index span { color: var(--muted); letter-spacing: .14em; text-transform: uppercase; font-size: 10px; }
+    .hero-index b { font: 400 42px/1 Georgia, serif; }
+    .modes { counter-reset: modes; }
+    .mode {
+      counter-increment: modes;
+      position: relative;
+      display: grid;
+      grid-template-columns: 88px minmax(260px, .72fr) minmax(320px, 1.28fr);
+      min-height: 430px;
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .mode::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity .35s ease;
+      background: linear-gradient(110deg, rgba(255,178,62,.07), transparent 55%);
+    }
+    .mode:hover::after, .mode:focus-visible::after { opacity: 1; }
+    .number { display: grid; place-items: start center; padding-top: 35px; color: var(--muted); border-right: 1px solid var(--line); }
+    .number::before { content: "0" counter(modes); }
+    .mode-copy { padding: clamp(36px, 5vw, 72px); border-right: 1px solid var(--line); }
+    .mode-copy h2 { margin: 14px 0 24px; font: 400 clamp(42px, 5.2vw, 82px)/.88 Georgia, serif; letter-spacing: -.055em; }
+    .mode-copy p { max-width: 430px; color: #aaa79e; font-size: 17px; line-height: 1.55; }
+    .open { display: inline-flex; gap: 14px; align-items: center; margin-top: 38px; color: var(--paper); text-transform: uppercase; letter-spacing: .14em; font-size: 11px; }
+    .open::after { content: "↗"; font-size: 18px; transition: transform .25s ease; }
+    .mode:hover .open::after, .mode:focus-visible .open::after { transform: translate(5px,-5px); }
+    .preview { min-height: 360px; position: relative; overflow: hidden; background: #07090b; }
+    .preview::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(9,11,14,.22), transparent); pointer-events: none; }
+    .preview-video { background: radial-gradient(circle at 66% 47%, #9d4c16 0 3%, #2e170c 9%, #0b0d11 31%, #050608 66%); }
+    .preview-video .orbit, .preview-three .orbit { position: absolute; left: 66%; top: 47%; width: 44%; aspect-ratio: 1; border: 1px solid rgba(255,178,62,.42); border-radius: 50%; transform: translate(-50%,-50%) rotate(-18deg); box-shadow: 0 0 50px rgba(255,178,62,.08); }
+    .preview-video .route { position: absolute; left: 10%; right: 8%; top: 58%; height: 1px; background: linear-gradient(90deg, transparent, var(--amber), transparent); transform: rotate(-8deg); box-shadow: 0 0 20px var(--amber); }
+    .preview-video .gate { position: absolute; left: calc(16% + var(--i) * 12%); top: calc(67% - var(--i) * 5%); width: calc(42px - var(--i) * 4px); height: calc(68px - var(--i) * 7px); border: 1px solid rgba(241,234,220,.35); transform: skewY(-7deg); }
+    .preview-three { background: radial-gradient(circle at 66% 48%, #f1eee7 0 7%, #cbc7bd 8% 22%, #e6e2da 23% 58%, #f04427 59% 61%, #d8d4cc 62%); }
+    .preview-three::after { background: linear-gradient(90deg,rgba(9,11,14,.14),transparent); }
+    .preview-three .orbit { border: 3px dotted #161616; transform: translate(-50%,-50%) rotate(24deg) scaleY(.48); box-shadow: none; }
+    .preview-three .orbit.two { border: 1px solid #f04427; transform: translate(-50%,-50%) rotate(-35deg) scaleY(.78); width: 56%; }
+    .preview-three .star { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #141414; left: calc(9% + var(--x) * 8%); top: calc(15% + var(--y) * 7%); opacity: .8; }
+    .preview-data { display: grid; grid-template-columns: .72fr 1.28fr; padding: clamp(26px, 5vw, 64px); background: #ece6d8; color: #141515; gap: 34px; }
+    .data-figure { align-self: end; }
+    .data-figure strong { display: block; font: 400 clamp(66px, 9vw, 136px)/.8 Georgia, serif; letter-spacing: -.07em; }
+    .data-figure span { color: #5d5d58; text-transform: uppercase; letter-spacing: .15em; font-size: 10px; }
+    .bars { display: flex; align-items: end; gap: 9px; border-bottom: 1px solid #777; padding-top: 30px; }
+    .bars i { flex: 1; height: calc(16% + var(--h) * 8%); min-height: 18px; background: #161819; }
+    .bars i:last-child { background: #e45b31; }
+    footer { display: flex; justify-content: space-between; gap: 20px; padding: 32px 28px 72px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-size: 10px; }
+    :focus-visible { outline: 2px solid var(--acid); outline-offset: -5px; }
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-copy { border-right: 0; border-bottom: 1px solid var(--line); }
+      .hero-index { grid-template-columns: repeat(3,1fr); grid-template-rows: none; }
+      .hero-index div { min-height: 112px; border-bottom: 0; border-right: 1px solid var(--line); }
+      .mode { grid-template-columns: 56px 1fr; }
+      .mode-copy { border-right: 0; }
+      .preview { grid-column: 1 / -1; min-height: 340px; border-top: 1px solid var(--line); }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding-inline: 18px; }
+      .topbar span:last-child { display: none; }
+      .hero-copy { padding: 56px 22px 64px; }
+      .hero-index b { font-size: 30px; }
+      .hero-index div { padding: 16px; }
+      .mode { grid-template-columns: 44px 1fr; }
+      .mode-copy { padding: 46px 22px; }
+      .preview { min-height: 300px; }
+      .preview-data { grid-template-columns: 1fr; }
+      footer { flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .001ms !important; animation-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <span class="signal">Scroll world system</span>
+      <span>One story / three renderers</span>
+    </header>
+
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <span class="kicker">The Contract / Demo Kit</span>
+        <h1 id="page-title">Choose the world.</h1>
+        <p class="lede">The same six-beat story, translated into video, real-time 3D, and semantic data typography. Pick the renderer that strengthens the source.</p>
+      </div>
+      <div class="hero-index" aria-label="Demo summary">
+        <div><span>Modes</span><b>03</b></div>
+        <div><span>Beats</span><b>06</b></div>
+        <div><span>CTA</span><b>01</b></div>
+      </div>
+    </section>
+
+    <section class="modes" aria-label="Scroll world demos">
+      <a class="mode" href="video/">
+        <span class="number" aria-hidden="true"></span>
+        <div class="mode-copy">
+          <span class="kicker">Pre-rendered / cinematic</span>
+          <h2>Video<br>scrub</h2>
+          <p>Scroll seeks through a generated continuous camera move. Best when atmosphere, realism, and exact art direction are the argument.</p>
+          <span class="open">Open demo</span>
+        </div>
+        <div class="preview preview-video" aria-hidden="true">
+          <i class="orbit"></i><i class="route"></i>
+          <i class="gate" style="--i:0"></i><i class="gate" style="--i:1"></i><i class="gate" style="--i:2"></i><i class="gate" style="--i:3"></i>
+        </div>
+      </a>
+
+      <a class="mode" href="threejs/">
+        <span class="number" aria-hidden="true"></span>
+        <div class="mode-copy">
+          <span class="kicker">Real-time / spatial</span>
+          <h2>Three.js<br>studies</h2>
+          <p>One live sculptural world in signal-red, monochrome, and soft-pearl directions. Best when the story is a system or object to explore.</p>
+          <span class="open">Open demo</span>
+        </div>
+        <div class="preview preview-three" aria-hidden="true">
+          <i class="orbit"></i><i class="orbit two"></i>
+          <i class="star" style="--x:1;--y:3"></i><i class="star" style="--x:4;--y:1"></i><i class="star" style="--x:7;--y:6"></i><i class="star" style="--x:9;--y:2"></i><i class="star" style="--x:3;--y:8"></i>
+        </div>
+      </a>
+
+      <a class="mode" href="html-data/">
+        <span class="number" aria-hidden="true"></span>
+        <div class="mode-copy">
+          <span class="kicker">Semantic / evidence-led</span>
+          <h2>Data &amp;<br>type</h2>
+          <p>Native HTML, SVG charts, live values, and editorial typography. Best when proof, clarity, accessibility, and responsive precision matter most.</p>
+          <span class="open">Open demo</span>
+        </div>
+        <div class="preview preview-data" aria-hidden="true">
+          <div class="data-figure"><span>Verified arrival</span><strong>94%</strong></div>
+          <div class="bars"><i style="--h:1"></i><i style="--h:3"></i><i style="--h:5"></i><i style="--h:7"></i><i style="--h:9"></i></div>
+        </div>
+      </a>
+    </section>
+
+    <footer><span>Native scroll / reversible / reduced-motion ready</span><span>Standalone HTML demos</span></footer>
+  </main>
+</body>
+</html>

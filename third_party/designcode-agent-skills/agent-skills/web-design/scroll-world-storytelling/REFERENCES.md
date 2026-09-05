@@ -1,0 +1,11 @@
+https://github.com/oso95/scroll-world
+https://x.com/0xMiraqle/status/2075333806286942579
+https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentTime
+https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame
+https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
+https://threejs.org/docs/
+https://threejs.org/manual/#en/responsive
+https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dashoffset
+https://ffmpeg.org/ffmpeg.html
+https://docs.x.ai/developers/model-capabilities/video/generation
+https://x.ai/grok/use-cases/video-generation

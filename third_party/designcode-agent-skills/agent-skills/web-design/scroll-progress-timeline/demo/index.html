@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A data-ready scroll progress timeline demo.">
+  <title>Fieldwork — Scroll Progress Timeline</title>
+  <style>
+    :root { color-scheme: light; --paper: #f1eee7; --ink: #171817; --muted: #73736d; --line: rgba(23,24,23,.16); --blue: #2759ff; --lime: #dfff52; --coral: #ff6848; --progress: 0; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-width: 320px; color: var(--ink); background: var(--paper); font-family: Arial, Helvetica, sans-serif; }
+    .topbar { min-height: 62px; padding: 0 clamp(20px,4vw,60px); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; text-transform: uppercase; letter-spacing: .14em; font-size: 10px; }
+    .topbar b { display: flex; align-items: center; gap: 12px; }
+    .topbar b::before { content: ""; width: 8px; height: 8px; background: var(--blue); border-radius: 50%; }
+    .hero { min-height: 58vh; padding: clamp(70px,10vw,140px) clamp(20px,5vw,76px) 70px; display: grid; grid-template-columns: minmax(0,1.35fr) minmax(260px,.65fr); gap: 60px; align-items: end; border-bottom: 1px solid var(--line); }
+    .kicker { display: block; margin-bottom: 22px; color: var(--blue); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { max-width: 1050px; margin: 0; font: 400 clamp(66px,10vw,148px)/.77 Georgia, "Times New Roman", serif; letter-spacing: -.075em; }
+    .intro { max-width: 470px; margin: 0; color: var(--muted); font-size: 18px; line-height: 1.55; }
+    .timeline { position: relative; max-width: 1540px; margin: 0 auto; padding: 110px clamp(20px,5vw,76px) 180px; display: grid; grid-template-columns: minmax(250px,.62fr) minmax(0,1.38fr); gap: clamp(44px,9vw,150px); }
+    .chapter { position: sticky; top: 92px; align-self: start; min-height: 460px; display: flex; flex-direction: column; justify-content: space-between; }
+    .chapter span { color: var(--muted); font-size: 10px; letter-spacing: .15em; text-transform: uppercase; }
+    .chapter h2 { max-width: 500px; margin: 20px 0; font: 400 clamp(48px,6vw,88px)/.86 Georgia, serif; letter-spacing: -.055em; }
+    .chapter .index { display: flex; align-items: end; gap: 16px; }
+    .chapter .current { font: 400 76px/1 Georgia, serif; letter-spacing: -.07em; font-variant-numeric: tabular-nums; }
+    .chapter .total { margin-bottom: 10px; color: var(--muted); font-size: 11px; }
+    .steps-wrap { position: relative; min-width: 0; }
+    .rail { position: absolute; left: 22px; top: var(--rail-top, 22px); width: 1px; height: var(--rail-height, calc(100% - 44px)); background: var(--line); }
+    .rail i { display: block; width: 3px; height: 100%; margin-left: -1px; background: var(--blue); transform: scaleY(var(--progress)); transform-origin: top; }
+    .steps { list-style: none; margin: 0; padding: 0; }
+    .step { position: relative; display: grid; grid-template-columns: 46px minmax(0,1fr); gap: clamp(24px,4vw,58px); min-height: 620px; opacity: .46; transition: opacity .28s ease; }
+    .step:last-child { min-height: 470px; }
+    .step.active { opacity: 1; }
+    .dot { position: relative; z-index: 2; width: 13px; height: 13px; margin: 5px 0 0 16px; border: 2px solid var(--paper); border-radius: 50%; background: #a7a69f; box-shadow: 0 0 0 1px #a7a69f; transform: scale(.72); transition: transform .28s ease, background .28s ease, box-shadow .28s ease; }
+    .step.active .dot { background: var(--blue); box-shadow: 0 0 0 1px var(--blue), 0 0 0 7px rgba(39,89,255,.12); transform: scale(1); }
+    .step-grid { display: grid; grid-template-columns: minmax(220px,.75fr) minmax(260px,1.25fr); gap: clamp(28px,5vw,72px); align-items: start; }
+    .phase { color: var(--blue); font-size: 10px; letter-spacing: .15em; text-transform: uppercase; }
+    .step h3 { margin: 18px 0 22px; font: 400 clamp(38px,4vw,62px)/.92 Georgia, serif; letter-spacing: -.045em; }
+    .step p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.65; }
+    .evidence { display: inline-flex; margin-top: 28px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--ink); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+    .media { min-height: 350px; position: relative; overflow: hidden; background: #1a1c1b; color: #f0eee7; isolation: isolate; }
+    .media::after { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(240,238,231,.22); pointer-events: none; }
+    .media span { position: absolute; z-index: 2; left: 28px; bottom: 25px; color: rgba(240,238,231,.7); font-size: 9px; letter-spacing: .15em; text-transform: uppercase; }
+    .one { background: var(--lime); color: var(--ink); }
+    .one::before { content: "?"; position: absolute; right: 2%; top: -16%; font: 400 360px/1 Georgia, serif; color: rgba(23,24,23,.13); }
+    .one::after { border-color: rgba(23,24,23,.25); }
+    .one span { color: rgba(23,24,23,.62); }
+    .two { background: var(--blue); }
+    .two::before { content: ""; position: absolute; inset: 17% 13%; border: 1px solid rgba(255,255,255,.48); border-radius: 50%; box-shadow: 0 0 0 38px rgba(255,255,255,.08), 0 0 0 76px rgba(255,255,255,.05); }
+    .three { background: #1b1d1c; }
+    .three::before { content: ""; position: absolute; left: 12%; right: 12%; top: 50%; height: 1px; background: linear-gradient(90deg,var(--coral) 0 22%,transparent 22% 28%,var(--lime) 28% 62%,transparent 62% 68%,#f0eee7 68%); box-shadow: 0 -48px 0 rgba(240,238,231,.14), 0 48px 0 rgba(240,238,231,.14); }
+    .four { background: var(--coral); color: var(--ink); }
+    .four::before { content: "PROOF"; position: absolute; inset: 0; display: grid; place-items: center; font: 700 clamp(68px,10vw,150px)/1 Arial, sans-serif; letter-spacing: -.09em; color: rgba(23,24,23,.16); transform: rotate(-7deg); }
+    .four::after { border-color: rgba(23,24,23,.24); }
+    .four span { color: rgba(23,24,23,.64); }
+    .closing { min-height: 60vh; padding: 110px clamp(20px,5vw,76px); background: #191b19; color: #f1eee7; display: grid; place-items: center; }
+    .closing p { max-width: 1000px; margin: 0; font: 400 clamp(48px,7vw,104px)/.9 Georgia, serif; letter-spacing: -.055em; }
+    :focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+    @media (max-width: 860px) {
+      html { scroll-behavior: auto; }
+      .hero { min-height: 70vh; grid-template-columns: 1fr; gap: 34px; }
+      .timeline { grid-template-columns: 1fr; padding-inline: 18px; }
+      .chapter { position: relative; top: auto; min-height: auto; padding-bottom: 54px; border-bottom: 1px solid var(--line); }
+      .chapter .index { margin-top: 28px; }
+      .step { min-height: 570px; gap: 18px; }
+      .step-grid { grid-template-columns: 1fr; gap: 28px; }
+      .media { min-height: 280px; }
+      .rail { left: 6px; }
+      .dot { margin-left: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      :root { --progress: 1; }
+      .step { opacity: 1; }
+      .step .dot { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar"><b>Fieldwork / Method 01</b><span>Scroll maps the sequence</span></header>
+  <main>
+    <section class="hero" aria-labelledby="title"><div><span class="kicker">A process with evidence</span><h1 id="title">From question to proof.</h1></div><p class="intro">Four phases connect a loose possibility to something observable. The rail records where the reader is—nothing more, nothing hidden.</p></section>
+    <section class="timeline" aria-labelledby="timeline-title">
+      <aside class="chapter"><div><span>Field method / 01</span><h2 id="timeline-title">Build what the evidence can hold.</h2></div><div class="index"><strong class="current">01</strong><span class="total">/ 04 active phase</span></div></aside>
+      <div class="steps-wrap">
+        <div class="rail" aria-hidden="true"><i></i></div>
+        <ol class="steps">
+          <li class="step active" aria-current="step"><i class="dot" aria-hidden="true"></i><div class="step-grid"><div><span class="phase">01 / Frame</span><h3>Ask the useful question.</h3><p>Turn an open ambition into one observable tension, one audience, and one decision the work must support.</p><span class="evidence">Output — written premise</span></div><div class="media one" aria-hidden="true"><span>Question field / unresolved</span></div></div></li>
+          <li class="step"><i class="dot" aria-hidden="true"></i><div class="step-grid"><div><span class="phase">02 / Observe</span><h3>Collect the signal.</h3><p>Look for repeated behavior, exceptions, workarounds, and language. Keep source evidence separate from interpretation.</p><span class="evidence">Output — evidence ledger</span></div><div class="media two" aria-hidden="true"><span>Signal map / 12 observations</span></div></div></li>
+          <li class="step"><i class="dot" aria-hidden="true"></i><div class="step-grid"><div><span class="phase">03 / Shape</span><h3>Make the smallest system.</h3><p>Connect only the states required to test the idea. Give each transition a visible cause and a reversible path.</p><span class="evidence">Output — working model</span></div><div class="media three" aria-hidden="true"><span>State model / three transitions</span></div></div></li>
+          <li class="step"><i class="dot" aria-hidden="true"></i><div class="step-grid"><div><span class="phase">04 / Verify</span><h3>Let reality answer.</h3><p>Observe the result against the premise, record the gap, and keep the next decision narrower than the one before it.</p><span class="evidence">Output — verified finding</span></div><div class="media four" aria-hidden="true"><span>Decision record / complete</span></div></div></li>
+        </ol>
+      </div>
+    </section>
+    <section class="closing"><p>A line connects the order. Evidence gives the order meaning.</p></section>
+  </main>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const wrap = document.querySelector('.steps-wrap');
+      const rail = document.querySelector('.rail');
+      const steps = [...document.querySelectorAll('.step')];
+      const dots = [...document.querySelectorAll('.dot')];
+      const current = document.querySelector('.current');
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let scheduled = false, geometry = null;
+
+      function measure() {
+        const wrapRect = wrap.getBoundingClientRect();
+        const centers = dots.map(dot => { const rect = dot.getBoundingClientRect(); return rect.top + scrollY + rect.height / 2; });
+        const wrapTop = wrapRect.top + scrollY;
+        geometry = { centers, first: centers[0], last: centers.at(-1) };
+        rail.style.setProperty('--rail-top', `${centers[0] - wrapTop}px`);
+        rail.style.setProperty('--rail-height', `${centers.at(-1) - centers[0]}px`);
+      }
+
+      function render() {
+        scheduled = false;
+        measure();
+        const anchor = scrollY + innerHeight * .52;
+        const progress = reduced ? 1 : Math.min(1, Math.max(0, (anchor - geometry.first) / Math.max(1, geometry.last - geometry.first)));
+        root.style.setProperty('--progress', progress.toFixed(4));
+        let active = 0;
+        geometry.centers.forEach((center, index) => { if (anchor >= center) active = index; });
+        steps.forEach((step, index) => { step.classList.toggle('active', index === active); index === active ? step.setAttribute('aria-current', 'step') : step.removeAttribute('aria-current'); });
+        current.textContent = String(active + 1).padStart(2, '0');
+      }
+
+      function requestRender() { if (!scheduled) { scheduled = true; requestAnimationFrame(render); } }
+      addEventListener('scroll', requestRender, { passive: true });
+      addEventListener('resize', requestRender);
+      new ResizeObserver(requestRender).observe(wrap);
+      document.fonts?.ready.then(requestRender);
+      render();
+    })();
+  </script>
+</body>
+</html>

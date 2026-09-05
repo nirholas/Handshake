@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A reversible scroll-controlled optical object assembly demo.">
+  <title>Aperture 04 — Scroll-Scrubbed Visual Sequence</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #ebe8df;
+      --ink: #141714;
+      --muted: #666a61;
+      --line: rgba(20, 23, 20, .16);
+      --acid: #d7ff3f;
+      --orange: #ff5a2f;
+      --night: #10150f;
+      --p: 0;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--paper); }
+    body { margin: 0; min-width: 320px; color: var(--ink); background: var(--paper); font-family: Arial, Helvetica, sans-serif; }
+    button, a { font: inherit; }
+    a { color: inherit; }
+    .skip { position: fixed; z-index: 20; left: 16px; top: -60px; padding: 10px 14px; background: var(--acid); color: var(--ink); }
+    .skip:focus { top: 16px; }
+    .topbar {
+      position: fixed; z-index: 10; inset: 0 0 auto; height: 62px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(18px, 3vw, 44px); border-bottom: 1px solid rgba(235, 232, 223, .2); color: var(--paper);
+      mix-blend-mode: difference; pointer-events: none; text-transform: uppercase; letter-spacing: .15em; font-size: 10px;
+    }
+    .sequence { height: 380vh; position: relative; }
+    .stage { position: sticky; top: 0; height: 100vh; min-height: 620px; overflow: hidden; display: grid; grid-template-columns: minmax(310px, .78fr) minmax(520px, 1.22fr); }
+    .copy { position: relative; z-index: 2; padding: clamp(92px, 10vh, 132px) clamp(24px, 5vw, 72px) 42px; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+    .eyebrow { display: flex; justify-content: space-between; gap: 24px; color: var(--muted); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { max-width: 620px; margin: auto 0 30px; font: 400 clamp(62px, 8.3vw, 132px)/.77 Georgia, "Times New Roman", serif; letter-spacing: -.075em; }
+    h1 span { display: block; color: var(--orange); }
+    .state-copy { position: relative; min-height: 96px; max-width: 500px; border-top: 1px solid var(--line); padding-top: 18px; }
+    .state { position: absolute; inset: 18px 0 auto; opacity: 0; transform: translateY(12px); transition: opacity .2s linear, transform .2s ease; }
+    .state.active { opacity: 1; transform: translateY(0); }
+    .state b { display: block; margin-bottom: 8px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+    .state p { margin: 0; color: var(--muted); font-size: clamp(14px, 1.4vw, 18px); line-height: 1.5; }
+    .readout { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; margin-top: 26px; }
+    .track { height: 2px; background: var(--line); overflow: hidden; }
+    .track i { display: block; width: 100%; height: 100%; background: var(--ink); transform: scaleX(var(--p)); transform-origin: left; }
+    .percent { font: 400 34px/1 Georgia, serif; font-variant-numeric: tabular-nums; }
+    .visual { position: relative; min-width: 0; overflow: hidden; background: var(--night); color: #f4f2e8; }
+    .grid { position: absolute; inset: 0; opacity: .2; background-image: linear-gradient(rgba(244,242,232,.13) 1px, transparent 1px), linear-gradient(90deg, rgba(244,242,232,.13) 1px, transparent 1px); background-size: 9.1% 10%; }
+    .grid::after { content: ""; position: absolute; inset: 11% 10%; border: 1px solid rgba(244,242,232,.22); border-radius: 50%; transform: scale(calc(.62 + var(--p) * .38)); }
+    .object { position: absolute; left: 50%; top: 48%; width: min(70vw, 730px); aspect-ratio: 1; transform: translate(-50%, -50%); }
+    svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .orbit { fill: none; stroke: rgba(244,242,232,.32); stroke-width: 1; stroke-dasharray: 2 8; transform-origin: center; transform: rotate(calc(-40deg + var(--p) * 155deg)) scale(calc(.78 + var(--p) * .22)); }
+    .aperture { fill: #161c15; stroke: #f4f2e8; stroke-width: 1.2; transform-origin: center; transform: rotate(calc(28deg - var(--p) * 118deg)) scale(calc(.48 + var(--p) * .52)); }
+    .core { fill: var(--acid); transform-origin: center; transform: scale(calc(.18 + var(--p) * .82)); }
+    .shard { fill: var(--orange); transform-origin: 400px 400px; opacity: calc(.45 + var(--p) * .55); }
+    .s1 { transform: rotate(calc(-92deg + var(--p) * 78deg)) translateX(calc(170px - var(--p) * 130px)); }
+    .s2 { transform: rotate(calc(28deg - var(--p) * 18deg)) translateX(calc(205px - var(--p) * 168px)); }
+    .s3 { transform: rotate(calc(144deg - var(--p) * 56deg)) translateX(calc(188px - var(--p) * 148px)); }
+    .s4 { transform: rotate(calc(232deg + var(--p) * 32deg)) translateX(calc(220px - var(--p) * 174px)); }
+    .axis { stroke: rgba(215,255,63,.7); stroke-width: 1; vector-effect: non-scaling-stroke; transform-origin: center; transform: rotate(calc(-18deg + var(--p) * 36deg)); }
+    .object-label { position: absolute; color: rgba(244,242,232,.62); font: 10px/1.4 monospace; letter-spacing: .12em; text-transform: uppercase; }
+    .label-a { left: 8%; top: 19%; }
+    .label-b { right: 7%; bottom: 18%; text-align: right; }
+    .cross { position: absolute; width: 18px; height: 18px; }
+    .cross::before, .cross::after { content: ""; position: absolute; background: rgba(244,242,232,.42); }
+    .cross::before { left: 8px; top: 0; width: 1px; height: 18px; }
+    .cross::after { left: 0; top: 8px; width: 18px; height: 1px; }
+    .cross.one { left: 9%; bottom: 12%; }
+    .cross.two { right: 10%; top: 14%; }
+    .scroll-cue { position: absolute; z-index: 3; right: 24px; bottom: 24px; writing-mode: vertical-rl; color: rgba(244,242,232,.62); font-size: 9px; letter-spacing: .18em; text-transform: uppercase; }
+    .after { min-height: 72vh; display: grid; place-items: center; padding: 80px 24px; border-top: 1px solid var(--line); }
+    .after div { width: min(900px, 100%); display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: end; }
+    .after h2 { margin: 0; font: 400 clamp(54px, 8vw, 112px)/.82 Georgia, serif; letter-spacing: -.065em; }
+    .after p { margin: 0; color: var(--muted); line-height: 1.7; }
+    :focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
+    @media (max-width: 820px) {
+      .stage { grid-template-columns: 1fr; grid-template-rows: 48% 52%; min-height: 680px; }
+      .copy { padding: 82px 22px 24px; border-right: 0; border-bottom: 1px solid var(--line); }
+      h1 { margin: auto 0 18px; font-size: clamp(56px, 16vw, 94px); }
+      .state-copy { min-height: 74px; }
+      .state p { font-size: 14px; }
+      .visual { min-height: 0; }
+      .object { width: min(92vw, 520px); top: 50%; }
+      .object-label { display: none; }
+      .after div { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      :root { --p: 1; }
+      .sequence { height: auto; }
+      .stage { position: relative; }
+      .scroll-cue { display: none; }
+      .state { display: none; }
+      .state:last-child { display: block; opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#after">Skip sequence</a>
+  <header class="topbar"><span>Aperture / 04</span><span>Scroll controls state</span></header>
+  <main>
+    <section class="sequence" aria-labelledby="title">
+      <div class="stage">
+        <div class="copy">
+          <div class="eyebrow"><span>Optical study</span><span>2026 — 04</span></div>
+          <h1 id="title">Matter to <span>memory.</span></h1>
+          <div class="state-copy" aria-live="off">
+            <div class="state active"><b>01 / Fragments</b><p>Separate parts hold possibility before they hold form.</p></div>
+            <div class="state"><b>02 / Alignment</b><p>Each element finds an axis, a relation, and a reason to stay.</p></div>
+            <div class="state"><b>03 / Aperture</b><p>The mechanism disappears. What remains is a clear way through.</p></div>
+          </div>
+          <div class="readout"><div class="track" aria-hidden="true"><i></i></div><span class="percent">00</span></div>
+        </div>
+        <div class="visual" aria-hidden="true">
+          <div class="grid"></div>
+          <div class="object">
+            <svg viewBox="0 0 800 800" role="img" aria-label="Abstract optical parts assembling into one aperture">
+              <circle class="orbit" cx="400" cy="400" r="324"/>
+              <circle class="orbit" cx="400" cy="400" r="266"/>
+              <path class="aperture" d="M400 135C546 135 665 254 665 400S546 665 400 665 135 546 135 400 254 135 400 135Zm0 118c-81 0-147 66-147 147s66 147 147 147 147-66 147-147-66-147-147-147Z"/>
+              <path class="shard s1" d="M400 232l64 110-64 58-64-58z"/>
+              <path class="shard s2" d="M568 400l-110 64-58-64 58-64z"/>
+              <path class="shard s3" d="M400 568l-64-110 64-58 64 58z"/>
+              <path class="shard s4" d="M232 400l110-64 58 64-58 64z"/>
+              <line class="axis" x1="118" y1="400" x2="682" y2="400"/>
+              <line class="axis" x1="400" y1="118" x2="400" y2="682"/>
+              <circle class="core" cx="400" cy="400" r="66"/>
+            </svg>
+          </div>
+          <span class="object-label label-a">Exploded system<br>X 04 / Y 17</span>
+          <span class="object-label label-b">Normalized state<br><b class="state-number">0.000</b></span>
+          <i class="cross one"></i><i class="cross two"></i>
+          <span class="scroll-cue">Scroll to assemble ↓</span>
+        </div>
+      </div>
+    </section>
+    <section class="after" id="after"><div><h2>One position.<br>One state.</h2><p>The sequence releases into ordinary document flow. Reverse the scroll and every fragment returns to its exact earlier position—no autoplay, no hidden timeline, no trapped footer.</p></div></section>
+  </main>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const section = document.querySelector('.sequence');
+      const percent = document.querySelector('.percent');
+      const stateNumber = document.querySelector('.state-number');
+      const states = [...document.querySelectorAll('.state')];
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let scheduled = false;
+
+      function render() {
+        scheduled = false;
+        const rect = section.getBoundingClientRect();
+        const distance = Math.max(1, section.offsetHeight - innerHeight);
+        const progress = reduced ? 1 : Math.min(1, Math.max(0, -rect.top / distance));
+        root.style.setProperty('--p', progress.toFixed(4));
+        percent.textContent = String(Math.round(progress * 100)).padStart(2, '0');
+        stateNumber.textContent = progress.toFixed(3);
+        const active = progress < .34 ? 0 : progress < .72 ? 1 : 2;
+        states.forEach((state, index) => state.classList.toggle('active', index === active));
+      }
+
+      function requestRender() {
+        if (!scheduled) { scheduled = true; requestAnimationFrame(render); }
+      }
+
+      addEventListener('scroll', requestRender, { passive: true });
+      addEventListener('resize', requestRender);
+      render();
+    })();
+  </script>
+</body>
+</html>

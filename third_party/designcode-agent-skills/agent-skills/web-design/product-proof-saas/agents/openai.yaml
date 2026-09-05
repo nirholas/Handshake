@@ -1,0 +1,4 @@
+interface:
+  display_name: "Product Proof SaaS"
+  short_description: "Build SaaS pages around honest product proof"
+  default_prompt: "Use $product-proof-saas to design an original SaaS landing page where a real workflow demo is the central proof."

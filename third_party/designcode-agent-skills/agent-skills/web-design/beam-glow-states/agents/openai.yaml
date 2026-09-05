@@ -1,0 +1,4 @@
+interface:
+  display_name: "Beam Glow States"
+  short_description: "Add beam glows to loading and active UI"
+  default_prompt: "Use $beam-glow-states to add a restrained loading, selected, or active beam glow to this React UI."

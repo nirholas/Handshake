@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:40:48.314Z",
+  "skill": {
+    "id": "dither-laser-dark-mode",
+    "label": "Dither Laser Dark Mode",
+    "usage_count": 103,
+    "url": "https://neuform.ai/skill/dither-laser-dark-mode"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "952cdb7a-bfc0-41ef-b4ec-4d863c9b293f",
+    "slug": "cedar-lodges-where-the-mountains-breathe-6",
+    "title": "Cedar Lodges | Where the Mountains Breathe",
+    "url": "https://neuform.ai/pages/cedar-lodges-where-the-mountains-breathe-6/index.html",
+    "view_count": 322,
+    "favorite_count": 18,
+    "remix_count": 3
+  },
+  "html": {
+    "original_sha256": "b933c642ace8e0bde995ce2f36ece3a93c07435c5b346cfdd3271c6fed69ac5b",
+    "bundled_sha256": "041c06795b9ecbd539e8812d76d9584cf059c2aa6bf43617651e52a894a69b17",
+    "runtime_dependencies": [
+      "https://fonts.googleapis.com",
+      "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Source+Sans+3:ital,wght@0,300;0,400;1,300&display=swap",
+      "https://fonts.gstatic.com"
+    ],
+    "hardened_sha256": "367d06c9b2a4f9739f4a77ba6334cd9486f5253824e98150578e1f9877d6d5fc",
+    "sandboxed_sha256": "184da411f3d660fc3cb9ec2f428e7d9b832c4d84da3e2dcef0e5caf106662759",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 1238234,
+        "file": "assets/page-01-photo-1542224566-6e85f2e6772f.jpg",
+        "original_url": "https://images.unsplash.com/photo-1542224566-6e85f2e6772f"
+      },
+      {
+        "bytes": 186731,
+        "file": "assets/page-02-photo-1518732714860-b62714ce0c59.jpg",
+        "original_url": "https://images.unsplash.com/photo-1518732714860-b62714ce0c59"
+      },
+      {
+        "bytes": 262867,
+        "file": "assets/page-03-photo-1596394516093-501ba68a0ba6.jpg",
+        "original_url": "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6"
+      },
+      {
+        "bytes": 533313,
+        "file": "assets/page-04-photo-1587061949409-02df41d5e562.jpg",
+        "original_url": "https://images.unsplash.com/photo-1587061949409-02df41d5e562"
+      },
+      {
+        "bytes": 238376,
+        "file": "assets/page-05-photo-1522708323590-d24dbb6b0267.jpg",
+        "original_url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267"
+      },
+      {
+        "bytes": 439306,
+        "file": "assets/page-06-photo-1464822759023-fed622ff2c3b.jpg",
+        "original_url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"
+      },
+      {
+        "bytes": 192865,
+        "file": "assets/page-07-photo-1544161515-4ab6ce6db874.jpg",
+        "original_url": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874"
+      },
+      {
+        "bytes": 576747,
+        "file": "assets/page-08-photo-1555396273-367ea4eb4db5.jpg",
+        "original_url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5"
+      },
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 42667,
+        "file": "../../../../assets/runtime/runtime-689ca8dda44c-scrolltrigger-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js",
+        "kind": "runtime-script",
+        "sha256": "65f6c13748b0c8d8f9eabd0373a130ac293b3f16bf34aaa946d953980372b932"
+      },
+      {
+        "bytes": 71520,
+        "file": "../../../../assets/runtime/runtime-027051effa47-gsap-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js",
+        "kind": "runtime-script",
+        "sha256": "efc85c7eb141819717cda0033484a84b1c890d13b02e355a2fec79d424b20e7a"
+      },
+      {
+        "bytes": 603445,
+        "file": "../../../../assets/runtime/runtime-25023b521d77-three-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",
+        "kind": "runtime-script",
+        "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

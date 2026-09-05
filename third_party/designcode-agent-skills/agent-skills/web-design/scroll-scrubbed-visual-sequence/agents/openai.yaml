@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scroll-Scrubbed Visual Sequence"
+  short_description: "Build reversible video and frame scroll sequences"
+  default_prompt: "Use $scroll-scrubbed-visual-sequence to turn this visual transformation into a responsive, reversible scroll-controlled sequence."

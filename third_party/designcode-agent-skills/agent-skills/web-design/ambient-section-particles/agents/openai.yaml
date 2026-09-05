@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ambient Section Particles"
+  short_description: "Add efficient visibility-aware particle atmosphere"
+  default_prompt: "Use $ambient-section-particles to add a restrained, responsive particle layer to this section."

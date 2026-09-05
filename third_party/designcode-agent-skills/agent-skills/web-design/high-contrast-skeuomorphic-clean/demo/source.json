@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:40:55.951Z",
+  "skill": {
+    "id": "high-contrast-skeuomorphic-clean",
+    "label": "High Contrast Skeuomorphic Clean",
+    "usage_count": 462,
+    "url": "https://neuform.ai/skill/high-contrast-skeuomorphic-clean"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "4c49893e-5d44-449e-8253-795a37490d80",
+    "slug": "core-interface",
+    "title": "Core Interface",
+    "url": "https://neuform.ai/pages/core-interface/index.html",
+    "view_count": 851,
+    "favorite_count": 58,
+    "remix_count": 29
+  },
+  "html": {
+    "original_sha256": "759b603ed6544e3d709464cf5859199ee8a848cc7815dfe03b504e401da61c48",
+    "bundled_sha256": "d33ede921a371f1f3663091a563fea4912b8db7dcea008dc7871b53012731ca2",
+    "runtime_dependencies": [
+      "https://fonts.googleapis.com",
+      "https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap",
+      "https://fonts.gstatic.com"
+    ],
+    "hardened_sha256": "dbafa56ac3d82027a37aad0cf60a6054f69f79b0804acdb25c6ea2527b425e84",
+    "sandboxed_sha256": "53366d8e3c52fb3df510ff3bf670646d5a30da720fa44f214b7720ea88ed2e1f",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 82206,
+        "file": "assets/page-01-77415a2e-dcbc-4748-a29d-fced4821881a-800w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/77415a2e-dcbc-4748-a29d-fced4821881a_800w.jpg"
+      },
+      {
+        "bytes": 62810,
+        "file": "assets/page-02-eca707cc-a5b7-439a-b4fd-247f6106c2e1-800w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/eca707cc-a5b7-439a-b4fd-247f6106c2e1_800w.jpg"
+      },
+      {
+        "bytes": 74294,
+        "file": "assets/page-03-3186f9ea-5f5a-49f7-8fcf-568ad52f515e-800w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/3186f9ea-5f5a-49f7-8fcf-568ad52f515e_800w.webp"
+      },
+      {
+        "bytes": 17083,
+        "file": "assets/page-04-4734259a-bad7-422f-981e-ce01e79184f2-800w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/4734259a-bad7-422f-981e-ce01e79184f2_800w.jpg"
+      },
+      {
+        "bytes": 194699,
+        "file": "assets/page-05-005600e5-f6ab-4e59-bc86-eaeb02797dfa-800w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/005600e5-f6ab-4e59-bc86-eaeb02797dfa_800w.jpg"
+      },
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 71520,
+        "file": "../../../../assets/runtime/runtime-027051effa47-gsap-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js",
+        "kind": "runtime-script",
+        "sha256": "efc85c7eb141819717cda0033484a84b1c890d13b02e355a2fec79d424b20e7a"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

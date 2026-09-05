@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reference-Inspired Brand Worlds"
+  short_description: "Generate original brand worlds from references"
+  default_prompt: "Use $generate-reference-inspired-brand-worlds to create five original brand concepts that stay close to this visual reference without copying it."

@@ -1,0 +1,123 @@
+.lumen-cta,
+.lumen-cta *,
+.lumen-cta *::before,
+.lumen-cta *::after {
+  box-sizing: border-box;
+}
+
+.lumen-cta {
+  --lumen-cta-hue: 0deg;
+  --lumen-cta-saturation: 1;
+  --lumen-cta-brightness: 1;
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  background: #0b0821;
+}
+
+.lumen-cta--light {
+  background: #f3f0fb;
+}
+
+.lumen-cta__button {
+  /* Measurements are the authored ones from lumen.html: .btn / .btn-primary. */
+  height: 45px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 30px;
+  border-radius: 999px;
+  border: 0;
+  outline: 1px solid rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+  font-family: "Mulish", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15.7px;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  white-space: nowrap;
+  position: relative;
+  cursor: pointer;
+  appearance: none;
+  background: linear-gradient(
+    90deg,
+    #050014 0%,
+    #0d0029 20%,
+    #1e0066 40%,
+    #2f00ab 60%,
+    #5227c0 75%,
+    #9470d9 100%
+  );
+  box-shadow:
+    0 4px 22px rgba(70, 20, 190, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  filter: hue-rotate(var(--lumen-cta-hue)) saturate(var(--lumen-cta-saturation))
+    brightness(var(--lumen-cta-brightness));
+  transition: filter 0.25s ease;
+}
+
+.lumen-cta__button:hover:not(:disabled) {
+  filter: hue-rotate(var(--lumen-cta-hue)) saturate(var(--lumen-cta-saturation))
+    brightness(calc(var(--lumen-cta-brightness) * 1.12));
+}
+
+.lumen-cta__button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+.lumen-cta__button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* The authored sibling: same pill, glass instead of gradient (.btn-ghost / .navcta). */
+.lumen-cta__button--ghost {
+  padding: 0 33px;
+  background: rgba(255, 255, 255, 0.018);
+  outline-color: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.25s ease, outline-color 0.25s ease;
+}
+
+.lumen-cta__button--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  filter: hue-rotate(var(--lumen-cta-hue)) saturate(var(--lumen-cta-saturation))
+    brightness(var(--lumen-cta-brightness));
+}
+
+.lumen-cta--light .lumen-cta__button--ghost {
+  color: #1a1033;
+  background: rgba(12, 6, 34, 0.03);
+  outline-color: rgba(12, 6, 34, 0.16);
+}
+
+.lumen-cta--light .lumen-cta__button--ghost:hover:not(:disabled) {
+  background: rgba(12, 6, 34, 0.07);
+}
+
+.lumen-cta__ring {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.3px solid rgba(255, 255, 255, 0.9);
+  flex: 0 0 auto;
+}
+
+.lumen-cta--light .lumen-cta__button--ghost .lumen-cta__ring {
+  border-color: rgba(26, 16, 51, 0.75);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lumen-cta__button {
+    transition: none;
+  }
+}

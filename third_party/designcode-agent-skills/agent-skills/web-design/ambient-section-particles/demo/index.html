@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A visibility-aware ambient seed particle field demo.">
+  <title>Seedfall — Ambient Section Particles</title>
+  <style>
+    :root { color-scheme: dark; --night: #101914; --paper: #f1eadb; --muted: #9aa89d; --line: rgba(241,234,219,.16); --lime: #cde96d; --coral: #ef704d; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: #ebe6da; color: #182018; font-family: Arial, Helvetica, sans-serif; }
+    .particle-section { position: relative; min-height: 100svh; overflow: hidden; isolation: isolate; display: grid; grid-template-rows: auto 1fr auto; color: var(--paper); background: radial-gradient(circle at 78% 28%, #263a2d 0, #17241b 31%, var(--night) 70%); }
+    canvas { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .wash { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, rgba(16,25,20,.94) 0 35%, rgba(16,25,20,.48) 57%, rgba(16,25,20,.12)); pointer-events: none; }
+    .topbar { min-height: 64px; display: flex; justify-content: space-between; align-items: center; padding: 0 clamp(20px,4vw,60px); border-bottom: 1px solid var(--line); text-transform: uppercase; letter-spacing: .15em; font-size: 10px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand::before { content: ""; width: 10px; height: 18px; border: 1px solid var(--lime); border-radius: 90% 0 90% 0; transform: rotate(-30deg); }
+    .hero { width: min(1500px, 100%); margin: auto; padding: clamp(56px,8vw,116px) clamp(20px,6vw,88px); display: grid; grid-template-columns: minmax(0,1fr) minmax(300px,.82fr); align-items: end; gap: clamp(34px,6vw,96px); }
+    .kicker { display: block; margin-bottom: 24px; color: var(--lime); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; }
+    h1 { max-width: 760px; margin: 0; font: 400 clamp(72px,9vw,142px)/.74 Georgia, "Times New Roman", serif; letter-spacing: -.075em; }
+    h1 em { display: block; color: var(--coral); font-weight: 400; }
+    .copy { width: 100%; max-width: 530px; min-width: 0; padding-bottom: 8px; }
+    .copy p { margin: 0 0 34px; color: #bac5bc; font-size: clamp(17px,1.7vw,22px); line-height: 1.55; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    button, .link { min-height: 46px; padding: 0 18px; border: 1px solid var(--line); color: var(--paper); background: rgba(241,234,219,.04); display: inline-flex; align-items: center; gap: 12px; text-decoration: none; text-transform: uppercase; letter-spacing: .12em; font-size: 10px; cursor: pointer; }
+    button:hover, .link:hover { background: var(--paper); color: var(--night); }
+    button::after { content: "↝"; font-size: 19px; }
+    .metrics { display: grid; grid-template-columns: repeat(4,1fr); border-top: 1px solid var(--line); }
+    .metric { min-height: 112px; padding: 24px clamp(16px,3vw,42px); border-right: 1px solid var(--line); display: flex; flex-direction: column; justify-content: space-between; }
+    .metric:last-child { border-right: 0; }
+    .metric span { color: var(--muted); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
+    .metric strong { font: 400 clamp(26px,3vw,46px)/1 Georgia, serif; }
+    .after { min-height: 58vh; padding: 90px clamp(22px,6vw,88px); display: grid; place-items: center; background: #ebe6da; }
+    .after div { width: min(1040px,100%); display: grid; grid-template-columns: .7fr 1.3fr; gap: 70px; align-items: start; }
+    .after span { color: #65705f; font-size: 10px; letter-spacing: .15em; text-transform: uppercase; }
+    .after p { margin: 0; font: 400 clamp(36px,5vw,72px)/1.02 Georgia, serif; letter-spacing: -.045em; }
+    :focus-visible { outline: 3px solid var(--lime); outline-offset: 4px; }
+    @media (max-width: 760px) {
+      .particle-section { min-height: 760px; }
+      .hero { grid-template-columns: 1fr; padding-top: 70px; }
+      .hero > * { min-width: 0; }
+      h1 { max-width: 100%; font-size: clamp(64px,19vw,92px); overflow-wrap: anywhere; }
+      .copy { max-width: 100%; min-width: 0; }
+      .copy p { font-size: 16px; }
+      .wash { background: linear-gradient(180deg, rgba(16,25,20,.8), rgba(16,25,20,.42)); }
+      .metrics { grid-template-columns: repeat(2,1fr); }
+      .metric:nth-child(2) { border-right: 0; }
+      .metric:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .after div { grid-template-columns: 1fr; gap: 30px; }
+    }
+    @media (prefers-reduced-motion: reduce) { button { display: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="particle-section" aria-labelledby="title">
+      <canvas aria-hidden="true"></canvas><div class="wash"></div>
+      <header class="topbar"><span class="brand">Seedfall</span><span>Ambient field / 01</span></header>
+      <div class="hero">
+        <div><span class="kicker">A quiet weather system</span><h1 id="title">Let the scene <em>settle.</em></h1></div>
+        <div class="copy"><p>Small seed forms cross the light, bend with the air, and disappear beyond the frame. The content keeps the foreground.</p><div class="actions"><button type="button" class="gust">Send a quiet gust</button><a class="link" href="#principle">Read the principle</a></div><span class="status" aria-live="polite"></span></div>
+      </div>
+      <div class="metrics" aria-label="Particle system settings"><div class="metric"><span>Density</span><strong class="count">00</strong></div><div class="metric"><span>Wind</span><strong>−3.0</strong></div><div class="metric"><span>Motion</span><strong>Calm</strong></div><div class="metric"><span>Bounds</span><strong>Local</strong></div></div>
+    </section>
+    <section class="after" id="principle"><div><span>Atmosphere, not obstruction</span><p>Motion starts with visibility, respects the reading zone, and stops the moment the section leaves.</p></div></section>
+  </main>
+  <script>
+    (() => {
+      const section = document.querySelector('.particle-section');
+      const canvas = section.querySelector('canvas');
+      const context = canvas.getContext('2d');
+      const countLabel = document.querySelector('.count');
+      const status = document.querySelector('.status');
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const pointer = { x: -9999, y: -9999, force: 0 };
+      let width = 0, height = 0, ratio = 1, particles = [], frame = 0, visible = false, last = 0, gust = 0;
+
+      function seeded(index) { const x = Math.sin(index * 9283.13) * 43758.5453; return x - Math.floor(x); }
+      function makeParticle(index, randomY = true) {
+        const depth = .25 + seeded(index + 5) * .75;
+        return {
+          x: seeded(index + 1) * width,
+          y: randomY ? seeded(index + 2) * height : -30,
+          size: 4 + depth * 9,
+          speed: 10 + depth * 18,
+          sway: 10 + seeded(index + 3) * 24,
+          phase: seeded(index + 4) * Math.PI * 2,
+          rotation: seeded(index + 8) * Math.PI * 2,
+          spin: (seeded(index + 9) - .5) * 1.3,
+          alpha: .18 + depth * .5,
+          depth
+        };
+      }
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        width = rect.width; height = rect.height; ratio = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+        const target = reduced ? 18 : Math.max(28, Math.min(76, Math.round(width * height / 21000)));
+        particles = Array.from({ length: target }, (_, index) => particles[index] || makeParticle(index));
+        countLabel.textContent = String(target).padStart(2, '0');
+        last = 0;
+        draw(0);
+      }
+
+      function draw(time) {
+        const dt = last ? Math.min(.034, (time - last) / 1000) : 0; last = time;
+        context.clearRect(0, 0, width, height);
+        particles.forEach((particle, index) => {
+          if (!reduced && dt) {
+            const quietZone = particle.x < width * .57 ? .28 : 1;
+            const dx = particle.x - pointer.x, dy = particle.y - pointer.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance < 130 && pointer.force > 0) {
+              const push = (1 - distance / 130) * pointer.force * 95 * dt;
+              particle.x += dx / Math.max(1, distance) * push;
+              particle.y += dy / Math.max(1, distance) * push;
+            }
+            particle.phase += dt * (.8 + particle.depth);
+            particle.x += (-3 + Math.sin(particle.phase) * particle.sway + gust * 34) * dt * quietZone;
+            particle.y += particle.speed * dt;
+            particle.rotation += particle.spin * dt;
+            if (particle.y > height + 30 || particle.x < -50 || particle.x > width + 50) Object.assign(particle, makeParticle(index + Math.round(time), false), { x: seeded(index + time) * width });
+          }
+          context.save();
+          context.translate(particle.x, particle.y); context.rotate(particle.rotation); context.globalAlpha = particle.alpha * (particle.x < width * .54 ? .42 : 1);
+          context.fillStyle = index % 7 === 0 ? '#ef704d' : index % 3 === 0 ? '#cde96d' : '#e8dfc9';
+          context.beginPath(); context.ellipse(0, 0, particle.size * .38, particle.size, 0, 0, Math.PI * 2); context.fill();
+          context.strokeStyle = 'rgba(16,25,20,.42)'; context.lineWidth = .7; context.beginPath(); context.moveTo(0, -particle.size); context.lineTo(0, particle.size); context.stroke();
+          context.restore();
+        });
+        pointer.force *= .94; gust *= .95;
+      }
+
+      function loop(time) { draw(time); if (visible && !reduced && !document.hidden) frame = requestAnimationFrame(loop); else frame = 0; }
+      function start() { if (!frame && visible && !reduced && !document.hidden) { last = 0; frame = requestAnimationFrame(loop); } }
+      function stop() { cancelAnimationFrame(frame); frame = 0; }
+
+      new ResizeObserver(resize).observe(canvas);
+      new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; visible ? start() : stop(); }, { threshold: .04 }).observe(section);
+      section.addEventListener('pointermove', event => { const rect = canvas.getBoundingClientRect(); pointer.x = event.clientX - rect.left; pointer.y = event.clientY - rect.top; pointer.force = 1; }, { passive: true });
+      section.addEventListener('pointerleave', () => { pointer.x = pointer.y = -9999; });
+      document.querySelector('.gust').addEventListener('click', () => { gust = 1; status.textContent = 'A gentle gust moved through the field.'; setTimeout(() => status.textContent = '', 1800); start(); });
+      document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+      addEventListener('pagehide', stop, { once: true });
+      resize(); if (reduced) draw(0);
+    })();
+  </script>
+</body>
+</html>

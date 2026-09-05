@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">ThreeUI</title>
+  <desc id="desc">The ThreeUI Triwave symbol, divided into three flowing bands.</desc>
+  <style>
+    .threeui-mark { fill: #050608; }
+    @media (prefers-color-scheme: dark) {
+      .threeui-mark { fill: #fff; }
+    }
+  </style>
+  <defs>
+    <mask id="triwave-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="#000" />
+      <circle cx="256" cy="256" r="208" fill="#fff" />
+      <g fill="none" stroke="#000" stroke-linecap="round" stroke-width="28">
+        <path d="M36 178C112 252 184 264 260 196C336 128 404 114 482 180" />
+        <path d="M36 292C112 366 184 378 260 310C336 242 404 228 482 294" />
+      </g>
+    </mask>
+  </defs>
+  <rect class="threeui-mark" width="512" height="512" mask="url(#triwave-cut)" />
+</svg>

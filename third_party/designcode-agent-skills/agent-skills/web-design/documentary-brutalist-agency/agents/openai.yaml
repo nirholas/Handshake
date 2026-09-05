@@ -1,0 +1,4 @@
+interface:
+  display_name: "Documentary Brutalist Agency"
+  short_description: "Build stark agencies with documentary proof"
+  default_prompt: "Use $documentary-brutalist-agency to design an original agency site with billboard type and a documentary project sequence."

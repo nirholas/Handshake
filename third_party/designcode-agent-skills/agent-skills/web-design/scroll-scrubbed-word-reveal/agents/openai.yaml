@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scroll-Scrubbed Word Reveal"
+  short_description: "Reveal marked-up text progressively on scroll"
+  default_prompt: "Use $scroll-scrubbed-word-reveal to make this marked-up copy become readable progressively as the user scrolls."

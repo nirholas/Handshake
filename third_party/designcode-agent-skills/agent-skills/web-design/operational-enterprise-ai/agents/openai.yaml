@@ -1,0 +1,4 @@
+interface:
+  display_name: "Operational Enterprise AI"
+  short_description: "Build credible operational AI product pages"
+  default_prompt: "Use $operational-enterprise-ai to design an original enterprise AI page that explains workflows, controls, and risk clearly."

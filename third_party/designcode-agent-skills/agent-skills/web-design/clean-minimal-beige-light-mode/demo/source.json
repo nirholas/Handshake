@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:40:41.448Z",
+  "skill": {
+    "id": "clean-minimal-beige-light-mode",
+    "label": "Clean Minimal Beige Light Mode",
+    "usage_count": 699,
+    "url": "https://neuform.ai/skill/clean-minimal-beige-light-mode"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "839676f0-4ee7-4810-a930-797a4844f480",
+    "slug": "mentorbridge-find-a-mentor-to-help-you-grow-your-career",
+    "title": "MentorBridge — Find a mentor to help you grow your career",
+    "url": "https://neuform.ai/pages/mentorbridge-find-a-mentor-to-help-you-grow-your-career/index.html",
+    "view_count": 744,
+    "favorite_count": 39,
+    "remix_count": 15
+  },
+  "html": {
+    "original_sha256": "9f98ddfed3612c2008f1aa4be79de92bcbcea8087fe53aa4c3f2079f1dd53c42",
+    "bundled_sha256": "ea0c0162c2285ecac48548816cb4b23e21aa07f7e484c45e4da682b808f1ad9f",
+    "runtime_dependencies": [],
+    "hardened_sha256": "96849d11aab7856e7793f3852260a94c39af69f7692ef6b825c19e0be05304ce",
+    "sandboxed_sha256": "92d010a9eadd4901c31c462917bdbc5973d10dce15a5e8b169f14ae9fcce776d",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 599390,
+        "file": "assets/page-01-3186f9ea-5f5a-49f7-8fcf-568ad52f515e-3840w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/3186f9ea-5f5a-49f7-8fcf-568ad52f515e_3840w.webp"
+      },
+      {
+        "bytes": 249675,
+        "file": "assets/page-02-eca707cc-a5b7-439a-b4fd-247f6106c2e1-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/eca707cc-a5b7-439a-b4fd-247f6106c2e1_1600w.jpg"
+      },
+      {
+        "bytes": 282854,
+        "file": "assets/page-03-0d868fef-f560-45ca-ab35-5dad4fc29059-3840w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/0d868fef-f560-45ca-ab35-5dad4fc29059_3840w.webp"
+      },
+      {
+        "bytes": 511242,
+        "file": "assets/page-04-582afef4-b810-47b8-a047-8b3597c323e1-3840w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/582afef4-b810-47b8-a047-8b3597c323e1_3840w.webp"
+      },
+      {
+        "bytes": 536390,
+        "file": "assets/page-05-65695f80-23f9-46ee-8487-cbb6c93cc48b-3840w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/65695f80-23f9-46ee-8487-cbb6c93cc48b_3840w.webp"
+      },
+      {
+        "bytes": 214106,
+        "file": "assets/page-06-c92852bb-a510-405a-85ab-ffa0fde136a4-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/c92852bb-a510-405a-85ab-ffa0fde136a4_1600w.jpg"
+      },
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 43380,
+        "file": "../../../../assets/runtime/runtime-36c29c028158-scrolltrigger-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js",
+        "kind": "runtime-script",
+        "sha256": "ad33c2df9ada8a663c2147357828f980d0b7ca731ef33eb3c6e4f327c3b2cda5"
+      },
+      {
+        "bytes": 72214,
+        "file": "../../../../assets/runtime/runtime-cb9c6262bdd7-gsap-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js",
+        "kind": "runtime-script",
+        "sha256": "28033e449a31ebcc396e5be8b13b63152bf03094288fb5867034321927bce087"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

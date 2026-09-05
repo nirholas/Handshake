@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Like Meng on X"
+  short_description: "Draft and refine Meng’s X voice"
+  default_prompt: "Use $write-like-meng-on-x to improve this tweet in Meng’s current voice."

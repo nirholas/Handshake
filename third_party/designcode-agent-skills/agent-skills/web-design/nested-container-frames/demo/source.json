@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:40:59.947Z",
+  "skill": {
+    "id": "nested-container-frames",
+    "label": "Nested Container Frames",
+    "usage_count": 239,
+    "url": "https://neuform.ai/skill/nested-container-frames"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "4dcea4c1-8ffe-40da-92de-85dc3b11c6e6",
+    "slug": "squish-turn-your-ideas-into-stunning-visuals",
+    "title": "Squish — Turn Your Ideas Into Stunning Visuals",
+    "url": "https://neuform.ai/pages/squish-turn-your-ideas-into-stunning-visuals/index.html",
+    "view_count": 351,
+    "favorite_count": 14,
+    "remix_count": 1
+  },
+  "html": {
+    "original_sha256": "b135590e01cd1404f3db7f5ffb50fd59a58ace389dcf61284288e5ddecb2c878",
+    "bundled_sha256": "6e64593f3f24b4210835e0a4e74652adada28f9cf48cd7f56daaca54b883d92b",
+    "runtime_dependencies": [
+      "https://fonts.googleapis.com",
+      "https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500&family=Inter:wght@300;400;500;600&family=Pacifico&display=swap"
+    ],
+    "hardened_sha256": "3fbd0a0d7461e528123c14a7acafae53e80ce0f43cf057b6a60a4e40deb1e976",
+    "sandboxed_sha256": "7abbd51e4c973de2df8ce06f7b1f24f9c20cbfc4cabb0438b88e80177d26f50e",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 298959,
+        "file": "assets/page-01-2f563338-39fa-47ea-9761-658d4f3f84db-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/2f563338-39fa-47ea-9761-658d4f3f84db_1600w.jpg"
+      },
+      {
+        "bytes": 217369,
+        "file": "assets/page-02-4f5668c5-fc4a-44e0-bc5e-a664189d3c31-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/4f5668c5-fc4a-44e0-bc5e-a664189d3c31_1600w.jpg"
+      },
+      {
+        "bytes": 362749,
+        "file": "assets/page-03-77415a2e-dcbc-4748-a29d-fced4821881a-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/77415a2e-dcbc-4748-a29d-fced4821881a_1600w.jpg"
+      },
+      {
+        "bytes": 214106,
+        "file": "assets/page-04-c92852bb-a510-405a-85ab-ffa0fde136a4-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/c92852bb-a510-405a-85ab-ffa0fde136a4_1600w.jpg"
+      },
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

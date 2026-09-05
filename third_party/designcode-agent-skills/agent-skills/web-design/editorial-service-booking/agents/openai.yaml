@@ -1,0 +1,4 @@
+interface:
+  display_name: "Editorial Service Booking"
+  short_description: "Build calm editorial service booking pages"
+  default_prompt: "Use $editorial-service-booking to design an original service business page with a calm treatment selector and resilient booking flow."

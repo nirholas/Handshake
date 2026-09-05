@@ -1,0 +1,1316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text on a Path II — Six More Studies in Motion</title>
+<style>
+  :root{
+    --bg:#08090a;
+    --line:rgba(255,255,255,.028);
+    --line-strong:rgba(255,255,255,.05);
+    --fig:rgba(255,255,255,.24);
+    --title:#f2f3f5;
+    --copy:rgba(255,255,255,.46);
+    --sans:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    font-family:var(--sans);
+    color:var(--copy);
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+    -webkit-user-select:none;user-select:none;
+  }
+  .frame{height:100%;display:flex;flex-direction:column;padding:clamp(18px,2.2vw,34px)}
+  header{
+    display:flex;align-items:baseline;justify-content:space-between;gap:24px;flex:0 0 auto;
+    font-size:clamp(9.5px,.78vw,12px);font-weight:500;line-height:1;letter-spacing:.15em;
+    padding-bottom:clamp(14px,1.6vw,22px);
+    border-bottom:1px solid var(--line);
+  }
+  .ttl{white-space:nowrap;color:rgba(255,255,255,.78)}
+  .ttl b{font-weight:600;color:rgba(255,255,255,.92)}
+  .ttl span{color:rgba(255,255,255,.30);margin-left:1.5em}
+  .nav{color:rgba(255,255,255,.30);white-space:nowrap}
+
+  .grid{
+    position:relative;
+    flex:1 1 auto;min-height:0;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:1fr;
+  }
+  .fig{
+    position:relative;min-width:0;min-height:0;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(14px,1.35vw,22px) clamp(16px,1.7vw,28px) clamp(12px,1.2vw,20px);
+  }
+  /* the only chrome: hairlines between the figures */
+  .fig::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--line);
+  }
+  .fig:nth-child(3n+1)::before{display:none}
+  .fig:nth-child(n+4)::after{
+    content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--line);
+  }
+  .fignum{
+    font-size:clamp(9px,.72vw,11.5px);font-weight:500;letter-spacing:.17em;
+    color:var(--fig);flex:0 0 auto;
+  }
+  .art{
+    flex:1 1 auto;min-height:0;max-height:min(100%, 52vh);
+    margin:clamp(4px,.5vw,10px) 0 clamp(10px,1.1vw,18px);
+    display:flex;align-items:center;justify-content:center;
+    container-type:size;
+  }
+  .plate{
+    /* square, centred: every study measures itself off one side */
+    position:relative;width:min(100cqw,100cqh);height:min(100cqw,100cqh);
+    cursor:crosshair;touch-action:none;
+    /* a breath of light under the drawing, the way the reference lifts its figures */
+    background:radial-gradient(ellipse 60% 58% at 50% 48%, rgba(255,255,255,.038), rgba(255,255,255,0) 70%);
+  }
+  h3{
+    font-size:clamp(13px,1.03vw,16px);font-weight:500;letter-spacing:-.01em;
+    color:var(--title);margin-bottom:.42em;flex:0 0 auto;
+  }
+  .fig p{
+    font-size:clamp(12px,.95vw,15px);line-height:1.58;color:var(--copy);
+    max-width:34ch;flex:0 0 auto;
+  }
+  .plate canvas{
+    position:absolute;inset:0;width:100%;height:100%;display:block;
+    /* its own layer, so repainting the drawing never re-rasterises the copy under it */
+    transform:translateZ(0);contain:strict;
+  }
+
+  @media (max-width:900px){
+    /* stacked: plain block flow, so no grid row ever compresses a figure */
+    .grid{display:block;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .fig{display:block;padding:26px 4px 30px}
+    .fig::before{display:none}
+    .fig:nth-child(n+2)::after{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--line)}
+    .art{height:min(78vw,420px);max-height:none;margin:14px 0 20px}
+    .plate{width:min(100cqw,100cqh);height:min(100cqw,100cqh)}
+    .fig p{max-width:none}
+    .nav{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="ttl"><b>TEXT ON A PATH</b><span>SIX MORE STUDIES IN MOTION</span></div>
+    <div class="nav">GLOBE · CODEX · CLAUDE · BOOK · CARD · CLOTH</div>
+  </header>
+
+  <div class="grid" id="grid">
+    <section class="fig">
+      <div class="fignum">FIG 06</div>
+      <div class="art"><div class="plate"><canvas id="globe"></canvas></div></div>
+      <h3>Globe</h3>
+      <p>Land drawn as type along the latitude lines. Drag, scroll and click to pin.</p>
+    </section>
+    <section class="fig">
+      <div class="fignum">FIG 07</div>
+      <div class="art"><div class="plate"><canvas id="codex"></canvas></div></div>
+      <h3>Codex</h3>
+      <p>The mark&rsquo;s outline sampled as one path, with a sentence running its full length.</p>
+    </section>
+    <section class="fig">
+      <div class="fignum">FIG 08</div>
+      <div class="art"><div class="plate"><canvas id="mark"></canvas></div></div>
+      <h3>Claude Code</h3>
+      <p>Two marks sharing a cloud of glyphs, paired so the change reads as a turn.</p>
+    </section>
+    <section class="fig">
+      <div class="fignum">FIG 09</div>
+      <div class="art"><div class="plate"><canvas id="book"></canvas></div></div>
+      <h3>Book</h3>
+      <p>The turning leaf is a curved surface, not a door. Drag through five spreads.</p>
+    </section>
+    <section class="fig">
+      <div class="fignum">FIG 10</div>
+      <div class="art"><div class="plate"><canvas id="tilt"></canvas></div></div>
+      <h3>Card</h3>
+      <p>Every glyph placed in card space, pushed through the same perspective divide.</p>
+    </section>
+    <section class="fig">
+      <div class="fignum">FIG 11</div>
+      <div class="art"><div class="plate"><canvas id="cloth"></canvas></div></div>
+      <h3>Cloth</h3>
+      <p>A verlet sheet of letters that shear with the weave. Grab it and pull.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var FACE = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+  var INK  = '226,228,233';        // soft light type on a near-black ground
+  var GROUND = '#08090a';
+  var SVGNS = 'http://www.w3.org/2000/svg';
+
+  /* the two marks, straight from simple-icons (24x24 viewBox) */
+  var D_OPENAI = "M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z";
+  var D_CCODE  = "M21 10.5h3v3h-3v3h-1.5v3H18v-3h-1.5v3H15v-3H9v3H7.5v-3H6v3H4.5v-3H3v-3H0v-3h3v-6h18Zm-15 0h1.5v-3H6Zm10.5 0H18v-3h-1.5z";
+  var D_CLAUDE = "m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z";
+  var LAND_B64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPcBAOD/HwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACA//+P//f/LwgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4/v/4/////wcAAAAEAPABAAAAfAAAAAAAAAAAAAAAAAAAAADg9w/4/////wEAAP4AAAAAAAAA+AAAAAAAAAAAAAAAAAAAAIAG+Of//////wAAAHwGAAAAAAAAAAMAAAAAAAAAAAAAAACABwAc/4P//////wAAADAAAAAAQAAAAD4AAAAAAAAAAAAAAAAAfMbDcQAA/v///wAAAAAAAADABwAA//8HAMAPAAAAAAAAAABgAAAAAAAA/P///wAAAAAAAABwAADg//8AAAAAAAAAAAAAAADwG457dwcA8P//HwAAAAAAAAAYAAD///9/eAAAAAAAAAAAAAD4/g0H/w8A8P//PwAAAAAAAAAOgOv/////fwD/AAAAAAA/AAAA/B84/v8A8P//LwAAAAD4AAAA4PP//////////wAAAOD///H/+D/3cPgDoP//DwAAAID/BwAAx/v/////////P4AA/P///////////////////////w8AAOcBAAgAAAAAAAAAAAAAgP///////////////////////wcAACYAAAQAAAAAAAAAAAAAgf///////////////////////wMM8AAAAAAAAAAAAAAAAAAAIID/////////e+wPwH8AgA8AAP/5z/////////////////8/ANH///////9/AIALgD8AAAAAwH/+//////////////////9/APj///////8fADwAAD8AAAAA8D/+//////////////////sPAPC/+f////8fAPwAADgAAAAA8D/+////////////////D/wBAMCfAP////8PAPwYAAAAAAAA8H/4//////////////9/DgcAAAAcAOD///8/APw/AAAAAAAQAB7w//////////////8BgAMAAAACAMD/////Afh/AAAAAAA4gBz+/////////////38A4AMAAMAAAMD/////B/z/AAAAAABwwAb+/////////////x8A8AEAAAAAAAD/////P///AwAAAADmgOH//////////////z8A4AAAAAAAAAD+////P/7/BwAAAAD28P////////////////8D4AAAAAAAAAD8////f/7/BwAAAADz+f////////////////8HIAAAAAAAAAD6////////BAAAAABw/v////////////////8EAAAAAAAAAADo//////8jHgAAAACA//////////////////8MAAAAAAAAAADQ//////8OPgAAAADw//////////////////8AAAAAAAAAAADg//////+PIAAAAADA////v////////////38EAAAAAAAAAADg////////AAAAAACA//v/zD/8/////////z8AAAAAAAAAAADg//////8bAAAAAACA//N/gD///////////x8GAAAAAAAAAADw//////8AAAAAAAD+B8c/AD/+/////////wcPAAAAAAAAAADg//////8AAAAAAAD+gx4/DH74/////////wABAAAAAAAAAADg/////x8AAAAAAAD+gbCn///8////////fQABAAAAAAAAAADg/////w8AAAAAAAD/gCDn///4//////9/MgADAAAAAAAAAADA/////w8AAAAAAAD+AADm/3/4//////8/cIABAAAAAAAAAADA/////wcAAAAAAAA44AHC///5////////4+ABAAAAAAAAAACA/////wcAAAAAAACI/wEA4P//////////4OgAAAAAAAAAAAAA/////wMAAAAAAAD4/wAA4P//////////ADYAAAAAAAAAAAAA/P///wEAAAAAAAD+/wEA8P//////////AQcAAAAAAAAAAAAA+P//fwAAAAAAAAD//w8P8P//////////AQEAAAAAAAAAAAAAyP//fwAAAAAAAAD//3//////////////AQAAAAAAAAAAAAAA0P+PYQAAAAAAAAD//////z//////////AwAAAAAAAAAAAAAAoP8HwAAAAAAAAMD/////83/+////////AQAAAAAAAAAAAAAAIP8DwAAAAAAAAOD/////5//I////////AAAAAAAAAAAAAAAAQP4DgAAAAAAAAPD/////z/+A////////AAAAAAAAAAAAAAAAAPwDAAIAAAAAAPD/////z/8ZwP////9/AQAAAAAAAAAAAAAAAPgDQAAAAAAAAPj/////j/9/gP////8fAQAAAAAAAAAAAAAAAPADEAMAAAAAAPz/////v///AP9//P8DAAAAAAAAAAAAAAAAAPADAwwAAAAAAPj/////P/9/APw//B8AAAAAAAAAAAAIAAAAAPCHA8AAAAAAAPj/////P/4/APwP+J8BAAAAAAAAAAAAAAAAAMD/A0YEAAAAAPj/////f/4fAPwH+B8AAwAAAAAAAAAAAAAAAAD/AQAAAAAAAPj/////f/wHAPgD8D8AAwAAAAAAAAAAAAAAAADgHwAAAAAAAPj///////wDAPgAwH8AAQAAAAAAAAAAAAAAAADAHwAAAAAAAPz//////30AAPAAwH8AAAAAAAAAAAAAAAAAAAAAHAAAAAAAAPj//////wsAAPAAgH4AAQAAAAAAAAAAAAAAAAAAGEAAAAAAAPj//////wMBAPAAgHwAAAAAAAAAAAAAAAAAAAAAGPAhAAAAAPD///////cBAOAAgDiABAAAAAAAAAAAAAAAAAAAIPl/AAAAAOD///////8AAGABABBAFAAAAAAAAAAAAAAAAAAAgP7/AQAAAMD///////8AAAABgAAAHAAAAAAAAAAAAAAAAAAAAPz/AQAAAID///////8AAAABAAEgCAAAAAAAAAAAAAAAAAAAAPz/HwAAAAD/8P///38AAAAAAANgAAAAAAAAAAAAAAAAAAAAAPz/fwAAAAAAoP///z8AAAAAYAd4AAAAAAAAAAAAAAAAAAAAAPz/fwAAAAAAAP///x8AAAAAwAY8AAAAAAAAAAAAAAAAAAAAAP7//wAAAAAAAP///w8AAAAAgAc+AAAAAAAAAAAAAAAAAAAAAP///wAAAAAAAP///wcAAAAAgIM/TwAAAAAAAAAAAAAAAAAAAP///wEAAAAAgP///wMAAAAAAIc/QAQAAAAAAAAAAAAAAAAAgP///w8AAAAAgP///wEAAAAAAA6fAUQAAAAAAAAAAAAAAAAAAP////8AAAAAAP///wAAAAAAAB6ewuwDAgAAAAAAAAAAAAAAgP////8DAAAAAP7//wAAAAAAABwAAvAPAgAAAAAAAAAAAAAAgP////8PAAAAAPz/fwAAAAAAABAAAMCfAQAAAAAAAAAAAAAAAP////8PAAAAAPz//wAAAAAAAOADAIA/MAAAAAAAAAAAAAAAAP7///8PAAAAAPz/fwAAAAAAAAAPAMBngAAAAAAAAAAAAAAAAP7///8PAAAAAPz//wAAAAAAAAAACABAAAAAAAAAAAAAAAAAAPz///8HAAAAAPj//wAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAPz///8DAAAAAPj//wAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAPj///8BAAAAAPz//4AAAAAAAAAAAB8GAAAAAAAAAAAAAAAAAPj///8BAAAAAPz//8EAAAAAAAAAIB8OAAAAAAAAAAAAAAAAAPD///8BAAAAAP7//+AAAAAAAAAA+B8OACAAAAAAAAAAAAAAAMD///8BAAAAAP7/f/gAAAAAAAAA/H8eAAAAAAAAAAAAAAAAAID///8AAAAAAP7/H/gAAAAAAAAA/P8fAABAAAAAAAAAAAAAAAD///8AAAAAAPz/D3AAAAAAAAAA/v8/AAAAAAAAAAAAAAAAAAD///8AAAAAAPj/D3gAAAAAAADA//9/AAgAAAAAAAAAAAAAAAD//38AAAAAAPj/DzgAAAAAAADw////AAAAAAAAAAAAAAAAAAD//x8AAAAAAPD/DzgAAAAAAAD4////AQAAAAAAAAAAAAAAAAD//wMAAAAAAPD/DzgAAAAAAAD4////AwAAAAAAAAAAAAAAAID//wEAAAAAAPD/AwAAAAAAAAD4////AwAAAAAAAAAAAAAAAID//wEAAAAAAPD/AwAAAAAAAAD4////BwAAAAAAAAAAAAAAAID//wEAAAAAAOD/AwAAAAAAAAD4////BwAAAAAAAAAAAAAAAID//wAAAAAAAOD/AQAAAAAAAADw////BwAAAAAAAAAAAAAAAID//wAAAAAAAMD/AAAAAAAAAADw////AwAAAAAAAAAAAAAAAID/fwAAAAAAAIB/AAAAAAAAAADgf/z/AwAAAAAAAAAAAAAAAID/PwAAAAAAAIA/AAAAAAAAAADgB/D/AQAAAAAAAAAAAAAAAMD/HQAAAAAAAIABAAAAAAAAAADwAND/AQAAAAAAAAAAAAAAAMD/AwAAAAAAAAAAAAAAAAAAAAAAAID/AAAIAAAAAAAAAAAAAMD/BwAAAAAAAAAAAAAAAAAAAAAAAAD/AAAQAAAAAAAAAAAAAOD/AwAAAAAAAAAAAAAAAAAAAAAAAAA+AABwAAAAAAAAAAAAAOA/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAOA/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAOAPAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAGAAAAAAAAAAAAAMAPAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAADAAAAAAAAAAAAAPAPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABAAAAAAAAAAAAAPADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOABAAAAAAAAAAAAAPAHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPADAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAPABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPCBAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA+AABAAJ8//j8PAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAPD/fwD///////8/AAAAAAAAAAAAAAAAAIA+AAAAAAAAAAAAPP///8D/////////HwAAAAAAAAAAAAAAAIA9AAAAAAAA8Pz/////P/j//////////wMAAAAAAAAAAMAAAPB9AAAAAID/////////P/7///////////8BAAAAAAAAAOABAwB/AAAAAPD///////////////////////8AAAAAAFACPoD///9/AAAAAPD//////////////////////x8AAAAA+P////////8HAAAAAP///////////////////////wcAAAAA/v///////wMAAAAA/v///////////////////////wcAAAD8/////////w8AAA7w/////////////////////////w8AAMAB/////////wMAgB84/////////////////////////wEAAAAA/P///////3/w4AcA/////////////////////////wAAAADg//////////8/gM///////////////////////////wMAAADg/////////////f///////////////////////////z8A7wMA/v////////////////////////////////////////8/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
+  /* 64 ready-made ink strings — assigning a freshly built rgba() per glyph is what
+     drags a page like this from 60fps to 20 */
+  /* on black the eye needs far less ink, so every alpha runs through SOFT first */
+  var SOFT = 0.88;
+  var INK64 = [];
+  for (var q0=0;q0<64;q0++) INK64.push('rgba(' + INK + ',' + (q0/63*SOFT).toFixed(4) + ')');
+  function ink(a){ return INK64[a <= 0 ? 0 : a >= 1 ? 63 : (a*63)|0]; }
+
+  /* ---------- shared plumbing ---------- */
+  function rng(seed){
+    var s = seed >>> 0;
+    return function(){
+      s ^= s << 13; s >>>= 0;
+      s ^= s >> 17;
+      s ^= s << 5;  s >>>= 0;
+      return s / 4294967296;
+    };
+  }
+
+  /* one canvas per figure, sized to the drawing only. A single board spanning the
+     whole grid also had to composite every empty text row, and this page is
+     pixel-bound, so trimming that area is the cheapest frame you can buy. */
+  function Surface(el){
+    this.el = el; this.ctx = el.getContext('2d');
+    this.w = 0; this.h = 0; this.dpr = 1;
+    this.resize();
+  }
+  Surface.prototype.resize = function(){
+    var r = this.el.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    var dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    var w = Math.round(r.width*dpr), h = Math.round(r.height*dpr);
+    if (w === this.el.width && h === this.el.height && this.w === r.width) return false;
+    this.el.width = w; this.el.height = h;
+    this.w = r.width; this.h = r.height; this.dpr = dpr;
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);
+    return true;
+  };
+  /* panels are no longer square, so scale off the short side and centre on the box */
+  Object.defineProperty(Surface.prototype, 'u', {
+    get: function(){ return this.w < this.h ? this.w : this.h; }
+  });
+  Surface.prototype.base = function(){
+    this.ctx.setTransform(this.dpr,0,0,this.dpr,0,0);
+  };
+
+  /* Chrome rasterises and caches a glyph per (font, transform). A thousand distinct
+     rotations a frame is a thousand cache misses — 24ms. Snapping every angle to one of
+     64 steps makes them all hits and costs 8ms. The 5.6-degree error is invisible. */
+  var QA = Math.PI*2/64;
+  function qang(a){ return Math.round(a/QA)*QA; }
+
+  function local(canvas, e){
+    var r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  /* ---------- svg path helpers ---------- */
+  var scratch = document.createElementNS(SVGNS, 'svg');
+  scratch.setAttribute('viewBox','0 0 24 24');
+  scratch.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+  document.body.appendChild(scratch);
+
+  /* dense samples of a path, split wherever the pen jumps between subpaths */
+  function polylines(d, step){
+    var el = document.createElementNS(SVGNS,'path');
+    el.setAttribute('d', d);
+    scratch.appendChild(el);
+    var L = el.getTotalLength();
+    var n = Math.max(64, Math.ceil(L/step));
+    var lines = [], cur = [], prev = null;
+    for (var i=0;i<=n;i++){
+      var p = el.getPointAtLength(L*i/n);
+      if (prev){
+        var jump = Math.hypot(p.x-prev.x, p.y-prev.y);
+        if (jump > step*6){ if (cur.length>3) lines.push(cur); cur = []; }
+      }
+      cur.push({x:p.x, y:p.y});
+      prev = p;
+    }
+    if (cur.length>3) lines.push(cur);
+    scratch.removeChild(el);
+
+    /* arc-length parameterise each run */
+    return lines.map(function(pts){
+      var acc = [0];
+      for (var i=1;i<pts.length;i++)
+        acc.push(acc[i-1] + Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y));
+      return { pts:pts, acc:acc, len:acc[acc.length-1] };
+    }).filter(function(l){ return l.len > step*8; });
+  }
+
+  var _pt = {x:0, y:0, a:0};
+  function atLength(line, t){
+    var len = line.len;
+    t = t - Math.floor(t/len)*len;                 // wrap
+    var a = line.acc, lo = 0, hi = a.length-1;
+    while (lo < hi-1){ var m = (lo+hi)>>1; if (a[m] <= t) lo = m; else hi = m; }
+    var seg = a[hi]-a[lo] || 1, f = (t-a[lo])/seg;
+    var p0 = line.pts[lo], p1 = line.pts[hi];
+    _pt.x = p0.x + (p1.x-p0.x)*f;
+    _pt.y = p0.y + (p1.y-p0.y)*f;
+    _pt.a = Math.atan2(p1.y-p0.y, p1.x-p0.x);
+    return _pt;
+  }
+
+  /* points scattered evenly inside a filled path, centred and normalised to its own
+     bounding box so a short wide mark and a tall one both fill the same frame */
+  function fitPoints(d, spacing, rand, rule){
+    var S = 320;
+    var c = document.createElement('canvas'); c.width = c.height = S;
+    var x = c.getContext('2d');
+    x.setTransform(S/24,0,0,S/24,0,0);
+    x.fillStyle = '#000';
+    x.fill(new Path2D(d), rule || 'evenodd');
+    var data = x.getImageData(0,0,S,S).data;
+    var inside = [];
+    for (var i=0;i<S*S;i++) if (data[i*4+3] > 128) inside.push(i);
+    var out = [];
+    if (!inside.length) return out;
+    var hit = new Uint8Array(S*S);
+    var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+    for (var m=0;m<inside.length;m++){
+      var gx = inside[m] % S, gy = (inside[m] / S)|0;
+      hit[inside[m]] = 1;
+      if (gx<x0)x0=gx; if (gx>x1)x1=gx; if (gy<y0)y0=gy; if (gy>y1)y1=gy;
+    }
+    var span = Math.max(x1-x0, y1-y0) || 1;
+    var mx = (x0+x1)/2, my = (y0+y1)/2;
+
+    /* jittered grid at the glyph's own advance, so letters sit shoulder to shoulder
+       without stacking into an unreadable smear */
+    var cell = Math.max(1.6, spacing*span);
+    for (var gy2 = y0; gy2 < y1; gy2 += cell){
+      for (var gx2 = x0; gx2 < x1; gx2 += cell){
+        var jx = gx2 + rand()*cell, jy = gy2 + rand()*cell;
+        var ix = jx|0, iy = jy|0;
+        if (ix<0||ix>=S||iy<0||iy>=S || !hit[iy*S+ix]) continue;
+        out.push({ x: (jx - mx)/span, y: (jy - my)/span });
+      }
+    }
+    return out;
+  }
+
+  /* a pool of light that re-adds a bitmap's own luminance through a soft mask, so
+     type under the cursor thickens instead of the paper just going grey */
+  var glowC = null, glowX = null;
+  function readLight(ctx, u, look, paint){
+    if (!look) return;
+    var R = u*0.22, d = 2;
+    var w = Math.ceil(R*2*d);
+    if (!glowC){ glowC = document.createElement('canvas'); glowX = glowC.getContext('2d'); }
+    if (glowC.width !== w){ glowC.width = glowC.height = w; }
+    glowX.setTransform(d,0,0,d,0,0);
+    glowX.globalCompositeOperation = 'source-over';
+    glowX.clearRect(0,0,R*2,R*2);
+    glowX.save();
+    glowX.translate(-(look.x-R), -(look.y-R));
+    paint(glowX);
+    glowX.restore();
+    var g = glowX.createRadialGradient(R,R,0,R,R,R);
+    g.addColorStop(0,   'rgba(0,0,0,1)');
+    g.addColorStop(0.55,'rgba(0,0,0,.62)');
+    g.addColorStop(1,   'rgba(0,0,0,0)');
+    glowX.globalCompositeOperation = 'destination-in';
+    glowX.fillStyle = g;
+    glowX.fillRect(0,0,R*2,R*2);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.85;
+    ctx.drawImage(glowC, look.x-R, look.y-R, R*2, R*2);
+    ctx.restore();
+  }
+
+  /* ---------- 06 / GLOBE ---------- */
+  var Globe = (function(){
+    var cv = document.getElementById('globe');
+    var s  = new Surface(cv);
+    var MW = 288, MH = 144, land;
+    (function(){
+      var bin = atob(LAND_B64);
+      land = new Uint8Array(bin.length);
+      for (var i=0;i<bin.length;i++) land[i] = bin.charCodeAt(i);
+    })();
+    function isLand(lon, lat){
+      var gx = Math.floor((lon+180)/360*MW), gy = Math.floor((90-lat)/180*MH);
+      if (gx<0||gx>=MW||gy<0||gy>=MH) return false;
+      var b = gy*MW+gx;
+      return (land[b>>3] >> (b&7)) & 1;
+    }
+
+    var PHRASE = "everypointonthisballisapathbacktoanotherone";
+    var nodes = [];
+    (function(){
+      /* the halftone grid is fine enough to draw a coastline; every third land cell
+         also carries a letter, which is as dense as type can get and stay readable */
+      var LAT_STEP = 3.05, k = 0, run = 0, sea3 = 0;
+      for (var lat = -86; lat <= 86; lat += LAT_STEP){
+        var rl = Math.cos(lat*Math.PI/180);
+        var n  = Math.max(1, Math.round(98*rl));
+        for (var i=0;i<n;i++){
+          var lon = -180 + 360*i/n;
+          var l = isLand(lon, lat);
+          if (!l && (sea3++ % 2)) continue;          // half the ocean carries the whole sphere
+          var letter = 0;
+          if (l && (run++ % 2 === 0)) letter = PHRASE.charAt(k++ % PHRASE.length);
+          nodes.push({
+            lat: lat*Math.PI/180, lon: lon*Math.PI/180,
+            land: l, c: letter
+          });
+        }
+      }
+    })();
+
+    var spin = 2.1, vel = 0.16, hover = false, drag = null, tilt = -0.36, vtilt = 0;
+    var land8 = [];
+    var zoom = 1, zoomT = 1, pins = [], look = null;
+    var sea = [], soil = [];
+
+    cv.addEventListener('pointerenter', function(){ hover = true; });
+    cv.addEventListener('pointerleave', function(){ hover = false; });
+    cv.addEventListener('pointerdown', function(e){
+      drag = local(cv, e); drag.moved = false; 
+      cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener('pointermove', function(e){
+      var p = local(cv, e);
+      look = p;
+      if (!drag) return;
+      vel  = (p.x - drag.x) / s.u * 9;
+      vtilt = -(p.y - drag.y) / s.u * 6;
+      tilt  = Math.max(-1.15, Math.min(1.15, tilt + vtilt*0.016));
+      drag = p; drag.moved = true;
+    });
+    function release(e){
+      if (drag && !drag.moved){                    // a click that never became a drag drops a pin
+        var g = unproject(drag.x, drag.y);
+        if (g){ pins.push({lat:g.lat, lon:g.lon, t:performance.now()}); if (pins.length>7) pins.shift(); }
+      }
+      drag = null;
+    }
+    cv.addEventListener('pointerup', release);
+    cv.addEventListener('pointercancel', function(){ drag = null; });
+    cv.addEventListener('wheel', function(e){
+      e.preventDefault();
+      zoomT = Math.max(0.85, Math.min(2.6, zoomT * Math.exp(-e.deltaY*0.0016)));
+    }, {passive:false});
+
+    /* screen point -> the lat/lon it is sitting on, or null if it missed the globe */
+    var view = {cx:0, cy:0, R:1, cs:1, sn:0, ct:1, st:0};
+    function unproject(px, py){
+      var x1 = (px - view.cx)/view.R, y2 = (view.cy - py)/view.R;
+      var q = 1 - x1*x1 - y2*y2;
+      if (q <= 0.002) return null;
+      var z2 = Math.sqrt(q);
+      var y0 =  y2*view.ct + z2*view.st;
+      var z1 = -y2*view.st + z2*view.ct;
+      var x0 =  x1*view.cs + z1*view.sn;
+      var z0 = -x1*view.sn + z1*view.cs;
+      return { lat: Math.asin(Math.max(-1, Math.min(1, y0))), lon: Math.atan2(z0, x0) };
+    }
+
+    function draw(now, dt){
+      var ctx = s.ctx;
+      ctx.clearRect(0,0,s.w,s.h);
+
+      zoom += (zoomT - zoom) * Math.min(1, dt/180);
+      if (!drag){
+        var idle = hover ? 0.045 : 0.16;           // slow down under the hand so it can be aimed
+        vel += (idle - vel) * Math.min(1, dt/900);       // coast back to the idle drift
+        vtilt *= Math.pow(0.90, dt/16);
+        tilt += vtilt*dt/1000;
+        tilt += (-0.36 - tilt) * Math.min(1, dt/4000);
+      }
+      spin += vel * dt/1000;
+
+      var cx = s.w/2, cy = s.h/2 + s.u*0.035;
+      var R  = s.u*0.318*zoom;
+      var fs = s.u*0.0275*Math.pow(zoom, 0.72);
+      var cs = Math.cos(spin), sn = Math.sin(spin);
+      var ct = Math.cos(tilt), st = Math.sin(tilt);
+      view.cx = cx; view.cy = cy; view.R = R; view.cs = cs; view.sn = sn; view.ct = ct; view.st = st;
+
+      /* a soft pool of light under the cursor, so the type near it reads */
+      var lx = -1e9, ly = -1e9, lr = s.u*0.20, lr2 = lr*lr;
+      if (look && !drag){ lx = look.x; ly = look.y; }
+
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+
+      /* dots first, in depth passes — setting ctx.font per glyph is what kills the frame */
+      sea.length = 0; soil.length = 0;
+      for (var i=0;i<nodes.length;i++){
+        var nd = nodes[i];
+        var cl = Math.cos(nd.lat);
+        var x0 = cl*Math.cos(nd.lon), y0 = Math.sin(nd.lat), z0 = cl*Math.sin(nd.lon);
+        var x1 =  x0*cs - z0*sn,  z1 = x0*sn + z0*cs;
+        var y2 =  y0*ct - z1*st,  z2 = y0*st + z1*ct;
+        if (z2 <= 0.02) continue;                        // solid earth: far side is hidden
+
+        var px = cx + x1*R, py = cy - y2*R;      // canvas y grows downward
+        var dx = px-lx, dy = py-ly;
+        var glow = (dx*dx + dy*dy < lr2) ? (1 - Math.sqrt(dx*dx+dy*dy)/lr) : 0;
+        if (!nd.land){ sea.push(px, py, Math.min(0.999, z2 + glow*0.55)); continue; }
+        if (!nd.c){ soil.push(px, py, Math.min(0.999, z2 + glow*0.55)); continue; }
+
+        /* tangent to this parallel, so the type runs east */
+        var tx0 = -Math.sin(nd.lon), tz0 = Math.cos(nd.lon);
+        var tx1 = tx0*cs - tz0*sn, tz1 = tx0*sn + tz0*cs;
+        var ang = qang(Math.atan2(tz1*st, tx1));
+        var b = Math.min(7, Math.max(0, ((Math.min(0.999, z2 + glow*0.6))*7.99)|0));
+        (land8[b] || (land8[b] = [])).push(px, py, ang, nd.c, 0);
+      }
+
+      /* sea and land as a halftone, six depth passes each, batched into one path per pass */
+      var dmin = Math.max(0.7, s.u*0.0029);
+      function dots(list, base, gain, grow){
+        for (var lvl=0; lvl<6; lvl++){
+          var z = (lvl+0.5)/6, dsz = dmin*grow*(0.55 + 0.75*z);
+          ctx.fillStyle = ink(base + gain*z);
+          ctx.beginPath();
+          for (var q=0;q<list.length;q+=3){
+            var lv = list[q+2] >= 1 ? 5 : (list[q+2]*6)|0;
+            if (lv !== lvl) continue;
+            ctx.rect(list[q]-dsz/2, list[q+1]-dsz/2, dsz, dsz);
+          }
+          ctx.fill();
+        }
+      }
+      dots(sea,  0.10, 0.22, 1.0);
+      dots(soil, 0.34, 0.46, 1.7);
+
+      /* land: eight size buckets, so ctx.font is touched eight times instead of a thousand */
+      for (var bi=0; bi<8; bi++){
+        var arr = land8[bi];
+        if (!arr || !arr.length) continue;
+        var zb = (bi+0.5)/8;
+        ctx.font = 'bold ' + (fs*(0.42 + 0.58*zb)).toFixed(2) + 'px ' + FACE;
+        ctx.fillStyle = ink(0.28 + 0.72*Math.pow(zb, 0.6));
+        for (var t=0;t<arr.length;t+=5){
+          ctx.save();
+          ctx.translate(arr[t], arr[t+1]);
+          ctx.rotate(arr[t+2]);
+          ctx.fillText(arr[t+3], 0, 0);
+          ctx.restore();
+        }
+        arr.length = 0;
+      }
+
+      /* pins ride the surface they were dropped on */
+      for (var pi=0; pi<pins.length; pi++){
+        var pn = pins[pi];
+        var pcl = Math.cos(pn.lat);
+        var ax = pcl*Math.cos(pn.lon), ay = Math.sin(pn.lat), az = pcl*Math.sin(pn.lon);
+        var bx1 = ax*cs - az*sn, bz1 = ax*sn + az*cs;
+        var by2 = ay*ct - bz1*st, bz2 = ay*st + bz1*ct;
+        if (bz2 <= 0.02) continue;
+        var ppx = cx + bx1*R, ppy = cy - by2*R;
+        var age = (now - pn.t)/1000;
+        var pop = Math.min(1, age/0.22);
+        var rr2 = s.u*0.016*(0.4 + 0.6*pop)*(0.55 + 0.45*bz2);
+        ctx.beginPath();
+        ctx.arc(ppx, ppy, rr2, 0, Math.PI*2);
+        ctx.strokeStyle = ink(0.30 + 0.55*bz2);
+        ctx.lineWidth = Math.max(0.7, s.u*0.0022);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(ppx, ppy, Math.max(0.7, rr2*0.22), 0, Math.PI*2);
+        ctx.fillStyle = ink(0.45 + 0.55*bz2);
+        ctx.fill();
+        if (age < 0.9){                                   // a ring that opens once, on landing
+          var w2 = 1 - age/0.9;
+          ctx.beginPath();
+          ctx.arc(ppx, ppy, rr2 + (1-w2)*s.u*0.05, 0, Math.PI*2);
+          ctx.strokeStyle = ink(0.55*w2*w2);
+          ctx.lineWidth = Math.max(0.6, s.u*0.0016);
+          ctx.stroke();
+        }
+      }
+    }
+    return { s:s, draw:draw };
+  })();
+
+  /* ---------- 07 / CODEX — type running the mark's outline ---------- */
+  var Codex = (function(){
+    var cv = document.getElementById('codex');
+    var s  = new Surface(cv);
+    var lines = polylines(D_OPENAI, 0.05);
+    var PHRASE = "codexreadsthepathandwritesitbackagain";
+    var flow = 0, speed = 1, hover = false, look = null;
+    var burst = [];                                   // letters kicked loose by a click
+
+    cv.addEventListener('pointerenter', function(){ hover = true; });
+    cv.addEventListener('pointerleave', function(){ hover = false; look = null; });
+    cv.addEventListener('pointermove', function(e){ look = local(cv, e); });
+    cv.addEventListener('pointerdown', function(){
+      
+      burst.push({ t:performance.now() });
+      if (burst.length > 3) burst.shift();
+    });
+
+    function draw(now, dt){
+      var ctx = s.ctx;
+      ctx.clearRect(0,0,s.w,s.h);
+
+      speed += ((hover ? 3.1 : 1) - speed) * Math.min(1, dt/280);
+      flow  += speed * dt/1000 * 1.9;
+
+      var span = s.u*0.62;                            // the 24-unit mark, in card px
+      var k = span/24;
+      var cx = s.w/2 - 12*k, cy = s.h/2 + s.u*0.02 - 12*k;
+      var fs = s.u*0.0250, step = fs*0.76/k;          // spacing measured in path units
+
+      /* the most recent click sends a shove outward that settles back */
+      var kick = 0, kickAge = 0;
+      if (burst.length){
+        kickAge = (now - burst[burst.length-1].t)/1000;
+        kick = Math.max(0, 1 - kickAge/1.1);
+        kick = kick*kick;
+      }
+
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'bold ' + fs.toFixed(2) + 'px ' + FACE;
+      var base = 0.92 - kick*0.35;
+      ctx.fillStyle = ink(base);
+      var lit = -1;                                  /* quantised, so fillStyle is touched rarely */
+      var lx = look ? look.x : -1e9, ly = look ? look.y : -1e9;
+      var LR = s.u*0.22, LR2 = LR*LR;
+
+      var idx = 0;
+      for (var li=0; li<lines.length; li++){
+        var line = lines[li];
+        var n = Math.max(3, Math.round(line.len/step));
+        var sp = line.len/n;
+        for (var i=0;i<n;i++){
+          var q = atLength(line, i*sp + flow);
+          var px = cx + q.x*k, py = cy + q.y*k;
+
+          if (kick > 0){
+            var dx = px - (cx+12*k), dy = py - (cy+12*k);
+            var d = Math.hypot(dx,dy) || 1;
+            var wob = Math.sin(i*1.7 + li*2.3);
+            px += dx/d * kick * s.u*0.11 * (0.6+0.5*wob);
+            py += dy/d * kick * s.u*0.11 * (0.6+0.5*wob);
+          }
+
+          var gd = 0;
+          if (look){
+            var ddx = px-lx, ddy = py-ly, dd = ddx*ddx + ddy*ddy;
+            if (dd < LR2) gd = 1 - Math.sqrt(dd)/LR;
+          }
+          var lv = (gd*5)|0;
+          if (lv !== lit){ lit = lv; ctx.fillStyle = ink(base + (1-base)*((lv+ (lv?0.5:0))/5)); }
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(qang(q.a));
+          ctx.fillText(PHRASE.charAt(idx++ % PHRASE.length), 0, 0);
+          ctx.restore();
+        }
+      }
+    }
+    return { s:s, draw:draw };
+  })();
+
+  /* ---------- 08 / CLAUDE CODE — a glyph cloud that morphs between marks ---------- */
+  var Mark = (function(){
+    var cv = document.getElementById('mark');
+    var s  = new Surface(cv);
+    var SPAN = 0.60, FS = 0.0180;                 // fractions of the card
+    var GAP  = (FS*0.60*1.06)/SPAN;               // one glyph advance, in shape units
+    var rand = rng(9152026);
+    var A = fitPoints(D_CLAUDE, GAP, rand, 'evenodd');   // claude burst — the resting mark
+    var B = fitPoints(D_CCODE,  GAP, rand, 'evenodd');   // claude code
+    var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789<>/\\{}[]()=+-*#$%&@?!";
+    var glyphs = [];
+    for (var i=0;i<Math.max(A.length,B.length);i++){
+      glyphs.push({
+        c: CHARS.charAt((rand()*CHARS.length)|0),
+        ph: rand()*Math.PI*2,
+        sp: 0.55 + rand()*0.9,
+        wob: 0.4 + rand()*0.8
+      });
+    }
+    /* keep the two clouds paired by angle so the morph reads as a rotation, not a shuffle */
+    function order(set){
+      return set.map(function(p,i){ return {i:i, a:Math.atan2(p.y, p.x), r:Math.hypot(p.x,p.y)}; })
+                .sort(function(u,v){ return u.a - v.a || u.r - v.r; })
+                .map(function(o){ return o.i; });
+    }
+    var oa = order(A), ob = order(B);
+    var M = Math.min(A.length, B.length);
+    var pair = [];
+    for (var j=0;j<M;j++)
+      pair.push([ A[oa[(j*A.length/M)|0]], B[ob[(j*B.length/M)|0]] ]);
+
+    var m = 0, target = 0, hover = null, live = true;
+
+    cv.addEventListener('pointerdown', function(){ target = 1 - target;  live = true; });
+    cv.addEventListener('pointermove', function(e){ hover = local(cv, e); live = true; });
+    cv.addEventListener('pointerleave', function(){ hover = null; live = true; });
+
+    function draw(now, dt){
+      var ctx = s.ctx;
+      var moving = hover || Math.abs(target-m) > 1e-4;
+      if (!moving && !live) return;              // settled: the last frame stays on screen
+      live = !!moving;
+      ctx.clearRect(0,0,s.w,s.h);
+
+      m += (target - m) * Math.min(1, dt/460);
+      var e = m<0.5 ? 4*m*m*m : 1 - Math.pow(-2*m+2,3)/2;   // easeInOutCubic
+
+      var span = s.u*SPAN;
+      var cx = s.w/2, cy = s.h/2 + s.u*0.02;
+      var fs = s.u*FS;
+      var t  = now/1000;
+      var travel = 4*e*(1-e);                                // biggest scatter mid-flight
+
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'bold ' + fs.toFixed(2) + 'px ' + FACE;
+      ctx.fillStyle = ink(0.88);
+      var dirty = false;
+
+      for (var i=0;i<pair.length;i++){
+        var g = glyphs[i], p = pair[i];
+        var ux = p[0].x + (p[1].x - p[0].x)*e;
+        var uy = p[0].y + (p[1].y - p[0].y)*e;
+        var px = cx + ux*span, py = cy + uy*span;
+
+        /* a slow breath at rest, an arc while morphing */
+        px += Math.sin(t*g.sp + g.ph) * s.u*0.0035 * g.wob;
+        py += Math.cos(t*g.sp*0.9 + g.ph) * s.u*0.0035 * g.wob;
+        py -= travel * Math.sin(g.ph) * s.u*0.05;
+
+        var a = 0.88;
+        if (hover){
+          var dx = px-hover.x, dy = py-hover.y, d2 = dx*dx+dy*dy;
+          var rr = s.u*0.10;
+          if (d2 < rr*rr){
+            var d = Math.sqrt(d2) || 1, push = (1 - d/rr);
+            px += dx/d * push*push * s.u*0.055;
+            py += dy/d * push*push * s.u*0.055;
+            a = 0.88 - 0.35*push;
+          }
+        }
+        if (a !== 0.88){ ctx.fillStyle = ink(a); dirty = true; }
+        else if (dirty){ ctx.fillStyle = ink(0.88); dirty = false; }
+        ctx.fillText(g.c, px, py);
+      }
+    }
+    return { s:s, draw:draw, reset:function(){ live = true; } };
+  })();
+
+  /* ---------- 09 / BOOK ----------
+     The leaf that turns is a curved surface, not a door: a chain of strips whose
+     tangent sweeps through an arc, so the paper bends the way paper bends. Lifted
+     from the approach in github.com/MengTo/sketchbook. */
+  var Book = (function(){
+    var cv = document.getElementById('book');
+    var s  = new Surface(cv);
+    /* ten pages, five spreads — a real end in both directions */
+    var PAGES = [
+      "A line is the shortest promise between two points. A letter set on it agrees to keep going. " +
+      "Set enough of them down and the promise becomes a sentence, which is only a line that learned " +
+      "to mean something on the way.",
+
+      "Curve the line and the letters do not complain. Each one turns a little further than the last, " +
+      "and the eye, which was following the shape anyway, reads the turning as intent. A spiral says " +
+      "patience. A straight rule says hurry.",
+
+      "Type bends but it does not break. A letter rotated past ninety degrees is still a letter; it " +
+      "has simply become a direction as well. Past a hundred and eighty it is upside down, which is " +
+      "not an error but a return trip.",
+
+      "Give a page enough letters and it stops being a surface. It becomes a route, and the margin " +
+      "becomes the place where the route pauses for breath. The gutter is the fold in the middle of " +
+      "the thought.",
+
+      "A book is a path folded so that it fits in the hand. Every fold is a promise that the line " +
+      "resumes on the other side, and it always does, in the same voice, one leaf later.",
+
+      "Turning a page is not a cut. It is a hinge. The paper lifts, curves through an arc it has to " +
+      "invent on the spot, and lands with the sentence still running underneath it.",
+
+      "What bends is never the letter itself but the surface it rides. Hold the sheet still and the " +
+      "type is rigid. Move the sheet and every glyph inherits the movement without being asked.",
+
+      "The eye reads the path before it reads the word. That is why a ring of type feels like an " +
+      "announcement and a column feels like an argument, before a single letter has been identified.",
+
+      "Set a sentence on a sphere and it becomes a latitude. Set it on cloth and it becomes weather. " +
+      "The words do not change; the ground underneath them does, and that turns out to be enough.",
+
+      "Every letter is a small machine for holding a shape still. Arrange them along something that " +
+      "moves and you have built the only machine that reads back: a line that knows where it is going."
+    ];
+    var LAST = (PAGES.length/2 | 0) - 1;          /* highest spread index */
+
+    var ROWS = 15, N = 13, BETA = 0.62;
+    var spread = 0, t = 0, dir = 1, drag = null, spring = null;
+    var idle = 0, touched = false, autoDir = 1, look = null;
+
+    /* each half-page is rendered once into its own bitmap and reused every frame */
+    var tex = {}, texKey = '';
+    function pageTex(page, w, h){
+      var k = page + '@' + (w|0) + 'x' + (h|0);
+      if (tex[k]) return tex[k];
+      var c = document.createElement('canvas');
+      var d = Math.min(2, window.devicePixelRatio || 1);
+      c.width = Math.max(1, Math.round(w*d)); c.height = Math.max(1, Math.round(h*d));
+      var x = c.getContext('2d');
+      x.setTransform(d,0,0,d,0,0);
+      /* paper has to be opaque or the leaf lets the page beneath read through it */
+      x.fillStyle = GROUND; x.fillRect(0,0,w,h);
+      x.fillStyle = 'rgba(255,255,255,.028)'; x.fillRect(0,0,w,h);
+      var pad = w*0.11, iw = w - pad*2;
+      var fs = iw*0.062, lh = (h - pad*1.6)/(ROWS+0.6);
+      x.font = fs.toFixed(2) + 'px ' + FACE;
+      x.textBaseline = 'middle'; x.textAlign = 'left';
+      x.fillStyle = ink(0.80);
+      var words = (PAGES[page] || '').split(' ');
+      var i = 0, r = 0, line;
+      while (i < words.length && r < ROWS){
+        line = '';
+        while (i < words.length){
+          var nx = line ? line + ' ' + words[i] : words[i];
+          if (line && x.measureText(nx).width > iw) break;
+          line = nx; i++;
+        }
+        x.fillText(line, pad, pad*0.9 + lh*(r+0.5));
+        r++;
+      }
+      x.font = (fs*0.9).toFixed(2) + 'px ' + FACE;
+      x.textAlign = 'center';
+      x.fillStyle = ink(0.42);
+      x.fillText(String(page+1), w/2, h - pad*0.42);
+      tex[k] = c;
+      return c;
+    }
+
+    function canTurn(d){ return spread + d >= 0 && spread + d <= LAST; }
+    function begin(d){
+      if (spring || drag) return false;
+      if (!canTurn(d)) return false;
+      dir = d; t = 0;
+      return true;
+    }
+    cv.addEventListener('pointerdown', function(e){
+      var p = local(cv, e);
+      touched = true;
+      if (begin(p.x > s.w/2 ? 1 : -1)){
+        drag = { x:p.x, w:s.w };
+        cv.setPointerCapture(e.pointerId);
+      }
+    });
+    cv.addEventListener('pointermove', function(e){
+      var p = local(cv, e);
+      look = p;
+      if (!drag) return;
+      var span = s.u*0.42;
+      var d = dir > 0 ? (drag.x - p.x) : (p.x - drag.x);
+      t = Math.max(0, Math.min(1, d/span));
+    });
+    cv.addEventListener('pointerleave', function(){ look = null; });
+    function letGo(){
+      if (!drag) return;
+      drag = null;
+      spring = { to: t > 0.42 ? 1 : 0 };
+    }
+    cv.addEventListener('pointerup', letGo);
+    cv.addEventListener('pointercancel', letGo);
+
+    var settled = false;
+    function draw(now, dt){
+      var ctx = s.ctx;
+
+      if (!drag){
+        if (spring){
+          t += (spring.to - t) * Math.min(1, dt/150);
+          if (Math.abs(spring.to - t) < 0.004){
+            t = spring.to;
+            if (t === 1) spread = Math.max(0, spread + dir);
+            t = 0; spring = null; settled = false;
+          }
+        } else if (!touched){
+          idle += dt;                                  /* leafs back and forth until you take over */
+          if (idle > 3800){
+            idle = 0;
+            if (!canTurn(autoDir)) autoDir = -autoDir;
+            if (begin(autoDir)) spring = { to: 1 };
+          }
+        }
+      }
+      var moving = drag || spring || t > 0 || look;
+      if (settled && !moving) return;
+      settled = !moving;
+
+      ctx.clearRect(0,0,s.w,s.h);
+
+      var BW = s.u*0.86, BH = s.u*0.60;
+      var bx = (s.w-BW)/2, by = s.h/2 - BH/2 + s.u*0.02;
+      var HW = BW/2, spineX = bx + HW, cyB = by + BH/2;
+      var F = BW*1.9;
+
+      var L = spread*2, R = spread*2 + 1;
+      var from = dir > 0 ? R : L, to = dir > 0 ? R + 1 : L - 1;
+      var turning = t > 0.0005;
+      var stayL = turning && dir < 0 ? to : L;      /* at rest the spread is just L | R */
+      var stayR = turning && dir > 0 ? to : R;
+
+      /* the block */
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, by, BW, BH, s.u*0.006); else ctx.rect(bx,by,BW,BH);
+      ctx.fillStyle = 'rgba(255,255,255,.022)';
+      ctx.fill();
+      ctx.strokeStyle = ink(0.18);
+      ctx.lineWidth = Math.max(0.6, s.u*0.0016);
+      ctx.stroke();
+
+      /* the two pages that stay put */
+      ctx.drawImage(pageTex(stayL, HW, BH), bx, by, HW, BH);
+      ctx.drawImage(pageTex(stayR, HW, BH), spineX, by, HW, BH);
+
+      if (turning){
+        var th = Math.PI*t, beta = BETA*Math.sin(Math.PI*t);
+        var tt = th + beta, td = 2*beta/N;
+        var seg = HW/N, side = dir > 0 ? 1 : -1;
+        var px = 0, pz = 0;
+
+        var frontTex = pageTex(from, HW, BH);
+        var backTex  = pageTex(to,   HW, BH);
+
+        for (var i=0;i<N;i++){
+          var a  = tt - (i+0.5)*td;
+          var u0 = i*seg, u1 = (i+1)*seg;
+          var nx = px + seg*Math.cos(a), nz = pz + seg*Math.sin(a);
+
+          var d0 = F/(F - pz*0.55), d1 = F/(F - nz*0.55);
+          var x0 = spineX + side*px*d0, x1 = spineX + side*nx*d1;
+          var vs = (d0 + d1)/2;
+          var dw = Math.abs(x1 - x0);
+          if (dw < 0.05){ px = nx; pz = nz; continue; }
+
+          /* the sheet's normal points at the eye while cos(a) is positive */
+          var front = Math.cos(a) > 0;
+          var img = front ? frontTex : backTex;
+          /* a right-hand leaf carries its spine at image-x 0 on the front and at
+             image-x HW on the back; a left-hand leaf is the other way round */
+          var sameDir = (side > 0) === front;
+          var sx = sameDir ? u0 : (HW - u1);
+          var mirror = sameDir ? (x1 < x0) : (x1 > x0);
+          var dxL = x0 < x1 ? x0 : x1;
+
+          ctx.save();
+          ctx.translate(mirror ? dxL + dw : dxL, cyB);
+          ctx.scale(mirror ? -1 : 1, vs);
+          ctx.drawImage(img,
+            sx*(img.width/HW), 0, seg*(img.width/HW), img.height,
+            0, -BH/2, dw, BH);
+          /* paper is matte: shade by how far this strip has turned away */
+          var lit = Math.abs(Math.cos(a));
+          ctx.fillStyle = 'rgba(0,0,0,' + ((1-lit)*0.58).toFixed(3) + ')';
+          ctx.fillRect(0, -BH/2, dw, BH);
+          if (lit > 0.74){
+            ctx.fillStyle = 'rgba(255,255,255,' + ((lit-0.74)*0.12).toFixed(3) + ')';
+            ctx.fillRect(0, -BH/2, dw, BH);
+          }
+          ctx.restore();
+
+          px = nx; pz = nz;
+        }
+
+        /* the shadow the lifted leaf throws back onto the spread */
+        var sh = ctx.createLinearGradient(spineX, 0, spineX + side*HW*0.55, 0);
+        sh.addColorStop(0, 'rgba(0,0,0,' + (0.42*Math.sin(Math.PI*t)).toFixed(3) + ')');
+        sh.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = sh;
+        ctx.fillRect(Math.min(spineX, spineX + side*HW*0.55), by, HW*0.55, BH);
+      }
+
+      /* the reading light */
+      readLight(ctx, s.u, look, function(gx){
+        gx.drawImage(pageTex(stayL, HW, BH), bx, by, HW, BH);
+        gx.drawImage(pageTex(stayR, HW, BH), spineX, by, HW, BH);
+      });
+
+      /* the gutter */
+      var g = ctx.createLinearGradient(spineX - BW*0.05, 0, spineX + BW*0.05, 0);
+      g.addColorStop(0,   'rgba(0,0,0,0)');
+      g.addColorStop(0.5, 'rgba(0,0,0,0.62)');
+      g.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(spineX - BW*0.05, by, BW*0.10, BH);
+    }
+    return { s:s, draw:draw, reset:function(){ tex = {}; settled = false; } };
+  })();
+
+  /* ---------- 10 / CARD — a plane of type under real perspective ---------- */
+  var Tilt = (function(){
+    var cv = document.getElementById('tilt');
+    var s  = new Surface(cv);
+    var rx = 0, ry = 0, tx = 0, ty = 0, flip = 0, flipTarget = 0;
+
+    var live = true, over = false, edge = 0, look = null;
+    cv.addEventListener('pointermove', function(e){
+      var p = local(cv, e);
+      look = p;
+      ty =  (p.x/s.w - 0.5) * 1.05;
+      tx = -(p.y/s.h - 0.5) * 0.75;
+      over = true; live = true;
+    });
+    cv.addEventListener('pointerenter', function(){ over = true; live = true; });
+    cv.addEventListener('pointerleave', function(){ tx = ty = 0; over = false; live = true; look = null; });
+    cv.addEventListener('pointerdown', function(){ flipTarget = 1 - flipTarget;  live = true; });
+
+    var FRONT = {
+      kicker:'TEXT ON A PATH',
+      title:'STUDY 10',
+      body:['a plane of type carried','through a perspective','divide, one glyph at a','time — the letters keep','the surface, not the','other way round'],
+      foot:'TILT / FLIP'
+    };
+    var BACK = {
+      kicker:'REVERSE',
+      title:'STUDY 10',
+      body:['every character is placed','in card space and pushed','through the same matrix,','so the type shears with','the plane instead of','being pasted on it'],
+      foot:'CARD SPACE'
+    };
+    var EDGE = "textonapath ";
+
+    function draw(now, dt){
+      var ctx = s.ctx;
+      var moving = over || Math.abs(tx-rx) > 1e-4 || Math.abs(ty-ry) > 1e-4 ||
+                   Math.abs(flipTarget-flip) > 1e-4 || false;
+      if (!moving && !live) return;                       // parked: leave the last frame on screen
+      live = moving;
+      ctx.clearRect(0,0,s.w,s.h);
+
+      if (over || Math.abs(flipTarget-flip) > 1e-4) edge += dt/1000*8;   // border type only runs live
+      rx += (tx - rx) * Math.min(1, dt/220);
+      ry += (ty - ry) * Math.min(1, dt/220);
+      flip += (flipTarget - flip) * Math.min(1, dt/420);
+      var fe = flip<0.5 ? 4*flip*flip*flip : 1 - Math.pow(-2*flip+2,3)/2;
+      var spin = fe*Math.PI;
+
+      var CW = s.u*0.50, CH = s.u*0.70;                  // card size in card-space px
+      var F = s.w*1.9;                                   // focal length
+      var cx = s.w/2, cy = s.h/2 + s.u*0.02;
+
+      var ca = Math.cos(ry + spin), sa = Math.sin(ry + spin);
+      var cb = Math.cos(rx), sb = Math.sin(rx);
+
+      /* card basis vectors rotated into view space */
+      function xform(u,v){
+        var x = u, y = v, z = 0;
+        var x1 =  x*ca + z*sa,  z1 = -x*sa + z*ca;       // yaw
+        var y2 =  y*cb - z1*sb, z2 = y*sb + z1*cb;       // pitch
+        var d = F/(F - z2);
+        return { x: cx + x1*d, y: cy + y2*d, z: z2, d: d };
+      }
+      var facingBack = Math.cos(ry + spin) < 0;
+      var face = facingBack ? BACK : FRONT;
+
+      /* card body */
+      var c00 = xform(-CW/2,-CH/2), c10 = xform(CW/2,-CH/2),
+          c11 = xform(CW/2, CH/2),  c01 = xform(-CW/2, CH/2);
+      ctx.beginPath();
+      ctx.moveTo(c00.x,c00.y); ctx.lineTo(c10.x,c10.y);
+      ctx.lineTo(c11.x,c11.y); ctx.lineTo(c01.x,c01.y); ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.018 + 0.032*Math.abs(Math.sin(ry+spin))).toFixed(3) + ')';
+      ctx.fill();
+      ctx.strokeStyle = ink(0.34);
+      ctx.lineWidth = Math.max(0.6, s.u*0.0022);
+      ctx.stroke();
+
+      /* every glyph goes through the same transform, with its own local frame */
+      var h = 0.6;
+      var curA = 1, curLit = -1;
+      var LR = s.u*0.15, LR2 = LR*LR;   // the card is small; keep the pool small too
+      function glyph(ch, u, v, mirror){
+        var p0 = xform(u,v);
+        if (p0.z > F*0.92) return;
+        var gd = 0;
+        if (look){
+          var ddx = p0.x-look.x, ddy = p0.y-look.y, dd = ddx*ddx + ddy*ddy;
+          if (dd < LR2) gd = 1 - Math.sqrt(dd)/LR;
+        }
+        var lv = (gd*5)|0;
+        if (lv !== curLit){ curLit = lv; ctx.fillStyle = ink(curA + (1-curA)*((lv + (lv?0.5:0))/5)); }
+        var pu = xform(u+h, v), pv = xform(u, v+h);
+        ctx.save();
+        s.base();
+        ctx.transform((pu.x-p0.x)/h, (pu.y-p0.y)/h, (pv.x-p0.x)/h, (pv.y-p0.y)/h, p0.x, p0.y);
+        if (mirror) ctx.scale(-1, 1);
+        ctx.fillText(ch, 0, 0);
+        ctx.restore();
+      }
+      function line(str, u0, v, size, alpha, bold){
+        var m = facingBack ? -1 : 1;
+        ctx.font = (bold?'bold ':'') + size.toFixed(2) + 'px ' + FACE;
+        curA = alpha; curLit = -1;
+        ctx.fillStyle = ink(alpha);
+        var pen = u0;
+        for (var i=0;i<str.length;i++){
+          var ch = str.charAt(i), aw = ctx.measureText(ch).width;
+          glyph(ch, (pen + aw/2)*m, v, facingBack);      // placed on its own centre
+          pen += aw;
+        }
+      }
+
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      var pad = CW*0.11;
+      var k1 = CW*0.052, k2 = CW*0.125, k3 = CW*0.055;
+      line(face.kicker, -CW/2+pad, -CH/2+pad*1.0, k1, 0.55, true);
+      line(face.title,  -CW/2+pad, -CH/2+pad*2.3, k2, 0.95, true);
+      for (var i=0;i<face.body.length;i++)
+        line(face.body[i], -CW/2+pad, -CH/2+pad*3.9 + i*k3*1.55, k3, 0.72, false);
+      line(face.foot,   -CW/2+pad,  CH/2-pad*0.85, k1, 0.55, true);
+
+      /* type running the card's own border */
+      var per = 2*(CW-pad*0.7) + 2*(CH-pad*0.7);
+      var es = CW*0.040, estep = es*0.62, n = Math.floor(per/estep);
+      var W2 = CW-pad*0.7, H2 = CH-pad*0.7;
+      var off = edge % estep;
+      ctx.font = es.toFixed(2) + 'px ' + FACE;
+      curA = 0.42; curLit = -1;
+      ctx.fillStyle = ink(0.42);
+      for (var e2=0;e2<n;e2++){
+        var t = (e2*estep + off) % per, u, v, rot;
+        if (t < W2){ u = -W2/2 + t;  v = -H2/2; rot = 0; }
+        else if (t < W2+H2){ u = W2/2; v = -H2/2 + (t-W2); rot = Math.PI/2; }
+        else if (t < 2*W2+H2){ u = W2/2 - (t-W2-H2); v = H2/2; rot = Math.PI; }
+        else { u = -W2/2; v = H2/2 - (t-2*W2-H2); rot = -Math.PI/2; }
+        if (facingBack) u = -u;   // the 180-degree flip already mirrors the plane
+        var p0 = xform(u,v);
+        if (p0.z > F*0.92) continue;
+        var egd = 0;
+        if (look){
+          var edx = p0.x-look.x, edy = p0.y-look.y, edd = edx*edx + edy*edy;
+          if (edd < LR2) egd = 1 - Math.sqrt(edd)/LR;
+        }
+        var elv = (egd*5)|0;
+        if (elv !== curLit){ curLit = elv; ctx.fillStyle = ink(0.42 + 0.58*((elv + (elv?0.5:0))/5)); }
+        var pu = xform(u+h,v), pv = xform(u,v+h);
+        var ax = (pu.x-p0.x)/h, ay = (pu.y-p0.y)/h;
+        var bx = (pv.x-p0.x)/h, by = (pv.y-p0.y)/h;
+        ctx.save(); s.base();
+        ctx.transform(ax, ay, bx, by, p0.x, p0.y);
+        if (facingBack) ctx.scale(-1, 1);
+        ctx.rotate(rot);
+        ctx.fillText(EDGE.charAt(e2 % EDGE.length), 0, 0);
+        ctx.restore();
+      }
+
+      s.base();
+    }
+    return { s:s, draw:draw, reset:function(){ live = true; } };
+  })();
+
+  /* ---------- 11 / CLOTH ---------- */
+  var Cloth = (function(){
+    var cv = document.getElementById('cloth');
+    var s  = new Surface(cv);
+    var GX = 19, GY = 21;
+    var PHRASE = "thefabricremembersthelineitwasgivenandkeepsonsayingitwhilethewindpullsatthecorners";
+    var pts = [], rest = 0, built = 0;
+    var pointer = null, wind = 0, held = null;
+
+    function build(){
+      var w = s.w; if (!w) return;
+      rest = s.u*0.58/(GX-1);
+      var x0 = w/2 - rest*(GX-1)/2, y0 = s.h*0.185;
+      pts = [];
+      for (var j=0;j<GY;j++) for (var i=0;i<GX;i++){
+        var x = x0 + i*rest, y = y0 + j*rest;
+        pts.push({ x:x, y:y, px:x, py:y, pin:(j===0 && (i%5===0 || i===GX-1)) ? {x:x,y:y} : null, free:0 });
+      }
+      built = w;
+    }
+    function P(i,j){ return pts[j*GX+i]; }
+
+    cv.addEventListener('pointermove', function(e){
+      pointer = local(cv, e);
+      if (held){ held.gx = pointer.x; held.gy = pointer.y; }
+    });
+    cv.addEventListener('pointerleave', function(){ pointer = null; });
+    cv.addEventListener('pointerdown', function(e){
+      var p = local(cv, e);
+      var best = null, bd = 1e9;
+      for (var k=0;k<pts.length;k++){
+        var q = pts[k];
+        if (q.pin) continue;
+        var d = (q.x-p.x)*(q.x-p.x) + (q.y-p.y)*(q.y-p.y);
+        if (d < bd){ bd = d; best = q; }
+      }
+      if (best && bd < (s.u*0.24)*(s.u*0.24)){
+        held = best; held.gx = p.x; held.gy = p.y;
+        cv.setPointerCapture(e.pointerId);
+      }
+    });
+    function drop(){ held = null; }
+    cv.addEventListener('pointerup', drop);
+    cv.addEventListener('pointercancel', drop);
+
+    /* fixed-step verlet: a variable dt makes the constraint pass under-relax and the
+       sheet collapses instead of hanging */
+    var acc2 = 0, H = 1/120;
+    function step(dtms){
+      acc2 += Math.min(50, dtms)/1000;
+      var guard = 0;
+      while (acc2 >= H && guard++ < 2){ acc2 -= H; substep(H); }
+    }
+    function substep(h){
+      var g = s.w*1.6, now = performance.now();
+      wind += h;
+      var hh = h*h, damp = 0.992;
+      for (var k=0;k<pts.length;k++){
+        var p = pts[k];
+        if (p === held){
+          p.px = p.x; p.py = p.y;
+          p.x += (held.gx - p.x)*0.45;              // the hand leads, the cloth follows
+          p.y += (held.gy - p.y)*0.45;
+          continue;
+        }
+        if (p.pin && p.free < now){ p.x = p.pin.x; p.y = p.pin.y; p.px = p.x; p.py = p.y; continue; }
+        var vx = (p.x - p.px)*damp, vy = (p.y - p.py)*damp;
+        p.px = p.x; p.py = p.y;
+        var breeze = (Math.sin(wind*1.9 + p.y*0.035) * 0.55 + Math.sin(wind*0.7)*0.45) * s.u*0.55;
+        p.x += vx + breeze*hh;
+        p.y += vy + g*hh;
+        if (pointer && !held){                      // a passing hand only brushes it
+          var dx = p.x-pointer.x, dy = p.y-pointer.y, d = Math.hypot(dx,dy);
+          var rr = s.u*0.13;
+          if (d < rr && d > 0.001){
+            var push = (1-d/rr)*(1-d/rr) * s.u*0.008;
+            p.x += dx/d*push; p.y += dy/d*push;
+          }
+        }
+      }
+      var iters = held ? 12 : 6;                  // a hand on it needs the constraint to travel
+      for (var it=0; it<iters; it++){
+        for (var j=0;j<GY;j++) for (var i=0;i<GX;i++){
+          if (i<GX-1) solve(P(i,j), P(i+1,j), rest);
+          if (j<GY-1) solve(P(i,j), P(i,j+1), rest);
+        }
+        for (var m=0;m<pts.length;m++){
+          var q = pts[m];
+          if (q === held){ q.x = held.gx; q.y = held.gy; continue; }
+          if (q.pin && q.free < now){ q.x = q.pin.x; q.y = q.pin.y; }
+        }
+      }
+      /* a final hard clamp: cloth stretches a little and then simply refuses,
+         otherwise a long pull draws it out into strings */
+      var lim = rest*1.14;
+      for (var j2=0;j2<GY;j2++) for (var i2=0;i2<GX;i2++){
+        if (i2<GX-1) clamp(P(i2,j2), P(i2+1,j2), lim);
+        if (j2<GY-1) clamp(P(i2,j2), P(i2,j2+1), lim);
+      }
+    }
+    function clamp(a, b, lim){
+      var dx = b.x-a.x, dy = b.y-a.y, d = Math.hypot(dx,dy);
+      if (d <= lim || d < 1e-4) return;
+      var f = (d-lim)/d*0.5, ox = dx*f, oy = dy*f;
+      if (a !== held && !(a.pin && a.free < performance.now())){ a.x += ox; a.y += oy; }
+      if (b !== held && !(b.pin && b.free < performance.now())){ b.x -= ox; b.y -= oy; }
+    }
+    function solve(a, b, len){
+      var dx = b.x-a.x, dy = b.y-a.y, d = Math.hypot(dx,dy) || 1e-4;
+      var diff = (d-len)/d*0.5;
+      var ox = dx*diff, oy = dy*diff;
+      a.x += ox; a.y += oy; b.x -= ox; b.y -= oy;
+    }
+
+    function draw(now, dt){
+      var ctx = s.ctx;
+      if (built !== s.w) build();
+      ctx.clearRect(0,0,s.w,s.h);
+      step(dt);
+
+      var fs = rest*0.86;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'bold ' + fs.toFixed(2) + 'px ' + FACE;
+      var idx = 0;
+      for (var j=0;j<GY-1;j++){
+        for (var i=0;i<GX-1;i++){
+          var a = P(i,j), b = P(i+1,j), c = P(i,j+1), d2 = P(i+1,j+1);
+          var mx = (a.x+b.x+c.x+d2.x)/4, my = (a.y+b.y+c.y+d2.y)/4;
+          var ex = (b.x-a.x + d2.x-c.x)/2, ey = (b.y-a.y + d2.y-c.y)/2;
+          var fx = (c.x-a.x + d2.x-b.x)/2, fy = (c.y-a.y + d2.y-b.y)/2;
+          var sx = Math.hypot(ex,ey)/rest, sy = Math.hypot(fx,fy)/rest;
+          var area = Math.abs(ex*fy - ey*fx)/(rest*rest);   // stands in for facing
+          var ang = Math.atan2(ey, ex);
+          var a2 = 0.20 + 0.75*Math.min(1, area);
+          ctx.save();
+          ctx.translate(mx, my);
+          ctx.rotate(qang(ang));
+          ctx.scale(Math.max(0.15, Math.min(1.7, sx)), Math.max(0.15, Math.min(1.7, sy)));
+          ctx.fillStyle = ink(a2);
+          ctx.fillText(PHRASE.charAt(idx++ % PHRASE.length), 0, 0);
+          ctx.restore();
+        }
+      }
+
+      /* the pegs it hangs from */
+      for (var i2=0;i2<GX;i2++){
+        var q = P(i2,0);
+        if (!q.pin) continue;
+        var held = q.free < now;
+        ctx.beginPath();
+        ctx.arc(q.pin.x, q.pin.y, s.w*(held?0.006:0.004), 0, Math.PI*2);
+        ctx.fillStyle = ink(held?0.62:0.22);
+        ctx.fill();
+      }
+    }
+    return { s:s, draw:draw, reset:build };
+  })();
+
+  /* ---------- loop ---------- */
+  var studies = [Globe, Codex, Mark, Book, Tilt, Cloth];
+  var prev = performance.now();
+  var visible = [true,true,true,true,true,true];
+  function checkVisible(){
+    var vh = window.innerHeight;
+    for (var i=0;i<studies.length;i++){
+      var r = studies[i].s.el.getBoundingClientRect();
+      visible[i] = r.bottom > -80 && r.top < vh + 80;   // stacked on a phone, paint what is on screen
+    }
+  }
+  function frame(now){
+    var dt = Math.min(64, now - prev); prev = now;
+    for (var i=0;i<studies.length;i++){
+      var st = studies[i], sf = st.s;
+      if (!sf.w || !visible[i]) continue;
+      sf.base();
+      st.draw(now, dt);
+    }
+    requestAnimationFrame(frame);
+  }
+  addEventListener('scroll', checkVisible, true);
+  requestAnimationFrame(frame);
+
+  function onResize(){
+    for (var i=0;i<studies.length;i++){
+      studies[i].s.resize();
+      if (studies[i].reset) studies[i].reset();
+    }
+    checkVisible();
+  }
+  window.addEventListener('resize', onResize);
+  if (window.ResizeObserver) new ResizeObserver(onResize).observe(document.getElementById('grid'));
+  onResize();
+})();
+</script>
+</body>
+</html>

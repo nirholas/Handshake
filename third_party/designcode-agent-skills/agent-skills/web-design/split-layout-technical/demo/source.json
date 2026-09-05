@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:41:07.167Z",
+  "skill": {
+    "id": "split-layout-technical",
+    "label": "Split Layout Technical",
+    "usage_count": 288,
+    "url": "https://neuform.ai/skill/split-layout-technical"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "40dc5a34-31a3-4490-8fe4-ee4557058230",
+    "slug": "kiwi-floral-artisan-botanical-design-1",
+    "title": "Kiwi Floral | Artisan Botanical Design",
+    "url": "https://neuform.ai/pages/kiwi-floral-artisan-botanical-design-1/index.html",
+    "view_count": 2154,
+    "favorite_count": 47,
+    "remix_count": 27
+  },
+  "html": {
+    "original_sha256": "87aae46219f8e80319e272031226e6b29de1d610c8ef58385c801a549649b97f",
+    "bundled_sha256": "25e42ba4831fad7141ec00170a74d6539ca8ca5a288fcdcc6b35b7ea0d2eb548",
+    "runtime_dependencies": [
+      "https://fonts.googleapis.com",
+      "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap",
+      "https://fonts.gstatic.com"
+    ],
+    "hardened_sha256": "cc4b0b15268710a9e9728443fdf7536cbf0aee240d37e3062b62fb90aa5c48b7",
+    "sandboxed_sha256": "4559d22599d5ed733eb14ba074e37de12e8db297571b70be93b898a347274658",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 536390,
+        "file": "assets/page-01-65695f80-23f9-46ee-8487-cbb6c93cc48b-3840w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/65695f80-23f9-46ee-8487-cbb6c93cc48b_3840w.webp"
+      },
+      {
+        "bytes": 989406,
+        "file": "assets/page-02-724142aa-44a6-48d3-9cf3-761e00d05b78-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/724142aa-44a6-48d3-9cf3-761e00d05b78_1600w.jpg"
+      },
+      {
+        "bytes": 44753,
+        "file": "assets/page-03-4734259a-bad7-422f-981e-ce01e79184f2-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/4734259a-bad7-422f-981e-ce01e79184f2_1600w.jpg"
+      },
+      {
+        "bytes": 728581,
+        "file": "assets/page-04-005600e5-f6ab-4e59-bc86-eaeb02797dfa-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/005600e5-f6ab-4e59-bc86-eaeb02797dfa_1600w.jpg"
+      },
+      {
+        "bytes": 85289,
+        "file": "assets/page-05-e534354d-c5f2-4399-a1d9-2f50338e8c47-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/e534354d-c5f2-4399-a1d9-2f50338e8c47_1600w.jpg"
+      },
+      {
+        "bytes": 201962,
+        "file": "assets/page-06-fb6415fd-bf4d-4ccf-8e9d-7ab445e99207-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/fb6415fd-bf4d-4ccf-8e9d-7ab445e99207_1600w.jpg"
+      },
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 42667,
+        "file": "../../../../assets/runtime/runtime-689ca8dda44c-scrolltrigger-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js",
+        "kind": "runtime-script",
+        "sha256": "65f6c13748b0c8d8f9eabd0373a130ac293b3f16bf34aaa946d953980372b932"
+      },
+      {
+        "bytes": 71520,
+        "file": "../../../../assets/runtime/runtime-027051effa47-gsap-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js",
+        "kind": "runtime-script",
+        "sha256": "efc85c7eb141819717cda0033484a84b1c890d13b02e355a2fec79d424b20e7a"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

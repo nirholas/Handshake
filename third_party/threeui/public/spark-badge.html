@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Spark Badge — credential in rain</title>
+<link rel="icon" href="data:,">
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  body{-webkit-font-smoothing:antialiased}
+  canvas{display:block;width:100vw;height:100vh;background:#000}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(() => {
+'use strict';
+const TAU = Math.PI * 2;
+const sceneVariant = 'badge';
+const runtimeControls = {
+  speed: 1,
+  particleAmount: 1,
+  rainAmount: 1,
+  turbulence: 1,
+  spread: 1
+};
+window.__sparkBadgeControls = runtimeControls;
+const reflectControls = () => {
+  document.documentElement.dataset.sparkControls = JSON.stringify(runtimeControls);
+};
+reflectControls();
+
+/* ------------------------------------------------------------------ *
+ *  rng + noise
+ * ------------------------------------------------------------------ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd = mulberry32(0x5EED12);
+
+const NS = 256, NM = NS - 1;
+
+// tileable smooth scalar field -> its curl, precomputed once
+function makeCurlField(seed){
+  const r = mulberry32(seed);
+  let a = new Float32Array(NS*NS), b = new Float32Array(NS*NS);
+  for (let i = 0; i < NS*NS; i++) a[i] = r();
+  const R = 5;
+  for (let p = 0; p < 3; p++){
+    for (let y = 0; y < NS; y++){ const o = y*NS;
+      for (let x = 0; x < NS; x++){ let s = 0; for (let k = -R; k <= R; k++) s += a[o + ((x+k)&NM)]; b[o+x] = s/(2*R+1); } }
+    for (let x = 0; x < NS; x++){
+      for (let y = 0; y < NS; y++){ let s = 0; for (let k = -R; k <= R; k++) s += b[(((y+k)&NM)*NS)+x]; a[y*NS+x] = s/(2*R+1); } }
+  }
+  let mn = Infinity, mx = -Infinity;
+  for (let i = 0; i < NS*NS; i++){ if (a[i] < mn) mn = a[i]; if (a[i] > mx) mx = a[i]; }
+  const sc = 2/(mx-mn);
+  for (let i = 0; i < NS*NS; i++) a[i] = (a[i]-mn)*sc - 1;
+  // curl of scalar potential: (dP/dy, -dP/dx), wide stencil keeps it smooth
+  const cx = new Float32Array(NS*NS), cy = new Float32Array(NS*NS);
+  const H = 2;
+  let vmax = 0;
+  for (let y = 0; y < NS; y++) for (let x = 0; x < NS; x++){
+    const dy = a[(((y+H)&NM)*NS)+x] - a[(((y-H+NS)&NM)*NS)+x];
+    const dx = a[y*NS+((x+H)&NM)]   - a[y*NS+((x-H+NS)&NM)];
+    const i = y*NS+x; cx[i] = dy; cy[i] = -dx;
+    const m = Math.abs(dy) + Math.abs(dx); if (m > vmax) vmax = m;
+  }
+  const inv = 1.9/vmax;
+  for (let i = 0; i < NS*NS; i++){ cx[i] *= inv; cy[i] *= inv; }
+  return {cx, cy};
+}
+const F1 = makeCurlField(0x1234), F2 = makeCurlField(0x9ABC);
+
+const _cv = [0,0];
+function curlSample(F, x, y, out){
+  x *= NS; y *= NS;
+  let x0 = Math.floor(x), y0 = Math.floor(y);
+  const fx = x - x0, fy = y - y0;
+  x0 &= NM; y0 &= NM;
+  const x1 = (x0+1)&NM, y1 = (y0+1)&NM;
+  const u = fx*fx*(3-2*fx), v = fy*fy*(3-2*fy);
+  const i00 = y0*NS+x0, i01 = y0*NS+x1, i10 = y1*NS+x0, i11 = y1*NS+x1;
+  const ax = F.cx[i00] + (F.cx[i01]-F.cx[i00])*u, bx = F.cx[i10] + (F.cx[i11]-F.cx[i10])*u;
+  const ay = F.cy[i00] + (F.cy[i01]-F.cy[i00])*u, by = F.cy[i10] + (F.cy[i11]-F.cy[i10])*u;
+  out[0] = ax + (bx-ax)*v;
+  out[1] = ay + (by-ay)*v;
+}
+let CT = 0; // field clock
+function curlAt(x, y, out){
+  curlSample(F1, x*1.30 + CT*0.011, y*1.30 - CT*0.019, _cv);
+  let ox = _cv[0], oy = _cv[1];
+  curlSample(F2, x*3.05 - CT*0.026, y*3.05 + CT*0.015, _cv);
+  out[0] = ox + _cv[0]*0.45;
+  out[1] = oy + _cv[1]*0.45;
+}
+
+/* ------------------------------------------------------------------ *
+ *  figure — authored in art space (0..1 square), rasterised to a mask
+ * ------------------------------------------------------------------ */
+const MW = 768;                      // mask width == one art unit
+const AY0 = -0.55, AH = 1.55;        // slab covers art y from -0.55 to 1.00, so
+const MH = Math.round(MW * AH);      // the lanyard has somewhere to exist above
+
+/* Per-region emission: [ink, drift].
+   ink   — share of the frame's light this edge gets.
+   drift — how far its embers travel. The card and its printing stay pinned so
+           the manufactured edges read razor-crisp; only the straps and the
+           card's outer rim are allowed to plume.                            */
+const EMPH = {
+  base:   [1.00, 0.80],
+  strap:  [1.35, 1.15], clip: [2.30, 0.42],
+  card:   [1.95, 0.55], slot: [2.00, 0.20],
+  rule:   [1.05, 0.15], word: [1.75, 0.17], edition: [1.80, 0.18],
+  window: [1.70, 0.16], meta: [1.15, 0.15], name: [2.10, 0.18],
+  tier:   [1.85, 0.17], qr:   [1.45, 0.20]
+};
+const B = 78;
+const W2G = k => { const e = EMPH[k];
+  const r = Math.max(0, Math.min(255, Math.round(e[0]*B)));
+  const g = Math.max(0, Math.min(255, Math.round(e[1]*B)));
+  return 'rgb('+r+','+g+',0)'; };
+
+function buildMasks(){
+  const solid = document.createElement('canvas'); solid.width = MW; solid.height = MH;
+  const emph  = document.createElement('canvas'); emph.width  = MW; emph.height  = MH;
+  const gm = solid.getContext('2d');
+  const ge = emph.getContext('2d');
+  ge.fillStyle = W2G('base'); ge.fillRect(0, 0, MW, MH);
+
+  const S = MW;
+  gm.translate(0, -AY0*S); ge.translate(0, -AY0*S);   // art y=0 sits AY0 down the slab
+  const key = k => { const c = W2G(k); gm.fillStyle = '#fff'; gm.strokeStyle = '#fff'; ge.fillStyle = c; ge.strokeStyle = c; };
+  const both = fn => { fn(gm); fn(ge); };
+
+  // rounded rect in art units, built on one context
+  const rr = (c, x0, y0, x1, y1, r) => {
+    const X0=x0*S, Y0=y0*S, X1=x1*S, Y1=y1*S, R=r*S;
+    c.beginPath();
+    c.moveTo(X0+R, Y0);
+    c.arcTo(X1,Y0, X1,Y1, R);
+    c.arcTo(X1,Y1, X0,Y1, R);
+    c.arcTo(X0,Y1, X0,Y0, R);
+    c.arcTo(X0,Y0, X1,Y0, R);
+    c.closePath();
+  };
+  const poly = (c, a) => {
+    c.beginPath(); c.moveTo(a[0][0]*S, a[0][1]*S);
+    for (let i = 1; i < a.length; i++) c.lineTo(a[i][0]*S, a[i][1]*S);
+    c.closePath();
+  };
+  const SC = 1.12;                          // grown from the base so the card fills more frame
+  const tilt = c => {
+    c.save();
+    c.translate(0.500*S, 0.862*S); c.scale(SC, SC); c.translate(-0.500*S, -0.862*S);
+    c.translate(0.500*S, 0.300*S); c.rotate(-0.048); c.translate(-0.500*S, -0.300*S);
+  };
+
+    /* ---- lanyard: two ribbons rising out of frame to the clip ---- */
+    key('strap');
+    both(c => { poly(c, [[-0.315,-0.55],[-0.236,-0.55],[0.500,0.208],[0.460,0.208]]); c.fill(); });
+    both(c => { poly(c, [[ 1.236,-0.55],[ 1.315,-0.55],[0.540,0.208],[0.500,0.208]]); c.fill(); });
+
+    /* ---- clip and card, both grown off the base ---- */
+    key('clip');
+    both(c => { tilt(c); rr(c, 0.4536, 0.248, 0.5464, 0.306, 0.010); c.fill(); c.restore(); });
+    key('card');
+    both(c => { tilt(c); rr(c, 0.312, 0.296, 0.688, 0.862, 0.024); c.fill(); c.restore(); });
+
+  // snapshot the un-carved silhouette for rain occlusion
+  const occ = document.createElement('canvas'); occ.width = MW; occ.height = MH;
+  occ.getContext('2d').drawImage(solid, 0, 0);
+
+  /* ---- everything printed on the card is carved out of it, so its edges
+         light up. The mask loses material; the weight map gets the same
+         shape painted wide, so embers born there inherit the right pull. --- */
+  gm.globalCompositeOperation = 'destination-out';
+  gm.lineCap = 'round'; gm.lineJoin = 'round';
+  ge.lineCap = 'round'; ge.lineJoin = 'round';
+
+  const cutRR = (x0,y0,x1,y1,r,k) => {
+    rr(gm,x0,y0,x1,y1,r); gm.fill();
+    ge.fillStyle = W2G(k); ge.strokeStyle = W2G(k); ge.lineWidth = 0.019*S;
+    rr(ge,x0,y0,x1,y1,r); ge.fill(); ge.stroke();
+  };
+  const frameRR = (x0,y0,x1,y1,r,w,k) => {
+    gm.lineWidth = w*S; rr(gm,x0,y0,x1,y1,r); gm.stroke();
+    ge.strokeStyle = W2G(k); ge.lineWidth = (w + 0.017)*S;
+    rr(ge,x0,y0,x1,y1,r); ge.stroke();
+  };
+  const cutLine = (x0,y0,x1,y1,w,k) => {
+    gm.lineWidth = w*S; gm.beginPath(); gm.moveTo(x0*S,y0*S); gm.lineTo(x1*S,y1*S); gm.stroke();
+    ge.strokeStyle = W2G(k); ge.lineWidth = (w + 0.016)*S;
+    ge.beginPath(); ge.moveTo(x0*S,y0*S); ge.lineTo(x1*S,y1*S); ge.stroke();
+  };
+  const cutCircle = (x,y,r,k) => {
+    gm.beginPath(); gm.arc(x*S,y*S,r*S,0,TAU); gm.fill();
+    ge.fillStyle = W2G(k); ge.strokeStyle = W2G(k); ge.lineWidth = 0.017*S;
+    ge.beginPath(); ge.arc(x*S,y*S,r*S,0,TAU); ge.fill(); ge.stroke();
+  };
+
+
+
+
+  tilt(gm); tilt(ge);
+
+  cutRR(0.462, 0.316, 0.538, 0.334, 0.009, 'slot');        // punched lanyard slot
+
+  cutRR(0.342, 0.356, 0.500, 0.386, 0.005, 'word');        // wordmark plate
+  cutRR(0.576, 0.362, 0.658, 0.379, 0.004, 'edition');     // edition code
+  cutLine(0.342, 0.402, 0.658, 0.402, 0.0045, 'rule');     // header rule
+
+  frameRR(0.342, 0.420, 0.658, 0.600, 0.007, 0.005, 'window');   // portrait window
+
+  cutLine(0.342, 0.626, 0.556, 0.626, 0.0040, 'meta');     // date / venue line
+  cutRR(0.342, 0.648, 0.604, 0.690, 0.005, 'name');        // name plate
+  cutLine(0.342, 0.708, 0.540, 0.708, 0.0040, 'meta');     // role line
+  cutLine(0.342, 0.744, 0.658, 0.744, 0.0045, 'rule');     // divider
+  cutRR(0.342, 0.764, 0.470, 0.802, 0.019, 'tier');        // access-tier pill
+  cutLine(0.342, 0.822, 0.450, 0.822, 0.0038, 'meta');     // serial
+
+  /* ---- data block ---- */
+  (() => {
+    const x0 = 0.540, y0 = 0.752, m = 0.0197;              // 6 modules across, 5 down
+    frameRR(x0, y0, x0+m*6, y0+m*5, 0.004, 0.0038, 'qr');
+    for (const [cxm, cym] of [[0,0],[4,0],[0,3]]){          // finder squares
+      const fx0 = x0 + (cxm+0.35)*m, fy0 = y0 + (cym+0.35)*m;
+      frameRR(fx0, fy0, fx0+m*1.3, fy0+m*1.3, 0.0018, 0.0034, 'qr');
+    }
+    const r = mulberry32(0x51DE);
+    for (let gy = 0; gy < 5; gy++) for (let gx = 0; gx < 6; gx++){
+      if ((gx < 2 && gy < 2) || (gx > 3 && gy < 2) || (gx < 2 && gy > 2)) continue;
+      if (r() > 0.46) continue;
+      const mx = x0 + (gx+0.28)*m, my = y0 + (gy+0.28)*m;
+      cutRR(mx, my, mx+m*0.62, my+m*0.62, 0.0012, 'qr');
+    }
+  })();
+
+  /* ---- the window carries the Codex wordmark. Small type dissolves at
+         ember scale, so the letters use a compact authored single-line
+         alphabet with enough room to stay legible through the particle pass. ---- */
+  const GLYPH_WIDTHS = { C: 0.52, o: 0.44, d: 0.48, e: 0.44, x: 0.42 };
+  const glyph = (ch, x, y, h) => {
+    const w = h * GLYPH_WIDTHS[ch];
+    ge.strokeStyle = W2G('edition');
+    both(c => {
+      c.beginPath();
+      if (ch === 'C') {
+        c.moveTo(x+w*0.91, y+h*0.14);
+        c.bezierCurveTo(x+w*0.72, y-h*0.01, x+w*0.22, y-h*0.02, x+w*0.10, y+h*0.49);
+        c.bezierCurveTo(x+w*0.00, y+h*0.94, x+w*0.55, y+h*1.10, x+w*0.93, y+h*0.84);
+      } else if (ch === 'o') {
+        c.ellipse(x+w*0.50, y+h*0.63, w*0.43, h*0.35, 0, 0, TAU);
+      } else if (ch === 'd') {
+        c.ellipse(x+w*0.42, y+h*0.64, w*0.35, h*0.34, 0, 0, TAU);
+        c.moveTo(x+w*0.77, y);
+        c.lineTo(x+w*0.77, y+h*0.98);
+      } else if (ch === 'e') {
+        c.moveTo(x+w*0.91, y+h*0.62);
+        c.lineTo(x+w*0.10, y+h*0.62);
+        c.bezierCurveTo(x+w*0.13, y+h*0.25, x+w*0.84, y+h*0.18, x+w*0.88, y+h*0.57);
+        c.bezierCurveTo(x+w*0.94, y+h*0.94, x+w*0.32, y+h*1.08, x+w*0.12, y+h*0.82);
+      } else if (ch === 'x') {
+        c.moveTo(x+w*0.08, y+h*0.30);
+        c.lineTo(x+w*0.92, y+h*0.98);
+        c.moveTo(x+w*0.92, y+h*0.30);
+        c.lineTo(x+w*0.08, y+h*0.98);
+      }
+      c.stroke();
+    });
+    return w;
+  };
+  (() => {
+    const str = 'Codex', h = 0.087*S, gap = h*0.11, cx = 0.500*S, cy = 0.512*S;
+    let tot = 0; for (const ch of str) tot += h*GLYPH_WIDTHS[ch] + gap; tot -= gap;
+    gm.lineWidth = 0.0068*S; ge.lineWidth = 0.019*S;
+    let x = cx - tot/2; const y = cy - h/2;
+    for (const ch of str) x += glyph(ch, x, y, h) + gap;
+  })();
+
+  gm.restore(); ge.restore();
+  gm.globalCompositeOperation = 'source-over';
+  return { detail: solid, occ, emph };
+}
+
+/* ------------------------------------------------------------------ *
+ *  emitters: silhouette edges of the mask, with outward normals
+ * ------------------------------------------------------------------ */
+function buildEmitters(maskCanvas, emphCanvas){
+  const g = maskCanvas.getContext('2d');
+  const d = g.getImageData(0, 0, MW, MH).data;
+  const ed = emphCanvas.getContext('2d').getImageData(0, 0, MW, MH).data;
+  let a = new Float32Array(MW*MH), b = new Float32Array(MW*MH);
+  for (let i = 0; i < MW*MH; i++) a[i] = d[i*4+3]/255;
+  const R = 2;                                    // soften so gradients are stable
+  for (let p = 0; p < 2; p++){
+    for (let y = 0; y < MH; y++){ const o = y*MW;
+      for (let x = 0; x < MW; x++){ let s = 0, n = 0;
+        for (let k = -R; k <= R; k++){ const xx = x+k; if (xx<0||xx>=MW) continue; s += a[o+xx]; n++; }
+        b[o+x] = s/n; } }
+    for (let x = 0; x < MW; x++){
+      for (let y = 0; y < MH; y++){ let s = 0, n = 0;
+        for (let k = -R; k <= R; k++){ const yy = y+k; if (yy<0||yy>=MH) continue; s += b[yy*MW+x]; n++; }
+        a[y*MW+x] = s/n; } }
+  }
+  const ex = [], ey = [], enx = [], eny = [], ew = [], ee = [], edr = [];
+  for (let y = 1; y < MH-1; y++) for (let x = 1; x < MW-1; x++){
+    const i = y*MW+x;
+    const gx = a[i+1] - a[i-1], gy = a[i+MW] - a[i-MW];
+    const m = Math.hypot(gx, gy);
+    if (m < 0.035) continue;
+    const w = ed[i*4]/78, dr = ed[i*4+1]/78;    // region emphasis, sampled on the edge
+    ex.push(x/MW); ey.push(y/MW + AY0);
+    enx.push(-gx/m); eny.push(-gy/m);
+    ew.push(m * w); ee.push(w); edr.push(dr);
+  }
+  // cdf for weighted sampling
+  const n = ew.length, cdf = new Float32Array(n);
+  let acc = 0;
+  for (let i = 0; i < n; i++){ acc += ew[i]; cdf[i] = acc; }
+  return {
+    n, total: acc, cdf,
+    x: Float32Array.from(ex), y: Float32Array.from(ey),
+    nx: Float32Array.from(enx), ny: Float32Array.from(eny),
+    e: Float32Array.from(ee), dr: Float32Array.from(edr),
+    pick(){
+      const t = rnd()*this.total;
+      let lo = 0, hi = this.n-1;
+      while (lo < hi){ const mid = (lo+hi)>>1; if (this.cdf[mid] < t) lo = mid+1; else hi = mid; }
+      return lo;
+    }
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ *  stage
+ * ------------------------------------------------------------------ */
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d', { alpha: false });
+let VW = 0, VH = 0, DPR = 1, ART = { x:0, y:0, s:0 }, LW = 1, WATER = 0;
+
+const WANG = 60 * Math.PI/180;
+const WIND = { x: Math.cos(WANG), y: Math.sin(WANG) };
+
+const MASKS = buildMasks();
+const EM = buildEmitters(MASKS.detail, MASKS.emph);
+
+/* ---- strand pools ----
+   A spark is a moving particle drawn as its own motion blur: a short tick
+   along its current heading. Slow embers around the figure read as flecks;
+   fast rain reads as a long streak. Same renderer, different speeds.        */
+const SEG = 0.0082;                 // segment length as a fraction of the stage
+// Counts calibrated against the reference at a 900px stage. Marks scale with
+// the stage, so the budget has to scale too or a retina display thins out.
+const NF0 = 17600, NR0 = 300, NW0 = 460, REF_S = 900;
+let NF = NF0, NR = NR0, NW = NW0;
+let BASE_NF = NF0, BASE_NR = NR0, BASE_NW = NW0;
+const CAP_F = 40000, CAP_R = 1400, CAP_W = 1600;
+
+function applyParticleCounts(){
+  NF = Math.min(CAP_F, Math.max(1, Math.round(BASE_NF * runtimeControls.particleAmount)));
+  NR = Math.min(CAP_R, Math.max(0, Math.round(BASE_NR * runtimeControls.rainAmount)));
+  NW = Math.min(CAP_W, Math.max(1, Math.round(BASE_NW * runtimeControls.particleAmount)));
+}
+
+addEventListener('message', event => {
+  if (!event.data) return;
+  if (event.data.type === 'spark-badge-step') {
+    const d = Number.isFinite(event.data.delta) ? Math.max(0, Math.min(0.1, event.data.delta)) : 1/30;
+    CT += d;
+    cycle();
+    stepRain(d); stepFur(d); stepWater(d);
+    render();
+    if (parent !== window) parent.postMessage({ type: 'spark-badge-stepped', frame: event.data.frame }, '*');
+    return;
+  }
+  if (event.data.type !== 'spark-badge-controls') return;
+  const next = event.data.controls || {};
+  const set = (key, lo, hi) => {
+    if (Number.isFinite(next[key])) runtimeControls[key] = Math.max(lo, Math.min(hi, next[key]));
+  };
+  set('speed', 0, 2);
+  set('particleAmount', 0.35, 1.4);
+  set('rainAmount', 0, 1.5);
+  set('turbulence', 0, 2);
+  set('spread', 0.5, 1.75);
+  applyParticleCounts();
+  reflectControls();
+});
+
+const mk = n => ({
+  x: new Float32Array(n), y: new Float32Array(n),
+  nx: new Float32Array(n), ny: new Float32Array(n),   // heading of the tick
+  rx: new Float32Array(n), ry: new Float32Array(n),   // launch normal
+  spd: new Float32Array(n),
+  len: new Float32Array(n), br: new Float32Array(n),
+  seed: new Float32Array(n), style: new Uint8Array(n),
+  life: new Float32Array(n), max: new Float32Array(n),
+  vx: new Float32Array(n), vy: new Float32Array(n),   // rain velocity
+  pin: new Float32Array(n),                           // 0 = plumes freely, 1 = held on the contour
+  age: new Float32Array(n),                           // seconds since spawn (rain fade-in)
+  k: new Uint8Array(n)
+});
+const FUR = mk(CAP_F), RAIN = mk(CAP_R), WAT = mk(CAP_W);
+
+const pickStyle = () => { const r = rnd(); return r < 0.46 ? 0 : (r < 0.78 ? 1 : 2); };
+const stepsFor = (len, lo, hi) => Math.max(lo, Math.min(hi, Math.round(len/(SEG*ART.s))));
+
+function pickHot(){                                   // rejection-sample toward the currently hot arcs
+  let e = EM.pick();
+  for (let t = 0; t < 3; t++){
+    curlSample(F1, EM.x[e]*0.85 + CT*0.045, EM.y[e]*0.85 - CT*0.030, _cv);
+    const h = _cv[0]*0.5 + 0.5;
+    if (rnd() < h*h*1.15) break;
+    e = EM.pick();
+  }
+  return e;
+}
+
+function spawnFur(i, seeded){
+  const e = pickHot();
+  const j = 0.0032 * ART.s;
+  FUR.x[i] = ART.x + EM.x[e]*ART.s + (rnd()-0.5)*j;
+  FUR.y[i] = ART.y + EM.y[e]*ART.s + (rnd()-0.5)*j;
+  const em = EM.e[e], eb = Math.sqrt(em), dr = EM.dr[e];
+  // pin = how strongly this edge holds its embers in place. A pinned ember
+  // barely moves and lies along the contour tangent, so successive marks chain
+  // into a thin bright line — that is how the reference draws the shield and
+  // robe edges. An unpinned one launches outward and plumes into fur.
+  const pin = Math.max(0, Math.min(1, 1 - dr/0.85));
+  FUR.pin[i] = pin;
+  const sp = (rnd() < 0.58 + pin*0.38)
+    ? (rnd() < 0.5 ? -1 : 1) * (1.44 + (rnd()-0.5)*0.42*(1-pin*0.7))
+    : (rnd()-0.5) * 1.15;
+  const cs = Math.cos(sp), sn = Math.sin(sp);
+  FUR.rx[i] = EM.nx[e]*cs - EM.ny[e]*sn;
+  FUR.ry[i] = EM.nx[e]*sn + EM.ny[e]*cs;
+  FUR.nx[i] = FUR.rx[i]; FUR.ny[i] = FUR.ry[i];
+  FUR.spd[i] = ART.s * (0.010 + Math.pow(rnd(), 1.8)*0.098) * (0.24 + dr*0.90) * (1 - pin*0.90);
+  // Embers stay flecks. Anything long enough to read as a line has to belong to
+  // the rain and fall with it — stray long sparks at other angles break the read.
+  FUR.len[i] = ART.s * (0.0022 + Math.pow(rnd(), 2.3)*0.0110) * (1 - pin*0.28);
+  FUR.br[i] = (0.74 + rnd()*0.94) * eb * (1 + pin*0.30);
+  FUR.max[i] = (0.17 + rnd()*0.74) * (1 - pin*0.55) * (0.75 + dr*0.42);
+  FUR.k[i] = stepsFor(FUR.len[i], 1, 6);
+  FUR.seed[i] = rnd()*1000;
+  FUR.style[i] = pickStyle();
+  FUR.life[i] = seeded ? rnd()*FUR.max[i] : FUR.max[i];
+}
+// Rain must fall *through* the frame: enter above the top edge, cross, exit past
+// the bottom. Anything that dies of old age mid-air reads as flickering, not
+// falling. Speed is set from the reference, which drifts 0.57 stage-widths/sec.
+function spawnRain(i, seeded){
+  const sp = ART.s * (0.40 + Math.pow(rnd(), 1.2)*0.46);
+  RAIN.vx[i] = WIND.x*sp; RAIN.vy[i] = WIND.y*sp;
+  const r = rnd();
+  RAIN.len[i] = ART.s * (0.035 + Math.pow(r, 1.45)*0.150);
+  RAIN.br[i] = 0.30 + Math.pow(rnd(), 1.3)*1.05;
+  RAIN.k[i] = stepsFor(RAIN.len[i], 3, 14);
+  RAIN.seed[i] = rnd()*1000;
+  RAIN.style[i] = rnd() < 0.74 ? 0 : (rnd() < 0.6 ? 1 : 2);
+  RAIN.pin[i] = rnd() < 0.24 ? 1 : 0;                 // 1 = falls in front of the figure
+  if (seeded){
+    RAIN.x[i] = rnd()*VW; RAIN.y[i] = rnd()*VH;       // fill the frame at boot
+  } else {
+    // enter along the top, offset left far enough that the slanted fall still
+    // reaches the right-hand edge by the time it lands
+    const skew = (WIND.x/WIND.y) * (VH + RAIN.len[i]);
+    RAIN.x[i] = -skew + rnd()*(VW + skew);
+    RAIN.y[i] = -RAIN.len[i]*WIND.y - rnd()*ART.s*0.25;
+  }
+  RAIN.age[i] = 0;
+}
+function waveAt(x){                                    // swell along the waterline
+  curlSample(F2, x/ART.s*0.55 + CT*0.02, 0.31, _cv);
+  return _cv[0] * 0.011 * ART.s;
+}
+function spawnWater(i, seeded){
+  const yw = WATER;
+  let x, y, br;
+  const roll = rnd();
+  if (roll < 0.34){                                   // the waterline seam itself
+    x = rnd()*VW;
+    y = yw + waveAt(x) + (rnd()-0.35)*0.013*ART.s;
+    br = 0.58 + rnd()*0.90;
+  } else if (roll < 0.68){                            // broken reflection of the figure
+    const e = EM.pick();
+    const ax = ART.x + EM.x[e]*ART.s, ay = ART.y + EM.y[e]*ART.s;
+    x = ax + (rnd()-0.5)*0.05*ART.s;
+    y = yw + waveAt(x) + (yw - ay)*0.34 + (rnd()-0.5)*0.014*ART.s;
+    br = 0.28 + rnd()*0.62;
+    if (y < yw + 0.004*ART.s || y > VH) { x = rnd()*VW; y = yw + rnd()*Math.max(1, VH-yw); }
+  } else {                                            // ambient ripple
+    x = rnd()*VW;
+    y = yw + waveAt(x) + Math.pow(rnd(), 2.2)*Math.max(1, VH - yw);
+    br = 0.24 + rnd()*0.66;
+  }
+  WAT.x[i] = x; WAT.y[i] = y;
+  const dir = rnd() < 0.5 ? -1 : 1;
+  WAT.nx[i] = dir; WAT.ny[i] = (rnd()-0.5)*0.10;
+  WAT.len[i] = ART.s * (0.010 + Math.pow(rnd(), 2.0)*0.135);
+  WAT.br[i] = br;
+  WAT.k[i] = stepsFor(WAT.len[i], 2, 14);
+  WAT.seed[i] = rnd()*1000;
+  WAT.style[i] = rnd() < 0.30 ? 0 : (rnd() < 0.5 ? 1 : 2);
+  WAT.max[i] = 0.6 + rnd()*1.6;
+  WAT.life[i] = seeded ? rnd()*WAT.max[i] : WAT.max[i];
+}
+
+function layout(){
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  VW = Math.round(innerWidth * DPR); VH = Math.round(innerHeight * DPR);
+  cv.width = VW; cv.height = VH;
+  cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
+  // Anchor the waterline near the bottom of the viewport rather than centring
+  // the art square, or a tall phone strands the figure above a dead expanse.
+  const s = Math.min(VW, VH);
+  ART = { x: (VW - s)/2, y: VH*0.87 - 0.888*s, s };
+  WATER = ART.y + 0.888*s;
+  LW = Math.max(0.85, s/1280 * 1.05);
+
+  // Mark length AND line width both scale with the stage, so coverage only
+  // needs a fractional boost — exponent fitted by measuring lit-pixel fraction
+  // at 900@1 against 1440@2.
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const D = clamp(Math.pow(s/REF_S, 0.55), 0.6, 1.9);
+  BASE_NF = Math.min(CAP_F, Math.round(NF0 * D));
+  BASE_NR = Math.min(CAP_R, Math.round(NR0 * D * clamp(VW*VH/(s*s), 0.6, 3.0)));   // sky area
+  BASE_NW = Math.min(CAP_W, Math.round(NW0 * D * clamp(VW/s, 0.6, 3.0)));          // waterline width
+  applyParticleCounts();
+
+  for (let i = 0; i < CAP_F; i++) spawnFur(i, true);
+  for (let i = 0; i < CAP_R; i++) spawnRain(i, true);
+  for (let i = 0; i < CAP_W; i++) spawnWater(i, true);
+}
+
+/* ------------------------------------------------------------------ *
+ *  draw
+ * ------------------------------------------------------------------ */
+const LEVELS = [0.19, 0.31, 0.47, 0.68, 0.97];
+const DASHES = [[], [3.2, 3.4], [1.15, 4.6]];
+const NB = LEVELS.length * DASHES.length;
+const paths = new Array(NB);
+const cur = new Float32Array(2);
+
+function levelOf(a){
+  if (a < 0.26) return 0;
+  if (a < 0.39) return 1;
+  if (a < 0.57) return 2;
+  if (a < 0.82) return 3;
+  return 4;
+}
+// stochastic on/off along the strand -> the dotted filament texture
+function lit(seed, k){
+  const v = Math.sin((seed + k*1.7) * 127.1) * 43758.5453;
+  return (v - Math.floor(v)) > 0.28;
+}
+
+function emit(style, lvl, moved, x, y, px, py){
+  const p = paths[style*LEVELS.length + lvl];
+  if (moved) p.moveTo(px, py);
+  p.lineTo(x, y);
+}
+
+let turb = 1, spread = 1;
+
+function strand(P, i, mode){
+  const K = P.k[i];
+  let env;
+  if (mode === 1){
+    env = Math.min(1, P.age[i]*9);                     // ease in at the top, never fade out
+  } else {
+    const t = 1 - P.life[i]/P.max[i];                  // 0 -> 1 with age
+    env = Math.min(1, t*9) * Math.min(1, (1-t)*3.4);
+  }
+  if (env <= 0.01) return;
+  const style = P.style[i], seed = P.seed[i];
+  const base = P.br[i] * env;
+  const L = P.len[i] * (mode === 0 ? spread : 1), h = L/K;
+  let x = P.x[i], y = P.y[i];
+  const dirx = P.nx[i], diry = P.ny[i];
+  let prevLvl = -1, moved = true;
+  const ix = 1/ART.s;
+
+  for (let k = 0; k < K; k++){
+    const s = k/K;
+    curlAt((x - ART.x)*ix, (y - ART.y)*ix, cur);
+    let dx, dy;
+    if (mode === 0){                                   // ember tick: holds its heading, curl bends it
+      const c = (0.10 + s*0.42) * turb * (1 - P.pin[i]*0.85);
+      dx = dirx + cur[0]*c;
+      dy = diry + cur[1]*c;
+    } else if (mode === 1){                            // rain: trails back up the wind
+      const c = (0.05 + s*0.17) * turb;
+      dx = -WIND.x + cur[0]*c;
+      dy = -WIND.y + cur[1]*c;
+    } else {                                           // water: skims horizontally
+      dx = dirx + cur[0]*0.10;
+      dy = diry*0.6 + cur[1]*0.045;
+    }
+    const m = Math.hypot(dx, dy) || 1;
+    dx /= m; dy /= m;
+    const nx2 = x + dx*h, ny2 = y + dy*h;
+
+    const a = base * Math.pow(1-s, mode === 1 ? 0.75 : 0.95);
+    if (a > 0.15 && lit(seed, k)){
+      const lvl = levelOf(a);
+      if (lvl !== prevLvl) moved = true;
+      emit(style, lvl, moved, nx2, ny2, x, y);
+      prevLvl = lvl; moved = false;
+    } else {
+      moved = true; prevLvl = -1;
+    }
+    x = nx2; y = ny2;
+  }
+}
+
+let last = 0, acc = 0, frames = 0, slowRun = 0;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function stepRain(d){
+  for (let i = 0; i < NR; i++){
+    RAIN.age[i] += d;
+    RAIN.x[i] += RAIN.vx[i]*d; RAIN.y[i] += RAIN.vy[i]*d;
+    // the streak trails back up-wind, so the tail is the last thing to leave
+    const ty = RAIN.y[i] - RAIN.len[i]*WIND.y, tx = RAIN.x[i] - RAIN.len[i]*WIND.x;
+    if (ty > VH || tx > VW) spawnRain(i, false);
+  }
+}
+function stepFur(d){
+  for (let i = 0; i < NF; i++){
+    FUR.life[i] -= d;
+    if (FUR.life[i] <= 0){ spawnFur(i, false); continue; }
+    const age = 1 - FUR.life[i]/FUR.max[i];
+    const pin = FUR.pin[i], free = 1 - pin;
+    curlAt((FUR.x[i]-ART.x)/ART.s, (FUR.y[i]-ART.y)/ART.s, cur);
+    const rad = (Math.pow(1-age, 1.5)*0.90*free + 0.62*pin) * 1.45;
+    const c = (0.34 + age*1.25) * turb * (1 - pin*0.88);
+    let dx = FUR.rx[i]*rad + WIND.x*0.50*free + cur[0]*c;
+    let dy = FUR.ry[i]*rad + WIND.y*0.50*free + cur[1]*c;
+    const m = Math.hypot(dx, dy) || 1; dx /= m; dy /= m;
+    FUR.x[i] += dx*FUR.spd[i]*d; FUR.y[i] += dy*FUR.spd[i]*d;
+    FUR.nx[i] = dx; FUR.ny[i] = dy;                 // the tick lies along the motion
+  }
+}
+function stepWater(d){
+  for (let i = 0; i < NW; i++){
+    WAT.life[i] -= d;
+    WAT.x[i] += WAT.nx[i]*ART.s*0.035*d;
+    if (WAT.life[i] <= 0) spawnWater(i, false);
+  }
+}
+
+function cycle(){                                      // slow dissolve / reform
+  const cyc = 0.5 - 0.5*Math.cos(CT * TAU/17);
+  turb   = (0.62 + cyc*0.78) * runtimeControls.turbulence;
+  spread = (0.88 + cyc*0.44) * runtimeControls.spread;
+}
+
+// Freshly spawned embers all sit exactly on the contour, so an un-warmed first
+// frame is a bare outline. Run the sim forward before anything is painted.
+function prewarm(){
+  const d = 1/30;                                     // ~1s of sim: past the longest ember life
+  for (let n = 0; n < 30; n++){ CT += d; stepRain(d); stepFur(d); stepWater(d); }
+  cycle();
+}
+
+function render(){
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, VW, VH);
+
+  // rain behind the figure first, so the silhouette can be punched out of it
+  for (let i = 0; i < NB; i++) paths[i] = new Path2D();
+  for (let i = 0; i < NR; i++) if (!RAIN.pin[i]) strand(RAIN, i, 1);
+  flush();
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.filter = 'blur(' + (ART.s*0.004).toFixed(2) + 'px)';
+  ctx.drawImage(MASKS.occ, ART.x, ART.y + AY0*ART.s, ART.s, AH*ART.s);
+  ctx.restore();
+  ctx.filter = 'none';
+
+  for (let i = 0; i < NB; i++) paths[i] = new Path2D();
+  for (let i = 0; i < NF; i++) strand(FUR, i, 0);
+  for (let i = 0; i < NW; i++) strand(WAT, i, 2);
+  flush();
+
+  // and the rest in front, so falling lines cross the figure too
+  for (let i = 0; i < NB; i++) paths[i] = new Path2D();
+  for (let i = 0; i < NR; i++) if (RAIN.pin[i]) strand(RAIN, i, 1);
+  flush();
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if (!last) last = ts;
+  let dt = (ts - last)/1000; last = ts;
+  if (dt > 0.1) dt = 0.1;
+  const rate = runtimeControls.speed * (reduced ? 0.25 : 1);
+  CT += dt * rate;
+  cycle();
+
+  const d = dt * rate;
+  stepRain(d); stepFur(d); stepWater(d);
+  render();
+
+  // adaptive load governor
+  frames++; acc += dt;
+  if (frames >= 40){
+    const avg = acc/frames; frames = 0; acc = 0;
+    if (avg > 0.022){ slowRun++; if (slowRun >= 2){ NF = Math.max(1100, (NF*0.85)|0); NR = Math.max(240, (NR*0.9)|0); NW = Math.max(260, (NW*0.9)|0); slowRun = 0; } }
+    else slowRun = 0;
+  }
+}
+
+function flush(){
+  ctx.globalCompositeOperation = 'lighter';           // sparks accumulate; dense edges burn to white
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = LW;
+  ctx.lineCap = 'butt';
+  for (let s = 0; s < DASHES.length; s++){
+    ctx.setLineDash(DASHES[s].map(v => v*LW));
+    for (let l = 0; l < LEVELS.length; l++){
+      ctx.globalAlpha = LEVELS[l];
+      ctx.stroke(paths[s*LEVELS.length + l]);
+    }
+  }
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+// Relayout on both signals: some hosts resize the viewport without ever firing
+// a resize event, which would strand the canvas at its boot size.
+let resizeT = 0, lastW = 0, lastH = 0;
+function relayout(){
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => {
+    if (!innerWidth || !innerHeight) return;
+    if (innerWidth === lastW && innerHeight === lastH) return;
+    lastW = innerWidth; lastH = innerHeight;
+    layout(); prewarm(); render();
+  }, 120);
+}
+addEventListener('resize', relayout);
+new ResizeObserver(relayout).observe(document.documentElement);
+layout();
+lastW = innerWidth; lastH = innerHeight;
+
+if (params.get('debug') === 'mask'){                  // silhouette check while authoring geometry
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH);
+  ctx.drawImage(MASKS.detail, ART.x, ART.y + AY0*ART.s, ART.s, AH*ART.s);
+} else {
+  // paint once up front — a backgrounded tab throttles rAF, and the page
+  // should never be sitting on an empty canvas when it comes into view
+  prewarm();
+  render();
+  requestAnimationFrame(frame);
+}
+window.__ready = true;
+})();
+</script>
+</body>
+</html>

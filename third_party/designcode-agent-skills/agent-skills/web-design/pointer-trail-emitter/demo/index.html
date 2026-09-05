@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wisps — Vanilla JavaScript + Canvas 2D</title>
+<link rel="icon" href="data:,">
+<style>
+  :root{
+    color-scheme:dark;
+    --ink:#07090b;
+    --surface:#0d1114;
+    --surface-raised:#12171b;
+    --text:#eef3f0;
+    --text-dim:#aab5b0;
+    --muted:#6f7b76;
+    --line:#26302d;
+    --line-soft:#171e1c;
+    --signal:#bfeef8;
+    --signal-strong:#72d9ef;
+    --focus:#e8ff70;
+    --track:#27312e;
+    --panel-width:380px;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0;
+    min-height:100svh;
+    overflow:hidden;
+    background:var(--ink);
+    color:var(--text);
+    font-family:"Avenir Next",Avenir,"Helvetica Neue",sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+  ::selection{ background:var(--signal); color:var(--ink); }
+
+  #trail{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    display:block;
+    pointer-events:none;
+  }
+  #stage{
+    position:fixed;
+    inset:0;
+    z-index:2;
+  }
+  #stage:focus-visible{
+    outline:1px solid var(--focus);
+    outline-offset:-8px;
+  }
+
+  .sheet{
+    position:fixed;
+    inset:0;
+    z-index:3;
+    padding:clamp(22px,3vw,48px);
+    pointer-events:none;
+  }
+  .intro{
+    width:min(480px,calc(100vw - 44px));
+    pointer-events:none;
+  }
+  .eyebrow{
+    margin:0 0 18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--muted);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+  }
+  .eyebrow::before{
+    content:"";
+    width:18px;
+    height:1px;
+    background:var(--signal-strong);
+    box-shadow:0 0 10px rgba(114,217,239,.65);
+  }
+  h1{
+    margin:0;
+    max-width:9ch;
+    font-size:clamp(40px,6vw,84px);
+    font-weight:400;
+    line-height:.94;
+    letter-spacing:-.055em;
+  }
+  .intro-copy{
+    margin:22px 0 0;
+    max-width:43ch;
+    color:var(--text-dim);
+    font-size:clamp(13px,1vw,15px);
+    line-height:1.65;
+  }
+
+  .wisp-panel{
+    position:absolute;
+    right:clamp(18px,3vw,48px);
+    bottom:clamp(18px,3vw,48px);
+    width:min(var(--panel-width),calc(100vw - 36px));
+    padding:20px;
+    pointer-events:auto;
+    background:rgba(13,17,20,.96);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:0 24px 80px rgba(0,0,0,.42);
+  }
+  .panel-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:20px;
+    padding-bottom:16px;
+    margin-bottom:18px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .panel-kicker{
+    margin:0 0 4px;
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:-.01em;
+  }
+  .panel-claim{
+    margin:0;
+    max-width:32ch;
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.5;
+  }
+  .live{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin-top:2px;
+    color:var(--text-dim);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:9px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+  .live::before{
+    content:"";
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--signal-strong);
+    box-shadow:0 0 12px rgba(114,217,239,.75);
+  }
+
+  .hud{ display:grid; gap:18px; }
+  fieldset{
+    min-width:0;
+    margin:0;
+    padding:0;
+    border:0;
+  }
+  legend,.ctl label{
+    color:var(--text-dim);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.13em;
+    text-transform:uppercase;
+  }
+  legend{ margin-bottom:9px; }
+  .seg{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    padding:3px;
+    background:#080b0d;
+    border:1px solid var(--line-soft);
+    border-radius:9px;
+  }
+  .opt{ position:relative; }
+  .opt input{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    margin:0;
+    opacity:0;
+    cursor:pointer;
+  }
+  .opt span{
+    display:block;
+    padding:9px 12px;
+    border-radius:6px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:500;
+    text-align:center;
+    transition:background-color .25s var(--ease),color .25s var(--ease),box-shadow .25s var(--ease);
+  }
+  .opt input:checked + span{
+    color:var(--text);
+    background:var(--surface-raised);
+    box-shadow:0 1px 8px rgba(0,0,0,.35),inset 0 0 0 1px var(--line);
+  }
+  .opt input:hover + span{ color:var(--text); }
+  .opt input:focus-visible + span{
+    outline:2px solid var(--focus);
+    outline-offset:2px;
+  }
+
+  .ctl{ display:grid; gap:8px; }
+  .ctl-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  output{
+    min-width:58px;
+    padding:4px 7px;
+    color:var(--signal);
+    background:rgba(191,238,248,.06);
+    border:1px solid rgba(191,238,248,.13);
+    border-radius:5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11px;
+    font-variant-numeric:tabular-nums;
+    text-align:right;
+  }
+  .range-wrap{ display:grid; gap:4px; }
+  input[type=range]{
+    --value:50%;
+    width:100%;
+    height:24px;
+    margin:0;
+    padding:0;
+    background:transparent;
+    cursor:pointer;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:4px;
+    border-radius:100px;
+    background:linear-gradient(to right,var(--signal-strong) 0 var(--value),var(--track) var(--value) 100%);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    width:16px;
+    height:16px;
+    margin-top:-6px;
+    border:2px solid var(--ink);
+    border-radius:50%;
+    background:var(--text);
+    box-shadow:0 0 0 1px var(--signal-strong),0 2px 8px rgba(0,0,0,.55);
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  input[type=range]::-moz-range-track{
+    height:4px;
+    border-radius:100px;
+    background:var(--track);
+  }
+  input[type=range]::-moz-range-progress{
+    height:4px;
+    border-radius:100px;
+    background:var(--signal-strong);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px;
+    height:14px;
+    border:2px solid var(--ink);
+    border-radius:50%;
+    background:var(--text);
+    box-shadow:0 0 0 1px var(--signal-strong),0 2px 8px rgba(0,0,0,.55);
+  }
+  input[type=range]:focus-visible{ outline:none; }
+  input[type=range]:focus-visible::-webkit-slider-thumb{
+    box-shadow:0 0 0 2px var(--ink),0 0 0 4px var(--focus);
+  }
+  input[type=range]:focus-visible::-moz-range-thumb{
+    box-shadow:0 0 0 2px var(--ink),0 0 0 4px var(--focus);
+  }
+  .range-limits{
+    display:flex;
+    justify-content:space-between;
+    color:#56615d;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:8px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  .panel-actions{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding-top:2px;
+  }
+  .panel-hint{
+    margin:0;
+    max-width:24ch;
+    color:var(--muted);
+    font-size:10px;
+    line-height:1.45;
+  }
+  button{
+    flex:0 0 auto;
+    padding:9px 13px;
+    color:var(--text);
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:7px;
+    font:600 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:border-color .2s var(--ease),background-color .2s var(--ease),color .2s var(--ease);
+  }
+  button:hover{
+    color:var(--ink);
+    background:var(--signal);
+    border-color:var(--signal);
+  }
+  button:focus-visible{
+    outline:2px solid var(--focus);
+    outline-offset:3px;
+  }
+  .sr{
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip-path:inset(50%);
+    white-space:nowrap;
+  }
+
+  @media (max-width:700px){
+    .sheet{ padding:20px; }
+    h1{ max-width:8ch; font-size:clamp(38px,13vw,58px); }
+    .wisp-panel{
+      left:12px;
+      right:12px;
+      bottom:max(12px,env(safe-area-inset-bottom));
+      width:auto;
+      padding:16px;
+      border-radius:12px;
+    }
+    .panel-head{ margin-bottom:14px; padding-bottom:13px; }
+    .hud{ gap:13px; }
+    .panel-actions{ align-items:flex-end; }
+  }
+
+  @media (max-height:720px){
+    .wisp-panel{ padding:16px; }
+    .panel-head{ margin-bottom:12px; padding-bottom:12px; }
+    .hud{ gap:11px; }
+    .range-wrap{ gap:1px; }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      scroll-behavior:auto!important;
+      animation-duration:.01ms!important;
+      animation-iteration-count:1!important;
+      transition-duration:.01ms!important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="trail" aria-hidden="true"></canvas>
+<div id="stage" tabindex="0" role="application"
+     aria-label="Wisp field. Move the pointer, or use the arrow keys, to lay a trail."></div>
+
+<main class="sheet">
+  <header class="intro">
+    <p class="eyebrow">Vanilla JavaScript · Canvas 2D</p>
+    <h1>Wisps</h1>
+    <p class="intro-copy">The wisps use Vanilla JavaScript and the Canvas 2D API; CSS styles the interface only. No shaders, WebGL, Three.js, or runtime dependencies. A slow crawl and a fast flick keep the same spacing.</p>
+  </header>
+
+  <section class="wisp-panel" aria-labelledby="wisp-title">
+    <div class="panel-head">
+      <div>
+        <h2 class="panel-kicker" id="wisp-title">Wisp controls</h2>
+        <p class="panel-claim">Tune the path, then switch to timer mode to expose the spacing failure.</p>
+      </div>
+      <span class="live" aria-hidden="true">Live</span>
+    </div>
+
+    <div class="hud">
+      <fieldset>
+        <legend>Emission</legend>
+        <div class="seg">
+          <label class="opt"><input type="radio" name="mode" value="dist" checked><span>By distance</span></label>
+          <label class="opt"><input type="radio" name="mode" value="time"><span>By timer</span></label>
+        </div>
+      </fieldset>
+
+      <div class="ctl">
+        <div class="ctl-head">
+          <label for="step">Spacing</label>
+          <output id="stepOut" for="step">14 px</output>
+        </div>
+        <div class="range-wrap">
+          <input id="step" type="range" min="4" max="46" step="1" value="14">
+          <div class="range-limits" aria-hidden="true"><span>Tight · 4</span><span>Open · 46</span></div>
+        </div>
+      </div>
+
+      <div class="ctl">
+        <div class="ctl-head">
+          <label for="scatter">Scatter</label>
+          <output id="scatterOut" for="scatter">18%</output>
+        </div>
+        <div class="range-wrap">
+          <input id="scatter" type="range" min="0" max="60" step="1" value="18">
+          <div class="range-limits" aria-hidden="true"><span>Line · 0</span><span>Cloud · 60</span></div>
+        </div>
+      </div>
+
+      <div class="ctl">
+        <div class="ctl-head">
+          <label for="coast">Coast</label>
+          <output id="coastOut" for="coast">0.50</output>
+        </div>
+        <div class="range-wrap">
+          <input id="coast" type="range" min="10" max="220" step="5" value="50">
+          <div class="range-limits" aria-hidden="true"><span>Long · 0.10</span><span>Short · 2.20</span></div>
+        </div>
+      </div>
+
+      <div class="panel-actions">
+        <p class="panel-hint">Move the pointer or focus the field and use arrow keys.</p>
+        <button id="trace" type="button">Replay path</button>
+      </div>
+      <p class="sr" role="status" aria-live="polite" id="say"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+'use strict';
+
+const TAU = Math.PI * 2;
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches ||
+  new URLSearchParams(location.search).has('reduce'); /* deterministic demo QA */
+const COARSE = matchMedia('(hover: none)').matches;
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+/* frame-rate independent approach, so the lag is the same at 60 and 120Hz */
+const damp = (a, b, l, dt) => b + (a - b) * Math.exp(-l * dt);
+
+const cv = document.getElementById('trail');
+const ctx = cv.getContext('2d');
+const say = document.getElementById('say');
+
+/* -------------------------------------------------------- 1 · the mote art
+   Drawn once. A few pixels of core inside a faint halo — small sprites are
+   what let the count go up without paying the additive fill a screenful of
+   large ones costs. Round, so nothing here is ever oriented: no per-particle
+   angle attribute, no rotated lookup. Cold, against the warm night. */
+const SPRITE = (() => {
+  const S = 64, c = document.createElement('canvas');
+  c.width = c.height = S;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  g.addColorStop(0,   'rgba(255,255,255,1)');
+  g.addColorStop(.07, 'rgba(236,250,250,.92)');
+  g.addColorStop(.16, 'rgba(190,230,238,.40)');
+  g.addColorStop(.34, 'rgba(132,192,212,.13)');
+  g.addColorStop(.62, 'rgba(88,146,172,.035)');
+  g.addColorStop(1,   'rgba(70,120,142,0)');
+  x.fillStyle = g; x.beginPath(); x.arc(S / 2, S / 2, S / 2, 0, TAU); x.fill();
+  return c;
+})();
+
+/* ------------------------------------------------------------ 2 · the field */
+const N = 190;
+const M = new Array(N);
+for (let i = 0; i < N; i++) M[i] = { life: 0, max: 1, x: 0, y: 0, vx: 0, vy: 0, sz: 0, ph: 0 };
+
+const P = { step: 14, scatter: 18, coast: .50, mode: 'dist' };
+const E = { x: 0, y: 0, lx: 0, ly: 0, px: 0, py: 0, i: 0, acc: 0, tacc: 0, idle: 0, seen: false };
+let W = 0, H = 0, dpr = 1, clock = 0;
+
+/* Scatter is a fraction of the field it hangs on, never an absolute. The same
+   number that reads as a soft cloud on a laptop is a hard line on a phone. */
+const spread = () => (P.scatter / 100) * Math.min(H, W * 1.1) * .75;
+
+function spawn(x, y, ang, weak) {
+  const i = E.i; E.i = (i + 1) % N;   /* slot first, then advance: the other
+     order writes the position into the next slot and the life into this one,
+     and every mote appears where the one before it started */
+  const m = M[i], s = spread();
+  m.x = x + (Math.random() + Math.random() - 1) * s;
+  m.y = y + (Math.random() + Math.random() - 1) * s;
+  m.life = 0;
+  m.max = (weak ? 2.1 : 1.45) + Math.random() * 1.3;
+  const k = Math.min(H, W) * .055;
+  m.vx = -Math.cos(ang) * k * .5 + (Math.random() - .5) * k * 2.1;
+  m.vy = -Math.sin(ang) * k * .5 + (Math.random() - .5) * k * 1.8 - k * .12;
+  m.sz = ((weak ? .0014 : .0018) + Math.random() * .0018) * Math.min(H, W);
+  m.ph = Math.random() * TAU;
+}
+
+function emit(dt) {
+  const dx = E.x - E.lx, dy = E.y - E.ly;
+  const moved = Math.hypot(dx, dy);
+  const ang = moved > 1e-4 ? Math.atan2(dy, dx) : Math.random() * TAU;
+
+  if (P.mode === 'dist') {
+    /* the mechanism: spend distance, so spacing along the path is always STEP
+       and the ribbon reads the same at any hand speed */
+    E.acc += moved;
+    let guard = 0;
+    /* the cap is the teleport guard — a tab restore or a warped pointer can
+       hand you one enormous `moved`, and without it that frame spawns
+       thousands of motes and stalls */
+    while (E.acc >= P.step && guard++ < 14) {
+      E.acc -= P.step;
+      /* lay each at the distance along the segment it is owed, or a flick
+         clumps every mote at one end and leaves a gap behind it */
+      const t = moved > 1e-6 ? Math.min(1, guard * P.step / moved) : 0;
+      spawn(E.lx + dx * t, E.ly + dy * t, ang, false);
+    }
+  } else {
+    /* the wrong way, kept live so the failure is visible: the pointer covers
+       speed x interval between spawns, so a flick scatters the line into dots
+       and a resting hand piles every mote on one spot */
+    E.tacc += dt;
+    const every = P.step / 900;
+    let guard = 0;
+    while (E.tacc >= every && guard++ < 14) { E.tacc -= every; spawn(E.x, E.y, ang, false); }
+  }
+
+  /* Distance emission means a resting hand travels nothing and so emits
+     nothing. This is the breath that keeps an aura on a still cursor —
+     rarely, or a stationary pointer grows a column of smoke. */
+  E.idle += dt;
+  if (E.idle > .42) { E.idle = 0; spawn(E.x, E.y, Math.random() * TAU, true); }
+
+  E.lx = E.x; E.ly = E.y;
+}
+
+function step(dt) {
+  clock += dt;
+  /* the emitter trails the pointer, which gives the drift its slack on a fast
+     flick instead of welding it to the cursor */
+  E.x = damp(E.x, E.px, 16, dt);
+  E.y = damp(E.y, E.py, 16, dt);
+  emit(dt);
+
+  const drag = 1 - P.coast * dt, rise = Math.min(H, W) * .02 * dt;
+  for (let i = 0; i < N; i++) {
+    const m = M[i];
+    if (m.life >= m.max) continue;
+    m.life += dt;
+    /* curl, so the drift frays instead of blowing along one straight line */
+    m.x += (m.vx + Math.sin(clock * 1.3 + m.ph) * Math.min(H, W) * .012) * dt;
+    m.y += (m.vy + Math.cos(clock * 1.1 + m.ph * 1.7) * Math.min(H, W) * .010) * dt;
+    /* light damping: they must coast to carry the scatter outward */
+    m.vx *= drag; m.vy = m.vy * drag - rise;
+  }
+}
+
+function draw() {
+  if (!W || !H) return;
+  ctx.clearRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < N; i++) {
+    const m = M[i];
+    if (m.life >= m.max) continue;
+    const u = m.life / m.max;
+    const a = Math.min(1, u / .12) * (1 - clamp((u - .22) / .78, 0, 1)) * .9;
+    if (a <= 0) continue;
+    const d = m.sz * (1 + u * .55) * 2;   /* a mote softens, it does not swell */
+    ctx.globalAlpha = a;
+    ctx.drawImage(SPRITE, m.x - d, m.y - d, d * 2, d * 2);
+  }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+/* ------------------------------------------------- 3 · a path with two speeds
+   The mechanism has to be legible before anyone touches anything, so the field
+   traces itself on load: a slow arc, then a fast one. Under distance emission
+   both stretches carry the same spacing — which is the point. Any pointer or
+   key input takes over immediately. */
+let trace = 0, tracing = true;
+const PATH = [
+  [.20,.70],[.27,.61],[.34,.54],[.40,.49],[.46,.46],[.51,.45],   /* slow */
+  [.63,.42],[.79,.36],[.93,.29]                                   /* fast */
+];
+function traceStep(dt) {
+  trace += dt * .30;
+  if (trace >= 1) trace = 0;
+  const f = trace * (PATH.length - 1);
+  const i = Math.min(PATH.length - 2, Math.floor(f)), t = f - i;
+  E.px = (PATH[i][0] + (PATH[i + 1][0] - PATH[i][0]) * t) * W;
+  E.py = (PATH[i][1] + (PATH[i + 1][1] - PATH[i][1]) * t) * H;
+}
+const takeOver = () => { tracing = false; };
+
+/* --------------------------------------------------------------- 4 · input */
+const stage = document.getElementById('stage');
+addEventListener('pointermove', e => {
+  takeOver(); E.px = e.clientX; E.py = e.clientY;
+  if (!E.seen) { E.x = E.lx = E.px; E.y = E.ly = E.py; E.seen = true; }
+}, { passive: true });
+
+const keys = new Set();
+const KEY = { ArrowUp:'u', ArrowDown:'d', ArrowLeft:'l', ArrowRight:'r' };
+stage.addEventListener('keydown', e => {
+  const k = KEY[e.key]; if (!k) return;
+  e.preventDefault(); takeOver(); keys.add(k);
+});
+addEventListener('keyup', e => { const k = KEY[e.key]; if (k) keys.delete(k); });
+function keyDrive(dt) {
+  if (!keys.size) return;
+  const v = Math.min(W, H) * 1.05 * dt;
+  if (keys.has('l')) E.px -= v;
+  if (keys.has('r')) E.px += v;
+  if (keys.has('u')) E.py -= v;
+  if (keys.has('d')) E.py += v;
+  E.px = clamp(E.px, 0, W); E.py = clamp(E.py, 0, H);
+}
+
+/* ---------------------------------------------------------- 5 · the loop */
+let last = 0, running = false, raf = 0;
+function frame(now) {
+  if (!running) return;
+  const dt = clamp((now - last) / 1000, 0, 1 / 30);   /* a stall must not teleport the field */
+  last = now;
+  if (tracing) traceStep(dt);
+  keyDrive(dt);
+  step(dt); draw();
+  raf = requestAnimationFrame(frame);
+}
+function start() {
+  if (running || REDUCE || !sized) return;
+  running = true;
+  last = performance.now();   /* reset the base, or the first frame after a
+     pause integrates the whole pause */
+  raf = requestAnimationFrame(frame);
+}
+function stop() { running = false; cancelAnimationFrame(raf); }
+document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+
+/* Under reduced motion the field is composed, not hidden: run the trace
+   forward without animating and draw the one frame it produces, so the whole
+   laid ribbon is on screen at rest. */
+function still() {
+  for (let i = 0; i < N; i++) M[i].life = M[i].max;
+  trace = 0; E.seen = false;
+  E.px = PATH[0][0] * W; E.py = PATH[0][1] * H;
+  E.x = E.lx = E.px; E.y = E.ly = E.py;
+  const dt = 1 / 60;
+  for (let n = 0; n < 190; n++) { traceStep(dt); step(dt); }
+  draw();
+}
+
+/* ---------------------------------------------------------- 6 · controls */
+function wire(id, fmt, apply) {
+  const el = document.getElementById(id);
+  const out = document.getElementById(id + 'Out');
+  const label = document.querySelector('label[for="' + id + '"]');
+  const run = () => {
+    const v = +el.value;
+    const pct = ((v - +el.min) / (+el.max - +el.min)) * 100;
+    el.style.setProperty('--value', pct + '%');
+    out.textContent = fmt(v);
+    apply(v);
+    say.textContent = label.textContent.trim() + ' ' + fmt(v);
+    if (REDUCE) still();
+  };
+  el.addEventListener('input', run);
+  run();
+}
+wire('step', v => v + ' px', v => { P.step = v; });
+wire('scatter', v => v + '%', v => { P.scatter = v; });
+wire('coast', v => (v / 100).toFixed(2), v => { P.coast = v / 100; });
+
+document.querySelectorAll('input[name="mode"]').forEach(r => {
+  r.addEventListener('change', () => {
+    P.mode = r.value; E.acc = E.tacc = 0;
+    say.textContent = r.value === 'dist'
+      ? 'Emission by distance — spacing constant at any speed'
+      : 'Emission by timer — spacing follows the speed of the hand';
+    if (REDUCE) still();
+  });
+});
+document.getElementById('trace').addEventListener('click', () => {
+  tracing = true; trace = 0; keys.clear();
+  say.textContent = 'Tracing a path: slow, then fast';
+  if (REDUCE) still();
+});
+
+/* -------------------------------------------------------------- 7 · sizing
+   A one-shot measurement at script time is correct only if layout already
+   happened. A ResizeObserver on the root fires whenever the page actually
+   gets a size, which covers the first layout as well as every later one. */
+let sized = false;
+function fit() {
+  const de = document.documentElement;
+  const w = innerWidth || de.clientWidth || 0, h = innerHeight || de.clientHeight || 0;
+  if (!w || !h) return;                      /* not laid out yet */
+  if (sized && w === W && h === H) return;   /* the observer fires on no-ops too */
+  W = w; H = h;
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  if (!E.seen) { E.px = W * PATH[0][0]; E.py = H * PATH[0][1];
+                 E.x = E.lx = E.px; E.y = E.ly = E.py; }
+  if (!sized) {
+    sized = true;
+    /* On touch there is no hover position to follow, so the field keeps
+       tracing its own path rather than parking an emitter that would plume. */
+    if (COARSE) tracing = true;
+    if (REDUCE) still(); else start();
+  } else if (REDUCE) still();
+}
+if (typeof ResizeObserver === 'function') new ResizeObserver(fit).observe(document.documentElement);
+addEventListener('resize', fit, { passive: true });
+fit();
+})();
+</script>
+</body>
+</html>

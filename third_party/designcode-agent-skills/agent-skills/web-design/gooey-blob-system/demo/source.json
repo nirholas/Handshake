@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:40:51.569Z",
+  "skill": {
+    "id": "gooey-blob-system",
+    "label": "Gooey Blob System",
+    "usage_count": 36,
+    "url": "https://neuform.ai/skill/gooey-blob-system"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "60acc30b-501e-4cec-b815-645cf10804d2",
+    "slug": "modern-talent-platform",
+    "title": "Modern Talent Platform",
+    "url": "https://neuform.ai/pages/modern-talent-platform/index.html",
+    "view_count": 170,
+    "favorite_count": 10,
+    "remix_count": 2
+  },
+  "html": {
+    "original_sha256": "c40c369e5b130e9d0050cf150a14015325f8592ccc076cd41d0c31950c5f6de0",
+    "bundled_sha256": "ba9d237706178cc9b8853cecf65b7c6be78a0b473b10aa422e54061191ce3f5a",
+    "runtime_dependencies": [],
+    "hardened_sha256": "ad9bfe5929be4db66649eb27ee17f3f956461066253ca8d659925695dbac976f",
+    "sandboxed_sha256": "e3e7f73f42b35cad267ec86b3ac7ce153518d2cae57479d149e2c5aca7ecb0d2",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 282854,
+        "file": "assets/page-01-0d868fef-f560-45ca-ab35-5dad4fc29059-3840w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/0d868fef-f560-45ca-ab35-5dad4fc29059_3840w.webp"
+      },
+      {
+        "bytes": 599390,
+        "file": "assets/page-02-3186f9ea-5f5a-49f7-8fcf-568ad52f515e-3840w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/3186f9ea-5f5a-49f7-8fcf-568ad52f515e_3840w.webp"
+      },
+      {
+        "bytes": 298959,
+        "file": "assets/page-03-2f563338-39fa-47ea-9761-658d4f3f84db-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/2f563338-39fa-47ea-9761-658d4f3f84db_1600w.jpg"
+      },
+      {
+        "bytes": 536390,
+        "file": "assets/page-04-65695f80-23f9-46ee-8487-cbb6c93cc48b-3840w.webp",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/65695f80-23f9-46ee-8487-cbb6c93cc48b_3840w.webp"
+      },
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 42667,
+        "file": "../../../../assets/runtime/runtime-689ca8dda44c-scrolltrigger-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js",
+        "kind": "runtime-script",
+        "sha256": "65f6c13748b0c8d8f9eabd0373a130ac293b3f16bf34aaa946d953980372b932"
+      },
+      {
+        "bytes": 71520,
+        "file": "../../../../assets/runtime/runtime-027051effa47-gsap-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js",
+        "kind": "runtime-script",
+        "sha256": "efc85c7eb141819717cda0033484a84b1c890d13b02e355a2fec79d424b20e7a"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

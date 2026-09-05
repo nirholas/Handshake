@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elemental Marks — 水・雷・炎</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060708;
+    --line: rgba(255,255,255,.07);
+    --ink: #e8e4dc;
+    --dim: rgba(232,228,220,.42);
+    --faint: rgba(232,228,220,.22);
+    --water: #6cd3ff;
+    --bolt: #aab4ff;
+    --fire: #ff9d6b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "JetBrains Mono", monospace;
+    overflow: hidden;
+  }
+  header {
+    position: fixed; inset: 0 0 auto 0; z-index: 10;
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 18px 22px;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  header .brand {
+    font-family: "Inter", "Hiragino Sans", sans-serif; font-weight: 500;
+    font-size: 15px; letter-spacing: normal; text-transform: uppercase;
+  }
+  header .brand em { font-style: normal; color: var(--dim); margin-left: .8em; letter-spacing: normal; }
+
+  main { display: flex; height: 100dvh; }
+  .panel {
+    position: relative; flex: 1 1 0; min-width: 0;
+    transition: flex .7s cubic-bezier(.22,1,.36,1);
+    border-left: 1px solid var(--line);
+    opacity: 0; transform: translateY(14px);
+    animation: reveal 1.1s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  .panel:first-child { border-left: 0; }
+  .panel:nth-child(1) { animation-delay: .05s; }
+  .panel:nth-child(2) { animation-delay: .18s; }
+  .panel:nth-child(3) { animation-delay: .31s; }
+  @keyframes reveal { to { opacity: 1; transform: none; } }
+  @media (hover:hover) and (min-width: 761px) {
+    .panel:hover { flex: 1.4 1 0; }
+  }
+  .panel canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .info {
+    position: absolute; left: 22px; bottom: 20px; z-index: 5;
+    pointer-events: none;
+  }
+  .info .romaji {
+    font-size: 10px; letter-spacing: normal; color: var(--faint);
+    margin-bottom: 10px; text-transform: uppercase;
+  }
+  .info h2 {
+    font-family: "Inter", "Hiragino Sans", sans-serif; font-weight: 500;
+    font-size: clamp(20px, 2.2vw, 30px); letter-spacing: normal;
+    color: var(--ink);
+  }
+  .info .tech {
+    margin-top: 8px; font-size: 10px; letter-spacing: normal;
+    color: var(--dim); max-width: 30ch; line-height: 1.7;
+  }
+  .kanji {
+    position: absolute; top: 46px; right: 18px; z-index: 5;
+    font-family: "Inter", "Hiragino Sans", "Yu Gothic", sans-serif; font-weight: 800;
+    font-size: clamp(64px, 8vw, 120px); line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--accent, rgba(255,255,255,.25));
+    opacity: .55; pointer-events: none;
+    transition: opacity .5s, color .5s;
+  }
+  .panel:hover .kanji { opacity: .95; color: var(--accent); -webkit-text-stroke: 0; text-shadow: 0 0 34px var(--accent); }
+  .panel[data-fx="water"]     { --accent: var(--water); }
+  .panel[data-fx="lightning"] { --accent: var(--bolt); }
+  .panel[data-fx="fire"]      { --accent: var(--fire); }
+
+  .hint {
+    position: fixed; bottom: 18px; right: 22px;
+    z-index: 10; font-size: 9px; letter-spacing: normal; color: var(--faint);
+    text-transform: uppercase; pointer-events: none; white-space: nowrap;
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  .fail {
+    position: absolute; inset: 0; display: none; place-items: center;
+    font-size: 11px; letter-spacing: normal; color: var(--dim); text-align: center;
+  }
+
+  @media (max-width: 760px) {
+    body { overflow-y: auto; }
+    main { flex-direction: column; height: auto; }
+    .panel { height: 72dvh; border-left: 0; border-top: 1px solid var(--line); }
+    .hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .panel { animation-duration: .01s; }
+    .hint { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Elemental Marks<em>水 雷 炎</em></div>
+</header>
+
+<main>
+  <section class="panel" data-fx="water">
+    <canvas></canvas>
+    <div class="kanji">水</div>
+    <div class="info">
+      <div class="romaji">Sui — Water</div>
+      <h2>OpenAI</h2>
+      <p class="tech">ping-pong wave equation · gradient refraction of the mark</p>
+    </div>
+    <div class="fail">WEBGL2 FLOAT BUFFERS UNAVAILABLE</div>
+  </section>
+
+  <section class="panel" data-fx="lightning">
+    <canvas></canvas>
+    <div class="kanji">雷</div>
+    <div class="info">
+      <div class="romaji">Rai — Lightning</div>
+      <h2>Anthropic</h2>
+      <p class="tech">contour distance field · fBm zigzag arcs crawling the outline</p>
+    </div>
+    <div class="fail">WEBGL2 UNAVAILABLE</div>
+  </section>
+
+  <section class="panel" data-fx="fire">
+    <canvas></canvas>
+    <div class="kanji">炎</div>
+    <div class="info">
+      <div class="romaji">En — Flame</div>
+      <h2>Claude</h2>
+      <p class="tech">noise ribbons licking upward from the edge · rising embers</p>
+    </div>
+    <div class="fail">WEBGL2 UNAVAILABLE</div>
+  </section>
+</main>
+
+<div class="hint">move — 触れてみて — press</div>
+
+<script>
+'use strict';
+
+/* ---------------- logo paths (simple-icons, viewBox 0 0 24 24) ---------------- */
+const LOGO_PATHS = {
+  openai: "M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z",
+  anthropic: "M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z",
+  claude: "m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"
+};
+
+/* ---------------- rasterize -> SDF (chamfer) + edge point extraction ---------------- */
+const SDF_SIZE = 512;
+const SDF_SPREAD = 128;          // px each side of the edge
+const D_RANGE = SDF_SPREAD * 2 / SDF_SIZE; // decoded sdf span in mask-uv units
+
+function rasterizeLogo(pathStr) {
+  const c = document.createElement('canvas');
+  c.width = c.height = SDF_SIZE;
+  const ctx = c.getContext('2d');
+  const box = SDF_SIZE * 0.60;
+  const s = box / 24;
+  const off = (SDF_SIZE - box) / 2;
+  ctx.setTransform(s, 0, 0, s, off, off);
+  ctx.fillStyle = '#fff';
+  ctx.fill(new Path2D(pathStr));
+  return ctx.getImageData(0, 0, SDF_SIZE, SDF_SIZE);
+}
+
+function chamfer(d, w, h) {
+  const D1 = 1, D2 = Math.SQRT2;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x; let v = d[i];
+    if (x > 0) v = Math.min(v, d[i - 1] + D1);
+    if (y > 0) {
+      v = Math.min(v, d[i - w] + D1);
+      if (x > 0) v = Math.min(v, d[i - w - 1] + D2);
+      if (x < w - 1) v = Math.min(v, d[i - w + 1] + D2);
+    }
+    d[i] = v;
+  }
+  for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) {
+    const i = y * w + x; let v = d[i];
+    if (x < w - 1) v = Math.min(v, d[i + 1] + D1);
+    if (y < h - 1) {
+      v = Math.min(v, d[i + w] + D1);
+      if (x < w - 1) v = Math.min(v, d[i + w + 1] + D2);
+      if (x > 0) v = Math.min(v, d[i + w - 1] + D2);
+    }
+    d[i] = v;
+  }
+}
+
+function buildSDF(img) {
+  const n = SDF_SIZE * SDF_SIZE;
+  const dOut = new Float32Array(n), dIn = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const inside = img.data[i * 4 + 3] > 127;
+    dOut[i] = inside ? 0 : 1e9;
+    dIn[i]  = inside ? 1e9 : 0;
+  }
+  chamfer(dOut, SDF_SIZE, SDF_SIZE);
+  chamfer(dIn, SDF_SIZE, SDF_SIZE);
+  const enc = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const d = dOut[i] - dIn[i]; // + outside, - inside
+    enc[i] = Math.max(0, Math.min(255, Math.round((0.5 + 0.5 * d / SDF_SPREAD) * 255)));
+  }
+  return enc;
+}
+
+/* contour pixels + outward normals, in y-up mask uv */
+function edgePoints(img) {
+  const S = SDF_SIZE, pts = [];
+  const a = (x, y) => img.data[(y * S + x) * 4 + 3] > 127;
+  for (let y = 1; y < S - 1; y++) {
+    for (let x = 1; x < S - 1; x++) {
+      if (!a(x, y)) continue;
+      const l = a(x - 1, y), r = a(x + 1, y), u = a(x, y - 1), dn = a(x, y + 1);
+      if (l && r && u && dn) continue;
+      const gx = (r ? 1 : 0) - (l ? 1 : 0);
+      const gy = (dn ? 1 : 0) - (u ? 1 : 0);
+      let nx = -gx, ny = gy;                 // outward, y flipped to y-up
+      const len = Math.hypot(nx, ny);
+      if (!len) { nx = 0; ny = 1; } else { nx /= len; ny /= len; }
+      pts.push((x + 0.5) / S, 1 - (y + 0.5) / S, nx, ny);
+    }
+  }
+  return pts;
+}
+
+function makeParticleData(pts, count) {
+  const data = new Float32Array(count * 5);
+  const nPts = pts.length / 4;
+  for (let i = 0; i < count; i++) {
+    const j = (Math.random() * nPts) | 0;
+    data[i * 5]     = pts[j * 4];
+    data[i * 5 + 1] = pts[j * 4 + 1];
+    data[i * 5 + 2] = pts[j * 4 + 2];
+    data[i * 5 + 3] = pts[j * 4 + 3];
+    data[i * 5 + 4] = Math.random() * 100 + i * 0.618;
+  }
+  return data;
+}
+
+/* ---------------- shaders ---------------- */
+const VERT = `#version 300 es
+out vec2 vUv;
+void main(){
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  vUv = p;
+  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+}`;
+
+const GLSL_COMMON = `
+precision highp float;
+uniform sampler2D uSDF;
+uniform float uTime;
+uniform float uAspect;
+uniform vec2  uScale;
+uniform vec2  uShift;
+uniform vec3  uPointer; // uv.xy, active
+in vec2 vUv;
+out vec4 frag;
+
+float hash21(vec2 p){
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+float vnoise(vec2 p){
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = hash21(i), b = hash21(i + vec2(1,0));
+  float c = hash21(i + vec2(0,1)), d = hash21(i + vec2(1,1));
+  return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+}
+float fbm(vec2 p){
+  float v = 0.0, a = 0.5;
+  mat2 r = mat2(0.8, -0.6, 0.6, 0.8);
+  for (int i = 0; i < 5; i++){ v += a * vnoise(p); p = r * p * 2.03; a *= 0.5; }
+  return v;
+}
+/* signed distance in mask-uv units; extended analytically past the texture
+   border so out-of-range samples keep growing instead of clamping (kills
+   the rectangular clamp artifacts) */
+float sdf(vec2 uv){
+  vec2 m = 0.5 + (uv - 0.5 - uShift) * uScale;
+  vec2 mc = clamp(m, 0.0, 1.0);
+  float d = (texture(uSDF, vec2(mc.x, 1.0 - mc.y)).r - 0.5) * ${D_RANGE.toFixed(4)};
+  return d + length(m - mc);
+}
+float edgeFade(vec2 uv){
+  return smoothstep(0.0, 0.05, uv.x) * smoothstep(1.0, 0.95, uv.x)
+       * smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+}
+`;
+
+/* water simulation step (ping-pong, r = h, g = h_prev) */
+const FRAG_SIM = `#version 300 es
+precision highp float;
+uniform sampler2D uState;
+uniform vec2 uTexel;
+uniform vec3 uDrop; // sim-uv.xy, strength
+in vec2 vUv;
+out vec4 frag;
+void main(){
+  vec2 s = texture(uState, vUv).rg;
+  float l = texture(uState, vUv - vec2(uTexel.x, 0.0)).r;
+  float r = texture(uState, vUv + vec2(uTexel.x, 0.0)).r;
+  float u = texture(uState, vUv + vec2(0.0, uTexel.y)).r;
+  float d = texture(uState, vUv - vec2(0.0, uTexel.y)).r;
+  float next = (l + r + u + d) * 0.5 - s.g;
+  next *= 0.984;
+  if (uDrop.z != 0.0){
+    float dd = distance(vUv, uDrop.xy);
+    next += uDrop.z * exp(-dd * dd * 3800.0);
+  }
+  frag = vec4(next, s.r, 0.0, 1.0);
+}`;
+
+const FRAG_WATER = `#version 300 es
+${GLSL_COMMON}
+uniform sampler2D uState;
+uniform vec2 uSimTexel;
+/* cover-map panel uv into the square sim so rings stay circular on screen */
+vec2 simUV(vec2 uv){
+  return 0.5 + (uv - 0.5) * vec2(uAspect, 1.0) / max(uAspect, 1.0);
+}
+void main(){
+  vec2 suv = simUV(vUv);
+  float h  = texture(uState, suv).r;
+  float hx = texture(uState, suv + vec2(uSimTexel.x, 0.0)).r - texture(uState, suv - vec2(uSimTexel.x, 0.0)).r;
+  float hy = texture(uState, suv + vec2(0.0, uSimTexel.y)).r - texture(uState, suv - vec2(0.0, uSimTexel.y)).r;
+  vec2 grad = vec2(hx, hy);
+  vec3 nrm = normalize(vec3(-grad * 30.0, 1.0));
+
+  vec2 ruv = vUv + grad * 0.22;          // refracted lookup
+  float d  = sdf(ruv);
+
+  // deep water base
+  vec3 col = mix(vec3(0.006, 0.030, 0.055), vec3(0.012, 0.078, 0.125), vUv.y * 0.8 + h * 0.25);
+  col += vec3(0.02, 0.10, 0.13) * fbm(vUv * vec2(uAspect, 1.0) * 3.0 + uTime * 0.05) * 0.3;
+
+  // the mark, seen through the surface
+  float logo = smoothstep(0.005, -0.005, d);
+  float glow = exp(-max(d, 0.0) / 0.09) * 0.26;
+  vec3 markCol = mix(vec3(0.55, 0.92, 1.0), vec3(0.95, 1.0, 1.0), logo * 0.6);
+  col += markCol * (logo * 0.92 + glow);
+
+  // ripple shading: crests bright, troughs barely darker
+  col += vec3(0.09, 0.30, 0.40) * clamp(h * 1.8, -0.06, 1.0);
+  col += vec3(0.25, 0.55, 0.65) * pow(clamp(h * 2.6, 0.0, 1.0), 2.0) * 0.5;
+
+  // specular glint
+  vec3 L = normalize(vec3(-0.35, 0.55, 0.75));
+  vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+  float spec = pow(max(dot(nrm, H), 0.0), 150.0);
+  col += spec * vec3(0.65, 0.9, 1.0) * 0.9;
+
+  col *= 0.35 + 0.65 * edgeFade(vUv);
+  col += (hash21(vUv * 617.0 + uTime) - 0.5) / 128.0;
+  frag = vec4(col, 1.0);
+}`;
+
+const FRAG_LIGHTNING = `#version 300 es
+${GLSL_COMMON}
+void main(){
+  float t = uTime;
+  float d = sdf(vUv);
+  vec2 pp = vUv * vec2(uAspect, 1.0);
+
+  // storm backdrop
+  vec3 col = vec3(0.010, 0.011, 0.024);
+  col += vec3(0.035, 0.04, 0.075) * fbm(pp * 2.2 + vec2(t * 0.04, t * 0.01));
+
+  // occasional sheet flash
+  float slot = floor(t * 0.45);
+  float ph   = fract(t * 0.45);
+  float big  = step(0.68, hash21(vec2(slot, 3.7))) * exp(-ph * 16.0);
+
+  // the mark: dark slate body, lit by flashes
+  float inside = smoothstep(0.005, -0.005, d);
+  vec3 body = vec3(0.055, 0.06, 0.10) + big * vec3(0.55, 0.58, 0.85);
+  col = mix(col, body, inside);
+  float rim = exp(-abs(d) / 0.012) * 0.5;
+  col += rim * vec3(0.35, 0.4, 0.8);
+
+  // pointer draws the storm closer
+  vec2 dp = (vUv - uPointer.xy) * vec2(uAspect, 1.0);
+  float pb = 1.0 + 2.4 * uPointer.z * exp(-dot(dp, dp) * 34.0);
+
+  // fBm zigzag arcs crawling the contour
+  float fade = edgeFade(vUv);
+  for (int i = 0; i < 3; i++){
+    float fi = float(i);
+    float n  = fbm(pp * mix(3.0, 8.0, fi / 2.0) + vec2(t * (1.2 + fi * 0.9), fi * 19.3)) - 0.5;
+    float e  = abs(d + n * 0.11);
+    float fl = hash21(vec2(floor(t * (6.0 + fi * 3.0)), fi));
+    fl = mix(0.15, 1.0, smoothstep(0.25, 0.95, fl));
+    float bolt = pow(0.0042 * pb / (e + 0.0022), 1.35) * fl;
+    bolt = min(bolt, 6.0);
+    col += bolt * mix(vec3(0.38, 0.42, 1.0), vec3(0.92, 0.9, 1.0), fi / 2.0) * fade;
+  }
+  // tight white core arc
+  float n0 = fbm(pp * 5.0 + vec2(t * 2.4, 7.7)) - 0.5;
+  float e0 = abs(d + n0 * 0.10);
+  float corefl = mix(0.25, 1.15, hash21(vec2(floor(t * 9.0), 11.0)));
+  col += min(pow(0.0026 * pb / (e0 + 0.0016), 1.6), 8.0) * corefl * vec3(1.0) * fade;
+
+  col += big * vec3(0.30, 0.32, 0.55) * (0.25 + 0.75 * inside);
+  col = col / (1.0 + col * 0.18);
+  col *= 0.4 + 0.6 * edgeFade(vUv);
+  col += (hash21(vUv * 431.0 + uTime) - 0.5) / 128.0;
+  frag = vec4(col, 1.0);
+}`;
+
+const FRAG_FIRE = `#version 300 es
+${GLSL_COMMON}
+uniform float uWind;
+
+vec3 fireRamp(float x){
+  x = clamp(x, 0.0, 1.0);
+  vec3 c = mix(vec3(0.0), vec3(0.45, 0.06, 0.02), smoothstep(0.02, 0.30, x));
+  c = mix(c, vec3(0.95, 0.34, 0.08), smoothstep(0.28, 0.55, x));
+  c = mix(c, vec3(1.0, 0.68, 0.22), smoothstep(0.52, 0.78, x));
+  c = mix(c, vec3(1.0, 0.97, 0.88), smoothstep(0.78, 0.97, x));
+  return c;
+}
+
+void main(){
+  float t = uTime;
+  float d0 = sdf(vUv);
+  vec2 pp = vUv * vec2(uAspect, 1.0);
+
+  // which way is "up and away" from the mark (wide epsilon: the gradient
+  // creases on the medial axis between rays and narrow sampling bands there)
+  float e = 0.012;
+  vec2 g = vec2(sdf(vUv + vec2(e, 0.0)) - sdf(vUv - vec2(e, 0.0)),
+                sdf(vUv + vec2(0.0, e)) - sdf(vUv - vec2(0.0, e)));
+  float upw = smoothstep(-0.2, 0.9, normalize(g + 1e-5).y);
+
+  // pointer stokes the flame
+  vec2 dp = (vUv - uPointer.xy) * vec2(uAspect, 1.0);
+  float stoke = uPointer.z * exp(-dot(dp, dp) * 26.0);
+
+  // thin tongues: x-squashed scrolling fBm, advected progressively with
+  // height so flames stay attached at the edge and lick upward
+  float n1 = fbm(vec2(pp.x * 12.0,        pp.y * 3.0  - t * 2.1));
+  float n2 = fbm(vec2(pp.x * 6.0 + 41.3,  pp.y * 1.7  - t * 1.25));
+  float d0f = d0 + (hash21(vUv * 771.0 + t * 1.3) - 0.5) * 0.004;
+  float rise = max(0.0, n1 * 1.15 + n2 * 0.65 - 0.5) * 1.3;  // many columns ~0, few run hot
+  float adv  = smoothstep(-0.03, 0.22, d0f);     // 0 at the edge, grows above
+  float lick = 0.30 * (1.0 + stoke * 0.8);
+  vec2 offs = vec2((n2 - 0.5) * 0.05 + uWind * 0.05, -rise * lick * adv);
+  float df = sdf(vUv + offs);
+  df += (hash21(vUv * 997.0 + uTime) - 0.5) * 0.004;  // dither the 8-bit field
+
+  float heat = clamp(1.0 - df / 0.07, 0.0, 1.0);
+  heat *= mix(0.1, 1.0, upw);
+  heat *= 1.0 - 0.45 * smoothstep(0.08, 0.26, d0f);  // gentle thinning with height
+  float tongue = smoothstep(0.25, 0.70, heat);   // sharp separated licks
+  float body   = pow(heat, 2.2) * 0.45;          // faint haze beneath them
+  float f = max(tongue, body) * (0.95 + 0.25 * stoke);
+
+  vec3 col = vec3(0.012, 0.006, 0.004);
+  col += fireRamp(f * (1.05 - 0.4 * smoothstep(0.02, 0.25, d0)));  // white base, orange tips
+
+  // white-hot mark with a warm halo, like paper mid-combustion
+  float inside = smoothstep(0.004, -0.004, d0);
+  float core   = smoothstep(0.0, -0.02, d0);
+  vec3 markCol = mix(vec3(1.0, 0.92, 0.78), vec3(1.0, 1.0, 0.98), core);
+  col = mix(col, markCol, inside);
+  col += exp(-max(d0, 0.0) / 0.035) * vec3(1.0, 0.55, 0.22) * 0.35 * (1.0 - inside * 0.9);
+  col += exp(-max(d0, 0.0) / 0.12)  * vec3(0.55, 0.14, 0.03) * 0.35 * (0.6 + 0.4 * n2);
+
+  col = col / (1.0 + col * 0.12);
+  col *= 0.35 + 0.65 * edgeFade(vUv);
+  col += (hash21(vUv * 523.0 + uTime) - 0.5) / 128.0;
+  frag = vec4(col, 1.0);
+}`;
+
+/* ---------------- particles: stateless GPU point sprites off the contour ---------------- */
+const PART_VERT = `#version 300 es
+precision highp float;
+layout(location=0) in vec2 aPos;    // spawn point, y-up mask uv
+layout(location=1) in vec2 aNorm;   // outward contour normal
+layout(location=2) in float aSeed;
+uniform float uTime;
+uniform vec2  uScale;
+uniform vec2  uShift;
+uniform float uDpr;
+uniform float uWind;
+uniform vec4  uCfgA;  // travel, lifeMin, lifeMax, alongNormal
+uniform vec4  uCfgB;  // wiggle, sizeMin, sizeMax, sparse
+out float vFade;
+out float vMixC;
+float h1(float n){ return fract(sin(n) * 43758.5453); }
+void main(){
+  float hs   = h1(aSeed * 1.31);
+  float life = mix(uCfgA.y, uCfgA.z, hs);
+  float tt   = uTime / life + aSeed * 13.7;
+  float ph   = fract(tt);
+  float cyc  = floor(tt);
+  float r1 = h1(aSeed + cyc * 0.317);
+  float r2 = h1(aSeed * 2.13 + cyc * 0.771);
+  float on = step(uCfgB.w, r2);
+
+  vec2 dir = normalize(mix(vec2(0.0, 1.0), aNorm, uCfgA.w) + (vec2(r1, h1(r1 * 7.0)) - 0.5) * 0.8);
+  float trav = uCfgA.x * (0.45 + 0.9 * r1);
+  vec2 p = aPos + aNorm * 0.004 + dir * trav * ph;
+  p.x += sin(ph * 10.0 + r1 * 40.0 + uTime * 0.5) * uCfgB.x * ph;
+  p.x += uWind * 0.08 * ph;
+
+  vec2 uv = 0.5 + uShift + (p - 0.5) / uScale;
+  vFade = on * smoothstep(0.0, 0.12, ph) * smoothstep(1.0, 0.5, ph) * mix(0.35, 1.0, r2);
+  vMixC = h1(aSeed * 3.7 + cyc);
+  gl_Position = vec4(uv * 2.0 - 1.0, 0.0, 1.0);
+  gl_PointSize = mix(uCfgB.y, uCfgB.z, h1(aSeed * 5.11 + cyc)) * uDpr * (1.0 - 0.45 * ph);
+}`;
+
+const PART_FRAG = `#version 300 es
+precision highp float;
+uniform vec3 uColA;
+uniform vec3 uColB;
+in float vFade;
+in float vMixC;
+out vec4 frag;
+void main(){
+  vec2 q = gl_PointCoord * 2.0 - 1.0;
+  float r2 = dot(q, q);
+  if (r2 > 1.0) discard;
+  float a = exp(-r2 * 3.5) * (1.0 - r2);
+  frag = vec4(mix(uColA, uColB, vMixC) * a * vFade, 1.0);
+}`;
+
+/* ---------------- GL helpers ---------------- */
+function compile(gl, type, src) {
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, src);
+  gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+    console.error(gl.getShaderInfoLog(sh), src);
+    return null;
+  }
+  return sh;
+}
+function program(gl, vertSrc, fragSrc) {
+  const p = gl.createProgram();
+  const vs = compile(gl, gl.VERTEX_SHADER, vertSrc);
+  const fs = compile(gl, gl.FRAGMENT_SHADER, fragSrc);
+  if (!vs || !fs) return null;
+  gl.attachShader(p, vs); gl.attachShader(p, fs);
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+    console.error(gl.getProgramInfoLog(p));
+    return null;
+  }
+  return p;
+}
+
+const DPR = Math.min(window.devicePixelRatio || 1, 1.75);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SIM_RES = 512;
+
+class Panel {
+  constructor(el, fragSrc, logo, opts) {
+    this.el = el;
+    this.canvas = el.querySelector('canvas');
+    this.opts = opts;
+    this.pointer = { x: 0.5, y: 0.5, active: 0 };
+    this.wind = 0;
+    this.windTarget = 0;
+    this.dropQueue = [];
+    this.nextAutoDrop = 0.6;
+    this.needsResize = false;
+    this.ok = false;
+
+    const gl = this.canvas.getContext('webgl2', { alpha: false, antialias: false });
+    if (!gl) return this.fail();
+    this.gl = gl;
+
+    this.prog = program(gl, VERT, fragSrc);
+    if (!this.prog) return this.fail();
+    this.uni = {};
+    for (const n of ['uSDF','uTime','uAspect','uScale','uShift','uPointer','uState','uSimTexel','uWind'])
+      this.uni[n] = gl.getUniformLocation(this.prog, n);
+
+    // sdf texture
+    this.sdfTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.sdfTex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, SDF_SIZE, SDF_SIZE, 0, gl.RED, gl.UNSIGNED_BYTE, logo.sdf);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    if (opts.sim) {
+      if (!gl.getExtension('EXT_color_buffer_float')) return this.fail();
+      this.simProg = program(gl, VERT, FRAG_SIM);
+      if (!this.simProg) return this.fail();
+      this.simUni = {
+        uState: gl.getUniformLocation(this.simProg, 'uState'),
+        uTexel: gl.getUniformLocation(this.simProg, 'uTexel'),
+        uDrop:  gl.getUniformLocation(this.simProg, 'uDrop'),
+      };
+      this.simTex = []; this.simFbo = [];
+      for (let i = 0; i < 2; i++) {
+        const t = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, SIM_RES, SIM_RES, 0, gl.RG, gl.HALF_FLOAT, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        const f = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+        this.simTex.push(t); this.simFbo.push(f);
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      this.simSrc = 0;
+    }
+
+    // particle system
+    const P = opts.particles;
+    if (P) {
+      this.partProg = program(gl, PART_VERT, PART_FRAG);
+      if (!this.partProg) return this.fail();
+      this.partUni = {};
+      for (const n of ['uTime','uScale','uShift','uDpr','uWind','uCfgA','uCfgB','uColA','uColB'])
+        this.partUni[n] = gl.getUniformLocation(this.partProg, n);
+      const data = makeParticleData(logo.edges, P.count);
+      this.partVao = gl.createVertexArray();
+      gl.bindVertexArray(this.partVao);
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 20, 0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 8);
+      gl.enableVertexAttribArray(2);
+      gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 20, 16);
+      gl.bindVertexArray(null);
+    }
+
+    this.resize();
+    // resize inside the rAF (before drawing), never in the RO callback —
+    // RO fires after rAF, so resizing there clears the canvas post-draw
+    // and every hover transition frame paints black
+    new ResizeObserver(() => {
+      if (REDUCED) this.resize(); else this.needsResize = true;
+    }).observe(el);
+    this.bindPointer();
+    this.ok = true;
+  }
+
+  fail() {
+    this.el.querySelector('.fail').style.display = 'grid';
+    this.canvas.style.display = 'none';
+  }
+
+  resize() {
+    const r = this.el.getBoundingClientRect();
+    const w = Math.max(2, Math.round(r.width * DPR));
+    const h = Math.max(2, Math.round(r.height * DPR));
+    if (this.canvas.width !== w || this.canvas.height !== h) {
+      this.canvas.width = w; this.canvas.height = h;
+    }
+    this.aspect = w / h;
+    if (REDUCED && this.ok) this.draw(0.001);
+  }
+
+  bindPointer() {
+    const uv = e => {
+      const r = this.el.getBoundingClientRect();
+      return { x: (e.clientX - r.left) / r.width, y: 1 - (e.clientY - r.top) / r.height };
+    };
+    let last = null, lastT = 0;
+    this.el.addEventListener('pointermove', e => {
+      const p = uv(e), now = performance.now();
+      this.pointer.x = p.x; this.pointer.y = p.y; this.pointer.active = 1;
+      if (last) {
+        const dt = Math.max(8, now - lastT);
+        const dx = p.x - last.x, dy = p.y - last.y;
+        const speed = Math.hypot(dx, dy) / (dt / 1000);
+        if (this.opts.sim && speed > 0.05 && this.dropQueue.length < 6)
+          this.dropQueue.push({ x: p.x, y: p.y, s: Math.min(speed * 0.14, 0.55) });
+        this.windTarget = Math.max(-1, Math.min(1, dx / (dt / 1000) * 0.55));
+      }
+      last = p; lastT = now;
+    });
+    this.el.addEventListener('pointerdown', e => {
+      const p = uv(e);
+      if (this.opts.sim) this.dropQueue.push({ x: p.x, y: p.y, s: 0.9 });
+      this.pointer.x = p.x; this.pointer.y = p.y; this.pointer.active = 1.6;
+    });
+    this.el.addEventListener('pointerup', () => { this.pointer.active = 1; });
+    this.el.addEventListener('pointerleave', () => { this.pointer.active = 0; last = null; this.windTarget = 0; });
+  }
+
+  /* panel uv -> square sim uv (must match simUV() in the water shader) */
+  toSimUV(x, y) {
+    const a = this.aspect, m = Math.max(a, 1);
+    return { x: 0.5 + (x - 0.5) * a / m, y: 0.5 + (y - 0.5) / m };
+  }
+
+  stepSim(t) {
+    const gl = this.gl;
+    if (t > this.nextAutoDrop) {
+      this.dropQueue.push({ x: 0.12 + Math.random() * 0.76, y: 0.12 + Math.random() * 0.76, s: 0.12 + Math.random() * 0.3 });
+      this.nextAutoDrop = t + 0.5 + Math.random() * 1.4;
+    }
+    gl.useProgram(this.simProg);
+    gl.viewport(0, 0, SIM_RES, SIM_RES);
+    gl.uniform2f(this.simUni.uTexel, 1 / SIM_RES, 1 / SIM_RES);
+    for (let i = 0; i < 2; i++) {
+      const drop = this.dropQueue.shift();
+      if (drop) {
+        const s = this.toSimUV(drop.x, drop.y);
+        gl.uniform3f(this.simUni.uDrop, s.x, s.y, drop.s);
+      } else {
+        gl.uniform3f(this.simUni.uDrop, 0, 0, 0);
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.simFbo[1 - this.simSrc]);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, this.simTex[this.simSrc]);
+      gl.uniform1i(this.simUni.uState, 1);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      this.simSrc = 1 - this.simSrc;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  scaleVec() {
+    const zoom = this.opts.zoom, a = this.aspect;
+    const fit = Math.min(a, 1);
+    return [(a / fit) * zoom, (1 / fit) * zoom];
+  }
+
+  draw(t) {
+    const gl = this.gl;
+    if (this.needsResize) { this.needsResize = false; this.resize(); }
+    if (this.opts.sim) this.stepSim(t);
+
+    this.wind += (this.windTarget - this.wind) * 0.04;
+    this.windTarget *= 0.97;
+
+    gl.useProgram(this.prog);
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+
+    const sc = this.scaleVec();
+    gl.uniform1f(this.uni.uTime, t);
+    gl.uniform1f(this.uni.uAspect, this.aspect);
+    gl.uniform2f(this.uni.uScale, sc[0], sc[1]);
+    gl.uniform2f(this.uni.uShift, this.opts.shift[0], this.opts.shift[1]);
+    gl.uniform3f(this.uni.uPointer, this.pointer.x, this.pointer.y, this.pointer.active);
+    if (this.uni.uWind) gl.uniform1f(this.uni.uWind, this.wind);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.sdfTex);
+    gl.uniform1i(this.uni.uSDF, 0);
+    if (this.opts.sim) {
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, this.simTex[this.simSrc]);
+      gl.uniform1i(this.uni.uState, 1);
+      gl.uniform2f(this.uni.uSimTexel, 1 / SIM_RES, 1 / SIM_RES);
+    }
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    const P = this.opts.particles;
+    if (P) {
+      gl.useProgram(this.partProg);
+      gl.uniform1f(this.partUni.uTime, t);
+      gl.uniform2f(this.partUni.uScale, sc[0], sc[1]);
+      gl.uniform2f(this.partUni.uShift, this.opts.shift[0], this.opts.shift[1]);
+      gl.uniform1f(this.partUni.uDpr, DPR);
+      gl.uniform1f(this.partUni.uWind, this.wind);
+      gl.uniform4f(this.partUni.uCfgA, P.travel, P.lifeMin, P.lifeMax, P.alongNormal);
+      gl.uniform4f(this.partUni.uCfgB, P.wiggle, P.sizeMin, P.sizeMax, P.sparse);
+      gl.uniform3f(this.partUni.uColA, P.colA[0], P.colA[1], P.colA[2]);
+      gl.uniform3f(this.partUni.uColB, P.colB[0], P.colB[1], P.colB[2]);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE);
+      gl.bindVertexArray(this.partVao);
+      gl.drawArrays(gl.POINTS, 0, P.count);
+      gl.bindVertexArray(null);
+      gl.disable(gl.BLEND);
+    }
+  }
+}
+
+/* ---------------- boot ---------------- */
+function buildLogo(path) {
+  const img = rasterizeLogo(path);
+  return { sdf: buildSDF(img), edges: edgePoints(img) };
+}
+const logos = {
+  openai: buildLogo(LOGO_PATHS.openai),
+  anthropic: buildLogo(LOGO_PATHS.anthropic),
+  claude: buildLogo(LOGO_PATHS.claude),
+};
+
+const panels = [
+  new Panel(document.querySelector('[data-fx="water"]'), FRAG_WATER, logos.openai, {
+    sim: true, zoom: 1.06, shift: [0, 0],
+    particles: {
+      count: 160, travel: 0.10, lifeMin: 4.0, lifeMax: 8.0, alongNormal: 0.15,
+      wiggle: 0.02, sizeMin: 1.5, sizeMax: 3.5, sparse: 0.5,
+      colA: [0.10, 0.24, 0.30], colB: [0.22, 0.40, 0.48],
+    },
+  }),
+  new Panel(document.querySelector('[data-fx="lightning"]'), FRAG_LIGHTNING, logos.anthropic, {
+    sim: false, zoom: 1.10, shift: [0, 0],
+    particles: {
+      count: 240, travel: 0.055, lifeMin: 0.3, lifeMax: 0.9, alongNormal: 1.0,
+      wiggle: 0.015, sizeMin: 1.2, sizeMax: 2.6, sparse: 0.8,
+      colA: [0.45, 0.50, 1.0], colB: [0.95, 0.95, 1.0],
+    },
+  }),
+  new Panel(document.querySelector('[data-fx="fire"]'), FRAG_FIRE, logos.claude, {
+    sim: false, zoom: 1.16, shift: [0, -0.04],
+    particles: {
+      count: 420, travel: 0.30, lifeMin: 1.4, lifeMax: 3.0, alongNormal: 0.35,
+      wiggle: 0.035, sizeMin: 1.6, sizeMax: 4.5, sparse: 0.55,
+      colA: [1.0, 0.62, 0.28], colB: [1.0, 0.30, 0.10],
+    },
+  }),
+].filter(p => p.ok);
+
+const t0 = performance.now();
+function loop() {
+  const t = (performance.now() - t0) / 1000;
+  for (const p of panels) p.draw(t);
+  requestAnimationFrame(loop);
+}
+if (!REDUCED) requestAnimationFrame(loop);
+else for (const p of panels) p.draw(0.001);
+</script>
+</body>
+</html>

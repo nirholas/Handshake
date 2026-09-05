@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Three.js Enemy Systems"
+  short_description: "Build reusable Three.js enemy conventions"
+  default_prompt: "Use $build-threejs-enemy-systems to define a reusable enemy archetype and moveset system for this Three.js action game."

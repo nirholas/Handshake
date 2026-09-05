@@ -1,0 +1,487 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Organic Semantic Explorer</title>
+    <style vid="5">
+        :root {
+            --bg-color: #030303;
+            --text-color: #6a6a6a;
+            --highlight-color: #e0e0e0;
+            --organism-core: #ffffff;
+            --organism-outer: #808080;
+            --font-main: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --font-mono: 'Courier Prime', 'Courier New', monospace;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            overflow: hidden;
+            cursor: none; 
+        }
+
+        
+        #bio-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            
+            filter: url('#liquid-filter') contrast(150%) brightness(100%);
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
+        
+        .noise-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            mix-blend-mode: overlay;
+        }
+
+        
+        .interface-layer {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            padding: 4rem 15%;
+            box-sizing: border-box;
+        }
+
+        
+        .query-container {
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .query-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #444;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .query-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #222;
+            color: var(--highlight-color);
+            font-size: 1.5rem;
+            font-weight: 300;
+            padding: 0.5rem 0;
+            outline: none;
+            font-family: var(--font-main);
+            transition: border-color 0.5s ease;
+        }
+
+        .query-input:focus {
+            border-bottom: 1px solid #555;
+        }
+
+        
+        .journal-area {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            font-size: 1.5rem;
+            line-height: 1.8;
+            font-weight: 300;
+            color: #333; 
+            white-space: pre-wrap;
+            outline: none;
+            border: none;
+            resize: none;
+            background: transparent;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        
+        .journal-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        
+        .word {
+            position: relative;
+            transition: color 1s ease, text-shadow 0.5s ease;
+            cursor: text;
+            z-index: 2;
+        }
+
+        .word.active {
+            color: var(--highlight-color);
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+
+        .word.connected {
+            color: #999;
+        }
+
+        
+        #cursor-follower {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease;
+            mix-blend-mode: exclusion;
+        }
+
+        
+        .status-hud {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #333;
+            border-radius: 50%;
+            margin-left: 8px;
+            animation: pulse 4s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+    </style>
+</head>
+<body vid="6">
+
+    
+    
+    <svg style="position: absolute; width: 0; height: 0;" vid="7">
+        <defs vid="8">
+            <filter id="liquid-filter" vid="9">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" vid="10"></feGaussianBlur>
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" vid="11"></feColorMatrix>
+                
+                <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise" vid="12"></feTurbulence>
+                <feDisplacementMap in="goo" in2="noise" scale="20" xChannelSelector="R" yChannelSelector="G" vid="13"></feDisplacementMap>
+                <feComposite in="SourceGraphic" operator="atop" vid="14"></feComposite>
+            </filter>
+        </defs>
+    </svg>
+
+    <div class="noise-overlay" vid="15"></div>
+    <canvas id="bio-layer" vid="16"></canvas>
+
+    <div class="interface-layer" vid="17">
+        <div class="query-container" vid="18">
+            <span class="query-label" vid="19">Active Organism // Query</span>
+            <input type="text" class="query-input" value="Why do patterns repeat in isolation?" placeholder="Enter a theme to explore..." vid="20">
+        </div>
+
+        <div class="journal-area" id="editor" contenteditable="true" spellcheck="false" vid="21">
+The silence in this room feels heavy, not empty. I have been thinking about the structure of fungal networks, how they don't just grow; they search. They send out filaments into the dark, gambling energy on the possibility of sustenance.
+
+It feels like my own thoughts are doing the same. Branching out. Retracting.
+
+Yesterday I felt a disconnect between my intent and my action. A gap. The koji mold doesn't have gaps; it is a continuous stream of becoming. If I could map my anxiety like a mycelial network, would it look chaotic? Or would it reveal a geometry I am too close to see?
+
+We speak of "finding meaning" as if it is a hidden object, but perhaps meaning is just the friction of movement. The residue of the search itself.
+
+I am trying to be still. To let the organism settle.
+        </div>
+    </div>
+
+    <div class="status-hud" vid="22">
+        <span vid="23">SUBSTRATE ANALYSIS: ACTIVE</span>
+        <span vid="24">SEMANTIC DENSITY: 0.84 <span class="status-dot" vid="25"></span></span>
+    </div>
+
+    <div id="cursor-follower" vid="26"></div>
+
+    <script vid="27">
+        
+
+        const canvas = document.getElementById('bio-layer');
+        const ctx = canvas.getContext('2d');
+        const editor = document.getElementById('editor');
+        const cursorFollower = document.getElementById('cursor-follower');
+        
+        let width, height;
+        let mouse = { x: -1000, y: -1000 };
+        let lastMouse = { x: -1000, y: -1000 };
+        
+        
+        const config = {
+            particleCount: 50,
+            baseRadius: 15,
+            viscosity: 0.08,
+            wanderStrength: 0.5,
+            connectionDist: 150,
+            repelDist: 50,
+            textAttractionRadius: 200
+        };
+
+        let particles = [];
+        let wordCoordinates = [];
+
+        
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            scanText();
+        }
+        window.addEventListener('resize', resize);
+
+        
+        
+        function scanText() {
+            
+            
+            
+            
+            const text = editor.innerText;
+            
+            
+            
+            if (editor.dataset.processed === "true") {
+                updateWordCoords();
+                return;
+            }
+
+            const words = text.split(/(\s+)/); 
+            editor.innerHTML = '';
+            words.forEach(word => {
+                const span = document.createElement('span');
+                span.textContent = word;
+                if (word.trim().length > 0) {
+                    span.className = 'word';
+                }
+                editor.appendChild(span);
+            });
+            editor.dataset.processed = "true";
+            updateWordCoords();
+        }
+
+        function updateWordCoords() {
+            wordCoordinates = [];
+            const spans = document.querySelectorAll('.word');
+            spans.forEach(span => {
+                const rect = span.getBoundingClientRect();
+                wordCoordinates.push({
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2,
+                    w: rect.width,
+                    element: span,
+                    active: false
+                });
+            });
+        }
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.radius = config.baseRadius * (0.8 + Math.random() * 0.5);
+                this.targetX = x;
+                this.targetY = y;
+                this.angle = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                
+                this.angle += (Math.random() - 0.5) * 0.2;
+                this.vx += Math.cos(this.angle) * config.wanderStrength;
+                this.vy += Math.sin(this.angle) * config.wanderStrength;
+
+                
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+
+                
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 400) {
+                    this.vx += dx * 0.002;
+                    this.vy += dy * 0.002;
+                }
+
+                
+                
+                let closestDist = Infinity;
+                let closestWord = null;
+
+                wordCoordinates.forEach(word => {
+                    
+                    const wdx = word.x - this.x;
+                    const wdy = word.y - this.y;
+                    const wDist = Math.sqrt(wdx * wdx + wdy * wdy);
+                    
+                    if (wDist < closestDist) {
+                        closestDist = wDist;
+                        closestWord = word;
+                    }
+                });
+
+                if (closestWord && closestDist < config.textAttractionRadius) {
+                    
+                    const wdx = closestWord.x - this.x;
+                    const wdy = closestWord.y - this.y;
+                    this.vx += wdx * 0.01;
+                    this.vy += wdy * 0.01;
+                    
+                    
+                    if (closestDist < 30) {
+                        if (!closestWord.active) {
+                            closestWord.element.classList.add('active');
+                            closestWord.active = true;
+                        }
+                    } else if (closestDist > 60) {
+                         if (closestWord.active) {
+                            closestWord.element.classList.remove('active');
+                            closestWord.active = false;
+                        }
+                    }
+                }
+
+                
+                this.x += this.vx;
+                this.y += this.vy;
+
+                
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height;
+                if (this.y > height) this.y = 0;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                
+                
+                
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.8)'; 
+                ctx.fill();
+            }
+        }
+
+        
+        function init() {
+            resize();
+            
+            for (let i = 0; i < config.particleCount; i++) {
+                particles.push(new Particle(width/2 + (Math.random()-0.5)*100, height/2 + (Math.random()-0.5)*100));
+            }
+            scanText(); 
+        }
+
+        
+        function animate() {
+            
+            ctx.clearRect(0, 0, width, height);
+
+            
+            
+            ctx.strokeStyle = 'rgba(120, 120, 120, 0.15)';
+            ctx.lineWidth = 4; 
+
+            for (let i = 0; i < particles.length; i++) {
+                let p1 = particles[i];
+                p1.update();
+                p1.draw();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if (dist < config.connectionDist) {
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        
+                        
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        
+        window.addEventListener('mousemove', e => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+
+            
+            cursorFollower.style.transform = `translate(${e.clientX}px, ${e.clientY}px) scale(1)`;
+        });
+
+        
+        document.querySelector('.query-input').addEventListener('input', () => {
+            
+            particles.forEach(p => {
+                p.vx += (Math.random() - 0.5) * 5;
+                p.vy += (Math.random() - 0.5) * 5;
+            });
+        });
+
+        
+        editor.addEventListener('input', () => {
+             
+             
+             
+        });
+
+        
+        init();
+        animate();
+
+        
+        setTimeout(scanText, 100);
+
+    </script>
+
+</body></html>

@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "provider": "Neuform",
+  "synced_at": "2026-07-18T06:41:09.286Z",
+  "skill": {
+    "id": "technical-wireframe-info-layout",
+    "label": "Technical Wireframe Info Layout",
+    "usage_count": 123,
+    "url": "https://neuform.ai/skill/technical-wireframe-info-layout"
+  },
+  "ranking": {
+    "position": 1,
+    "order": [
+      "view_count desc",
+      "community_favorite_count desc",
+      "relation_created_at desc"
+    ],
+    "visible_design_count": 1
+  },
+  "design": {
+    "id": "47eb7454-756f-44bd-a3a8-88b81de18660",
+    "slug": "system-ontology-diagnostic-view",
+    "title": "System Ontology // Diagnostic View",
+    "url": "https://neuform.ai/pages/system-ontology-diagnostic-view/index.html",
+    "view_count": 1424,
+    "favorite_count": 67,
+    "remix_count": 27
+  },
+  "html": {
+    "original_sha256": "4f51da43450783f0cb74542647573ad42e372586a4138b04ff44bd406756e9fc",
+    "bundled_sha256": "d8e98e163580f606a6127349e1756ed2ca4ed38324e5935a38357b989bca0d09",
+    "runtime_dependencies": [],
+    "hardened_sha256": "ed9961d8a201b5ef04337330122402271395116bd61d7af4e256004b4e355174",
+    "sandboxed_sha256": "c0bd03fa1e08482f5325b13941cba2d7ffa0af009892112b877ca981e06cd2db",
+    "security_profile": "sandboxed-srcdoc-v1"
+  },
+  "assets": {
+    "preview": "assets/source-preview.jpg",
+    "bundled": [
+      {
+        "bytes": 47486,
+        "file": "assets/page-01-fa51902b-c2a4-4c33-a96e-a8f1ef67edc6-1600w.jpg",
+        "original_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/fa51902b-c2a4-4c33-a96e-a8f1ef67edc6_1600w.jpg"
+      },
+      {
+        "bytes": 407279,
+        "file": "../../../../assets/runtime/runtime-ccc8894b3418-runtime.js",
+        "original_url": "https://cdn.tailwindcss.com/",
+        "kind": "runtime-script",
+        "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+      },
+      {
+        "bytes": 42667,
+        "file": "../../../../assets/runtime/runtime-689ca8dda44c-scrolltrigger-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js",
+        "kind": "runtime-script",
+        "sha256": "65f6c13748b0c8d8f9eabd0373a130ac293b3f16bf34aaa946d953980372b932"
+      },
+      {
+        "bytes": 71520,
+        "file": "../../../../assets/runtime/runtime-027051effa47-gsap-min.js",
+        "original_url": "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js",
+        "kind": "runtime-script",
+        "sha256": "efc85c7eb141819717cda0033484a84b1c890d13b02e355a2fec79d424b20e7a"
+      },
+      {
+        "bytes": 22003,
+        "file": "../../../../assets/runtime/runtime-163ebd087cfc-iconify-icon-min.js",
+        "original_url": "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js",
+        "kind": "runtime-script",
+        "sha256": "851bed7af266f96a0be3edf9918daab48d8da4ce17c46040511bae450caf3dd6"
+      }
+    ],
+    "skipped": []
+  }
+}

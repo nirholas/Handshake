@@ -1,0 +1,4 @@
+interface:
+  display_name: "Editorial Portfolio Chapters"
+  short_description: "Build portfolio pages through editorial chapters"
+  default_prompt: "Use $editorial-portfolio-chapters to design an original studio portfolio where project work leads the story."
