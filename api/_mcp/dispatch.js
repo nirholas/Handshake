@@ -8,9 +8,29 @@ import {
 } from '../_lib/pump-pricing.js';
 import { declareMcpDiscovery } from '../_lib/x402/bazaar-helpers.js';
 import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
+import { GETTING_STARTED_TOOL } from '../_lib/mcp-getting-started.js';
 import { TOOL_CATALOG, TOOLS } from './catalog.js';
 
-export { isPublicTool } from '../_lib/mcp-getting-started.js';
+// Tools any caller may invoke with no OAuth token and no x402 payment.
+//
+// Membership is an explicit allowlist, never "is unpriced": a scoped tool that
+// happens to cost nothing (recall, list_my_avatars) still reads account data and
+// must stay behind auth. Everything here is a read of an already-public,
+// already-published artifact with no caller state in it, which is precisely why
+// it is safe to hand to an anonymous client. Per-IP rate limits still apply.
+const PUBLIC_TOOLS = new Set([
+	GETTING_STARTED_TOOL,
+	// The asset catalog: published CC0 / free-to-use library manifests plus the
+	// code that renders them. Discovery has to work before a client signs in, or
+	// nobody discovers anything.
+	'search_catalog',
+	'get_catalog_item',
+	'get_item_source',
+]);
+
+export function isPublicTool(name) {
+	return PUBLIC_TOOLS.has(name);
+}
 
 export const PROTOCOL_VERSION = '2025-06-18';
 const SERVER_INFO = { name: '3d-agent-mcp', version: '1.0.0' };

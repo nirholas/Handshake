@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-05",
+			"title": "AI coding assistants can now search the three.ws asset library and get working code back",
+			"summary": "Every ready-made asset the platform publishes is now one search away from any AI coding client connected to the three.ws MCP server: 511 CC0 props, 107 rigged characters and 2,874 motion clips, all in a single searchable catalog instead of three separate browse pages. Ask for a wooden chair or an industrial lamp and you get matching items ranked best first, with tags, license, and the CDN link. Ask for the source and you get code that runs as it is: the model-viewer tag our own gallery renders with, the agent-3d web component pinned to the exact published version and its integrity hash, plain three.js, or a React component. Motion clips come back as three.js code that loads and plays them. All three tools are free and need no account, no API key and no payment, because you should be able to find out what is already here before you sign up for anything. A search that matches only part of what you typed says so instead of returning nothing.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/mcp"
+		},
+		{
 			"date": "2026-09-04",
 			"title": "Generation jobs can now push their result to your server, and the health page finally watches the editing tools",
 			"summary": "Two additions for anyone who builds on the forge. First, webhooks for generation jobs: subscribe to forge.completed and forge.failed and three.ws POSTs you the finished model instead of making you poll for it. A generation outlives the request that started it, so until now an integration had to keep asking. The completion event rides the single writer every lane finishes through, so it arrives exactly once whether the job ran on the free lane, a paid call, or the background finalizer that picks up abandoned work; the failure event deliberately stays quiet while a job is being retried on another engine, so it only ever means the job is really over. Payloads and a runnable example are in the developer platform docs. Second, the forge health report now live-probes the editing tools as well as the generation engines: remesh, stylize, segment, background removal, text to motion, auto-rig and retexture each get checked for real. Those tools have buttons in the result panel, so a user can hit them, but none of them were being watched; retexture had in fact been offline the whole time and nothing said so.",

@@ -20,8 +20,10 @@ import { toolDefs as garmentDefs } from './tools/garments.js';
 import { toolDefs as signDefs } from './tools/sign.js';
 import { toolDefs as feedbackDefs } from './tools/feedback.js';
 import { toolDefs as homeDefs } from './tools/home.js';
+import { toolDefs as libraryDefs } from './tools/library.js';
 
 const baseDefs = [
+	...libraryDefs,
 	...avatarDefs,
 	...embedDefs,
 	...modelDefs,
@@ -50,7 +52,7 @@ const gettingStarted = {
 	...buildGettingStartedTool({
 		server: 'three.ws',
 		tagline:
-			'The main three.ws MCP server: render and manage 3D avatars and models, animations, American Sign Language, an agent registry, agent memory, live pump.fun market data, Oracle conviction signals, the trader leaderboard + copy-trading system, and safe control of a connected Home Assistant house.',
+			'The main three.ws MCP server: render and manage 3D avatars and models, animations, American Sign Language, a free searchable catalog of ready-made CC0 props, rigged characters and motion clips with paste-ready embed source, an agent registry, agent memory, live pump.fun market data, Oracle conviction signals, the trader leaderboard + copy-trading system, and safe control of a connected Home Assistant house.',
 		tools: baseDefs,
 		priceFor,
 		access: [

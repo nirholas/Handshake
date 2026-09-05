@@ -234,7 +234,130 @@ Send `POST /api/mcp` with valid JSON-RPC 2.0 messages and a bearer token. The se
 
 All tools return `{ content: [{ type, text }], structuredContent: {...} }`. On error, `isError: true` is set and `content[0].text` contains the message.
 
-The tools below are the core avatar, validation, minting, and market-data set. The server registers more beyond this page (memory `remember`/`recall`/`forget`, `register_agent`, oracle and pump.fun intel reads, trader analytics, copy-trading); call `tools/list` for the complete live catalog with schemas.
+`search_catalog`, `get_catalog_item`, and `get_item_source` are free and need no account, API key, or payment: start there. The tools below them are the core avatar, validation, minting, and market-data set. The server registers more beyond this page (memory `remember`/`recall`/`forget`, `register_agent`, oracle and pump.fun intel reads, trader analytics, copy-trading); call `tools/list` for the complete live catalog with schemas.
+
+---
+
+### `search_catalog`
+
+Search every ready-made asset three.ws publishes in one call: 511 CC0 props, 107 rigged
+characters, and 2,874 retargetable motion clips (live counts come back in `facets.kinds`).
+
+**Free. No account, no API key, no x402 payment.** Discovery works before you connect.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "q":        { "type": "string", "maxLength": 200 },
+    "kind":     { "type": "string", "enum": ["object", "character", "animation"] },
+    "category": { "type": "string", "maxLength": 80 },
+    "tag":      { "type": "string", "maxLength": 80 },
+    "limit":    { "type": "integer", "minimum": 1, "maximum": 50, "default": 12 },
+    "offset":   { "type": "integer", "minimum": 0, "default": 0 }
+  },
+  "additionalProperties": false
+}
+```
+
+Every word of `q` must match somewhere (title, name, tag, or category), which keeps a
+two-word query precise. If nothing matches all of the words, the search retries on any of
+them and sets `relaxed: true` so you know the results are partial rather than exact.
+
+Each result carries a stable `id` of the form `<kind>:<name>`, plus `title`, `tags`,
+`categories`, `license`, `thumb`, and the CDN `url` of the GLB or clip JSON. The response
+also carries `facets` (kind counts and the most common categories and tags in the result
+set) to narrow the next call, and `next_offset` for paging.
+
+```jsonc
+// search_catalog { "q": "wooden chair", "kind": "object", "limit": 2 }
+{
+  "ok": true,
+  "matched": 10,
+  "relaxed": false,
+  "items": [
+    {
+      "id": "object:painted_wooden_chair_01",
+      "kind": "object",
+      "title": "Painted Wooden Chair 01",
+      "categories": ["furniture"],
+      "tags": ["chair", "wood", "painted"],
+      "license": "CC0",
+      "format": "glb",
+      "url": "https://.../objects/polyhaven/glb/painted_wooden_chair_01.glb",
+      "thumb": "https://.../objects/polyhaven/thumbs/painted_wooden_chair_01.png",
+      "bytes": 1483264
+    }
+  ],
+  "facets": { "kinds": { "object": 10 }, "categories": [{ "value": "furniture", "count": 8 }] },
+  "next_offset": 2
+}
+```
+
+Check the catalog before generating anything. If the prop or character already exists,
+dropping it in is instant and free, where a Forge generation is neither.
+
+---
+
+### `get_catalog_item`
+
+One catalog item in full, by the `id` from `search_catalog` (a bare name also resolves).
+
+**Free. No account or payment.**
+
+```json
+{
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": { "type": "string", "maxLength": 200 }
+  },
+  "additionalProperties": false
+}
+```
+
+Returns the item, the `links` that browse/preview/edit it on three.ws (an object opens in
+the viewer and in AR Studio, a character in the viewer, Widget Studio, and the pose editor,
+a clip in the animation gallery), up to six `related` items of the same kind, and the
+`frameworks` that `get_item_source` can emit for it.
+
+---
+
+### `get_item_source`
+
+Paste-ready code that renders one catalog item on any site.
+
+**Free. No account or payment.**
+
+```json
+{
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id":        { "type": "string", "maxLength": 200 },
+    "framework": { "type": "string", "enum": ["agent-3d", "model-viewer", "three", "react", "all"] }
+  },
+  "additionalProperties": false
+}
+```
+
+| Framework | What you get |
+| --- | --- |
+| `agent-3d` | The `<agent-3d>` web component, pinned to the exact version this deployment serves with its published SRI hash. Never `latest`. |
+| `model-viewer` | The `<model-viewer>` tag, build, and integrity hash the three.ws browse grids themselves use. |
+| `three` | Plain three.js: `GLTFLoader` for a model, `THREE.AnimationClip.parse` for a motion clip. |
+| `react` | The same, wrapped as a React component (or a hook, for a clip). |
+| `all` | Every variant that applies to the item, in one response. |
+
+Omit `framework` and you get the one that fits the item: `model-viewer` for a prop (what the
+object grid renders), `agent-3d` for a rigged character, `three` for a motion clip. A
+framework that does not apply to the item (asking for `model-viewer` on a clip) is rejected
+with the list that does.
+
+Motion clips are `THREE.AnimationClip` JSON on canonical (Mixamo) bone names. To bake one
+onto your own rig server-side instead of playing it in the browser, pass the returned clip
+name to the `apply_animation` tool with your GLB url; it retargets and returns an animated
+GLB.
 
 ---
 
