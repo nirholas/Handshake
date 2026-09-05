@@ -19,11 +19,11 @@ guide is [docs/product-demo.md](../../docs/product-demo.md).
 | --- | --- |
 | `three-ws-demo.mp4` | The whole film, every chapter joined, 1920x1080 with narration |
 | `three-ws-demo-01-main.mp4` … | One file per chapter, in route order, so a chapter can be posted or re-shot on its own |
-| `demo-manifest.json` | The run record: origin, route, narration lane and voice, stop count, per-chapter durations, and every stop that was skipped with the reason |
+| `three-ws-demo-manifest.json` | The run record: origin, route, narration lane and voice, stop count, per-chapter durations, and every stop that was skipped with the reason |
 | `.raw/` | Working directory: the narration clip cache and per-chapter audio tracks. Safe to delete; deleting the voice cache means the next run re-synthesizes it |
 
 **The mp4s are gitignored.** Each chapter is a 1080p screen recording and the set runs to hundreds of
-megabytes, which is not something a git history should carry forever. `demo-manifest.json` is
+megabytes, which is not something a git history should carry forever. The manifest is
 committed, so the repo still records what was filmed and when. Re-run the recorder to get the film
 back.
 

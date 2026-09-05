@@ -23,7 +23,7 @@ Output goes to `marketing/product-demo/`:
 |---|---|
 | `three-ws-demo.mp4` | The whole film, all chapters joined |
 | `three-ws-demo-01-main.mp4` … | One file per chapter, in route order |
-| `demo-manifest.json` | What was filmed: origin, route, voice, stop count, chapter durations, and every skipped stop with the reason |
+| `three-ws-demo-manifest.json` | What was filmed: origin, route, narration lane and voice, stop count, chapter durations, and every skipped stop with the reason |
 
 The mp4s are gitignored on purpose. Each chapter is a 1080p screen recording and the set runs to
 hundreds of megabytes, which is not something a git history should carry forever. The manifest is
@@ -64,7 +64,7 @@ clicks instead of going silent on a surface that takes a moment. Add an act by a
 `ACTS` whose name is the stop's path.
 
 A selector that has gone missing does not fail the run. It fails that stop, which is recorded in
-`demo-manifest.json` under `skipped`, and the film moves on. Pass `--strict` when you want a missing
+the run manifest under `skipped`, and the film moves on. Pass `--strict` when you want a missing
 selector to stop everything.
 
 ## How it is filmed

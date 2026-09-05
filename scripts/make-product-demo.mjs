@@ -34,6 +34,7 @@
  *   --authed                        replay .auth/audit-state.json (signed-in surfaces)
  *   --origin=                       film a dev server instead of https://three.ws
  *   --out=                          output directory (default marketing/product-demo)
+ *   --name=                         output basename (default three-ws-demo, per route)
  *   --narrator=edge|speak           which TTS lane to synthesize on (default edge)
  *   --voice=                        voice id for that lane (default en-US-AndrewMultilingualNeural)
  *   --no-voice                      caption-only, no narration track
@@ -62,6 +63,9 @@ const VOICE = args.voice ? String(args.voice) : null;
 const CRF = Number(args.crf || 22);
 const STRICT = Boolean(args.strict);
 const LIMIT = args.limit ? Number(args.limit) : Infinity;
+/* Every route writes its own set of files, so filming the short cut never
+   overwrites the chapters of the full film sitting beside it. */
+const NAME = String(args.name || (String(args.route || 'full') === 'full' ? 'three-ws-demo' : `three-ws-demo-${args.route}`));
 const log = (...m) => console.log('[demo]', ...m);
 
 /* ── the script ─────────────────────────────────────────────────────────── */
@@ -399,7 +403,7 @@ const browser = await chromium.launch(launchOptions());
 
 try {
 	for (const [ci, chapter] of chapters.entries()) {
-		const out = path.join(OUT, `three-ws-demo-${String(ci + 1).padStart(2, '0')}-${chapter.id}.mp4`);
+		const out = path.join(OUT, `${NAME}-${String(ci + 1).padStart(2, '0')}-${chapter.id}.mp4`);
 		if (args.reuse && existsSync(out)) {
 			log(`chapter ${chapter.title}: reusing ${path.basename(out)}`);
 			parts.push(out);
@@ -505,7 +509,7 @@ try {
 	await browser.close();
 }
 
-const full = path.join(OUT, 'three-ws-demo.mp4');
+const full = path.join(OUT, `${NAME}.mp4`);
 if (parts.length > 1) {
 	concatParts(parts, full, WORK);
 	log(`wrote ${path.relative(ROOT, full)}`);
@@ -535,7 +539,7 @@ const manifest = {
 	})),
 	skipped,
 };
-writeFileSync(path.join(OUT, 'demo-manifest.json'), `${JSON.stringify(manifest, null, '\t')}\n`);
+writeFileSync(path.join(OUT, `${NAME}-manifest.json`), `${JSON.stringify(manifest, null, '\t')}\n`);
 
 log(`${manifest.recorded}/${totalStops} stops recorded, ${skipped.length} skipped`);
 if (skipped.length) for (const s of skipped) log(`  skipped ${s.path}: ${s.why}`);
