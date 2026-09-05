@@ -52,6 +52,14 @@ Note that the files here are deliberately uncompressed. Everything three.ws serv
 
 A running Space that loads the avatars above in an interactive 3D viewer, so a reader who arrives from the article can orbit a real rig without leaving Hugging Face or installing anything. The equivalent on our own domain is [the avatar inspector](./avatar-inspector.md).
 
+## In draft
+
+| Draft | Subject |
+|---|---|
+| [huggingface-agent-feedback-loop.md](./huggingface-agent-feedback-loop.md) | Closing the agentic-3D feedback loop: rendering results back into the model's own modality, a mechanical physics-readiness grade, structural glTF diffing, and retargeting with no rig allowlist |
+
+Written to the same house rule as the two published articles: AI-focused, with no coin, exchange, or listing content anywhere in the piece.
+
 ## Publishing checklist
 
 Hugging Face community articles accept Markdown, so a draft in `docs/` is the article. To take one from draft to published:

@@ -124,5 +124,6 @@ Subscribe via RSS to track new listings, integrations, and protocol updates.
 
 - [AWS Marketplace](/docs/aws-marketplace): the AWS listing and entitlement-issued x402 API keys
 - [Syndication](/docs/syndication): how announcements flow to HackerNoon and other channels
+- [Publishing program, September 2026](./publishing-program-2026-09.md): the venue matrix, running order, and per-venue rules for the current writing push
 - [x402 protocol](/docs/x402): the payment rail behind the paid endpoints these listings distribute
 - [Introduction](/docs/introduction): the full technical picture of the platform being listed

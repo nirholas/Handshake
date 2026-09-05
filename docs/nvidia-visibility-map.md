@@ -231,6 +231,13 @@ Latencies in it were measured against the live endpoint the day it was written,
 not estimated. It is owner-gated under the external-channel rule: paste and post
 when approved.
 
+## Drafted, not yet posted
+
+| Draft | Subject |
+|---|---|
+| [nvidia-forum-gpu-fleet-post.md](./nvidia-forum-gpu-fleet-post.md) | The production GPU fleet: cold weight loads on L4s, min-instances as a quota decision rather than a performance one, the keep-warm cron, and why a failover chain must never have an empty rung |
+| [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md) | Audio2Face-3D streamed onto a rig the visitor generated ninety seconds earlier |
+
 ## Benefits we are entitled to and have never requested
 
 Straight from NVIDIA's [Inception program page](https://www.nvidia.com/en-us/startups/).
