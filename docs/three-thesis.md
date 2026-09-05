@@ -502,7 +502,7 @@ The repository is silent on the following. Their absence is a fact, not a red fl
 - **No documented emissions to users.** The in-game economy is explicit that $THREE is never awarded by gameplay. Agora and the labor market pay $THREE, but from escrow funded by posters, not from inflation.
 - **No cumulative revenue, cumulative buyback USD, or holder count in the docs.** All of these are read live from public endpoints (`/api/three-token/stats`, `/revenue-share`, `/leaderboard`, `/agent-economy-volume`) rather than quoted in prose. That is the correct design, and it means the numbers in this document are a snapshot that the endpoints will outdate.
 
-Questions worth asking: What is the treasury's current $THREE and USDC balance? When will `THREE_BUYBACK_ENABLED` and `THREE_MICROBUY_ENABLED` be flipped on? How is the deploy-burn ledger reconciled with the no-platform-burn policy? What is the team's own holding and is it locked?
+Questions worth asking: What is the treasury's current $THREE and USDC balance? How is the deploy-burn ledger reconciled with the no-platform-burn policy? What is the team's own holding and is it locked?
 
 ---
 
