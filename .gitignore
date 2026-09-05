@@ -532,12 +532,6 @@ marketing/*/.raw-*/
 marketing/product-demo/*.mp4
 marketing/product-demo/.smoke/
 
-# Same reasoning for the Seeker long-form feature tour: seeker:screencast makes
-# a 14 second listing clip small enough to track (seeker-device.mp4 /
-# seeker-screen.mp4 stay committed), while seeker:feature-tour walks the whole
-# app and lands hundreds of megabytes that GitHub would refuse on push anyway.
-marketing/seeker-video/seeker-feature-tour-*.mp4
-
 # Screenshot captures dropped in the repo root by browser and mobile checks.
 # Real assets belong in public/; scratch captures are never committed.
 /*.png
