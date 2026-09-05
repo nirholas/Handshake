@@ -785,6 +785,7 @@ Docs, tutorials, and reference.
 - [Docs · Agent vitals: can it act?](https://three.ws/docs/agent-vitals): Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.
 - [Docs · Terminal renderer](https://three.ws/docs/tty): curl three.ws/tty and a rigged 3D agent walks in your terminal. The hosted streaming endpoint and its parameters, plus @three-ws/tty-3d, the CLI and library that render any GLB in a terminal with a pure-CPU rasterizer: real skeletal animation, half-block pixels, no GPU and no browser.
 - [Tutorial · Connect your home](https://three.ws/tutorials/connect-your-home): Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never...
+- [Docs · Pocket Console](https://three.ws/docs/pocket): How the /pocket handheld works: the D-pad and gamepad controls, the three cartridges, the URL params that make a share link, and the one iframe that puts a live 3D agent console on any site.
 
 ## Blog
 

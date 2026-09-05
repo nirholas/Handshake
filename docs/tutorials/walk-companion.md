@@ -70,6 +70,7 @@ The embed reads its world and controls from the URL. The verified params:
 | `controls` | `joystick` `keyboard` `none` | How (or whether) the visitor steers |
 | `orbit` | `true` `false` | Allow drag-to-orbit the camera |
 | `avatar` | a roster id or your avatar id | Which avatar walks |
+| `zoom` | `0.5` to `2` | Scales how far the chase camera sits back (`1` if omitted). Below 1 pulls in, which is what a small window wants: the [Pocket Console](https://three.ws/pocket) runs the embed at `0.74` so the avatar fills a 4:3 handheld screen instead of framing a lot of empty sky. |
 
 A live, drivable demo on a beach:
 

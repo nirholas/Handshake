@@ -858,7 +858,17 @@ window.addEventListener('gamepaddisconnected', (e) => {
 
 if (canHover && !reduceMotion) {
 	const stage = el.device.parentElement;
+	// Frozen while a control is held: a device that keeps rotating under the
+	// thumb slides its own buttons away from the cursor mid-press.
+	let frozen = false;
+	el.device.addEventListener('pointerdown', () => {
+		frozen = true;
+	});
+	window.addEventListener('pointerup', () => {
+		frozen = false;
+	});
 	stage.addEventListener('pointermove', (e) => {
+		if (frozen) return;
 		const rect = el.device.getBoundingClientRect();
 		const px = (e.clientX - rect.left) / rect.width - 0.5;
 		const py = (e.clientY - rect.top) / rect.height - 0.5;
@@ -885,7 +895,7 @@ function embedCode() {
 	url.searchParams.set('chrome', 'off');
 	const agent = currentAgent();
 	const title = agent ? `${agent.name} on three.ws` : 'three.ws Pocket Console';
-	return `<iframe src="${url.toString()}" width="440" height="700" title="${title}" style="border:0;background:transparent" allow="xr-spatial-tracking" loading="lazy"></iframe>`;
+	return `<iframe src="${url.toString()}" width="440" height="640" title="${title}" style="border:0;background:transparent" allow="xr-spatial-tracking" loading="lazy"></iframe>`;
 }
 
 function renderEmbed() {
@@ -964,7 +974,10 @@ document.querySelectorAll('.pk-tab[data-env]').forEach((tab) => {
 
 // ── boot ──────────────────────────────────────────────────────────────────
 
-if (chromeOff) document.body.dataset.chrome = 'off';
+if (chromeOff) {
+	document.documentElement.dataset.chrome = 'off';
+	document.body.dataset.chrome = 'off';
+}
 setShell(state.shell);
 setCart(state.cart);
 setEnv(state.env);

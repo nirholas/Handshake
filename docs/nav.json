@@ -130,6 +130,10 @@
 					"path": "forge-pipeline"
 				},
 				{
+					"label": "Pocket Console",
+					"path": "pocket"
+				},
+				{
 					"label": "Materialize: print it for real",
 					"path": "materialize"
 				},

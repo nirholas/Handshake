@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-05T05:50:48.393Z",
+	"generated_at": "2026-09-05T06:01:52.624Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -7433,6 +7433,16 @@
 					"title": "Tutorial · Connect your home",
 					"description": "Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never...",
 					"added": "2026-09-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/pocket",
+					"title": "Docs · Pocket Console",
+					"description": "How the /pocket handheld works: the D-pad and gamepad controls, the three cartridges, the URL params that make a share link, and the one iframe that puts a live 3D agent console on any site.",
+					"added": "2026-09-05",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

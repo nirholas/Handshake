@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Pocket Console</title>
+			<link>https://three.ws/docs/pocket</link>
+			<guid isPermaLink="false">2026-09-05:Docs · Pocket Console</guid>
+			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the /pocket handheld works: the D-pad and gamepad controls, the three cartridges, the URL params that make a share link, and the one iframe that puts a live 3D agent console on any site.</description>
+		</item>
+		<item>
 			<title>Filming the product demo</title>
 			<link>https://three.ws/docs/product-demo</link>
 			<guid isPermaLink="false">2026-09-05:Filming the product demo</guid>
@@ -61,6 +69,14 @@
 			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>npx @three-ws/assets search wooden chair finds it, and npx @three-ws/assets add object:painted_wooden_chair_01 downloads the model into your public folder and prints the tag that renders it, already pointing at your local copy rather than our CDN. Your site keeps working even if we do not. The catalog behind it is the same one the AI tools read: 511 CC0 props, 107 rigged characters and 2,874 motion clips, searchable in one place instead of three separate galleries. It is also a plain HTTP endpoint now, GET /api/catalog, free and open to any origin, so a build script or a site that is not using an AI client can read it too. Adding an asset twice changes nothing the second time, and a file you edited afterwards is never overwritten without asking. Every object is CC0, and the license of anything that is not travels with it in the output.</description>
+		</item>
+		<item>
+			<title>Your agent now lives in a handheld console you can put on any website</title>
+			<link>https://three.ws/pocket</link>
+			<guid isPermaLink="false">2026-09-05:Your agent now lives in a handheld console you can put on any website</guid>
+			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new Pocket Console at /pocket is a real handheld with a real 3D agent inside the screen. The D-pad walks it, A waves, B jumps, START swaps between the agent walking, its live stats, and a menu of every public agent you can slot in like a cartridge, and L and R flip through them. It takes keyboard, touch and a plugged-in game controller. Four shell finishes, four scenes, and the whole state travels in the link, so what you share is the device exactly as you left it. Add chrome=off and one iframe puts the console, your agent included, on your own site: transparent background, no sign-in, no SDK, no API key.</description>
 		</item>
 		<item>
 			<title>Trader Wrapped: your season on pump.fun</title>

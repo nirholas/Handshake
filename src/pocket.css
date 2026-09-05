@@ -1136,6 +1136,7 @@
 
 /* ── chrome-off (embed) mode ──────────────────────────────────────────── */
 
+html[data-chrome='off'],
 body[data-chrome='off'] {
 	background: transparent;
 }

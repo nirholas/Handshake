@@ -4492,6 +4492,12 @@ URL: https://three.ws/tutorials/connect-your-home
 
 Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never...
 
+### Docs · Pocket Console
+
+URL: https://three.ws/docs/pocket
+
+How the /pocket handheld works: the D-pad and gamepad controls, the three cartridges, the URL params that make a share link, and the one iframe that puts a live 3D agent console on any site.
+
 ## Blog
 
 Long-form announcements, launches, and writing from three.ws.

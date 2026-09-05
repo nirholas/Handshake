@@ -20,7 +20,6 @@
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/src/pocket.css" />
 		<link rel="stylesheet" href="/footer.css" />
-		<script defer src="/footer-newsletter.js"></script>
 
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 		<meta property="og:type" content="website" />
@@ -55,7 +54,7 @@
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Pocket Console","description":"A handheld console with a live 3D agent inside the screen. Steer it with the D-pad, swap cartridges for any public agent, and embed the whole console anywhere with one line of HTML.","url":"https://three.ws/pocket","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=labs&t=Pocket+Console&d=A+handheld+console+with+a+live+3D+agent+inside+the+screen.+Steer+it+with+the+D-pad%2C+swap+cartridges+for+any+public+agent%2C+and+embed+the+whole+console+anywhere&p=%2Fpocket"}]}</script>
 </head>
 	<body>
-		<script>/* embed mode (?chrome=off) is the device and nothing else: the site nav, footer, walk companion, tour and language pill all belong to three.ws, not to the page hosting this iframe. Decided here, before any of them load. */(function(){try{if(new URLSearchParams(location.search).get('chrome')==='off'){document.body.dataset.chrome='off';document.body.setAttribute('data-no-lang-switcher','');}}catch(e){}})();</script>
+		<script>/* embed mode (?chrome=off) is the device and nothing else: the site nav, footer, walk companion, tour and language pill all belong to three.ws, not to the page hosting this iframe. Decided here, before any of them load. */(function(){try{if(new URLSearchParams(location.search).get('chrome')==='off'){document.documentElement.dataset.chrome='off';document.body.dataset.chrome='off';document.body.setAttribute('data-no-lang-switcher','');}}catch(e){}})();</script>
 		<header><div id="nav-container"></div></header>
 
 		<main class="pk-shell">
@@ -241,6 +240,6 @@
 
 		<script type="module" src="/src/pocket.js"></script>
 		<div id="footer-container"></div>
-		<script>/* Site chrome loads only outside embed mode. Same files, same order as every other page; an embedded console just never asks for them. */(function(){if(document.body.dataset.chrome==='off')return;for(const src of ['/nav.js','/footer.js']){const s=document.createElement('script');s.src=src;document.body.appendChild(s);}const b=document.createElement('script');b.src='/brand.js';b.defer=true;document.body.appendChild(b);const i=document.createElement('script');i.type='module';i.src='/i18n.js';document.body.appendChild(i);})();</script>
+		<script>/* Site chrome loads only outside embed mode. Same files, same order as every other page; an embedded console just never asks for them. */(function(){if(document.body.dataset.chrome==='off')return;for(const src of ['/nav.js','/footer.js','/footer-newsletter.js']){const s=document.createElement('script');s.src=src;document.body.appendChild(s);}const b=document.createElement('script');b.src='/brand.js';b.defer=true;document.body.appendChild(b);const i=document.createElement('script');i.type='module';i.src='/i18n.js';document.body.appendChild(i);})();</script>
 	</body>
 </html>

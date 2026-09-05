@@ -164,7 +164,7 @@
 				},
 				{
 					"path": "/agenc/embodied",
-					"title": "AgenC \u00b7 Embodied",
+					"title": "AgenC · Embodied",
 					"description": "Watch two AI agents negotiate and coordinate a task, embodied as 3D characters: the AgenC coordination protocol made visible.",
 					"priority": 0.6,
 					"changefreq": "weekly",
@@ -173,7 +173,7 @@
 				},
 				{
 					"path": "/agenc/room",
-					"title": "AgenC \u00b7 Task Room",
+					"title": "AgenC · Task Room",
 					"description": "A live room where autonomous agents discover open work, bid for it, and settle on-chain: the labor market up close.",
 					"priority": 0.6,
 					"changefreq": "weekly",
@@ -380,7 +380,7 @@
 				{
 					"path": "/timeline",
 					"title": "The Story So Far",
-					"description": "three.ws's history as an explorable 3D scene: every launch, partnership, listing, and milestone laid out along a path you can orbit in 360\u00b0 or walk end to end, with a synced scrubber and source links.",
+					"description": "three.ws's history as an explorable 3D scene: every launch, partnership, listing, and milestone laid out along a path you can orbit in 360° or walk end to end, with a synced scrubber and source links.",
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-07-25"
@@ -638,7 +638,7 @@
 				{
 					"path": "/restyle",
 					"title": "Restyle Studio: material presets, AI restyle & variants",
-					"description": "Re-skin any 3D model in the browser: apply PBR material presets (chrome, gold, glass, wood\u2026), restyle from a plain-language AI instruction, fan out seeded colorway variants as durable versions, fine-tune metalness and roughness live, and export a validated GLB: non-destructively, with a real revertable version lineage.",
+					"description": "Re-skin any 3D model in the browser: apply PBR material presets (chrome, gold, glass, wood…), restyle from a plain-language AI instruction, fan out seeded colorway variants as durable versions, fine-tune metalness and roughness live, and export a validated GLB: non-destructively, with a real revertable version lineage.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-07-08"
@@ -646,7 +646,7 @@
 				{
 					"path": "/avatar-engines",
 					"title": "Avatar Engines Atlas",
-					"description": "A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars: Gaussian-splat heads, single-photo humans, text\u2192avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.",
+					"description": "A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars: Gaussian-splat heads, single-photo humans, text→avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.",
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-06-26"
@@ -677,7 +677,7 @@
 				},
 				{
 					"path": "/forge-nim",
-					"title": "Forge \u00b7 NIM: Self-Hosted Image to 3D",
+					"title": "Forge · NIM: Self-Hosted Image to 3D",
 					"description": "Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64: rendered live and downloadable.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -685,7 +685,7 @@
 				},
 				{
 					"path": "/forge-spark",
-					"title": "Text \u2192 3D: Nemotron \u2192 FLUX \u2192 TRELLIS",
+					"title": "Text → 3D: Nemotron → FLUX → TRELLIS",
 					"description": "Describe an object and watch it become a textured 3D mesh: Nemotron sharpens the prompt, FLUX paints a clean reference, and TRELLIS reconstructs the model: served on NVIDIA NIM, quiet and always on.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -967,7 +967,7 @@
 				},
 				{
 					"path": "/ca2x402",
-					"title": "CA \u2192 x402",
+					"title": "CA → x402",
 					"description": "Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel (price, momentum, and a bullish/bearish signal) for $0.01 USDC, discoverable in the x402 bazaar.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -1406,7 +1406,7 @@
 				{
 					"path": "/guardian",
 					"title": "Guardian console: recover & inherit agent wallets",
-					"description": "The agents you\u2019re trusted to protect. Approve a recovery or confirm an inheritance to help a fellow human back into their funded agent wallet: through a threshold-approved, time-locked process that never exposes a private key.",
+					"description": "The agents you’re trusted to protect. Approve a recovery or confirm an inheritance to help a fellow human back into their funded agent wallet: through a threshold-approved, time-locked process that never exposes a private key.",
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-06-23"
@@ -1462,7 +1462,7 @@
 				{
 					"path": "/creations",
 					"title": "Creator Gallery",
-					"description": "Search, filter, and live-preview the remix bazaar: remix any published 3D creation for a real on-chain USDC royalty, view parent \u2192 child lineage, and see the trending assets and top-creator leaderboard. Every model links to its own /m/:id detail page with an interactive viewer, live geometry stats, likes, comments, and suggested models.",
+					"description": "Search, filter, and live-preview the remix bazaar: remix any published 3D creation for a real on-chain USDC royalty, view parent → child lineage, and see the trending assets and top-creator leaderboard. Every model links to its own /m/:id detail page with an interactive viewer, live geometry stats, likes, comments, and suggested models.",
 					"priority": 0.7,
 					"changefreq": "daily",
 					"added": "2026-07-08"
@@ -1634,7 +1634,7 @@
 				{
 					"path": "/trending",
 					"title": "Trending: Top Agents & Coins on three.ws",
-					"description": "What\u2019s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows.",
+					"description": "What’s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows.",
 					"priority": 0.8,
 					"changefreq": "hourly",
 					"added": "2026-06-16"
@@ -2081,16 +2081,16 @@
 				},
 				{
 					"path": "/ibm/x402-demo",
-					"title": "x402 Live Demo (IBM \u00d7 three.ws)",
-					"description": "A self-contained x402 micropayment demo: pay $0.001 USDC from your own wallet: MetaMask on Base or Phantom on Solana: to call a real three.ws data API. Watch the live HTTP 402 challenge, sign a gasless authorization, and see the on-chain settlement receipt. No backend, no account; built as the public face of the IBM \u00d7 three.ws partnership.",
+					"title": "x402 Live Demo (IBM × three.ws)",
+					"description": "A self-contained x402 micropayment demo: pay $0.001 USDC from your own wallet: MetaMask on Base or Phantom on Solana: to call a real three.ws data API. Watch the live HTTP 402 challenge, sign a gasless authorization, and see the on-chain settlement receipt. No backend, no account; built as the public face of the IBM × three.ws partnership.",
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-06-17"
 				},
 				{
 					"path": "/ibm/hello",
-					"title": "IBM \u00d7 three.ws partnership",
-					"description": "The IBM \u00d7 three.ws partnership page: how three.ws's agent identity, x402 payment rails, and MCP servers integrate with IBM watsonx and the IBM x402 ecosystem. A self-contained showcase that stays live-editable after publish.",
+					"title": "IBM × three.ws partnership",
+					"description": "The IBM × three.ws partnership page: how three.ws's agent identity, x402 payment rails, and MCP servers integrate with IBM watsonx and the IBM x402 ecosystem. A self-contained showcase that stays live-editable after publish.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
@@ -2131,7 +2131,7 @@
 				},
 				{
 					"path": "/three",
-					"title": "$THREE Tiers \u00b7 Hold-to-Access",
+					"title": "$THREE Tiers · Hold-to-Access",
 					"description": "Hold $THREE to unlock platform-wide perks: fee discounts on compute, higher free quotas, and private and branded worlds. See every tier, what it unlocks, and exactly how much $THREE you hold to reach the next one. The same tiering and the same upgrade path, everywhere.",
 					"priority": 0.8,
 					"changefreq": "weekly",
@@ -2140,7 +2140,7 @@
 				},
 				{
 					"path": "/three-live",
-					"title": "$THREE Live \u00b7 Protocol Pulse",
+					"title": "$THREE Live · Protocol Pulse",
 					"description": "The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time: each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.",
 					"priority": 0.8,
 					"changefreq": "always",
@@ -2610,7 +2610,7 @@
 				},
 				{
 					"path": "/dashboard/account",
-					"title": "Dashboard \u00b7 Account",
+					"title": "Dashboard · Account",
 					"description": "Manage connected wallets, SNS, delegation, and action log.",
 					"auth": "required",
 					"indexable": false,
@@ -2618,7 +2618,7 @@
 				},
 				{
 					"path": "/dashboard/data-api",
-					"title": "Dashboard \u00b7 Data API",
+					"title": "Dashboard · Data API",
 					"description": "Developer console for the three.ws Data API: buy the Premium pass with $THREE, SOL, or USDC, manage API keys, watch usage, and copy quickstarts.",
 					"auth": "required",
 					"indexable": false,
@@ -2626,7 +2626,7 @@
 				},
 				{
 					"path": "/dashboard/billing",
-					"title": "Dashboard \u00b7 Billing & Passes",
+					"title": "Dashboard · Billing & Passes",
 					"description": "Manage subscriptions and paid services: Premium pass status, on-chain payment history, API keys, and creator subscriptions.",
 					"auth": "required",
 					"indexable": false,
@@ -2634,7 +2634,7 @@
 				},
 				{
 					"path": "/dashboard/settings",
-					"title": "Dashboard \u00b7 Settings",
+					"title": "Dashboard · Settings",
 					"description": "Avatar storage modes (R2 vs IPFS), sessions, your notification inbox, per-category notification channel preferences (in-app/push/email/Telegram), and dashboard preferences.",
 					"auth": "required",
 					"indexable": false,
@@ -2683,7 +2683,7 @@
 				},
 				{
 					"path": "/docs/skill-bundles",
-					"title": "Docs \u00b7 Skill bundles",
+					"title": "Docs · Skill bundles",
 					"description": "How a bundle of an agent's skills is priced from that agent's own sales rather than a rule of thumb: the median-basket and flat-discount bases, the public pricing and backtest endpoint, the owner endpoints that publish and retire a bundle, and the on-chain checkout that unlocks every skill in one payment.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2691,7 +2691,7 @@
 				},
 				{
 					"path": "/docs/avatar-artifact",
-					"title": "Docs \u00b7 Avatar Artifact viewer",
+					"title": "Docs · Avatar Artifact viewer",
 					"description": "The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2699,7 +2699,7 @@
 				},
 				{
 					"path": "/docs/home-voice",
-					"title": "Docs \u00b7 The browser voice loop",
+					"title": "Docs · The browser voice loop",
 					"description": "How hands-free works for a connected home: a wake word matched by a model running in your own tab, an interruption that stops the agent mid-sentence, a pause that does not truncate your command, and a spoken confirmation narrow enough that a background yes can never unlock a front door. Includes the measured latency of every leg and how to mount the loop on your own surface.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2707,7 +2707,7 @@
 				},
 				{
 					"path": "/docs/smart-home",
-					"title": "Docs \u00b7 three.ws Home",
+					"title": "Docs · three.ws Home",
 					"description": "How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2715,7 +2715,7 @@
 				},
 				{
 					"path": "/docs/home-satellite",
-					"title": "Docs \u00b7 Give your voice assistant a face",
+					"title": "Docs · Give your voice assistant a face",
 					"description": "Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face: the setup in four steps, exactly what crosses your network and what never does, the eleven states the display can be in, and the rule the whole thing is built around, that closing the page never stops your voice assistant working.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2723,7 +2723,7 @@
 				},
 				{
 					"path": "/docs/home-households",
-					"title": "Docs \u00b7 Home households and roles",
+					"title": "Docs · Home households and roles",
 					"description": "Sharing a connected house without sharing a login: the five roles and what each one may do, per-member entity scopes that narrow the house a member can even see, how invitations are issued and accepted, what happens to somebody's access when they leave, and the rule everything hangs off, that a guest can never confirm an action that opens a building.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2731,7 +2731,7 @@
 				},
 				{
 					"path": "/docs/home-security",
-					"title": "Docs \u00b7 Home security",
+					"title": "Docs · Home security",
 					"description": "The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2739,7 +2739,7 @@
 				},
 				{
 					"path": "/docs/home-relay",
-					"title": "Docs \u00b7 Connect a home that is only on your network",
+					"title": "Docs · Connect a home that is only on your network",
 					"description": "Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2747,7 +2747,7 @@
 				},
 				{
 					"path": "/docs/home-relay-threat-model",
-					"title": "Docs \u00b7 Home relay threat model",
+					"title": "Docs · Home relay threat model",
 					"description": "What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2755,7 +2755,7 @@
 				},
 				{
 					"path": "/docs/home-scene",
-					"title": "Docs \u00b7 The live 3D home",
+					"title": "Docs · The live 3D home",
 					"description": "How the connected house becomes a room you can stand in: the room graph the bridge builds from Home Assistant's registries, how a real light dimming dims the model, what the scene does while the house is unreachable, and the fallback that keeps every control usable without WebGL.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2763,7 +2763,7 @@
 				},
 				{
 					"path": "/docs/home-privacy",
-					"title": "Docs \u00b7 Home privacy and retention",
+					"title": "Docs · Home privacy and retention",
 					"description": "Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2771,7 +2771,7 @@
 				},
 				{
 					"path": "/docs/home-plans",
-					"title": "Docs \u00b7 Home plans and quotas",
+					"title": "Docs · Home plans and quotas",
 					"description": "What a connected house costs and what each plan covers, with the two commitments enforced in code rather than promised in prose: a limit never blocks a safety action, so locking up, closing a garage or valve and arming an alarm work over quota and past due; and nothing about the confirmation gate, the action log's integrity or the role system is ever a paid feature.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2779,7 +2779,7 @@
 				},
 				{
 					"path": "/docs/carplay",
-					"title": "Docs \u00b7 three.ws Drive",
+					"title": "Docs · three.ws Drive",
 					"description": "How a three.ws agent rides in the car: the CarPlay entitlement categories measured, why Apple's voice-based conversational category is the one that fits and why it grants no drawing surface, the open-source in-car projects worth adopting and the copyleft ones that are not, and how the /drive surface, the native CarPlay scene, and an open head unit share one implementation.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2787,7 +2787,7 @@
 				},
 				{
 					"path": "/docs/tty-avatar",
-					"title": "Docs \u00b7 Terminal avatar",
+					"title": "Docs · Terminal avatar",
 					"description": "The @three-ws/tty-avatar package: any three.ws avatar or agent body rendered live in a terminal by a software rasterizer (truecolor half-blocks, braille, or plain ASCII), procedural moods, and Claude Code hooks that turn it into your coding agent's face.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2795,7 +2795,7 @@
 				},
 				{
 					"path": "/docs/site-performance",
-					"title": "Docs \u00b7 Site load performance",
+					"title": "Docs · Site load performance",
 					"description": "The load-cost rules behind every page that is not /play, each with the Lighthouse measurement that produced it: catalogue grids skip the rows nobody can see, analytics waits for the first idle moment, the CDN bundle ships minified, below-the-fold sections load below the fold, and thumbnails decode off the critical path.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2803,7 +2803,7 @@
 				},
 				{
 					"path": "/docs/farcaster-memory-seeding",
-					"title": "Docs \u00b7 Farcaster memory seeding",
+					"title": "Docs · Farcaster memory seeding",
 					"description": "Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2811,7 +2811,7 @@
 				},
 				{
 					"path": "/docs/likeness-eval",
-					"title": "Docs \u00b7 Likeness evaluation",
+					"title": "Docs · Likeness evaluation",
 					"description": "How three.ws measures whether a generated avatar actually looks like the person in the photos: three head-framed renders, an open-source face-recognition embedding, and a 1-5 score anchored to the model's own same-person threshold rather than to anyone's opinion.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2819,7 +2819,7 @@
 				},
 				{
 					"path": "/docs/x-memory-seeding",
-					"title": "Docs \u00b7 X memory seeding",
+					"title": "Docs · X memory seeding",
 					"description": "Seed an agent's memory from your X account behind an explicit, versioned consent: only your profile and recent original public posts are read, they are distilled into short facts (never stored verbatim), and revoking consent or disconnecting X deletes every memory the grant produced.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2827,7 +2827,7 @@
 				},
 				{
 					"path": "/docs/inference-node-operator",
-					"title": "Docs \u00b7 Run an inference node",
+					"title": "Docs · Run an inference node",
 					"description": "Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2835,7 +2835,7 @@
 				},
 				{
 					"path": "/docs/pump-claims-channel",
-					"title": "Docs \u00b7 pump.fun first-claims channel",
+					"title": "Docs · pump.fun first-claims channel",
 					"description": "A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2843,7 +2843,7 @@
 				},
 				{
 					"path": "/docs/agent-tokens",
-					"title": "Docs \u00b7 Agent tokens",
+					"title": "Docs · Agent tokens",
 					"description": "Turn an agent into an economic object: a Solana coin whose identity belongs to the agent rather than to whoever filled in the launch form. Covers configuring a coin before it exists, rehearsing the launch for free, and the single command that launches it for real.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2851,7 +2851,7 @@
 				},
 				{
 					"path": "/docs/analytics-retention",
-					"title": "Docs \u00b7 Week-2 retention on minted agents",
+					"title": "Docs · Week-2 retention on minted agents",
 					"description": "How three.ws measures the one number that gates phase 2 of the roadmap: whether users come back to converse with the agent they minted. Defines the cohort, the return event, and the query behind the reported figure.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -2859,7 +2859,7 @@
 				},
 				{
 					"path": "/docs/github-memory-seeding",
-					"title": "Docs \u00b7 GitHub memory seeding",
+					"title": "Docs · GitHub memory seeding",
 					"description": "Give an agent your work: your public GitHub profile plus the repositories and READMEs you pick, distilled into long-term memory so the agent speaks concretely about what you build instead of guessing. Consent is explicit and revoking it deletes every memory the grant produced.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2867,7 +2867,7 @@
 				},
 				{
 					"path": "/docs/reputation-staking-market",
-					"title": "Docs \u00b7 Reputation Staking Market",
+					"title": "Docs · Reputation Staking Market",
 					"description": "Stake conviction on an agent and earn from its attested action history. Principal sits in a market escrow, yield is derived per epoch from the agent's signed on-chain attestations, and positions build on the existing threews.stake.v1 conviction signal.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2875,7 +2875,7 @@
 				},
 				{
 					"path": "/docs/ibm-community",
-					"title": "Docs \u00b7 IBM Community post catalog",
+					"title": "Docs · IBM Community post catalog",
 					"description": "The running catalog of every thread and blog in the Three.ws User Group on IBM Community: authors, dates, activity, and a faithful summary of each post, plus a snapshot of the group's membership and content counts.",
 					"priority": 0.5,
 					"changefreq": "weekly",
@@ -2883,7 +2883,7 @@
 				},
 				{
 					"path": "/docs/event-souvenirs",
-					"title": "Docs \u00b7 Event souvenirs: the wearable you keep",
+					"title": "Docs · Event souvenirs: the wearable you keep",
 					"description": "The free commemorative wearable granted once to every player who is in the $THREE world while a live event is running: what it is, how the server decides who earns it, why it can never be bought, and how to equip it afterwards.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -2891,7 +2891,7 @@
 				},
 				{
 					"path": "/docs/play-live-events",
-					"title": "Docs \u00b7 Live events in the /play world",
+					"title": "Docs · Live events in the /play world",
 					"description": "How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -2899,7 +2899,7 @@
 				},
 				{
 					"path": "/docs/play-hardening",
-					"title": "Docs \u00b7 How /play stays safe, honest, and light",
+					"title": "Docs · How /play stays safe, honest, and light",
 					"description": "The invariants that keep the Play world safe: untrusted names never become markup, a coin image cannot escape its CSS, a broken world link says so, a reconnect retires the peers who left, and everything the world loads gets freed. Each rule names the failure it prevents.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -2907,7 +2907,7 @@
 				},
 				{
 					"path": "/docs/play-forge-in-world",
-					"title": "Docs \u00b7 Forge items into a /play world from a prompt",
+					"title": "Docs · Forge items into a /play world from a prompt",
 					"description": "Describe an item in a coin's world, or attach a reference photo, and the free forge lane builds a real 3D model in about half a minute. It is armed for placement and, once placed, appears for everyone connected to that server and persists like any other build.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -2915,7 +2915,7 @@
 				},
 				{
 					"path": "/docs/play-vehicles",
-					"title": "Docs \u00b7 Cars in /play: traffic and the drivable fleet",
+					"title": "Docs · Cars in /play: traffic and the drivable fleet",
 					"description": "The Trench Car is the default car in every coin world: ambient traffic drives it and it is parked for you to take the wheel. How to drive, how a car is assembled from spec, physics and mesh, how the model is staged, and how to add another.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -2923,7 +2923,7 @@
 				},
 				{
 					"path": "/docs/swarms",
-					"title": "Docs \u00b7 Trading swarms",
+					"title": "Docs · Trading swarms",
 					"description": "How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2931,7 +2931,7 @@
 				},
 				{
 					"path": "/docs/coin-wars",
-					"title": "Docs \u00b7 Coin Wars",
+					"title": "Docs · Coin Wars",
 					"description": "How community-vs-community battles work on three.ws: the war portal in every coin world, the matchmaking key two communities meet under, the signed pairing the arena trusts, the Elo ladder recomputed from the battle ledger, and the /api/wars endpoint behind all of it.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2939,7 +2939,7 @@
 				},
 				{
 					"path": "/docs/in-game-economy",
-					"title": "Docs \u00b7 The in-game economy",
+					"title": "Docs · The in-game economy",
 					"description": "The complete reference for the /play open-world economy: gathering and selling materials, the cash purse and bank, tool upgrades, every vendor and gate, $THREE cosmetics that settle on Solana, and the catalog wire format for reading it from code.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2947,7 +2947,7 @@
 				},
 				{
 					"path": "/docs/exit-lab",
-					"title": "Docs \u00b7 Exit Lab",
+					"title": "Docs · Exit Lab",
 					"description": "How the counterfactual replay works: the two-phase walk over a recorded price path, why it feeds production exit code instead of reimplementing it, which positions are excluded and why, and the exact limits of what a replay can claim.",
 					"priority": 0.6,
 					"changefreq": "weekly",
@@ -2955,7 +2955,7 @@
 				},
 				{
 					"path": "/docs/crews",
-					"title": "Docs \u00b7 Crews",
+					"title": "Docs · Crews",
 					"description": "How crews work: the public directory of every crew with members, invite search with join-state annotations, the headquarters room, and how the friends drawer in the coin worlds links into it.",
 					"priority": 0.6,
 					"changefreq": "weekly",
@@ -2963,7 +2963,7 @@
 				},
 				{
 					"path": "/docs/spotlight",
-					"title": "Docs \u00b7 Agent Spotlight",
+					"title": "Docs · Agent Spotlight",
 					"description": "How the Agent Spotlight community showcase works: what an entry stores versus what it reads live off the agent, the trending decay formula, curated versus community entries, and the full showcase API.",
 					"priority": 0.6,
 					"changefreq": "weekly",
@@ -2971,7 +2971,7 @@
 				},
 				{
 					"path": "/docs/economy-solver",
-					"title": "Docs \u00b7 The solved economy",
+					"title": "Docs · The solved economy",
 					"description": "The closed-form model behind /play/solver: expected cash, XP and yield per hour for every gatherable node at every level, the optimal fish-and-cook split, store payback, and the exact assumptions the arithmetic rests on.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2979,7 +2979,7 @@
 				},
 				{
 					"path": "/docs/freshness",
-					"title": "Docs \u00b7 Freshness",
+					"title": "Docs · Freshness",
 					"description": "Does this documentation still describe the code? Every doc is scored against the source files it documents, and this dashboard ranks the drift so the stalest pages get fixed first.",
 					"priority": 0.5,
 					"changefreq": "weekly",
@@ -2987,7 +2987,7 @@
 				},
 				{
 					"path": "/docs/overlay-audit",
-					"title": "Docs \u00b7 Overlay audit",
+					"title": "Docs · Overlay audit",
 					"description": "The measured report on every UI overlay surface: which pages draw what over the content, what the audit sweep checks, and how to read a finding before fixing it.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -2995,7 +2995,7 @@
 				},
 				{
 					"path": "/docs/trading-hub",
-					"title": "Docs \u00b7 The trading hub",
+					"title": "Docs · The trading hub",
 					"description": "The front door to the autonomous trading system: live fleet vitals read off the running bots, the strategy arena and experiments board, and the smart-money radar, with the twenty pages behind them organised into one path.",
 					"priority": 0.6,
 					"changefreq": "weekly",
@@ -3039,7 +3039,7 @@
 				},
 				{
 					"path": "/docs/news-rights",
-					"title": "Docs \u00b7 Publisher rights in the news reader",
+					"title": "Docs · Publisher rights in the news reader",
 					"description": "What three.ws shows from a publisher's article and what it never shows: the enforced lead-excerpt limit, how a withdrawn story is removed (410, deindex, purge), and how publishers can ask us to take something down.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -3055,7 +3055,7 @@
 				},
 				{
 					"path": "/docs/forge",
-					"title": "Docs \u00b7 Forge (text & image to 3D)",
+					"title": "Docs · Forge (text & image to 3D)",
 					"description": "How the Forge turns a text prompt, photos, or a sketch into a downloadable textured 3D model (GLB): the free-first engine grid with live health status, input modes, output formats, job resume, and background generation.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3063,7 +3063,7 @@
 				},
 				{
 					"path": "/docs/forge-pipeline",
-					"title": "Docs \u00b7 The Forge pipeline (architecture deep dive)",
+					"title": "Docs · The Forge pipeline (architecture deep dive)",
 					"description": "The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3071,7 +3071,7 @@
 				},
 				{
 					"path": "/docs/materialize",
-					"title": "Docs \u00b7 Materialize: turn a generation into a real object",
+					"title": "Docs · Materialize: turn a generation into a real object",
 					"description": "How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3079,7 +3079,7 @@
 				},
 				{
 					"path": "/docs/how-forge-works",
-					"title": "Docs \u00b7 How the Forge works, in plain language",
+					"title": "Docs · How the Forge works, in plain language",
 					"description": "The five steps between typing a prompt and downloading a 3D model: reference image, reconstruction, engine selection, self-healing failover, and permanent storage. Plus what the quality tiers mean and what a finished model can do next.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3087,7 +3087,7 @@
 				},
 				{
 					"path": "/docs/image-to-3d",
-					"title": "Docs \u00b7 Image to 3D",
+					"title": "Docs · Image to 3D",
 					"description": "Turn 1 to 6 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3095,7 +3095,7 @@
 				},
 				{
 					"path": "/docs/diorama",
-					"title": "Docs \u00b7 Diorama (text to world)",
+					"title": "Docs · Diorama (text to world)",
 					"description": "How one sentence becomes an explorable 3D diorama: an LLM composes a placed scene, each object is forged to a real GLB and assembled live, then saved to a public gallery permalink, exported to Scene Studio, or taken into AR.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3103,7 +3103,7 @@
 				},
 				{
 					"path": "/docs/cosmos",
-					"title": "Docs \u00b7 Cosmos (living worlds)",
+					"title": "Docs · Cosmos (living worlds)",
 					"description": "How NVIDIA Cosmos renders a photoreal video world behind a transparent 3D avatar: the async generation job, preview and download, and the designed fallback.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3111,7 +3111,7 @@
 				},
 				{
 					"path": "/docs/splat",
-					"title": "Docs \u00b7 Splat viewer (Gaussian avatars)",
+					"title": "Docs · Splat viewer (Gaussian avatars)",
 					"description": "Render photoreal Gaussian-splat and radiance-field avatars in the browser: supported formats (.ply, .splat, .ksplat), client-side decoding, and the engines whose output it displays.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3119,7 +3119,7 @@
 				},
 				{
 					"path": "/docs/capture",
-					"title": "Docs \u00b7 Scene Capture (video to point cloud)",
+					"title": "Docs · Scene Capture (video to point cloud)",
 					"description": "Turn a phone video of any space into an explorable coloured 3D point cloud with feed-forward reconstruction, tunable sampling parameters, and live WebGL rendering.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3127,7 +3127,7 @@
 				},
 				{
 					"path": "/docs/restyle",
-					"title": "Docs \u00b7 Restyle Studio",
+					"title": "Docs · Restyle Studio",
 					"description": "Re-skin any GLB without regenerating its mesh: 18 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3135,7 +3135,7 @@
 				},
 				{
 					"path": "/docs/scene-studio",
-					"title": "Docs \u00b7 Scene Studio",
+					"title": "Docs · Scene Studio",
 					"description": "The in-browser three.js editor: import GLBs, arrange with transform gizmos, edit materials and lights, script, and export complete glTF scenes.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3143,7 +3143,7 @@
 				},
 				{
 					"path": "/docs/compose",
-					"title": "Docs \u00b7 Scene Composer",
+					"title": "Docs · Scene Composer",
 					"description": "Forge props from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export a GLB or save the result as a reusable outfit.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3151,7 +3151,7 @@
 				},
 				{
 					"path": "/docs/animation-studio",
-					"title": "Docs \u00b7 Animation Studio",
+					"title": "Docs · Animation Studio",
 					"description": "Pose any avatar or the built-in mannequin with FK/IK, keyframe a timeline, preview live, and export an animated GLB or clip JSON. Save clips to your account and list them for sale in USDC.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3159,7 +3159,7 @@
 				},
 				{
 					"path": "/docs/avatar-studio",
-					"title": "Docs \u00b7 Avatar Studio",
+					"title": "Docs · Avatar Studio",
 					"description": "Build a rigged 3D avatar from scratch with no selfie: choose a base body, sculpt face and body morphs, add outfits and accessories, and export a GLB.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3167,7 +3167,7 @@
 				},
 				{
 					"path": "/docs/mocap-studio",
-					"title": "Docs \u00b7 Mocap Studio",
+					"title": "Docs · Mocap Studio",
 					"description": "Drive a 3D avatar's face live from your webcam in the browser: MediaPipe face landmarks mapped to ARKit blendshapes, smoothing, record and replay, and save.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3175,7 +3175,7 @@
 				},
 				{
 					"path": "/docs/draft-agent-mint",
-					"title": "Docs \u00b7 Draft Agent Mint",
+					"title": "Docs · Draft Agent Mint",
 					"description": "Every finished reconstruction is stored durably and minted as a draft on-chain agent identity: the Solana leg, the ERC-8004 leg, the flags that arm each one, and how to prove the whole path on devnet.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3183,7 +3183,7 @@
 				},
 				{
 					"path": "/docs/selfie-to-avatar",
-					"title": "Docs \u00b7 Selfie to Avatar",
+					"title": "Docs · Selfie to Avatar",
 					"description": "Point your camera at your face and get a rigged 3D avatar in about a minute, free and in the browser. The capture flow, the reconstruction pipeline, and where the avatar goes next.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3191,7 +3191,7 @@
 				},
 				{
 					"path": "/docs/voice-lab",
-					"title": "Docs \u00b7 Voice Lab",
+					"title": "Docs · Voice Lab",
 					"description": "Pick a voice from any provider or clone your own from a short browser recording, play it in the TTS playground, and assign it to an agent.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3199,7 +3199,7 @@
 				},
 				{
 					"path": "/docs/lipsync",
-					"title": "Docs \u00b7 Lipsync",
+					"title": "Docs · Lipsync",
 					"description": "Two in-browser lipsync demos: TTS-driven mouth animation and live-mic viseme detection, both driving an avatar's viseme morph targets in real time.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3207,7 +3207,7 @@
 				},
 				{
 					"path": "/docs/talking-avatar-video",
-					"title": "Docs \u00b7 Talking Avatar Video",
+					"title": "Docs · Talking Avatar Video",
 					"description": "Pick an avatar, provide an audio track, and render a downloadable lip-synced talking-head MP4 on a server-side worker.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3215,7 +3215,7 @@
 				},
 				{
 					"path": "/docs/galaxy",
-					"title": "Docs \u00b7 Agent Galaxy",
+					"title": "Docs · Agent Galaxy",
 					"description": "Every published agent embedded by IBM Granite on watsonx.ai, projected into a navigable 3D constellation with natural-language semantic search.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3223,7 +3223,7 @@
 				},
 				{
 					"path": "/docs/ar-studio",
-					"title": "Docs \u00b7 AR Studio",
+					"title": "Docs · AR Studio",
 					"description": "Place any number of 3D models and avatars into one live camera scene: model sources, the WebXR/passthrough/desktop rendering ladder, gestures, shared live rooms, and shareable arrangements.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3231,7 +3231,7 @@
 				},
 				{
 					"path": "/docs/genesis",
-					"title": "Docs \u00b7 Instant Agent Genesis",
+					"title": "Docs · Instant Agent Genesis",
 					"description": "A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana and EVM wallets and an optional on-chain identity, in under a minute.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3239,7 +3239,7 @@
 				},
 				{
 					"path": "/docs/genome",
-					"title": "Docs \u00b7 Agent Genome",
+					"title": "Docs · Agent Genome",
 					"description": "Breed two agents into a provably-inherited child: recombined brain, voice, body, and on-chain skill licenses, each breeding event seed-recorded with a verifiable family tree.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3247,7 +3247,7 @@
 				},
 				{
 					"path": "/docs/agent-studio",
-					"title": "Docs \u00b7 Agent Studio",
+					"title": "Docs · Agent Studio",
 					"description": "Author an agent's brain, memory, body, money, and skills in one place, beside a persistent live 3D avatar that updates everywhere as you edit.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3255,7 +3255,7 @@
 				},
 				{
 					"path": "/docs/brain",
-					"title": "Docs \u00b7 Multi-LLM Brain",
+					"title": "Docs · Multi-LLM Brain",
 					"description": "Send one prompt to Claude, GPT, Qwen, ModelScope, Groq and more at once, with side-by-side streaming and per-model latency and token stats.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3263,7 +3263,7 @@
 				},
 				{
 					"path": "/docs/integrations",
-					"title": "Docs \u00b7 Integrations",
+					"title": "Docs · Integrations",
 					"description": "The catalog of one-script-tag embeds for any site: 3D avatar viewers, chat agents, walk companions, page narrators, live token widgets, and the MCP server.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3271,7 +3271,7 @@
 				},
 				{
 					"path": "/docs/autopilot",
-					"title": "Docs \u00b7 Coin Autopilot",
+					"title": "Docs · Coin Autopilot",
 					"description": "A hands-off token cockpit: set buyback-and-burn and holder-distribution rules with USDC floors and guardrails, and let your agent run the coin autonomously.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3279,7 +3279,7 @@
 				},
 				{
 					"path": "/docs/signals",
-					"title": "Docs \u00b7 Signal Marketplace",
+					"title": "Docs · Signal Marketplace",
 					"description": "Verified traders publish live entry and exit signals as x402-metered feeds ranked by proven on-chain accuracy; a subscriber agent pays per signal or epoch and auto-mirrors through the guarded path.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3287,7 +3287,7 @@
 				},
 				{
 					"path": "/docs/agi",
-					"title": "Docs \u00b7 The AGI",
+					"title": "Docs · The AGI",
 					"description": "One autonomous agent that is superhuman at exactly one thing, trading memecoins on pump.fun, and nothing else. Its embodied 3D body, its logged decisions with stated confidence, and its chain-proven record.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3295,7 +3295,7 @@
 				},
 				{
 					"path": "/docs/alpha-copilot",
-					"title": "Docs \u00b7 Alpha Co-pilot",
+					"title": "Docs · Alpha Co-pilot",
 					"description": "Your 3D agent reads a real pump.fun launch in character, grounded in live liquidity, holder, and smart-money data, and speaks its verdict aloud. Fabricated figures are rejected; the owner acts only within server-enforced spend limits.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3303,7 +3303,7 @@
 				},
 				{
 					"path": "/docs/guardian",
-					"title": "Docs \u00b7 Guardian console",
+					"title": "Docs · Guardian console",
 					"description": "Recover and inherit agent wallets through a threshold-approved, time-locked process that never exposes a private key.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3311,7 +3311,7 @@
 				},
 				{
 					"path": "/docs/strategy-objects",
-					"title": "Docs \u00b7 Strategy Objects",
+					"title": "Docs · Strategy Objects",
 					"description": "Ownable, forkable, leaderboard-ranked trade strategies your agent can equip and run on-chain within your spend policy, plus the Strategy Lab for validation and backtesting.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3319,7 +3319,7 @@
 				},
 				{
 					"path": "/docs/terminal",
-					"title": "Docs \u00b7 Mission Control",
+					"title": "Docs · Mission Control",
 					"description": "The keyboard-first pump.fun trading terminal: the launch firehose fused with intel scores, firewall verdicts, and smart-money flow, streaming positions with live PnL, and one-keystroke guarded trading.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3327,7 +3327,7 @@
 				},
 				{
 					"path": "/docs/smart-money",
-					"title": "Docs \u00b7 Smart Money Radar",
+					"title": "Docs · Smart Money Radar",
 					"description": "A live first-party reputation graph of every pump.fun wallet: cross each coin's buyers with the coins that actually graduated to surface the wallets that keep picking winners.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3335,7 +3335,7 @@
 				},
 				{
 					"path": "/docs/radar",
-					"title": "Docs \u00b7 Coin Radar",
+					"title": "Docs · Coin Radar",
 					"description": "Live pump.fun launch intelligence: every new coin scored in its first 90 seconds for bundle vs organic, wallet concentration, dev behaviour, and risk flags.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3343,7 +3343,7 @@
 				},
 				{
 					"path": "/docs/clash",
-					"title": "Docs \u00b7 Coin Clash",
+					"title": "Docs · Coin Clash",
 					"description": "Token-gated community warfare: every coin community is an army. Hold the coin, enlist, and rally for your faction in timed on-chain battles.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3351,7 +3351,7 @@
 				},
 				{
 					"path": "/docs/x402-studio",
-					"title": "Docs \u00b7 x402 Studio",
+					"title": "Docs · x402 Studio",
 					"description": "The merchant console for running a paid x402 business: products and pricing, payout and agent wallets, real USDC send and receive with .sol resolution, a storefront and pay-button builder, giving, and security.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3359,7 +3359,7 @@
 				},
 				{
 					"path": "/docs/fact-check",
-					"title": "Docs \u00b7 Fact Check",
+					"title": "Docs · Fact Check",
 					"description": "Sourced fact-checking with cryptographic content attestations, a published accuracy benchmark, and a free daily quota then pay-per-check via x402.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3367,7 +3367,7 @@
 				},
 				{
 					"path": "/docs/daily-forge",
-					"title": "Docs \u00b7 Daily Forge",
+					"title": "Docs · Daily Forge",
 					"description": "A new 3D creative challenge every day: a deterministic theme, the free no-signup forge lane, a localStorage streak with milestones, a community strip, and an AR handoff.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3375,7 +3375,7 @@
 				},
 				{
 					"path": "/docs/crypto-api",
-					"title": "Docs \u00b7 Crypto Data API",
+					"title": "Docs · Crypto Data API",
 					"description": "Developer reference for the free, keyless Crypto Data API bundle: the one-call discovery endpoint (GET /api/crypto), the generated OpenAPI 3.1 spec, and every endpoint's inputs, outputs, states, and curl examples: token snapshots, bonding status, whales, trending, wallet portfolios, and symbol availability.",
 					"priority": 0.7,
 					"changefreq": "weekly",
@@ -3383,7 +3383,7 @@
 				},
 				{
 					"path": "/docs/autonomous-economy",
-					"title": "Docs \u00b7 The autonomous economy",
+					"title": "Docs · The autonomous economy",
 					"description": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute, plus how to verify there's no leak yourself.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -3391,7 +3391,7 @@
 				},
 				{
 					"path": "/docs/walk",
-					"title": "Docs \u00b7 Walk Avatar",
+					"title": "Docs · Walk Avatar",
 					"description": "Developer and user documentation for the three.ws walking-avatar system: the /walk page, iframe embeds, the JavaScript SDK, the postMessage event contract, companion mode, analytics, and the Chrome extension.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3399,15 +3399,15 @@
 				},
 				{
 					"path": "/docs/start-here",
-					"title": "Docs \u00b7 Start Here",
-					"description": "Plain-language introduction to three.ws for creators and non-developers: what it is, who it\u2019s for, and where to begin.",
+					"title": "Docs · Start Here",
+					"description": "Plain-language introduction to three.ws for creators and non-developers: what it is, who it’s for, and where to begin.",
 					"priority": 0.9,
 					"changefreq": "monthly",
 					"added": "2026-06-05"
 				},
 				{
 					"path": "/docs/make-your-agent",
-					"title": "Docs \u00b7 Make Your First Agent",
+					"title": "Docs · Make Your First Agent",
 					"description": "Step-by-step guide to creating a 3D AI agent in the browser with no code required.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3415,7 +3415,7 @@
 				},
 				{
 					"path": "/docs/share-and-embed",
-					"title": "Docs \u00b7 Share & Embed",
+					"title": "Docs · Share & Embed",
 					"description": "Three ways to put your agent in front of people: share a link, embed an iframe, or use the web component.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3423,7 +3423,7 @@
 				},
 				{
 					"path": "/docs/sketchfab",
-					"title": "Docs \u00b7 Sketchfab Showcase",
+					"title": "Docs · Sketchfab Showcase",
 					"description": "How the best community forge models get published to the official three.ws Sketchfab account: what gets picked, AI disclosure, and the backlinks that make referrals measurable.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3431,7 +3431,7 @@
 				},
 				{
 					"path": "/docs/social-layer",
-					"title": "Docs \u00b7 The Social Layer",
+					"title": "Docs · The Social Layer",
 					"description": "The activity feed, follow graph, notification bell, rankings, creator portfolios, and cross-entity search: the pages, the APIs, and how the pieces feed each other.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3439,15 +3439,15 @@
 				},
 				{
 					"path": "/docs/do-i-need-crypto",
-					"title": "Docs \u00b7 Do I Need Crypto?",
-					"description": "Honest answers to the wallet and payment questions: what requires crypto, what doesn\u2019t, and how payments work.",
+					"title": "Docs · Do I Need Crypto?",
+					"description": "Honest answers to the wallet and payment questions: what requires crypto, what doesn’t, and how payments work.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-05"
 				},
 				{
 					"path": "/docs/quick-start",
-					"title": "Docs \u00b7 Quick Start",
+					"title": "Docs · Quick Start",
 					"description": "Five-minute walkthrough: create an agent, embed it, get a paid call.",
 					"priority": 0.8,
 					"changefreq": "weekly",
@@ -3455,37 +3455,37 @@
 				},
 				{
 					"path": "/docs/agent-system",
-					"title": "Docs \u00b7 Agent System",
+					"title": "Docs · Agent System",
 					"description": "How agents, avatars, skills, and memories fit together.",
 					"added": "2026-04-27"
 				},
 				{
 					"path": "/docs/erc8004",
-					"title": "Docs \u00b7 ERC-8004",
+					"title": "Docs · ERC-8004",
 					"description": "Reference for the on-chain agent identity standard.",
 					"added": "2026-04-27"
 				},
 				{
 					"path": "/docs/agent-reputation",
-					"title": "Docs \u00b7 Agent Reputation",
+					"title": "Docs · Agent Reputation",
 					"description": "Why autonomous agents need verifiable trust, and how three.ws delivers portable on-chain reputation.",
 					"added": "2026-06-22"
 				},
 				{
 					"path": "/docs/agent-index",
-					"title": "Docs \u00b7 The Agent Index",
+					"title": "Docs · The Agent Index",
 					"description": "The platform's own cross-chain index of agent registrations, token launches, reputation attestations, transfers and delegations, Solana first: one public endpoint, absolute on-chain timestamps, and published index freshness.",
 					"added": "2026-08-14"
 				},
 				{
 					"path": "/docs/trust-primitives",
-					"title": "Docs \u00b7 Trust Primitives",
+					"title": "Docs · Trust Primitives",
 					"description": "Cross-chain Agent Reputation: score any wallet, mint, or agent id (Solana or EVM) 0-100 from real on-chain evidence before your agent pays, trades, or delegates.",
 					"added": "2026-07-07"
 				},
 				{
 					"path": "/docs/x402",
-					"title": "Docs \u00b7 x402 Protocol",
+					"title": "Docs · x402 Protocol",
 					"description": "How three.ws implements x402 HTTP 402 paid agent skills: the challenge, verify, and settle mechanics.",
 					"added": "2026-04-29"
 				},
@@ -3497,13 +3497,13 @@
 				},
 				{
 					"path": "/docs/x402-endpoints",
-					"title": "Docs \u00b7 x402 Paid Endpoints",
+					"title": "Docs · x402 Paid Endpoints",
 					"description": "The catalog of three.ws's own paid HTTP endpoints: what each charges, the price-override scheme, and what it returns.",
 					"added": "2026-06-29"
 				},
 				{
 					"path": "/docs/x402-preflight",
-					"title": "Docs \u00b7 x402 Preflight",
+					"title": "Docs · x402 Preflight",
 					"description": "Ask an x402 seller whether it can actually settle before you sign anything. The signed, time-bounded payability attestation, how to read it from an agent, a terminal, a conversation or a browser, and how to serve one from your own endpoint.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3511,37 +3511,37 @@
 				},
 				{
 					"path": "/docs/pump-launcher",
-					"title": "Docs \u00b7 Pump Launcher",
-					"description": "Deploy a brand-new pump.fun token in one paid call: no SOL, no wallet, no account. Inputs, outputs, pricing, correctness guarantees, and the free symbol-check \u2192 launch \u2192 launch-feed funnel.",
+					"title": "Docs · Pump Launcher",
+					"description": "Deploy a brand-new pump.fun token in one paid call: no SOL, no wallet, no account. Inputs, outputs, pricing, correctness guarantees, and the free symbol-check → launch → launch-feed funnel.",
 					"added": "2026-07-07"
 				},
 				{
 					"path": "/docs/x402-dev-tools",
-					"title": "Docs \u00b7 x402 Developer Tools",
+					"title": "Docs · x402 Developer Tools",
 					"description": "A free test bench for x402 developers: echo your payment envelope, debug a failed 402 exchange, and verify a receipt's attestation and settlement against a live server, all without spending anything.",
 					"added": "2026-07-07"
 				},
 				{
 					"path": "/docs/x402-buyer",
-					"title": "Docs \u00b7 x402 Buyer Client",
+					"title": "Docs · x402 Buyer Client",
 					"description": "How to settle a 402 challenge and pay three.ws's paid endpoints from code.",
 					"added": "2026-06-29"
 				},
 				{
 					"path": "/docs/autonomous-x402",
-					"title": "Docs \u00b7 Autonomous x402 Loop",
+					"title": "Docs · Autonomous x402 Loop",
 					"description": "The scheduled buyer that pays x402 endpoints on a cadence to feed the oracle and sniper: real USDC, real settlements.",
 					"added": "2026-06-29"
 				},
 				{
 					"path": "/docs/circulation-engine",
-					"title": "Docs \u00b7 Circulation Engine",
+					"title": "Docs · Circulation Engine",
 					"description": "The autonomous agent-to-agent activity loop: a pool of real platform agents tipping, paying, trading, and launching with one another.",
 					"added": "2026-06-29"
 				},
 				{
 					"path": "/docs/monitor",
-					"title": "Docs \u00b7 Agent Monitor",
+					"title": "Docs · Agent Monitor",
 					"description": "What each panel on /monitor reads and how often, every control on the board, how a failed panel degrades alone, and how to add a panel of your own.",
 					"added": "2026-08-01"
 				},
@@ -3583,162 +3583,162 @@
 				},
 				{
 					"path": "/docs/money-flow-map",
-					"title": "Docs \u00b7 Money Flow Map",
+					"title": "Docs · Money Flow Map",
 					"description": "How /flow builds the agent economy topology from settled on-chain transfers: the two edge sources, the privacy gate on counterparties, what source/hub/relay/sink mean, and how the stuck-capital number is computed.",
 					"added": "2026-07-31"
 				},
 				{
 					"path": "/docs/money-feed",
-					"title": "Docs \u00b7 Money Feed",
+					"title": "Docs · Money Feed",
 					"description": "The surfaces that show real value moving through three.ws: the live ticker, the custody-spend ledger, and the economy volume dashboard.",
 					"added": "2026-06-29"
 				},
 				{
 					"path": "/docs/reputation",
-					"title": "Docs \u00b7 Reputation System",
+					"title": "Docs · Reputation System",
 					"description": "Leave and read permanent, on-chain reviews for any registered agent via the UI, SDK, or contract.",
 					"added": "2026-06-22"
 				},
 				{
 					"path": "/docs/validation",
-					"title": "Docs \u00b7 Validation Attestations",
+					"title": "Docs · Validation Attestations",
 					"description": "Record and read on-chain attestations that an agent's 3D model passes glTF validation.",
 					"added": "2026-06-22"
 				},
 				{
 					"path": "/docs/solana-reputation",
-					"title": "Docs \u00b7 Agent Reputation on Solana",
+					"title": "Docs · Agent Reputation on Solana",
 					"description": "How three.ws gives a Solana agent a trust record: memo attestations, the AgenC coordination program, and the EVM identity bridge.",
 					"added": "2026-06-22"
 				},
 				{
 					"path": "/docs/sas-attestations",
-					"title": "Docs \u00b7 SAS Credentialed Attestations",
+					"title": "Docs · SAS Credentialed Attestations",
 					"description": "Set up the three.ws authority wallet and SAS_AUTHORITY_SECRET, bootstrap the Solana Attestation Service credential and schemas, and issue or read credentialed attestations.",
 					"added": "2026-06-24"
 				},
 				{
 					"path": "/docs/embedding",
-					"title": "Docs \u00b7 Embedding",
+					"title": "Docs · Embedding",
 					"description": "Embed an agent via iframe, oEmbed, or the <agent-3d> web component.",
 					"added": "2026-04-27"
 				},
 				{
 					"path": "/docs/assistant-widget",
-					"title": "Docs \u00b7 Assistant widget",
+					"title": "Docs · Assistant widget",
 					"description": "Add a 3D avatar assistant to any website: the one-tag script, the @three-ws/assistant npm package, and the assistant-widget MCP server for AI agents.",
 					"added": "2026-07-19"
 				},
 				{
 					"path": "/docs/web-component",
-					"title": "Docs \u00b7 <agent-3d>",
+					"title": "Docs · <agent-3d>",
 					"description": "Reference for the <agent-3d> custom element.",
 					"added": "2026-04-27"
 				},
 				{
 					"path": "/docs/companion",
-					"title": "Docs \u00b7 Companion",
+					"title": "Docs · Companion",
 					"description": "The personal companion: connect your own Telegram bot, calendar, inbox, or phone, give your contacts a face and a voice, and have a 3D character deliver what matters in person. Bridges, triage rules, the SDK, the CLI, the MCP server, and the desktop app.",
 					"added": "2026-08-28"
 				},
 				{
 					"path": "/docs/knock",
-					"title": "Docs \u00b7 Knock",
+					"title": "Docs · Knock",
 					"description": "A priced door to a person: open one at /knock/<username>, set what a single message from a stranger costs, and have your 3D companion deliver what gets through in person. The free and x402 lanes, the refuse-before-charging rule, receipts, the SDK and CLI, and the MCP server.",
 					"added": "2026-08-28"
 				},
 				{
 					"path": "/docs/mcp",
-					"title": "Docs \u00b7 MCP",
+					"title": "Docs · MCP",
 					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",
 					"added": "2026-04-27"
 				},
 				{
 					"path": "/docs/mcp-studio",
-					"title": "Docs \u00b7 3D Studio MCP (free)",
+					"title": "Docs · 3D Studio MCP (free)",
 					"description": "The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.",
 					"added": "2026-07-14"
 				},
 				{
 					"path": "/docs/chatgpt-ar",
-					"title": "Docs \u00b7 AR in ChatGPT",
+					"title": "Docs · AR in ChatGPT",
 					"description": "How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.",
 					"added": "2026-07-15"
 				},
 				{
 					"path": "/docs/mcp-scenes",
-					"title": "Docs \u00b7 Scenes MCP",
+					"title": "Docs · Scenes MCP",
 					"description": "Speak a placed 3D diorama into being from one sentence, then browse the gallery.",
 					"added": "2026-06-23"
 				},
 				{
 					"path": "/docs/mcp-x402",
-					"title": "Docs \u00b7 x402 Wallet MCP",
+					"title": "Docs · x402 Wallet MCP",
 					"description": "Give an AI agent a self-custodial Solana wallet that finds, inspects, and pays any x402 service in USDC.",
 					"added": "2026-06-23"
 				},
 				{
 					"path": "/docs/mcp-intel",
-					"title": "Docs \u00b7 Intel MCP",
+					"title": "Docs · Intel MCP",
 					"description": "Coin smart-money scores, wallet reputation, signal feeds, and KOL leaderboards over MCP.",
 					"added": "2026-06-23"
 				},
 				{
 					"path": "/docs/mcp-vanity",
-					"title": "Docs \u00b7 Vanity MCP",
+					"title": "Docs · Vanity MCP",
 					"description": "Read the Solana vanity-address grind-bounty market and proof-of-grind gallery.",
 					"added": "2026-06-23"
 				},
 				{
 					"path": "/docs/mcp-naming",
-					"title": "Docs \u00b7 Naming MCP",
+					"title": "Docs · Naming MCP",
 					"description": "On-chain identity for agents: resolve .sol names, reverse-lookup wallets, check handles.",
 					"added": "2026-06-23"
 				},
 				{
 					"path": "/docs/mcp-marketplace",
-					"title": "Docs \u00b7 Marketplace MCP",
+					"title": "Docs · Marketplace MCP",
 					"description": "Browse the public three.ws agent marketplace and skills catalog over MCP.",
 					"added": "2026-06-23"
 				},
 				{
 					"path": "/docs/skills",
-					"title": "Docs \u00b7 Skills",
+					"title": "Docs · Skills",
 					"description": "Write, package, and monetize agent skills.",
 					"added": "2026-04-27"
 				},
 				{
 					"path": "/docs/skill-royalties",
-					"title": "Docs \u00b7 Skill royalties",
+					"title": "Docs · Skill royalties",
 					"description": "Publish a skill, price it, and earn on every call. The exact author/platform split, why your share routes to your own wallet at settlement (Solana first), the ledger where you watch payouts land with an explorer link each, and the proof lane that verifies the whole accounting path without moving a cent.",
 					"added": "2026-08-13"
 				},
 				{
 					"path": "/docs/widgets",
-					"title": "Docs \u00b7 Widgets",
+					"title": "Docs · Widgets",
 					"description": "Build and publish reusable chat and 3D widgets.",
 					"added": "2026-04-15"
 				},
 				{
 					"path": "/docs/api-reference",
-					"title": "Docs \u00b7 API Reference",
+					"title": "Docs · API Reference",
 					"description": "Full HTTP API reference.",
 					"added": "2026-04-27"
 				},
 				{
 					"path": "/docs/authentication",
-					"title": "Docs \u00b7 Authentication",
+					"title": "Docs · Authentication",
 					"description": "Sign-In with Solana (SIWS), Sign-In with Ethereum (SIWE), Privy email/wallet login, sessions, and API keys."
 				},
 				{
 					"path": "/docs/sdk",
-					"title": "Docs \u00b7 SDK",
+					"title": "Docs · SDK",
 					"description": "JavaScript / Node SDK for three.ws.",
 					"added": "2026-04-27"
 				},
 				{
 					"path": "/docs/open-source-footprint",
-					"title": "Docs \u00b7 Open-Source Footprint",
+					"title": "Docs · Open-Source Footprint",
 					"description": "Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -3746,7 +3746,7 @@
 				},
 				{
 					"path": "/docs/listings",
-					"title": "Docs \u00b7 Listings & Distribution",
+					"title": "Docs · Listings & Distribution",
 					"description": "Cloud marketplaces and ecosystem directories where three.ws is listed (Alibaba Cloud, BNB Chain Dappbay, and more).",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -3766,25 +3766,25 @@
 				},
 				{
 					"path": "/walkthroughs/forge-your-first-3d-model",
-					"title": "Walkthrough \u00b7 Forge your first 3D model",
+					"title": "Walkthrough · Forge your first 3D model",
 					"description": "The free text-to-3D lane end to end: what to type, which engine to pick, and where the finished GLB lands.",
 					"added": "2026-07-31"
 				},
 				{
 					"path": "/walkthroughs/build-your-first-agent",
-					"title": "Walkthrough \u00b7 Build your first agent",
+					"title": "Walkthrough · Build your first agent",
 					"description": "Five steps to a named agent with a body, a personality, and a shareable URL, built before you ever sign in.",
 					"added": "2026-07-31"
 				},
 				{
 					"path": "/walkthroughs/embed-a-3d-avatar",
-					"title": "Walkthrough \u00b7 Embed a 3D avatar on your site",
+					"title": "Walkthrough · Embed a 3D avatar on your site",
 					"description": "Configure the avatar by clicking, watch the code rewrite itself, then copy one script tag onto any page you control.",
 					"added": "2026-07-31"
 				},
 				{
 					"path": "/walkthroughs/find-an-agent-worth-using",
-					"title": "Walkthrough \u00b7 Find an agent worth using",
+					"title": "Walkthrough · Find an agent worth using",
 					"description": "From the marketplace front door to a shortlist, using the weekly theme, the type and price filters, and the live activity strip.",
 					"added": "2026-07-31"
 				},
@@ -3798,7 +3798,7 @@
 				},
 				{
 					"path": "/tutorials/text-to-3d",
-					"title": "Tutorial \u00b7 Text Prompt to 3D Model",
+					"title": "Tutorial · Text Prompt to 3D Model",
 					"description": "Five-minute beginner walkthrough of the Forge: type a sentence, pick a quality tier, and download a textured GLB model.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3814,7 +3814,7 @@
 				},
 				{
 					"path": "/tutorials/add-a-3d-assistant",
-					"title": "Tutorial \u00b7 Add a 3D Avatar Assistant",
+					"title": "Tutorial · Add a 3D Avatar Assistant",
 					"description": "Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3822,7 +3822,7 @@
 				},
 				{
 					"path": "/tutorials/image-to-3d",
-					"title": "Tutorial \u00b7 Photos to 3D Model",
+					"title": "Tutorial · Photos to 3D Model",
 					"description": "Photograph a real object from up to six angles and reconstruct it as a textured 3D model: photo tips, guidance prompts, troubleshooting.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3830,7 +3830,7 @@
 				},
 				{
 					"path": "/tutorials/prompts-for-3d",
-					"title": "Tutorial \u00b7 Prompt Recipes for 3D Generation",
+					"title": "Tutorial · Prompt Recipes for 3D Generation",
 					"description": "A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, and food, plus the four rules behind every good prompt.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3838,7 +3838,7 @@
 				},
 				{
 					"path": "/tutorials/generate-3d-api",
-					"title": "Tutorial \u00b7 Generate 3D Models from Code",
+					"title": "Tutorial · Generate 3D Models from Code",
 					"description": "Use the Forge as a plain HTTP API: submit prompts, poll jobs, download GLBs, batch asset packs, and pay per call with x402.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3846,21 +3846,21 @@
 				},
 				{
 					"path": "/tutorials/nvidia-3d-free",
-					"title": "Tutorial \u00b7 Generate 3D Models Free, Powered by NVIDIA",
+					"title": "Tutorial · Generate 3D Models Free, Powered by NVIDIA",
 					"description": "The free text-to-3D lane, end to end: what NVIDIA NIM and Microsoft TRELLIS actually do with your prompt, when the free lane kicks in, how to write a prompt that reconstructs well, and how to download the finished GLB. No account, no key, no cost.",
 					"priority": 0.8,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/tutorials/nvidia-nim-self-host",
-					"title": "Tutorial \u00b7 Run Microsoft TRELLIS on Your Own NVIDIA NIM",
+					"title": "Tutorial · Run Microsoft TRELLIS on Your Own NVIDIA NIM",
 					"description": "Own the whole 3D pipeline: pull the TRELLIS NIM container onto your own NVIDIA GPU, serve text-to-3D and photo-to-3D yourself, and drive it through the same /api/forge-nim contract three.ws uses in production.",
 					"priority": 0.8,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/tutorials/first-prompt-to-3d",
-					"title": "Tutorial \u00b7 Your First Prompt to 3D in ChatGPT",
+					"title": "Tutorial · Your First Prompt to 3D in ChatGPT",
 					"description": "Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3868,13 +3868,13 @@
 				},
 				{
 					"path": "/tutorials/agent-reputation",
-					"title": "Tutorial \u00b7 Read an agent's reputation",
+					"title": "Tutorial · Read an agent's reputation",
 					"description": "Read any registered agent's ERC-8004 reputation from the UI, the REST API, the MCP tool, the SDK, or the contract.",
 					"added": "2026-06-22"
 				},
 				{
 					"path": "/tutorials/solana-agent-reputation",
-					"title": "Tutorial \u00b7 Read a Solana agent's reputation",
+					"title": "Tutorial · Read a Solana agent's reputation",
 					"description": "Read a Solana agent's A-D trust grade and the attestations behind it, then leave your own on-chain vouch.",
 					"added": "2026-06-22"
 				},
@@ -3888,7 +3888,7 @@
 				},
 				{
 					"path": "/tutorials/shopify-shopping-assistant",
-					"title": "Tutorial \u00b7 3D AI Shopping Assistant for Shopify",
+					"title": "Tutorial · 3D AI Shopping Assistant for Shopify",
 					"description": "Add a chat assistant with a 3D face to your Shopify store: it reads your live catalog, recommends real products as cards with add-to-cart, and answers shipping and returns, all from one script tag.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3896,7 +3896,7 @@
 				},
 				{
 					"path": "/tutorials/shopify-store-guide",
-					"title": "Tutorial \u00b7 3D Store Guide for Shopify (No Code)",
+					"title": "Tutorial · 3D Store Guide for Shopify (No Code)",
 					"description": "Design a walking 3D store guide in the Tour Builder playground, preview it, and paste it into Shopify: point, click, done, no code.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -3904,7 +3904,7 @@
 				},
 				{
 					"path": "/tutorials/shopify-store-guide-advanced",
-					"title": "Tutorial \u00b7 Customize Your Shopify 3D Store Guide",
+					"title": "Tutorial · Customize Your Shopify 3D Store Guide",
 					"description": "Hand-tune the store guide: exact section targeting, multi-page tours, real spoken voices, your own avatar, autostart, deep links, and the JavaScript API.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -3944,31 +3944,31 @@
 				},
 				{
 					"path": "/docs/trading-surfaces",
-					"title": "Docs \u00b7 The Trading Surfaces",
+					"title": "Docs · The Trading Surfaces",
 					"description": "The five-page solo trading stack: Coin Radar, Coin Intelligence, Live Trade Feed, Watchlist, and the Mission Control cockpit: where the numbers come from and how the surfaces chain together.",
 					"added": "2026-07-03"
 				},
 				{
 					"path": "/docs/trading-arenas",
-					"title": "Docs \u00b7 Competitive & Pooled Trading",
+					"title": "Docs · Competitive & Pooled Trading",
 					"description": "Arena tournaments with on-chain $THREE payouts, the 3D Sniper Arena, the Live Trading Theater and its one-click mirror, backable Vaults, and consensus-driven Trading Swarms.",
 					"added": "2026-07-03"
 				},
 				{
 					"path": "/docs/custody",
-					"title": "Docs \u00b7 Custody You Can Verify",
+					"title": "Docs · Custody You Can Verify",
 					"description": "Spend limits, the freeze switch, Merkle proof-of-custody with in-browser verification, and social recovery & inheritance for agent wallets.",
 					"added": "2026-07-03"
 				},
 				{
 					"path": "/docs/trader-card",
-					"title": "Docs \u00b7 Claim Your Wallet & Trader Card",
+					"title": "Docs · Claim Your Wallet & Trader Card",
 					"description": "Paste any Solana wallet for its on-chain pump.fun track record, then sign one gasless message to publish it as your public Trader Card.",
 					"added": "2026-07-03"
 				},
 				{
 					"path": "/docs/agent-abilities",
-					"title": "Docs \u00b7 What Agents Can Do: The Complete Dossier",
+					"title": "Docs · What Agents Can Do: The Complete Dossier",
 					"description": "The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform: 15 chapters plus a per-ability deep dive for the entire Agent Wallet.",
 					"priority": 0.8,
 					"changefreq": "weekly",
@@ -3998,7 +3998,7 @@
 				},
 				{
 					"path": "/docs/shipfeed",
-					"title": "Docs \u00b7 Ship log",
+					"title": "Docs · Ship log",
 					"description": "How three.ws links release notes to the commits that shipped them, the public feed API, and the open-source package behind it."
 				},
 				{
@@ -4062,7 +4062,7 @@
 				},
 				{
 					"path": "/tutorials/arm-an-agent-sniper",
-					"title": "Tutorial \u00b7 Arm an Autonomous Sniper on Your Agent",
+					"title": "Tutorial · Arm an Autonomous Sniper on Your Agent",
 					"description": "Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.",
 					"priority": 0.75,
 					"changefreq": "monthly",
@@ -4077,7 +4077,7 @@
 				},
 				{
 					"path": "/docs/nvidia-inception",
-					"title": "Docs \u00b7 NVIDIA Inception membership",
+					"title": "Docs · NVIDIA Inception membership",
 					"description": "three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -4085,21 +4085,21 @@
 				},
 				{
 					"path": "/docs/3d-asset-pipeline",
-					"title": "Docs \u00b7 The 3D asset pipeline (FBX, GLB, and clip JSON)",
+					"title": "Docs · The 3D asset pipeline (FBX, GLB, and clip JSON)",
 					"description": "The canonical reference for moving a 3D character or motion from a source file to something the browser renders and animates: the three formats three.ws works with (FBX, GLB, and three.js clip JSON), how each converts into the others, and what the platform does with them today.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/nvidia-models",
-					"title": "Docs \u00b7 Every NVIDIA model three.ws runs for free",
+					"title": "Docs · Every NVIDIA model three.ws runs for free",
 					"description": "The full free NVIDIA inference layer behind three.ws, model by model: TRELLIS for text-to-3D, FLUX.1-schnell for text-to-image, the Llama and Nemotron chat lineup, Nemotron vision, nv-embedqa embeddings, the cross-encoder reranker, NemoGuard content safety, and Magpie multilingual speech.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/agent-runtime",
-					"title": "Docs \u00b7 The agent runtime and transaction guard",
+					"title": "Docs · The agent runtime and transaction guard",
 					"description": "The seven-layer policy engine that preflights every fund-moving tool call in chat before the wallet prompts: security blacklist, approval policy, dollar caps with live SOL pricing, spend envelope with a token and destination firewall, MEV slippage clamp, and x402 budgets. Ships as @three-ws/agent-runtime.",
 					"added": "2026-08-07",
 					"priority": 0.6,
@@ -4107,7 +4107,7 @@
 				},
 				{
 					"path": "/docs/tokens-xyz",
-					"title": "Docs \u00b7 Tokens API on three.ws",
+					"title": "Docs · Tokens API on three.ws",
 					"description": "The Solana Foundation asset layer wired into three.ws: how one canonical asset maps to every Solana mint that represents it, the batch market read that prices a whole portfolio in one call, and where it sits in the price failover chain behind Birdeye.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -4115,7 +4115,7 @@
 				},
 				{
 					"path": "/docs/free-llm-providers",
-					"title": "Docs \u00b7 The free LLM failover chain",
+					"title": "Docs · The free LLM failover chain",
 					"description": "The dozen-plus free AI providers behind every text completion on three.ws, tried in order before any paid key: Groq, Cerebras, OpenRouter, NVIDIA NIM, SambaNova, Mistral, Z.AI, Cloudflare Workers AI, OVH, Gemini, Pollinations, LLM7, and SiliconFlow, with each free tier's limits and the recipe for adding the next rung.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -4123,14 +4123,14 @@
 				},
 				{
 					"path": "/docs/nvidia-inception/index.html",
-					"title": "Docs \u00b7 NVIDIA Inception membership overview",
+					"title": "Docs · NVIDIA Inception membership overview",
 					"description": "The three.ws membership overview deck: what the platform is, the production numbers behind it, the team, the NVIDIA surfaces already in use, and what the Inception program is being used for.",
 					"priority": 0.5,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/nvidia-nemotron-spotlight",
-					"title": "Docs \u00b7 How Nemotron Nano made free text-to-3D production-ready",
+					"title": "Docs · How Nemotron Nano made free text-to-3D production-ready",
 					"description": "The three.ws write-up published on the NVIDIA Developer Forums: the vision-model guardrail in front of the 3D generator, the real latency and token numbers behind each model choice, and the free NVIDIA stack powering the forge.",
 					"priority": 0.6,
 					"changefreq": "monthly"
@@ -4298,7 +4298,7 @@
 				},
 				{
 					"path": "/docs/model-diff",
-					"title": "Docs \u00b7 Model Diff",
+					"title": "Docs · Model Diff",
 					"description": "What actually changed between two glTF/GLB models: the three-pass matcher that reports renames instead of churn, the 1e-4 tolerance that ignores re-export noise, the severity ladder that calls a dropped joint breaking, and the four surfaces that share one engine (the page, the free API, the CLI, and the MCP tool).",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -4306,7 +4306,7 @@
 				},
 				{
 					"path": "/docs/feedback",
-					"title": "Docs \u00b7 Feedback",
+					"title": "Docs · Feedback",
 					"description": "Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -4314,7 +4314,7 @@
 				},
 				{
 					"path": "/docs/witness",
-					"title": "Docs \u00b7 Witness",
+					"title": "Docs · Witness",
 					"description": "Bug reports that arrive as failing tests. A privacy-first session recorder that captures intent rather than pixels and compiles it into a Playwright spec that stays red until the reported bug is fixed: the selector ladder, replay confidence, the capture-time privacy rules, and the CLI and MCP tools that turn a report into a file on disk.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -4464,7 +4464,7 @@
 				},
 				{
 					"path": "/docs/guards",
-					"title": "Docs \u00b7 Repository guards",
+					"title": "Docs · Repository guards",
 					"description": "The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -4472,14 +4472,14 @@
 				},
 				{
 					"path": "/tutorials/wallet-sign-in",
-					"title": "Tutorial \u00b7 Add Wallet Sign-In to Your App",
+					"title": "Tutorial · Add Wallet Sign-In to Your App",
 					"description": "Authenticate visitors with Phantom, Backpack, Solflare, or MetaMask: the Sign-In with Solana round trip end to end, the domain check that rejects dev origins, CSRF on verify, both signed-out response shapes, and error codes mapped to fixes.",
 					"priority": 0.8,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/tutorials/agent-spending-envelope",
-					"title": "Tutorial \u00b7 Give an Agent a Spending Envelope",
+					"title": "Tutorial · Give an Agent a Spending Envelope",
 					"description": "Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -4487,7 +4487,7 @@
 				},
 				{
 					"path": "/tutorials/render-avatar-images",
-					"title": "Tutorial \u00b7 Render Avatars as Images",
+					"title": "Tutorial · Render Avatars as Images",
 					"description": "Put a live 3D avatar in an image tag: four camera framings, 28 poses, ARKit facial morphs, social cards, turntables, and a CORS-open GLB proxy. No 3D engine anywhere in your stack.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -4495,7 +4495,7 @@
 				},
 				{
 					"path": "/tutorials/character-library-to-embed",
-					"title": "Tutorial \u00b7 Character Library to a Live Embed",
+					"title": "Tutorial · Character Library to a Live Embed",
 					"description": "Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -4503,7 +4503,7 @@
 				},
 				{
 					"path": "/tutorials/sell-a-skill-with-a-trial",
-					"title": "Tutorial \u00b7 Sell a Skill With a Free Trial That Converts",
+					"title": "Tutorial · Sell a Skill With a Free Trial That Converts",
 					"description": "List an agent skill for sale in $THREE, give buyers a metered free trial, and watch it expire into a real on-chain purchase. Covers choosing a trial length and the missing decrement that quietly makes a trialled skill impossible to sell.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -4511,7 +4511,7 @@
 				},
 				{
 					"path": "/docs/3d-vision",
-					"title": "Docs \u00b7 3D Vision: let an agent see the model",
+					"title": "Docs · 3D Vision: let an agent see the model",
 					"description": "Every text-to-3D API answers with a link to a binary an AI agent cannot open, so the agent that made the model cannot check its own work. This surface renders any GLB from several angles and hands the frames back as images a vision model actually sees, over MCP, REST or the @three-ws/see SDK.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -4519,21 +4519,21 @@
 				},
 				{
 					"path": "/docs/3d-api",
-					"title": "Docs \u00b7 The three.ws 3D API",
+					"title": "Docs · The three.ws 3D API",
 					"description": "Free, keyless 3D for AI agents. No key, no account, no wallet: an autonomous agent turns a text prompt into a real textured GLB in a single HTTP call. Endpoints, request shapes, and the response contract.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/DESIGN-TOKENS",
-					"title": "Docs \u00b7 Design tokens",
+					"title": "Docs · Design tokens",
 					"description": "The canonical design vocabulary every three.ws surface builds from: colour, spacing, type scale, radii, and motion primitives, with the source-of-truth stylesheet each token lives in and how component tokens layer on top.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/liquid-glass",
-					"title": "Docs \u00b7 Liquid glass, the visual direction",
+					"title": "Docs · Liquid glass, the visual direction",
 					"description": "The design brief for the liquid-glass look on three.ws grids and panels: real refraction instead of blur, the squircle and material recipe, the two lanes (CSS glass for chrome, three.js transmission for tiles), the open-source references, and the performance and accessibility budget.",
 					"added": "2026-08-21",
 					"priority": 0.6,
@@ -4541,287 +4541,287 @@
 				},
 				{
 					"path": "/docs/agent-manifest",
-					"title": "Docs \u00b7 Agent manifest reference",
+					"title": "Docs · Agent manifest reference",
 					"description": "The complete definition of an embodied AI agent in one JSON file: its 3D body, LLM brain, voice, personality, skills, memory, and on-chain identity. Every field, its type, its default, and what breaks if you omit it.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/agent-screen-control",
-					"title": "Docs \u00b7 Take the wheel: drive your agent's computer",
+					"title": "Docs · Take the wheel: drive your agent's computer",
 					"description": "Every agent has a live screen you can watch doing real web work in a real browser. If you own the agent, you can take control of that browser directly: mouse, scroll, keyboard, navigation. How the handoff works and why the browser holds no wallet.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/agent-shell",
-					"title": "Docs \u00b7 The agent shell",
+					"title": "Docs · The agent shell",
 					"description": "Every visitor gets a named agent within five seconds of arriving, and the shell makes that agent the way you use the site: a command palette that runs real commands, and navigation between pages that never unloads your agent.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/agent-skills",
-					"title": "Docs \u00b7 The three.ws Agent Skills pack",
+					"title": "Docs · The three.ws Agent Skills pack",
 					"description": "Portable skill folders that teach any Claude surface (Claude Code, the Claude apps, the Agent SDK) how to use three.ws: 3D creation, wallets, and paid services. The 3D subset is cross-platform-safe and needs no credentials.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/agent-wallets",
-					"title": "Docs \u00b7 Agent wallets",
+					"title": "Docs · Agent wallets",
 					"description": "Every three.ws agent owns a custodial Solana wallet, which is what lets it act on its own: pay for an API call, tip another agent, receive its earnings. Custody model, funding, limits, and the controls around spending.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/agents-vs-avatars",
-					"title": "Docs \u00b7 Agents vs. avatars",
+					"title": "Docs · Agents vs. avatars",
 					"description": "three.ws is built around two distinct concepts: agents are AI minds, avatars are 3D bodies. The short, plain-language explanation of which is which, how they combine, and why the distinction matters when you go looking for a feature.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/animations",
-					"title": "Docs \u00b7 Animations",
+					"title": "Docs · Animations",
 					"description": "The motion clips (idle, wave, dance, and about 3,000 more) that bring three.ws avatars to life: how the registry is organised, how clips load at runtime, how they retarget onto any humanoid rig, and how to preview every one in the browser.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/choreography",
-					"title": "Docs \u00b7 Choreography",
+					"title": "Docs · Choreography",
 					"description": "The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/architecture",
-					"title": "Docs \u00b7 Architecture overview",
+					"title": "Docs · Architecture overview",
 					"description": "The engineering map of three.ws: how a request flows from the browser through the route table to a handler, where 3D generation runs, how state is stored, and which layer to extend when you want to add something.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/avatar-creation",
-					"title": "Docs \u00b7 Avatar creation",
+					"title": "Docs · Avatar creation",
 					"description": "The three ways to give an agent a 3D body: generate one from a photo, build one in the browser with the avatar builder, or upload your own GLB. What each path costs, what each produces, and when to choose which.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/avatar-inspector",
-					"title": "Docs \u00b7 Avatar inspector",
+					"title": "Docs · Avatar inspector",
 					"description": "Every avatar you meet in a three.ws world is somebody: a player, an agent they pilot, or a townsperson selling a real paid service. Press I on anyone to see their reputation, wallet, and profile without leaving the world.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/avatar-pipeline",
-					"title": "Docs \u00b7 The avatar pipeline",
+					"title": "Docs · The avatar pipeline",
 					"description": "End to end, how a text prompt or an image becomes a rigged, animated 3D avatar: generation, auto-rigging, skin weighting, and the universal animation system that drives the result on any humanoid skeleton.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/avatar-reconstruction",
-					"title": "Docs \u00b7 Selfie to avatar reconstruction",
+					"title": "Docs · Selfie to avatar reconstruction",
 					"description": "The subsystem that turns a photo (or a generated reference image) into a rigged, animation-ready 3D avatar. How it differs from the text-to-3D forge lane, what the quality gates check, and how failures are recovered.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/avatar-thumbnails",
-					"title": "Docs \u00b7 Avatar thumbnails",
+					"title": "Docs · Avatar thumbnails",
 					"description": "Where an avatar's preview image comes from, the one rule every code path obeys (never publish a thumbnail URL whose object does not exist), the crons that keep coverage near 100%, and how to run the backfill yourself.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/avatar-wardrobe",
-					"title": "Docs \u00b7 The additive wardrobe",
+					"title": "Docs · The additive wardrobe",
 					"description": "Dress any avatar from the garment catalogue. The subtractive half recolours or hides layers a GLB already contains; the additive half fits new garments onto a body that never had them, and this documents both.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/character-studio",
-					"title": "Docs \u00b7 Avatar Studio builder",
+					"title": "Docs · Avatar Studio builder",
 					"description": "Avatar Studio is the browser-based avatar builder, an MIT-licensed fork that lives in character-studio/. Design a customised humanoid (body, hair, face, clothing, accessories) with point-and-click controls, then export it rigged as GLB or VRM.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/concierge",
-					"title": "Docs \u00b7 Concierge, an AI chat widget with a 3D face",
+					"title": "Docs · Concierge, an AI chat widget with a 3D face",
 					"description": "A floating launcher that opens a chat panel where a rigged 3D avatar blinks, idles, and lip-syncs while it answers your visitors. Grounded in your live page content, with voice in and out, in one script tag.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/configuration",
-					"title": "Docs \u00b7 Configuration reference",
+					"title": "Docs · Configuration reference",
 					"description": "Every environment variable and configuration file three.ws reads, what each one turns on, and what the safe default is. Written for self-hosters and for developers setting up a local environment.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/contributing",
-					"title": "Docs \u00b7 Contributing to three.ws",
+					"title": "Docs · Contributing to three.ws",
 					"description": "From a fresh clone to a merged pull request: local environment setup, how the test suite is organised, the code conventions the repository actually enforces, and what a reviewable change looks like here.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/deployment",
-					"title": "Docs \u00b7 Deployment and self-hosting",
+					"title": "Docs · Deployment and self-hosting",
 					"description": "Run your own instance of three.ws, from the single Node container that serves the whole application to a fully self-hosted setup on any Node.js infrastructure. Environment, storage, build, and the health checks to watch.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/editor",
-					"title": "Docs \u00b7 Editor guide",
+					"title": "Docs · Editor guide",
 					"description": "Inspect and modify an agent's 3D model in the browser: adjust materials and textures, build the agent manifest, and publish the result to the platform. Runs entirely client-side until you press publish.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/embody",
-					"title": "Docs \u00b7 Embody, a 3D body in one paid call",
+					"title": "Docs · Embody, a 3D body in one paid call",
 					"description": "One endpoint that turns a prompt or an image into an embeddable, animated, voiced 3D presence for an agent on any framework. What the call returns, how the embed works, and what the single payment covers.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/examples",
-					"title": "Docs \u00b7 Examples gallery",
+					"title": "Docs · Examples gallery",
 					"description": "Copy-paste-ready code for the most common three.ws use cases. Every example runs as written: swap in your own model URL and go. Covers embedding, animation control, camera work, and runtime model swaps.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/forge-background-generation",
-					"title": "Docs \u00b7 Background generation and completion notifications",
+					"title": "Docs · Background generation and completion notifications",
 					"description": "Forge generations are tracked server-side to completion. Start a generation, close the tab, and the platform finishes the job, saves the model to your gallery, and tells you when it is ready. How the tracking and the notification work.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/forge-off",
-					"title": "Docs \u00b7 Forge-Off, community voting on the forge",
+					"title": "Docs · Forge-Off, community voting on the forge",
 					"description": "Turns the passive Fresh from the Forge strip into a live competitive board: every public creation can be upvoted, the strip re-sorts by score, and a weekly winner is crowned. How votes are counted and abuse is prevented.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/how-it-works",
-					"title": "Docs \u00b7 How three.ws works",
+					"title": "Docs · How three.ws works",
 					"description": "The load-bearing mental model. If you are trying to figure out where a feature lives, how a request flows, or which layer to extend, start here before reading any other engineering doc.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/i18n",
-					"title": "Docs \u00b7 Internationalization",
+					"title": "Docs · Internationalization",
 					"description": "How the UI translation catalogue works: one source-of-truth file translated incrementally by an LLM, committed as static JSON, and swapped in the browser at runtime. Includes how to add a locale and how the lint pass catches drift.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/introduction",
-					"title": "Docs \u00b7 Introduction and overview",
+					"title": "Docs · Introduction and overview",
 					"description": "three.ws is an open-source, browser-native platform for creating, hosting, and embedding interactive AI agents that live inside 3D avatars. What it does, who it is for, and the shortest path to something running.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/irl",
-					"title": "Docs \u00b7 IRL, agents in the real world",
+					"title": "Docs · IRL, agents in the real world",
 					"description": "Take an agent off the screen and pin it at a real GPS coordinate: on your table, at a park bench, outside a venue. Anyone who physically walks up can see it, talk to it, and pay it.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/js-api",
-					"title": "Docs \u00b7 JavaScript API reference",
+					"title": "Docs · JavaScript API reference",
 					"description": "The internal JavaScript classes behind the three.ws viewer: the application controller, the three.js viewer, the glTF validator, and the small components that render around them. Constructors, methods, and events.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/layers",
-					"title": "Docs \u00b7 The four layers",
+					"title": "Docs · The four layers",
 					"description": "three.ws splits into four horizontal layers. Each can be used on its own, and each is independently replaceable as long as its contract with the rest of the system holds. What those contracts are.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/marketplace",
-					"title": "Docs \u00b7 Marketplace",
+					"title": "Docs · Marketplace",
 					"description": "Where agents and people list, buy, and sell real inventory: agent skills, whole assets (avatars, agents, plugins), and trials. How listings are created, how settlement works, and what the platform takes.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/mcp-3d-studio",
-					"title": "Docs \u00b7 3D Studio MCP server",
+					"title": "Docs · 3D Studio MCP server",
 					"description": "Turn text or an image into an interactive, animation-ready 3D model, then rig, animate, pose, edit, retexture, and analyse it, directly from Claude, Cursor, or any other MCP client. The full tool list and contract.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/mcp-tools",
-					"title": "Docs \u00b7 MCP tools catalog",
+					"title": "Docs · MCP tools catalog",
 					"description": "three.ws ships several MCP servers that AI assistants can call directly. One is free and 3D-only; the others expose paid tools. This is the catalogue: which server has which tools, what each costs, and how to connect.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/memory",
-					"title": "Docs \u00b7 Agent memory",
+					"title": "Docs · Agent memory",
 					"description": "Memory is what lets an agent remember between sessions. Without it every conversation starts fresh. How memories are stored and embedded, how retrieval is scored, and how to inspect what an agent actually remembers.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/mint-mark",
-					"title": "Docs \u00b7 The three.ws mint mark",
+					"title": "Docs · The three.ws mint mark",
 					"description": "Every address minted through three.ws carries the platform's brand mark in the address itself, verifiable directly from the address with no external lookup. How the mark is ground and how to check one yourself.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/motion-swap",
-					"title": "Docs \u00b7 Motion Swap",
+					"title": "Docs · Motion Swap",
 					"description": "Upload a video of yourself and get it back with your 3D avatar performing your exact motion instead of you. Pose tracking and masking run server-side; compositing and export happen in your browser.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/multi-agent",
-					"title": "Docs \u00b7 Multi-agent scenes",
+					"title": "Docs · Multi-agent scenes",
 					"description": "Load two or more characters at once, each with its own brain, memory, and persona, sharing one stage. How turn-taking works, how the scene is described to each brain, and what it costs to run.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/onboarding-tier",
-					"title": "Docs \u00b7 The onboarding tier",
+					"title": "Docs · The onboarding tier",
 					"description": "Why a first-time visitor sees around 30 navigation destinations instead of around 120, how the Simple and Everything switch works, and which tier a newly built page belongs in.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/onchain-agents",
-					"title": "Docs \u00b7 Deploying agents on-chain in bulk",
+					"title": "Docs · Deploying agents on-chain in bulk",
 					"description": "Give every agent a real on-chain identity as an NFT minted into the three.ws Agents collection on Solana. Written for platform admins and self-hosters running a batch registration.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/recurring-payments",
-					"title": "Docs \u00b7 Recurring payments",
+					"title": "Docs · Recurring payments",
 					"description": "Sign one permission, then a fixed USDC amount moves every day or week, or gets swapped into a token on a schedule. The lifecycle, the API, what every kind of failed charge does to a schedule, and the operator config settlement needs.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -4829,35 +4829,35 @@
 				},
 				{
 					"path": "/docs/permissions",
-					"title": "Docs \u00b7 Permissions and delegation",
+					"title": "Docs · Permissions and delegation",
 					"description": "As agents sign transactions, call external APIs, and spend on your behalf, what the agent is allowed to do becomes the central question. The permission model, how delegation is scoped, and how to revoke it.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/persona-hub",
-					"title": "Docs \u00b7 Persona Hub",
+					"title": "Docs · Persona Hub",
 					"description": "Cross-app sign-in for avatars: a user creates and stores their three.ws avatar once, then any site embedding the widget can request a short-lived token that carries that identity. The flow, the token shape, and the trust boundaries.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/procedural-animation",
-					"title": "Docs \u00b7 Procedural animation",
+					"title": "Docs · Procedural animation",
 					"description": "Pre-baked clips replay motion recorded somewhere else; they cannot know where your cursor is or that the ground under one foot is lower than the other. The runtime IK layers that fix both, on top of the clip library.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/provenance",
-					"title": "Docs \u00b7 Verifiable 3D provenance",
+					"title": "Docs · Verifiable 3D provenance",
 					"description": "Every generated model can carry a signed content credential (creator, prompt, model and provider, lineage, timestamp, and the file's content hash) with that hash anchored on-chain so anyone can verify it later.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/sim-readiness",
-					"title": "Docs \u00b7 Simulation readiness",
+					"title": "Docs · Simulation readiness",
 					"description": "A free physics grade for any 3D model: whether a rigid-body solver can use it as-is, whether its size is real meters or a generator's unit box, and its exact volume, centre of mass and inertia tensor.",
 					"added": "2026-09-03",
 					"priority": 0.6,
@@ -4865,35 +4865,35 @@
 				},
 				{
 					"path": "/docs/remix",
-					"title": "Docs \u00b7 The remix economy",
+					"title": "Docs · The remix economy",
 					"description": "Every model carries its provenance, and creators can opt a finished model into the remix bazaar: when someone builds on it, a creator-set royalty routes back automatically. How lineage and royalties are enforced.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/risk-acknowledgment",
-					"title": "Docs \u00b7 The real-funds risk acknowledgment",
+					"title": "Docs · The real-funds risk acknowledgment",
 					"description": "Every feature that can move real money sits behind a one-time, versioned acknowledgment shown before a user's first real-funds action. What it says, how versioning works, and why it is not a dialog you can skip.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/security",
-					"title": "Docs \u00b7 Security",
+					"title": "Docs · Security",
 					"description": "How three.ws protects your data, wallet, and agents, and what you are responsible for when you embed or self-host. The threat model, the boundaries enforced in code, and how to report an issue.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/seed-quality",
-					"title": "Docs \u00b7 The catalog quality gate",
+					"title": "Docs · The catalog quality gate",
 					"description": "Nobody asked for the assets the platform seeds into its own catalogue, so they have to earn their slot. The gate that decides whether a platform-generated model is published or discarded, and the metrics it scores.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/resilience",
-					"title": "Docs \u00b7 Upstream resilience map",
+					"title": "Docs · Upstream resilience map",
 					"description": "Every third-party service this platform calls and what happens to a user when it goes down. Generated from the source by an AST pass, graded per call site on deadline, retry, failover, last-good and circuit breaking, and held in place by a committed baseline plus per-endpoint degradation contracts.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -4901,112 +4901,112 @@
 				},
 				{
 					"path": "/docs/shared-utilities",
-					"title": "Docs \u00b7 Shared utilities",
+					"title": "Docs · Shared utilities",
 					"description": "Small dependency-backed modules that exist so the same problem is not solved twice. Each one replaced a family of hand-rolled copies that had drifted apart, and this is the list plus what each one supersedes.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/sign-language",
-					"title": "Docs \u00b7 Sign language, avatars that sign",
+					"title": "Docs · Sign language, avatars that sign",
 					"description": "three.ws avatars communicate in American Sign Language: words that have a sign are signed on one or both hands, and everything else is fingerspelled letter by letter in the same continuous motion.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/smart-contracts",
-					"title": "Docs \u00b7 ERC-8004 smart contracts",
+					"title": "Docs · ERC-8004 smart contracts",
 					"description": "The three Solidity contracts behind the ERC-8004 identity registry: contract interfaces, deployed addresses, and how to read from and write to each registry from your own code.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/solana",
-					"title": "Docs \u00b7 Solana agents",
+					"title": "Docs · Solana agents",
 					"description": "Give your agent a real on-chain identity on Solana. Your wallet signs one transaction that mints an NFT representing the agent, which is what lets the identity outlive any single platform.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/spatial-mcp",
-					"title": "Docs \u00b7 Spatial MCP",
+					"title": "Docs · Spatial MCP",
 					"description": "An open response shape for returning a live, interactive 3D scene as an MCP tool result instead of a URL in text. A conforming host renders it inline: orbit, animate, and place it in AR. Free to implement, CC0.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/token-gated-3d-embeds",
-					"title": "Docs \u00b7 Token-gated 3D embeds",
+					"title": "Docs · Token-gated 3D embeds",
 					"description": "You can already embed a live 3D avatar on any page with one script tag. Token gating adds one thing on top: the embed only renders for a visitor whose wallet holds what you require.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/trading-copilot",
-					"title": "Docs \u00b7 The Trading Copilot",
+					"title": "Docs · The Trading Copilot",
 					"description": "The conversational front door to an agent's self-custodied Solana wallet. Talk to it by text or by voice and it answers with real live data: your balances, your positions, and what it would do next.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/troubleshooting",
-					"title": "Docs \u00b7 Troubleshooting and FAQ",
+					"title": "Docs · Troubleshooting and FAQ",
 					"description": "Organised by symptom rather than by subsystem. Find the problem you are actually seeing, check the likely causes, and follow the fix steps. Covers embedding, rendering, generation, wallets, and auth.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/ui-juice",
-					"title": "Docs \u00b7 ui-juice, the shared game-feel library",
+					"title": "Docs · ui-juice, the shared game-feel library",
 					"description": "The one place the platform keeps its interaction primitives: count-ups, directional flashes, live-feed row enters, sparklines, ring gauges, and the ripple that fires when something ships.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/vanity",
-					"title": "Docs \u00b7 Vanity, branding a Solana address",
+					"title": "Docs · Vanity, branding a Solana address",
 					"description": "Endpoints that hand an agent a branded Solana address, one that starts with your prefix and optionally ends with a chosen suffix, with no wallet and no account. Includes the provably-fair grinding guarantee.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/viewer",
-					"title": "Docs \u00b7 The 3D viewer",
+					"title": "Docs · The 3D viewer",
 					"description": "The rendering layer of three.ws: a full-featured three.js WebGL scene manager handling model loading, camera control, animation playback, lighting, and environment. The reference for anyone extending the renderer.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/widget-api",
-					"title": "Docs \u00b7 Widget API",
+					"title": "Docs · Widget API",
 					"description": "Control an embedded three.ws widget from your own page: move the camera, play animations, capture screenshots, or swap models at runtime. Every method, its arguments, and the events you can listen for.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/widget-studio",
-					"title": "Docs \u00b7 Widget Studio guide",
+					"title": "Docs · Widget Studio guide",
 					"description": "The no-code builder for embeddable 3D widgets. Pick an avatar, choose a widget type, configure brand settings, and get a one-line embed snippet. No account and no build step required.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/labor-market",
-					"title": "Docs \u00b7 The agent labor market",
+					"title": "Docs · The agent labor market",
 					"description": "A market where agents post paid bounties and other agents bid, do the work, and get paid, settled on-chain through real escrow. How a bounty is scoped, claimed, delivered, and released.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/hold-to-access",
-					"title": "Docs \u00b7 Hold-to-access",
+					"title": "Docs · Hold-to-access",
 					"description": "three.ws unlocks premium capability by holding $THREE rather than spending it. A wallet's live value resolves to a membership tier, and tiers unlock fee discounts and higher limits. How tiers are computed and refreshed.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/open-source-ecosystem",
-					"title": "Docs \u00b7 The Open-Source Ecosystem",
+					"title": "Docs · The Open-Source Ecosystem",
 					"description": "100 stars on GitHub, and the complete map of the three.ws open-source developer ecosystem: every npm package, MCP server, contract, worker, skill, spec, integration, and registry where the code lives, with the number behind each.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -5014,7 +5014,7 @@
 				},
 				{
 					"path": "/docs/the-first-19-weeks",
-					"title": "Docs \u00b7 The First 19 Weeks",
+					"title": "Docs · The First 19 Weeks",
 					"description": "The founding three.ws roundup: a week-by-week record of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.",
 					"priority": 0.7,
 					"changefreq": "weekly",
@@ -5022,7 +5022,7 @@
 				},
 				{
 					"path": "/docs/three-thesis",
-					"title": "Docs \u00b7 The $THREE thesis",
+					"title": "Docs · The $THREE thesis",
 					"description": "The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -5030,28 +5030,28 @@
 				},
 				{
 					"path": "/docs/plan-checkout",
-					"title": "Docs \u00b7 Paid plans",
+					"title": "Docs · Paid plans",
 					"description": "Upgrading to a paid tier is a single on-chain payment on Solana: no card and no billing processor. Which assets are accepted, how the payment is verified, and what happens when a plan lapses.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/market-data-api",
-					"title": "Docs \u00b7 Market Data API",
+					"title": "Docs · Market Data API",
 					"description": "The same live market data behind every three.ws markets page, packaged as pay-per-call endpoints an agent can buy without an account. Endpoint list, response shapes, and per-call pricing.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/oracle",
-					"title": "Docs \u00b7 Oracle, the conviction engine",
+					"title": "Docs · Oracle, the conviction engine",
 					"description": "The complete story of Oracle: why it was built, how the scoring model works, the exact maths, the agent action loop, every platform feature that runs on it, and the paid integration other agents can call.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/oracle-model",
-					"title": "Docs \u00b7 The Oracle model, and how to run it yourself",
+					"title": "Docs · The Oracle model, and how to run it yourself",
 					"description": "How the three.ws conviction model is fitted, what its three heads predict, why the outcome labels had to be made independent of the SOL price, how the promotion gate decides which model ships, and how to score launches locally with @three-ws/oracle-model.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5059,14 +5059,14 @@
 				},
 				{
 					"path": "/docs/x402-distribution",
-					"title": "Docs \u00b7 x402 distribution",
+					"title": "Docs · x402 distribution",
 					"description": "three.ws sells dozens of pay-per-call services over x402. Building them is half the job; the other half is making sure every directory, crawler, and agent marketplace can find them. The distribution checklist.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/x402-ring-economy",
-					"title": "Docs \u00b7 The closed-loop x402 ring economy",
+					"title": "Docs · The closed-loop x402 ring economy",
 					"description": "A self-contained agent-to-agent payment loop where platform-controlled wallets pay the platform's own paid endpoints in real stablecoin, settled by the platform's own facilitator. No user funds are involved.",
 					"priority": 0.6,
 					"changefreq": "monthly"
@@ -5080,119 +5080,119 @@
 				},
 				{
 					"path": "/docs/ibm",
-					"title": "Docs \u00b7 IBM watsonx and Granite",
+					"title": "Docs · IBM watsonx and Granite",
 					"description": "three.ws agents can think on IBM Granite foundation models served through IBM watsonx.ai. The whole integration for developers and operators: model selection, credentials, request shapes, and the fallback behind it.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/ibm-x402-mcp",
-					"title": "Docs \u00b7 IBM Granite pay-per-call MCP",
+					"title": "Docs · IBM Granite pay-per-call MCP",
 					"description": "A menu of IBM AI capabilities (chat, code, embeddings, document analysis, forecasting) that any agent or MCP client can use by paying a few cents per call, with no account and no subscription.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/huggingface",
-					"title": "Docs \u00b7 three.ws on Hugging Face",
+					"title": "Docs · three.ws on Hugging Face",
 					"description": "Hugging Face is where the machine-learning community publishes models, demos, and engineering writing. three.ws publishes there under its organization account, and this is the index of the article, the avatar rigs, and the Space.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/aws-builder-center",
-					"title": "Docs \u00b7 three.ws on the AWS Builder Center",
+					"title": "Docs · three.ws on the AWS Builder Center",
 					"description": "The AWS Builder Center is Amazon's community publishing platform for engineers building on AWS. three.ws publishes there under its official organisation account, and this is the index of what has been published.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/aws-marketplace",
-					"title": "Docs \u00b7 three.ws on AWS Marketplace",
+					"title": "Docs · three.ws on AWS Marketplace",
 					"description": "three.ws is a verified AWS Partner. The AWS Marketplace product is an API-based SaaS listing whose subscription is a free front door: it links your AWS account to a platform account and issues an x402 key. Integration, endpoints, and current listing status.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/aws-partner-spotlight",
-					"title": "Docs \u00b7 three.ws on AWS",
+					"title": "Docs · three.ws on AWS",
 					"description": "Most enterprise AI agents live inside a chat box. For brand agents, product guides, tutors, and storefront assistants, a body changes the interaction. How three.ws builds that on AWS.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/aws-builder-center-mcp-agents",
-					"title": "Docs \u00b7 An MCP server whose tools pay for themselves",
+					"title": "Docs · An MCP server whose tools pay for themselves",
 					"description": "Most AI tooling assumes a human is standing by with a credit card and an API key. That model breaks the moment the caller is an agent. How to build tools an agent can discover, pay for, and use unattended.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/aws-builder-center-agent-payment-sessions",
-					"title": "Docs \u00b7 Give your AI agent a budget, not a private key",
+					"title": "Docs · Give your AI agent a budget, not a private key",
 					"description": "There is a moment in every agentic build where the agent needs to buy something. Handing it a private key is the wrong answer. Payment sessions give it a bounded budget instead, and this is how they work.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/aws-builder-center-marketplace-x402",
-					"title": "Docs \u00b7 One paywall, two economies",
+					"title": "Docs · One paywall, two economies",
 					"description": "Putting AWS Marketplace metering in front of a pay-per-call x402 API, so the same endpoint bills an enterprise buyer through their AWS account and an autonomous agent through an on-chain payment.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/chatgpt-3d-studio-gpt",
-					"title": "Docs \u00b7 The 3D Studio custom GPT configuration",
+					"title": "Docs · The 3D Studio custom GPT configuration",
 					"description": "The canonical builder configuration for the three.ws 3D Studio custom GPT: the instructions, the action contract it calls, the safety gate, and the response shapes that keep it store-compliant.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/mcp-agent",
-					"title": "Docs \u00b7 The three.ws Agent MCP server",
+					"title": "Docs · The three.ws Agent MCP server",
 					"description": "The MCP server where an assistant can transact real value: discover, pay for, and call paid services in stablecoin, settled on-chain from the signed-in user's own three.ws agent wallet.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/mcp-x402-bazaar",
-					"title": "Docs \u00b7 The x402 Bazaar MCP server",
+					"title": "Docs · The x402 Bazaar MCP server",
 					"description": "Discover paid agent services across the live x402 facilitator network: search, browse, and price any service from inside Claude, Cursor, or any other MCP client, without leaving the conversation.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/3d-pipeline",
-					"title": "Docs \u00b7 The 3D asset pipeline, stage by stage",
+					"title": "Docs · The 3D asset pipeline, stage by stage",
 					"description": "The same lanes the platform uses to turn a prompt into a rigged, game-ready character, with every working stage sold as its own pay-per-call resource. What each stage does and what it costs to call alone.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/PROTOCOL-vanity",
-					"title": "Docs \u00b7 The provably-fair vanity grinding protocol",
+					"title": "Docs · The provably-fair vanity grinding protocol",
 					"description": "A vanity-address service normally asks you to trust the operator: trust the randomness, trust that no copy was kept. This protocol removes that trust requirement, and the spec explains exactly how.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/changelog",
-					"title": "Docs \u00b7 Changelog and versioning",
+					"title": "Docs · Changelog and versioning",
 					"description": "How three.ws is versioned, what changed across releases, and how to upgrade safely. Written for developers pinning the SDK or the CDN bundle to a specific version.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/agenc",
-					"title": "Docs \u00b7 AgenC",
+					"title": "Docs · AgenC",
 					"description": "The on-chain coordination protocol three.ws reads from for task discovery and agent identity. The read endpoints exposed over it, and how three.ws agents are bridged into it.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/live-docs",
-					"title": "Docs \u00b7 Live Docs",
+					"title": "Docs · Live Docs",
 					"description": "Every code sample in the three.ws docs is editable and the runnable ones execute in place: an embed snippet renders a real animated avatar, a curl line sends a real request to the live API and shows status, latency and body, and a script runs with its console captured. What can run, what can never run, and how to opt a sample out.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -5200,21 +5200,21 @@
 				},
 				{
 					"path": "/docs/docs-world",
-					"title": "Docs \u00b7 Docs World",
+					"title": "Docs · Docs World",
 					"description": "The three.ws documentation as an explorable place: the same content served both as ordinary pages and as a navigable 3D world, from one source. How the two surfaces stay in sync.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/package-extraction",
-					"title": "Docs \u00b7 Package extraction",
+					"title": "Docs · Package extraction",
 					"description": "How reusable packages graduate out of the three.ws monorepo into their own repositories that publish to npm independently. The criteria for extraction and the mechanics of doing it without breaking consumers.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/tutorials/find-a-better-exit-policy",
-					"title": "Tutorial \u00b7 Find a better exit policy",
+					"title": "Tutorial · Find a better exit policy",
 					"description": "Take the trades the fleet already made and re-run them under different exit rules: why tightening an exit is measurable and loosening one is only a hypothesis, which of the five knobs can actually fire, and how to tell a real finding from a policy that caught two lucky coins.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5222,7 +5222,7 @@
 				},
 				{
 					"path": "/tutorials/read-the-trading-fleet",
-					"title": "Tutorial \u00b7 Read the trading fleet",
+					"title": "Tutorial · Read the trading fleet",
 					"description": "Tell a working autonomous strategy from a lucky one: why realized profit is the only profit, how to read profit factor against win rate and drawdown, the sample size below which a rank means nothing, and how to spot a broken fleet that still shows a green light.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5230,7 +5230,7 @@
 				},
 				{
 					"path": "/docs/live-steps",
-					"title": "Docs \u00b7 Live steps: documentation that runs",
+					"title": "Docs · Live steps: documentation that runs",
 					"description": "Tutorial steps that perform a real request against the live three.ws API from your browser and render the real response, so a sample can never quietly go stale. What a reader gets, how to add one to a tutorial, and the safety rules for which calls may run.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -5238,7 +5238,7 @@
 				},
 				{
 					"path": "/docs/mcp-safety",
-					"title": "Docs \u00b7 MCP tool safety",
+					"title": "Docs · MCP tool safety",
 					"description": "What an MCP tool's safety annotations mean on three.ws and why you can trust them: read-only tools never change what you asked about, anything that spends is labelled as spending, and a build check verifies every hint against the tool's own code before it can ship.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -5254,7 +5254,7 @@
 				},
 				{
 					"path": "/docs/trading-experiment",
-					"title": "Docs \u00b7 The 10 SOL trading experiment",
+					"title": "Docs · The 10 SOL trading experiment",
 					"description": "The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5262,7 +5262,7 @@
 				},
 				{
 					"path": "/tutorials/getting-started",
-					"title": "Tutorial \u00b7 Getting started (hosted)",
+					"title": "Tutorial · Getting started (hosted)",
 					"description": "A five-minute, no-code tour: create an agent, pick a body, give it a personality, share the URL.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5270,7 +5270,7 @@
 				},
 				{
 					"path": "/tutorials/explore-docs-world",
-					"title": "Tutorial \u00b7 Explore the docs as a 3D world",
+					"title": "Tutorial · Explore the docs as a 3D world",
 					"description": "Walk an avatar through the documentation: fourteen sections as glowing pavilions, live pages read in-world, shareable deep links, and your own GLB as the body.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5278,7 +5278,7 @@
 				},
 				{
 					"path": "/tutorials/embed-in-30-seconds",
-					"title": "Tutorial \u00b7 Embed in 30 seconds",
+					"title": "Tutorial · Embed in 30 seconds",
 					"description": "Drop one script tag into any HTML page. Your agent loads, auto-sizes, and starts animating.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5286,7 +5286,7 @@
 				},
 				{
 					"path": "/tutorials/customize-appearance",
-					"title": "Tutorial \u00b7 Customize size, position & background",
+					"title": "Tutorial · Customize size, position & background",
 					"description": "Tune every visible knob on the <agent-3d> element: layout mode, corner placement, size, background, camera framing, and the ambient clip.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5294,7 +5294,7 @@
 				},
 				{
 					"path": "/tutorials/swap-avatar-in-studio",
-					"title": "Tutorial \u00b7 Pick & swap an avatar in Studio",
+					"title": "Tutorial · Pick & swap an avatar in Studio",
 					"description": "Swap an agent's 3D body from the Outfit panel in one click, and have the change reach every embed without touching your snippet.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5302,7 +5302,7 @@
 				},
 				{
 					"path": "/tutorials/greeting-and-first-speech",
-					"title": "Tutorial \u00b7 Add a greeting & first speech line",
+					"title": "Tutorial · Add a greeting & first speech line",
 					"description": "Make your agent say hello the moment it loads, and have its mouth move with the words.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5310,7 +5310,7 @@
 				},
 				{
 					"path": "/tutorials/share-your-agent",
-					"title": "Tutorial \u00b7 Share your agent (link, QR, social preview)",
+					"title": "Tutorial · Share your agent (link, QR, social preview)",
 					"description": "Get a permanent link to your agent, generate a QR for print, and share the URL that unfurls with its real name, description, and card.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5318,7 +5318,7 @@
 				},
 				{
 					"path": "/tutorials/selfie-to-avatar",
-					"title": "Tutorial \u00b7 Turn a selfie into a 3D avatar",
+					"title": "Tutorial · Turn a selfie into a 3D avatar",
 					"description": "Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk, then put it on an agent.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5326,7 +5326,7 @@
 				},
 				{
 					"path": "/tutorials/view-in-ar",
-					"title": "Tutorial \u00b7 View your 3D model in AR",
+					"title": "Tutorial · View your 3D model in AR",
 					"description": "See any three.ws model in augmented reality and walk around it in your kitchen, straight from the browser with no app to install. iOS Quick Look, Android Scene Viewer, and WebXR.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5334,7 +5334,7 @@
 				},
 				{
 					"path": "/tutorials/import-avatar-url",
-					"title": "Tutorial \u00b7 Import an avatar by URL",
+					"title": "Tutorial · Import an avatar by URL",
 					"description": "Bring any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5342,7 +5342,7 @@
 				},
 				{
 					"path": "/tutorials/walk-companion",
-					"title": "Tutorial \u00b7 Add the Walk Companion to your site",
+					"title": "Tutorial · Add the Walk Companion to your site",
 					"description": "Drop a 3D avatar that strolls across any web page (corner mascot or full-page playground) with one script tag, the npm SDK, or a postMessage bridge.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5350,7 +5350,7 @@
 				},
 				{
 					"path": "/tutorials/sperax-tour",
-					"title": "Tutorial \u00b7 Load a ready-made 3D tour for a DeFi protocol (Sperax)",
+					"title": "Tutorial · Load a ready-made 3D tour for a DeFi protocol (Sperax)",
 					"description": "The Tour Builder's first template: an 8-stop guided tour of Sperax's USDs auto-yield stablecoin, ready to load, edit, and export as a one-tag snippet in minutes.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5358,7 +5358,7 @@
 				},
 				{
 					"path": "/tutorials/first-agent",
-					"title": "Tutorial \u00b7 Build your first agent (from scratch)",
+					"title": "Tutorial · Build your first agent (from scratch)",
 					"description": "A complete walkthrough from a blank HTML file to a live, talking 3D character you wrote yourself: no framework, no build tools.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5366,7 +5366,7 @@
 				},
 				{
 					"path": "/tutorials/embed-on-website",
-					"title": "Tutorial \u00b7 Embed on a website (HTML, React, Next.js)",
+					"title": "Tutorial · Embed on a website (HTML, React, Next.js)",
 					"description": "Five different ways to add an agent to your site: pick the one that matches how you build today.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5374,7 +5374,7 @@
 				},
 				{
 					"path": "/tutorials/personal-ai-site",
-					"title": "Tutorial \u00b7 Build a personal AI website",
+					"title": "Tutorial · Build a personal AI website",
 					"description": "A 3D version of you, on your domain, ready to answer any question about your work: with a portfolio, contact form, and resume.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5382,7 +5382,7 @@
 				},
 				{
 					"path": "/tutorials/js-api-events",
-					"title": "Tutorial \u00b7 Drive the agent with the JavaScript API",
+					"title": "Tutorial · Drive the agent with the JavaScript API",
 					"description": "Listen for the ready event, play animations on demand, make the agent speak from anywhere in your app code.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5390,7 +5390,7 @@
 				},
 				{
 					"path": "/tutorials/web-component-end-to-end",
-					"title": "Tutorial \u00b7 Use the <agent-3d> web component end-to-end",
+					"title": "Tutorial · Use the <agent-3d> web component end-to-end",
 					"description": "Skip the script tag: drop a real custom element into your DOM, bind attributes, and use the full event lifecycle.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5398,7 +5398,7 @@
 				},
 				{
 					"path": "/tutorials/build-a-site-concierge",
-					"title": "Tutorial \u00b7 Build a site concierge from the building blocks",
+					"title": "Tutorial · Build a site concierge from the building blocks",
 					"description": "How the Concierge widget is assembled: the talking avatar, the streaming chat, the tool calls, and how to point the same parts at your own backend over Server-Sent Events.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5406,7 +5406,7 @@
 				},
 				{
 					"path": "/tutorials/trigger-from-page-events",
-					"title": "Tutorial \u00b7 Trigger the agent from page events",
+					"title": "Tutorial · Trigger the agent from page events",
 					"description": "Make your agent react to clicks, scrolls, form submits, and route changes: turn it into a real co-pilot, not a chat widget.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5414,7 +5414,7 @@
 				},
 				{
 					"path": "/tutorials/upload-custom-glb",
-					"title": "Tutorial \u00b7 Upload a custom GLB avatar",
+					"title": "Tutorial · Upload a custom GLB avatar",
 					"description": "Bring your own model: any glTF 2.0 .glb from Blender, three.ws Studio, or any other source. Get it validated, fixed, and live.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5422,7 +5422,7 @@
 				},
 				{
 					"path": "/tutorials/connect-ai-brain",
-					"title": "Tutorial \u00b7 Connect Anthropic, OpenAI, or xAI as the brain",
+					"title": "Tutorial · Connect Anthropic, OpenAI, or xAI as the brain",
 					"description": "Plug your own model provider into the agent loop. Bring your API key, choose your model, control cost and latency.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5430,7 +5430,7 @@
 				},
 				{
 					"path": "/tutorials/create-and-edit-memory",
-					"title": "Tutorial \u00b7 Create, enhance & edit agent memory",
+					"title": "Tutorial · Create, enhance & edit agent memory",
 					"description": "Five ways to teach an agent a fact that sticks between sessions: the dashboard, the agent itself, MCP tools, the REST API, and a skill. Plus how to sharpen, edit, and forget.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5438,7 +5438,7 @@
 				},
 				{
 					"path": "/tutorials/place-agent-irl",
-					"title": "Tutorial \u00b7 Place your agent in the real world (IRL)",
+					"title": "Tutorial · Place your agent in the real world (IRL)",
 					"description": "Use camera passthrough, a joystick, and tap-to-place to drop your 3D agent into your physical space: and understand how location privacy works.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5446,7 +5446,7 @@
 				},
 				{
 					"path": "/tutorials/voice-and-lipsync",
-					"title": "Tutorial \u00b7 Give your agent a voice with lipsync",
+					"title": "Tutorial · Give your agent a voice with lipsync",
 					"description": "Add real-time text-to-speech with synchronized mouth movement: pick or clone a voice, drive visemes from audio, and wire it into a live agent.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5454,7 +5454,7 @@
 				},
 				{
 					"path": "/tutorials/pay-for-x402-service",
-					"title": "Tutorial \u00b7 Discover and pay for an x402 service",
+					"title": "Tutorial · Discover and pay for an x402 service",
 					"description": "Browse the x402 Bazaar and call a paid API from your agent: the 402 challenge, the USDC payment, and the retry, end to end.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5462,7 +5462,7 @@
 				},
 				{
 					"path": "/tutorials/emotion-from-data",
-					"title": "Tutorial \u00b7 Animations from data: wire your agent's gestures to real APIs and AI",
+					"title": "Tutorial · Animations from data: wire your agent's gestures to real APIs and AI",
 					"description": "Trigger real body animations (celebrate, dance, flinch) from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5470,7 +5470,7 @@
 				},
 				{
 					"path": "/tutorials/custom-skill",
-					"title": "Tutorial \u00b7 Build a custom skill",
+					"title": "Tutorial · Build a custom skill",
 					"description": "A complete walkthrough of building a weather skill an agent can invoke: bundle format, LLM tool calling, context API.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5478,7 +5478,7 @@
 				},
 				{
 					"path": "/tutorials/register-onchain",
-					"title": "Tutorial \u00b7 Register your agent on-chain (ERC-8004)",
+					"title": "Tutorial · Register your agent on-chain (ERC-8004)",
 					"description": "Give your agent a permanent, verifiable identity. Publish an ERC-8004 attestation anyone can read from any chain.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5486,7 +5486,7 @@
 				},
 				{
 					"path": "/tutorials/mint-pumpfun-token",
-					"title": "Tutorial \u00b7 Mint an agent token on Pump.fun",
+					"title": "Tutorial · Mint an agent token on Pump.fun",
 					"description": "Launch a Solana token for your agent, bond it to its on-chain identity, and let people speculate on (or hold) a piece of it.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5494,7 +5494,7 @@
 				},
 				{
 					"path": "/tutorials/paid-x402-endpoint",
-					"title": "Tutorial \u00b7 Build a paid x402 endpoint your agent calls",
+					"title": "Tutorial · Build a paid x402 endpoint your agent calls",
 					"description": "Stand up an API that other agents pay USDC to call: using the x402 protocol on Base mainnet. Real money, real flow.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5502,7 +5502,7 @@
 				},
 				{
 					"path": "/tutorials/monetize-mcp-server",
-					"title": "Tutorial \u00b7 Monetize an MCP server: charge per tool call",
+					"title": "Tutorial · Monetize an MCP server: charge per tool call",
 					"description": "Build an MCP server whose tools charge other agents per call in USDC on Solana. One free orientation tool, one paid tool that does real work, and a test that proves the product never escapes unpaid.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5510,7 +5510,7 @@
 				},
 				{
 					"path": "/tutorials/x402-server-sdk",
-					"title": "Tutorial \u00b7 Meter any API with the x402-server SDK",
+					"title": "Tutorial · Meter any API with the x402-server SDK",
 					"description": "Turn an ordinary HTTP handler into a paid one with @three-ws/x402-server. Solana-first, framework-agnostic, and runnable offline before you touch a wallet.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5518,7 +5518,7 @@
 				},
 				{
 					"path": "/tutorials/self-host-agent-backend",
-					"title": "Tutorial \u00b7 Self-host the agent backend",
+					"title": "Tutorial · Self-host the agent backend",
 					"description": "Run the full three.ws backend on your own infrastructure: workers, function endpoints, model proxies. No three.ws dependency in production.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5526,7 +5526,7 @@
 				},
 				{
 					"path": "/tutorials/multi-agent-coordination",
-					"title": "Tutorial \u00b7 Multi-agent coordination",
+					"title": "Tutorial · Multi-agent coordination",
 					"description": "Two or more agents on the same page that talk to each other: turn-taking, shared memory, delegating subtasks.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5534,7 +5534,7 @@
 				},
 				{
 					"path": "/tutorials/mcp-server-for-your-agent",
-					"title": "Tutorial \u00b7 Expose your agent as an MCP server",
+					"title": "Tutorial · Expose your agent as an MCP server",
 					"description": "Wrap your agent in the Model Context Protocol so any MCP-compatible client (Claude Desktop, Cursor, etc.) can drive it.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5542,7 +5542,7 @@
 				},
 				{
 					"path": "/tutorials/skill-with-database-auth",
-					"title": "Tutorial \u00b7 Custom skill with database + auth",
+					"title": "Tutorial · Custom skill with database + auth",
 					"description": "A real production skill: Postgres-backed CRM lookup, signed requests, per-user permissions, rate limits. Not a toy weather demo.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5550,7 +5550,7 @@
 				},
 				{
 					"path": "/tutorials/deploy-to-vercel-custom-domain",
-					"title": "Tutorial \u00b7 Deploy to Vercel with a custom domain",
+					"title": "Tutorial · Deploy to Vercel with a custom domain",
 					"description": "Take a forked three.ws and ship it as agent.yourcompany.com: CI, environment variables, custom domain, SSL, the lot.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5558,7 +5558,7 @@
 				},
 				{
 					"path": "/tutorials/claim-threews-name",
-					"title": "Tutorial \u00b7 Claim a .threews.sol name & get paid by name",
+					"title": "Tutorial · Claim a .threews.sol name & get paid by name",
 					"description": "Mint a *.threews.sol Solana subdomain for your agent and accept USDC payments addressed to the name instead of a raw wallet.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5566,7 +5566,7 @@
 				},
 				{
 					"path": "/tutorials/mine-vanity-address",
-					"title": "Tutorial \u00b7 Mine a Solana vanity address",
+					"title": "Tutorial · Mine a Solana vanity address",
 					"description": "Grind a custom-prefix Solana address in the browser, then prove how it was made with the proof-of-grind receipt, gallery, and bounty market.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5590,7 +5590,7 @@
 				},
 				{
 					"path": "/tutorials/ship-an-avatar-manifest",
-					"title": "Tutorial \u00b7 Ship an avatar manifest",
+					"title": "Tutorial · Ship an avatar manifest",
 					"description": "Turn a raw GLB into a signed-off, hash-anchored manifest: one document that names the avatar, records the exact bytes of its mesh, declares its skeleton, and fails your build if the model ever silently changes.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5598,7 +5598,7 @@
 				},
 				{
 					"path": "/tutorials/write-a-guard",
-					"title": "Tutorial \u00b7 Write a repository guard",
+					"title": "Tutorial · Write a repository guard",
 					"description": "This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when a server-side fetch has no timeout, wire it into the gate, prove it against the violation it claims to catch, and cover it with tests.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5622,7 +5622,7 @@
 				},
 				{
 					"path": "/docs/tutorials/write-a-guard",
-					"title": "Docs \u00b7 Write a repository guard",
+					"title": "Docs · Write a repository guard",
 					"description": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json with the violation it must reject, wire it into a stage, prove it still fires, and cover it with a test that includes the false positive it must never report.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -5630,7 +5630,7 @@
 				},
 				{
 					"path": "/tutorials/earn-and-spend-in-play",
-					"title": "Tutorial \u00b7 Earn and spend in /play",
+					"title": "Tutorial · Earn and spend in /play",
 					"description": "Run the full economic loop in the open world: gather raw materials, sell them to a vendor, buy a better tool, bank the rest so death can't take it, and spin the wheel. Covers why the world has two currencies that never touch, and why the server decides every price.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5645,7 +5645,7 @@
 				},
 				{
 					"path": "/docs/tutorials/earn-and-spend-in-play",
-					"title": "Docs \u00b7 Tutorial: earn and spend in /play",
+					"title": "Docs · Tutorial: earn and spend in /play",
 					"description": "Run the full economic loop in the open world: gather materials, sell them to the vendor, buy a better tool, bank what you cannot afford to lose, and spin the wheel. Explains why cooking triples fish value and why the bank is the only real decision.",
 					"priority": 0.7,
 					"changefreq": "monthly",
@@ -5653,7 +5653,7 @@
 				},
 				{
 					"path": "/tutorials/animate-your-agent",
-					"title": "Tutorial \u00b7 Give your agent body language",
+					"title": "Tutorial · Give your agent body language",
 					"description": "Clips, slots and hints: the three-name chain that makes an agent nod, look down while it reads, celebrate a settled payment, and dance on request. Re-point any gesture without touching skill code.",
 					"priority": 0.8,
 					"changefreq": "monthly",
@@ -5661,7 +5661,7 @@
 				},
 				{
 					"path": "/docs/ghost-copy",
-					"title": "Docs \u00b7 Ghost-copy",
+					"title": "Docs · Ghost-copy",
 					"description": "Replay a verified trader agent's real closed on-chain trades against a wallet that never existed: pick a leader, a budget, and a window, and see where copying them at your size would have left you. Nothing signed, nothing spent.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5669,7 +5669,7 @@
 				},
 				{
 					"path": "/docs/fork-trade",
-					"title": "Docs \u00b7 Fork a trade",
+					"title": "Docs · Fork a trade",
 					"description": "One tap on any coin across the Radar, the Live Trade Feed, the Smart Money Radar, or a ghost-copy replay opens the real pump.fun trade panel for it, pre-filled and signed by your own wallet. No custody, no delegated key, and a ?fork= link so a coin travels.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5677,7 +5677,7 @@
 				},
 				{
 					"path": "/docs/trader-passport",
-					"title": "Docs \u00b7 Trader Passport",
+					"title": "Docs · Trader Passport",
 					"description": "A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5685,7 +5685,7 @@
 				},
 				{
 					"path": "/docs/portfolio",
-					"title": "Docs \u00b7 Wallet Portfolio",
+					"title": "Docs · Wallet Portfolio",
 					"description": "How the live wallet portfolio works: the keyless Solana-first data sources behind /api/crypto/portfolio, the stable/major/token classification, the honest 24h coverage contract, and the full response shape for agents and scripts.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5693,7 +5693,7 @@
 				},
 				{
 					"path": "/docs/airdrops",
-					"title": "Docs \u00b7 Airdrop Checker",
+					"title": "Docs · Airdrop Checker",
 					"description": "How the airdrop eligibility checker works: the keyless Solana activity scan and Etherscan V2 EVM scan, the check DSL and scoring thresholds, the honesty contract around unmeasurable and manual criteria, and the full response shape.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5701,7 +5701,7 @@
 				},
 				{
 					"path": "/docs/community",
-					"title": "Docs \u00b7 Community",
+					"title": "Docs · Community",
 					"description": "Where the three.ws community talks: GitHub Discussions, the Telegram community, the X community, the IBM Community group, and the release channel, with guidance on which room fits which question.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5709,7 +5709,7 @@
 				},
 				{
 					"path": "/docs/first-contribution",
-					"title": "Docs \u00b7 Your first contribution",
+					"title": "Docs · Your first contribution",
 					"description": "Clone to open pull request in about 15 minutes, with a complete worked example: teaching the avatar retargeter a bone-naming convention it did not know, plus the test that proves it.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5717,7 +5717,7 @@
 				},
 				{
 					"path": "/docs/triage",
-					"title": "Docs \u00b7 Triage",
+					"title": "Docs · Triage",
 					"description": "How incoming issues and pull requests get sorted, what every label means, how to claim work, and the response times contributors can expect.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5725,7 +5725,7 @@
 				},
 				{
 					"path": "/docs/pill-mascot",
-					"title": "Docs \u00b7 Rigging the pump.fun pill mascot",
+					"title": "Docs · Rigging the pump.fun pill mascot",
 					"description": "How a static capsule mascot with four nubs became a 52-bone, six-clip avatar: limb discovery from a distance transform, medial-axis skinning, and a bind pose that differs from the rest pose on purpose.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -5733,7 +5733,7 @@
 				},
 				{
 					"path": "/docs/agent-vitals",
-					"title": "Docs \u00b7 Agent vitals: can it act?",
+					"title": "Docs · Agent vitals: can it act?",
 					"description": "Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5741,7 +5741,7 @@
 				},
 				{
 					"path": "/docs/tty",
-					"title": "Docs \u00b7 Terminal renderer",
+					"title": "Docs · Terminal renderer",
 					"description": "curl three.ws/tty and a rigged 3D agent walks in your terminal. The hosted streaming endpoint and its parameters, plus @three-ws/tty-3d, the CLI and library that render any GLB in a terminal with a pure-CPU rasterizer: real skeletal animation, half-block pixels, no GPU and no browser.",
 					"priority": 0.5,
 					"changefreq": "monthly",
@@ -5749,11 +5749,19 @@
 				},
 				{
 					"path": "/tutorials/connect-your-home",
-					"title": "Tutorial \u00b7 Connect your home",
+					"title": "Tutorial · Connect your home",
 					"description": "Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never...",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-09-03"
+				},
+				{
+					"path": "/docs/pocket",
+					"title": "Docs · Pocket Console",
+					"description": "How the /pocket handheld works: the D-pad and gamepad controls, the three cartridges, the URL params that make a share link, and the one iframe that puts a live 3D agent console on any site.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-05"
 				}
 			]
 		},
@@ -5911,7 +5919,7 @@
 				},
 				{
 					"path": "/blog/three-ws-ibm-collaboration",
-					"title": "Showcasing the three.ws \u00d7 IBM Partnership",
+					"title": "Showcasing the three.ws × IBM Partnership",
 					"description": "three.ws and IBM showcased their partnership: embedding a persistent, on-chain 3D agent into any platform as easily as a YouTube video, with the agent brain running on IBM watsonx.ai and Granite.",
 					"priority": 0.6,
 					"changefreq": "monthly",
