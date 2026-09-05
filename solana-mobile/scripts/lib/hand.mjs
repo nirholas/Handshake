@@ -295,7 +295,18 @@ export class Hand {
 	}
 
 	/** Current scroll offset and the furthest the document can go. */
-	async scrollState() {
+	/**
+	 * Where the scroll currently sits. With no argument that is the document;
+	 * with a scroller element (a drawer, a dialog, any overflow-y pane) it is
+	 * that element's own scrollport, because the window does not move it.
+	 */
+	async scrollState(scroller = null) {
+		if (scroller) {
+			return scroller.evaluate((el) => ({
+				y: el.scrollTop,
+				max: Math.max(0, el.scrollHeight - el.clientHeight),
+			}));
+		}
 		return this.page.evaluate(() => ({
 			y: window.scrollY,
 			max: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
@@ -307,8 +318,12 @@ export class Hand {
 	 * on and decays after it lifts. Positive dy scrolls further down the page,
 	 * which is a finger travelling up the glass.
 	 */
-	async flick(dy, { dragMs = 340, glideMs = 620 } = {}) {
-		const { y: y0, max } = await this.scrollState();
+	async flick(dy, { dragMs = 340, glideMs = 620, scroller = null } = {}) {
+		const { y: y0, max } = await this.scrollState(scroller);
+		const scrollTo = async (py) => {
+			if (scroller) await scroller.evaluate((el, v) => { el.scrollTop = v; }, py);
+			else await this.page.evaluate((v) => window.scrollTo(0, v), py);
+		};
 		const target = Math.max(0, Math.min(max, y0 + dy));
 		const delta = target - y0;
 		if (Math.abs(delta) < 2) return target;
@@ -332,7 +347,7 @@ export class Hand {
 			const t = easeInOutCubic(i / dragFrames);
 			this.state.x = startX + this.jitter(0.4);
 			this.state.y = startY + (endY - startY) * t;
-			await this.page.evaluate((py) => window.scrollTo(0, py), y0 + drag * t);
+			await scrollTo(y0 + drag * t);
 			await this.frame({ drift: false });
 		}
 
@@ -340,7 +355,7 @@ export class Hand {
 		const restStart = y0 + drag;
 		for (let i = 1; i <= glideFrames; i += 1) {
 			const t = i / glideFrames;
-			await this.page.evaluate((py) => window.scrollTo(0, py), restStart + (target - restStart) * easeOutQuint(t));
+			await scrollTo(restStart + (target - restStart) * easeOutQuint(t));
 			/* The hand leaves the glass as the page keeps going. */
 			this.state.opacity = 1 - easeInQuad(Math.min(1, t * 1.6));
 			this.state.y = endY + easeInQuad(t) * 34;
@@ -349,18 +364,18 @@ export class Hand {
 		}
 		this.state.opacity = 0;
 		this.state.scale = 1;
-		await this.page.evaluate((py) => window.scrollTo(0, py), target);
+		await scrollTo(target);
 		return target;
 	}
 
 	/** A long distance is several flicks with a beat between them, not one glide. */
-	async scrollBy(dy, { chunk = 520, betweenMs = 220 } = {}) {
+	async scrollBy(dy, { chunk = 520, betweenMs = 220, scroller = null } = {}) {
 		let left = dy;
 		let guard = 0;
 		while (Math.abs(left) > 8 && guard < 12) {
 			const step = Math.sign(left) * Math.min(Math.abs(left), chunk);
-			const before = (await this.scrollState()).y;
-			const after = await this.flick(step);
+			const before = (await this.scrollState(scroller)).y;
+			const after = await this.flick(step, { scroller });
 			left -= after - before;
 			if (Math.abs(after - before) < 2) break;
 			guard += 1;
@@ -380,7 +395,8 @@ export class Hand {
 			}
 			return false;
 		}).catch(() => false);
-		const box = await this.page.locator(selector).first().boundingBox();
+		const target = this.page.locator(selector).first();
+		let box = await target.boundingBox();
 		if (!box) return;
 		/* Declaring sticky is not the same as being stuck. A sticky element only
 		   travels within its own parent's box, so one wrapped in a container no
@@ -393,8 +409,28 @@ export class Hand {
 		const lo = top;
 		const hi = this.css.height - bottom;
 		if (box.y >= lo && box.y + box.height <= hi) return;
-		const wanted = box.y + box.height / 2 - this.css.height * 0.44;
-		await this.scrollBy(wanted);
+
+		/* The nav drawer is a tall pane that scrolls inside itself, so its lower
+		   entries sit past the bottom of the glass while the document has
+		   nowhere left to go. Playwright still calls them visible (a real box,
+		   nothing display:none), which is how a tap aimed at one landed on no
+		   element at all. Scroll the pane the element actually lives in. */
+		const handle = await target.evaluateHandle((el) => {
+			for (let n = el.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+				const cs = getComputedStyle(n);
+				if (/(auto|scroll)/.test(cs.overflowY) && n.scrollHeight > n.clientHeight + 1) return n;
+			}
+			return null;
+		});
+		const scroller = (await handle.evaluate((n) => n !== null)) ? handle : null;
+		await this.scrollBy(box.y + box.height / 2 - this.css.height * 0.44, { scroller });
+		if (!scroller) return;
+		/* A pane that hit its own end still leaves the target off the glass;
+		   the document is the only thing left that can close the gap. */
+		box = await target.boundingBox();
+		if (!box) return;
+		if (box.y >= lo && box.y + box.height <= hi) return;
+		await this.scrollBy(box.y + box.height / 2 - this.css.height * 0.44);
 	}
 
 	/**

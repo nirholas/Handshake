@@ -118,13 +118,16 @@ fling physics run on the wall clock, so a stepped frame would land on a differen
 ### What it costs to render
 
 Capture is frame-stepped, so wall-clock time is dominated by how expensive each page is to
-screenshot: about 1.3s per frame on `/seeker`, 2.2s on `/create/prompt`, and 3s on `/marketplace`,
-whose document is 90k px tall with a live WebGL hero. A full default tour is roughly an hour of
-capture for around a minute of video. Two things make that number what it is rather than five times
-worse: the tour dismisses the walk companion with its own close button on the first page that offers
-it (which the SDK persists for the session, and halves the per-frame cost), and the browser is
-launched with `--disable-dev-shm-usage`, because Docker's 64 MB `/dev/shm` makes a heavy page either
-crash the renderer outright or drag a single marketplace screenshot out to 22 seconds.
+screenshot. The default four-act tour recorded on 2026-09-05 came to 2320 frames, 77s of video, in
+roughly ten minutes including both encodes. Treat that as the shape of the cost rather than a
+guarantee: the `create` act waits on a real generation, so a slow lane moves the total on its own.
+
+Two things keep it there rather than several times worse. The tour dismisses the walk companion with
+its own close button on the first page that offers it, which the SDK persists for the session and
+which roughly halves the per-frame cost. And the browser is launched with `--disable-dev-shm-usage`,
+because Docker's 64 MB `/dev/shm` makes a heavy page either crash the renderer outright or drag a
+single marketplace screenshot out to 22 seconds, which is the worst case those two mitigations
+exist to avoid.
 
 The real build inside the `create` act is not compressed away, it is time-lapsed: the recording keeps
 rolling at one frame per 0.9s of real time while the page's own progress bar, status line, and
