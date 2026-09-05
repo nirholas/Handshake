@@ -1,0 +1,227 @@
+/* Viewer chrome. Every colour comes from the active VS Code theme so the panel
+   belongs to the editor rather than sitting on top of it. */
+
+:root {
+	--pad: 10px;
+	--radius: 6px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	height: 100%;
+	margin: 0;
+	overflow: hidden;
+	color: var(--vscode-foreground);
+	font-family: var(--vscode-font-family);
+	font-size: var(--vscode-font-size);
+	background: var(--vscode-editor-background);
+}
+
+#stage {
+	position: absolute;
+	inset: 0;
+}
+
+#stage canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+	outline: none;
+}
+
+#loading,
+#error {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	pointer-events: none;
+	text-align: center;
+	padding: 24px;
+}
+
+#error {
+	pointer-events: auto;
+	color: var(--vscode-errorForeground);
+}
+
+#error h2 {
+	margin: 0;
+	font-size: 1.1em;
+}
+
+#error p {
+	margin: 0;
+	max-width: 46ch;
+	color: var(--vscode-descriptionForeground);
+	word-break: break-word;
+}
+
+.spinner {
+	width: 22px;
+	height: 22px;
+	border: 2px solid var(--vscode-descriptionForeground);
+	border-top-color: transparent;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.spinner {
+		animation-duration: 3s;
+	}
+}
+
+#toolbar {
+	position: absolute;
+	left: 50%;
+	bottom: var(--pad);
+	transform: translateX(-50%);
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 4px;
+	padding: 5px;
+	max-width: calc(100% - 2 * var(--pad));
+	background: var(--vscode-editorWidget-background);
+	border: 1px solid var(--vscode-editorWidget-border, transparent);
+	border-radius: var(--radius);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+#toolbar button,
+#toolbar select {
+	appearance: none;
+	background: transparent;
+	color: var(--vscode-foreground);
+	border: 1px solid transparent;
+	border-radius: 4px;
+	padding: 4px 8px;
+	font: inherit;
+	cursor: pointer;
+	transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+#toolbar select {
+	background: var(--vscode-dropdown-background);
+	color: var(--vscode-dropdown-foreground);
+	border-color: var(--vscode-dropdown-border, transparent);
+	max-width: 220px;
+}
+
+#toolbar button:hover {
+	background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
+}
+
+#toolbar button:active {
+	background: var(--vscode-toolbar-activeBackground, rgba(128, 128, 128, 0.31));
+}
+
+#toolbar button:focus-visible,
+#toolbar select:focus-visible {
+	outline: 1px solid var(--vscode-focusBorder);
+	outline-offset: 1px;
+}
+
+#toolbar button[aria-pressed='true'] {
+	background: var(--vscode-inputOption-activeBackground, rgba(51, 122, 183, 0.4));
+	border-color: var(--vscode-inputOption-activeBorder, var(--vscode-focusBorder));
+	color: var(--vscode-inputOption-activeForeground, var(--vscode-foreground));
+}
+
+#playback {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+#scrub {
+	width: 120px;
+	accent-color: var(--vscode-focusBorder);
+}
+
+#report {
+	position: absolute;
+	top: var(--pad);
+	right: var(--pad);
+	width: 268px;
+	max-height: calc(100% - 78px);
+	overflow: auto;
+	padding: 12px 14px;
+	background: var(--vscode-editorWidget-background);
+	border: 1px solid var(--vscode-editorWidget-border, transparent);
+	border-radius: var(--radius);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+#report h2 {
+	margin: 0 0 8px;
+	font-size: 0.95em;
+	font-weight: 600;
+}
+
+#report dl {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 3px 12px;
+	margin: 0 0 12px;
+	font-size: 0.92em;
+}
+
+#report dt {
+	color: var(--vscode-descriptionForeground);
+	white-space: nowrap;
+}
+
+#report dd {
+	margin: 0;
+	text-align: right;
+	word-break: break-word;
+}
+
+#report ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	font-size: 0.9em;
+}
+
+#report li {
+	padding-left: 9px;
+	border-left: 2px solid var(--vscode-descriptionForeground);
+	color: var(--vscode-descriptionForeground);
+}
+
+#report li.sev-warn {
+	border-left-color: var(--vscode-editorWarning-foreground);
+	color: var(--vscode-foreground);
+}
+
+#report li.sev-critical {
+	border-left-color: var(--vscode-errorForeground);
+	color: var(--vscode-foreground);
+}
+
+#report[hidden],
+#playback[hidden],
+#clips[hidden],
+#loading[hidden],
+#error[hidden] {
+	display: none;
+}
