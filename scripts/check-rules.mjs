@@ -81,6 +81,15 @@ const SKIP = [
 	// holding them to house prose rules reports the vendor's copyright line as
 	// commented-out code. Our own code that loads them is still scanned.
 	/^public\/vendor\//,
+	// Whole third-party source trees under third_party/ (MIT drops kept
+	// byte-identical to upstream so a re-sync stays a diff instead of a merge).
+	// The prose there is the upstream author's, and rewriting its typography to
+	// satisfy a house rule would make every future sync conflict on punctuation
+	// (the current drop carries 1625 em-dashes that are upstream's to fix). Our
+	// own code and docs that USE them are still scanned, and so is this tree by
+	// scripts/check-secrets.mjs: a third party's leaked key is still a leaked key
+	// in our history. Provenance and licences: third_party/README.md.
+	/^third_party\//,
 	/\.min\.(js|css)$/,
 	/package-lock\.json$/,
 	/\.(png|jpg|jpeg|gif|webp|glb|gltf|bin|woff2?|ttf|mp4|wasm|ico|svg)$/i,

@@ -198,7 +198,8 @@
 		"exclude": [
 			"**/node_modules/**",
 			"public/chat/**",
-			"src/scene-studio/vendor/**"
+			"src/scene-studio/vendor/**",
+			"third_party/**"
 		]
 	},
 	"doNotTranslate": [

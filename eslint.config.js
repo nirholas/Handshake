@@ -31,6 +31,9 @@ export default [
 			// Any directory named `vendor` holds third-party code we don't own
 			// and must not lint (e.g. extensions/*/vendor/readability.js).
 			'**/vendor/**',
+			// Complete vendored upstream trees kept as reference material and
+			// never built or shipped. See third_party/README.md.
+			'third_party/**',
 			'**/*.bundle.js',
 			'public/dashboard/avaturn-sdk.js',
 			// Self-contained sub-projects with their own ESLint flat config

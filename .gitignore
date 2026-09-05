@@ -601,8 +601,8 @@ marketing/product-demo/.smoke/
 
 # The unanchored `demo/` rule above (NVIDIA TRELLIS local outputs) matches at any
 # depth, so it also swallowed 578 files of runnable demos inside the vendored MIT
-# trees under vendor/. Those demos are the substance of the Design+Code agent
-# skills (each SKILL.md points at its demo/ as the worked example), so re-include
-# the vendored copies explicitly. Scoped to vendor/ so the TRELLIS rule keeps
-# working everywhere else.
-!vendor/**/demo/
+# trees under third_party/. Those demos are the substance of the Design+Code
+# agent skills (each SKILL.md points at its demo/ as the worked example), so
+# re-include the vendored copies explicitly. Scoped to third_party/ so the
+# TRELLIS rule keeps working everywhere else.
+!third_party/**/demo/

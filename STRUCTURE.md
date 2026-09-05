@@ -468,6 +468,7 @@ array. Runbook: [docs/contributing.md](docs/contributing.md#publishing-packages-
 - **Cross-chain SDKs** — [sdk/](sdk), [solana-agent-sdk/](solana-agent-sdk), [agent-payments-sdk/](agent-payments-sdk), [agent-protocol-sdk/](agent-protocol-sdk)
 - **MCP integration** — [mcp-server/](mcp-server), [mcp-bridge/](mcp-bridge)
 - **Specs & protocol docs** — [specs/](specs)
+- **Vendored third-party reference trees**: [third_party/](third_party/README.md) (complete upstream MIT source kept to read, not to build: the Design+Code agent-skill corpus and the ThreeUI Community component library). Read-only, excluded from ESLint, i18n extraction, and the Cloud Build upload. Distinct from the `vendor/` directories inside a surface ([src/scene-studio/vendor/](src/scene-studio/vendor), `public/vendor/`, `pages/ibm/vendor/`), which are third-party code we actually ship.
 - **Frontend pages** — [src/](src), [pages/](pages), [public/](public)
 - **Tests** — [tests/](tests)
 

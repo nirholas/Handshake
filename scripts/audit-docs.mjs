@@ -63,6 +63,16 @@ const SKIP_DIRS = new Set([
 	// links are lifted verbatim from files that live elsewhere, so auditing it
 	// reports thousands of "missing" targets that exist at their real paths.
 	'exports',
+	// Vendored third-party source trees (vendor/). Their Markdown is upstream's,
+	// its relative links resolve against the upstream repo layout, and we never
+	// edit it, so auditing it reports the vendor's own docs as our drift. The
+	// three.ws docs that point INTO vendor/ are still audited from this side.
+	'vendor',
+	// Complete upstream trees kept as reference material (third_party/). Same
+	// reasoning as `vendor` above: the Markdown is upstream's, its relative
+	// links resolve against the upstream repo layout, and we never edit it.
+	// See third_party/README.md.
+	'third_party',
 ]);
 // Generated aggregates: their links are produced by a generator, not authored.
 const SKIP_FILES = new Set(['docs/ALL.md', 'docs/EVERYTHING.md', 'EVERYTHING.md', 'CHANGELOG.md']);
@@ -285,6 +295,8 @@ const UNPUBLISHED_DOCS = new Map([
 	['bnb-vault', 'owner-gated: names a crypto project other than $THREE'],
 	['bnb-world', 'owner-gated: names a crypto project other than $THREE'],
 	['btn-pill-migration', 'internal: one-time component migration map'],
+	['product-demo', 'internal: the runbook for recording the marketing demo film, not a reader-facing product doc'],
+	['vendored-design-libraries', 'internal: orientation for the third_party/ reference trees, which ship to no reader-facing surface'],
 	['build', 'internal: build and deploy integrity runbook'],
 	['clip-director', 'internal: content strategy'],
 	['coin-launches', 'owner-gated: names a crypto project other than $THREE'],
