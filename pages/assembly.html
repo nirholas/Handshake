@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Machine Atlas · Machines generated from code, not model files · three.ws</title>
+	<meta
+		name="description"
+		content="Two working machines with no 3D model files behind them. A radial aero engine and a steam locomotive, generated in your browser from a handful of dimensions, with solved motion, explode views, live parameters and a GLB export."
+	/>
+	<link rel="canonical" href="https://three.ws/assembly" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Machine Atlas · three.ws" />
+	<meta
+		property="og:description"
+		content="No model files. A radial aero engine and a steam locomotive built at runtime from dimensions, profiles and geometry functions, with solved linkages you can take apart."
+	/>
+	<meta property="og:url" content="https://three.ws/assembly" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Machine+Atlas&amp;d=Two+working+machines+generated+in+the+browser+from+code%3A+no+3D+model+files%2C+solved+linkages%2C+live+parameters%2C+GLB+export.&amp;p=%2Fassembly" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Machine Atlas · three.ws" />
+	<meta
+		name="twitter:description"
+		content="A radial engine and a steam locomotive, generated at runtime from dimensions and profiles. Move a slider and the geometry is rebuilt."
+	/>
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Machine+Atlas&amp;d=Two+working+machines+generated+in+the+browser+from+code%3A+no+3D+model+files%2C+solved+linkages%2C+live+parameters%2C+GLB+export.&amp;p=%2Fassembly" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="Machine Atlas — three.ws" />
+	<meta name="twitter:site" content="@trythreews" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/src/assembly.css" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Machine Atlas","description":"Two working machines generated in the browser from code: no 3D model files, solved linkages, live parameters, GLB export.","url":"https://three.ws/assembly","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=labs&t=Machine+Atlas&d=Two+working+machines+generated+in+the+browser+from+code%3A+no+3D+model+files%2C+solved+linkages%2C+live+parameters%2C+GLB+export.&p=%2Fassembly"}]}</script>
+</head>
+<body class="ma-body">
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="ma-stage" id="maStage">
+		<div class="ma-canvas" id="maCanvas"></div>
+		<div class="ma-label" id="maLabel" hidden></div>
+		<div class="ma-loading" aria-hidden="true">
+			<span></span><span></span><span></span>
+			<p>Generating geometry</p>
+		</div>
+
+		<div class="ma-topbar">
+			<div class="ma-brand">
+				<span class="ma-mark" aria-hidden="true"></span>
+				<span class="ma-brand-text">
+					<strong>Machine Atlas</strong>
+					<em>Interactive collection · no model files</em>
+				</span>
+			</div>
+			<div class="ma-tabs" id="maTabs" role="group" aria-label="Machine"></div>
+		</div>
+
+		<section class="ma-intro">
+			<p class="ma-kicker">Two machines. Two eras. Zero assets.</p>
+			<h1 id="maName">Radial Nine</h1>
+			<p class="ma-subtitle" id="maSubtitle">Air-cooled radial aero engine</p>
+			<p class="ma-blurb" id="maBlurb"></p>
+			<ul class="ma-facts" id="maFacts"></ul>
+			<div class="ma-parts-wrap">
+				<h2 class="ma-panel-title">Subassemblies</h2>
+				<div class="ma-parts" id="maParts"></div>
+			</div>
+		</section>
+
+		<aside class="ma-panel" aria-label="Dimensions">
+			<header class="ma-panel-head">
+				<h2 class="ma-panel-title">Dimensions</h2>
+				<button type="button" class="ma-ghost-btn" id="maReset">Reset</button>
+			</header>
+			<div class="ma-params" id="maParams"></div>
+			<h2 class="ma-panel-title ma-panel-title-sep">Derived</h2>
+			<ul class="ma-readout" id="maReadout"></ul>
+			<div class="ma-actions">
+				<button type="button" class="ma-btn" id="maExport">Export GLB</button>
+				<button type="button" class="ma-btn" id="maFrame">Save frame</button>
+				<button type="button" class="ma-btn" id="maSpec">Copy spec</button>
+				<button type="button" class="ma-btn" id="maLink">Copy link</button>
+				<button type="button" class="ma-btn ma-btn-accent" id="maShare">Share on X</button>
+			</div>
+		</aside>
+
+		<div class="ma-dock">
+			<button type="button" class="ma-play" id="maPlay" aria-pressed="true">
+				<span class="ma-play-icon" aria-hidden="true"></span>
+				<span class="ma-play-text">
+					<em>Motion</em>
+					<strong class="ma-play-label">Running</strong>
+				</span>
+			</button>
+			<label class="ma-slider">
+				<span>Shaft speed</span>
+				<input type="range" id="maSpeed" min="0" max="2.4" step="0.01" value="0.55" />
+				<output id="maSpeedOut">0.55 rev/s</output>
+			</label>
+			<label class="ma-slider">
+				<span>Explode</span>
+				<input type="range" id="maExplode" min="0" max="1" step="0.01" value="0" />
+				<output>E</output>
+			</label>
+			<button type="button" class="ma-toggle" id="maStructure" aria-pressed="false">Structure</button>
+			<button type="button" class="ma-toggle" id="maSourceToggle" aria-expanded="false">Source</button>
+			<dl class="ma-stats">
+				<div><dt>Parts</dt><dd id="maStatParts">0</dd></div>
+				<div><dt>Triangles</dt><dd id="maStatTris">0</dd></div>
+				<div><dt>FPS</dt><dd id="maStatFps">60</dd></div>
+			</dl>
+		</div>
+
+		<aside class="ma-source" aria-label="Generating code">
+			<h2 class="ma-panel-title">The calls behind this frame</h2>
+			<p class="ma-source-note">
+				Generated from the values on the right, so it always matches what is on screen.
+			</p>
+			<div class="ma-code" id="maCode"></div>
+		</aside>
+
+		<p class="ma-hint">Drag to orbit · scroll to zoom · hover a part to name it · space, E and S</p>
+		<div class="ma-toast" id="maToast" role="status" hidden></div>
+	</main>
+
+	<section class="ma-explain">
+		<div class="ma-explain-grid">
+			<article>
+				<h2>Nothing here was downloaded</h2>
+				<p>
+					Both machines are built when the page loads. Dimensions become profiles, profiles get
+					revolved or extruded, and the results are merged into the parts you can see. A cylinder
+					barrel is one revolved sawtooth, a rail is one closed cross-section swept down the track,
+					and a propeller blade is a stack of NACA sections lofted with twist.
+				</p>
+			</article>
+			<article>
+				<h2>The motion is solved, not keyframed</h2>
+				<p>
+					Pistons come from the exact planar slider-crank. The valve gear closes a four-bar chain by
+					intersecting circles every frame. That is why a longer rod visibly dwells at top dead
+					centre, and why a rod length that cannot physically reach refuses to move rather than
+					stretching.
+				</p>
+			</article>
+			<article>
+				<h2>A spec an agent can write</h2>
+				<p>
+					Every machine is a small JSON object of numbers. Copy the spec, hand it to an agent, get a
+					different machine back. Export the result as GLB and it drops straight into an avatar
+					scene, a product page, or the glTF viewer.
+				</p>
+			</article>
+		</div>
+		<div class="ma-next">
+			<a class="ma-next-card" href="/create">
+				<strong>Generate a 3D model</strong>
+				<span>Describe an object in words and get a textured GLB back.</span>
+			</a>
+			<a class="ma-next-card" href="/viewer">
+				<strong>glTF / GLB viewer</strong>
+				<span>Drop the export in and inspect materials, meshes and animations.</span>
+			</a>
+			<a class="ma-next-card" href="/labs">
+				<strong>Labs</strong>
+				<span>The rest of the experiments running live on three.ws.</span>
+			</a>
+		</div>
+	</section>
+
+	<script type="module" src="/src/assembly.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>
