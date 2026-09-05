@@ -941,6 +941,28 @@
 			}
 		},
 		{
+			"id": "check-announce",
+			"script": "scripts/check-announce.mjs",
+			"npm": "check:announce",
+			"title": "Announcement packs are postable",
+			"protects": "Every announcement pack ships captured media with alt text, a post inside X's real weighted limit, an opening no other pack reuses, and no reference to a crypto project other than $THREE.",
+			"why": "There are 320 shipped surfaces that have never been announced, so the copy gets written in volume, and volume is exactly what turns announcements into templated noise an audience learns to skip. Three failures are invisible in a diff and expensive after posting: a pack whose media was never captured (a post with no image measured 0.875x against our own median), a post over the 280 weighted characters X silently counts URLs as 23 of, and a frame captured from a live trading surface, which bakes whatever third-party tickers were on screen into a committed file and trips the commit gate the operating rules put on other-coin content.",
+			"stages": [
+				"manual"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "An announcement pack whose post opens with banned marketing copy and declares no media.",
+				"violation": {
+					"write": {
+						"docs/announcements/guard-proof-pack.md": "# Proof fixture\n\nalt text: none, on purpose.\n",
+						"docs/announcements/guard-proof-pack.post.txt": "Introducing our revolutionary new thing, now with seamless everything, at three.ws/guard-proof-pack\n"
+					}
+				},
+				"expect": "guard-proof-pack"
+			}
+		},
+		{
 			"id": "check-event-window",
 			"script": "scripts/check-event-window.mjs",
 			"npm": "check:event",

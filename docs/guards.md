@@ -122,6 +122,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Tutorial reachability | `npm run check:tutorials` | Every tutorial appears in the library manifest, has its markdown on disk, and is registered in `data/pages.json`. |
 | Runnable doc samples | `npm run check:runnable-docs` | Every sample a reader can press Run on still returns what the doc says it returns. |
 | Doc figures | `npm run check:doc-media` | Every figure a doc points at was really captured, still matches its recipe, and carries alt text. |
+| Announcement packs | `npm run check:announce` | Every announcement pack ships captured media with alt text, a post inside X's real weighted limit, an opening no other pack reuses, and no reference to a crypto project other than $THREE. |
 | Tour atlas truth | `npm run audit:tour-atlas` | `public/tour/atlas.json` matches a fresh render: every stop resolves, every promised screenshot exists, and the page's own copy (`data/pages.json`, `pages/tour-atlas.html`) advertises the number of stops the atlas actually has. |
 | x402 endpoint catalog | `npm run audit:x402-catalog` | Every paid endpoint is documented, so a buyer can find it. |
 | MCP manifests | `npm run audit:mcp` | Every MCP manifest satisfies the official registry's rules, offline. |
