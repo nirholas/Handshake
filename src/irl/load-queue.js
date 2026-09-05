@@ -13,6 +13,10 @@ import { dracoLoader } from '../game/avatar-rig.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 
 let _loader = null;
+// Settles once the meshopt decoder is attached (or its import failed). Every load
+// goes through loadGLTF() below, which awaits this, so a meshopt-compressed GLB
+// requested in the first frames after boot can never race ahead of the decoder.
+let _ready = null;
 
 // One GLTFLoader for the whole IRL scene. Pin avatars come from arbitrary
 // `avatar_url`s — pump.fun/Sketchfab exports are commonly Draco-compressed and
@@ -23,10 +27,22 @@ export function sharedGLTFLoader() {
 	if (_loader) return _loader;
 	_loader = new GLTFLoader();
 	_loader.setDRACOLoader(dracoLoader);
-	getMeshoptDecoder()
+	_ready = getMeshoptDecoder()
 		.then((d) => _loader.setMeshoptDecoder(d))
 		.catch(() => { /* meshopt GLBs will fail loudly at load; Draco/plain still work */ });
 	return _loader;
+}
+
+// Load a GLB through the shared loader once both decoders are wired. Most
+// three.ws avatars ship with EXT_meshopt_compression, and the decoder attaches
+// asynchronously: a bare `sharedGLTFLoader().loadAsync()` issued during boot (the
+// viewer's own avatar, the first nearby pin) raced that import and failed with
+// "setMeshoptDecoder must be called before loading compressed files", which /irl
+// surfaced as a "Couldn't load this agent" overlay on a cold start.
+export async function loadGLTF(url) {
+	const loader = sharedGLTFLoader();
+	await _ready;
+	return loader.loadAsync(url);
 }
 
 // Generic priority queue with a concurrency cap. `run(item)` returns a promise;

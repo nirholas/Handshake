@@ -55,7 +55,7 @@ import {
 } from './ar/studio-scene.js';
 import { renderQRToSVG } from './erc8004/qr.js';
 import { deriveVerticalFovDeg, DEFAULT_DIAG_FOV_DEG } from './irl/camera-fov.js';
-import { createLoadQueue, sharedGLTFLoader } from './irl/load-queue.js';
+import { createLoadQueue, loadGLTF } from './irl/load-queue.js';
 import { mountPinIdle } from './irl/pin-idle.js';
 import { clampPitch, isFiniteReading, resolveLockYaw, screenPitchDeg } from './irl/sensor-fusion.js';
 import { captureComposite, shareOrDownload } from './irl/share-frame.js';
@@ -329,7 +329,7 @@ const templates = new Map();
 // await, so it places only sources that have already finished loading.
 const tplReady = new Map();
 const loadQueue = createLoadQueue({
-	run: (src) => sharedGLTFLoader().loadAsync(src),
+	run: (src) => loadGLTF(src),
 	maxActive: 3,
 });
 
