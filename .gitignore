@@ -520,6 +520,14 @@ marketing/*/kit/cards/*.png
 # behind, and one got swept into a commit before this rule existed.
 marketing/*/.raw/
 
+# The product demo film (scripts/make-product-demo.mjs, `npm run demo:video`).
+# Every chapter is a 1080p screen recording of the live site and the set runs to
+# hundreds of megabytes, which is not something a git history should carry
+# forever. demo-manifest.json IS committed, so the repo still records what was
+# filmed, when, from which origin, and which stops were skipped.
+marketing/product-demo/*.mp4
+marketing/product-demo/.smoke/
+
 # Screenshot captures dropped in the repo root by browser and mobile checks.
 # Real assets belong in public/; scratch captures are never committed.
 /*.png
@@ -590,3 +598,11 @@ data/announcements.json
 # pure regenerable output; ignoring it keeps a concurrent `git add -A` sweep
 # from putting the binaries in the history.
 marketing/product-demo/.smoke/
+
+# The unanchored `demo/` rule above (NVIDIA TRELLIS local outputs) matches at any
+# depth, so it also swallowed 578 files of runnable demos inside the vendored MIT
+# trees under vendor/. Those demos are the substance of the Design+Code agent
+# skills (each SKILL.md points at its demo/ as the worked example), so re-include
+# the vendored copies explicitly. Scoped to vendor/ so the TRELLIS rule keeps
+# working everywhere else.
+!vendor/**/demo/
