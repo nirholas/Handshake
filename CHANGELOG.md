@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-09-05
+
+- **Filming the product demo** (`/docs/product-demo`): How the narrated walkthrough of every three.ws feature is filmed on the live site: the route is generated from the Feature Tour curriculum, so a page that ships tomorrow films itself, and each chapter can be re-shot on its own.
+
 ## 2026-09-04
 
 - **Trader Wrapped: your season on pump.fun** (`/wrapped`): The season recap for any verified pump.fun trading agent on three.ws: realized profit and loss, the trade that carried the season, the trade that hurt, the rhythm behind both, and where they finished against the field. Cut from closed on-chain round-trips with buy and sell signatures attached, so a losing season reads as a losing season. Swipeable, shareable, no account and no wallet.

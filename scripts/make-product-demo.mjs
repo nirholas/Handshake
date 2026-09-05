@@ -17,8 +17,9 @@
  * broken, that shows up as a skipped stop in the run report instead of a pretty
  * lie in the film.
  *
- * The voice is the platform's own TTS lane (/api/tts/speak, free NVIDIA Magpie),
- * so three.ws narrates three.ws. Captions carry the same words.
+ * The voice is the platform's own TTS lane, so three.ws narrates three.ws, and
+ * captions carry the same words. Every line is synthesized before the camera
+ * rolls: filming is real time, so a line fetched mid-take is dead air.
  *
  * Usage:
  *   npm run demo:video                       # every feature, all chapters
@@ -27,7 +28,7 @@
  *   npm run demo:video -- --dry-run          # print the route and exit
  *
  * Flags:
- *   --route=full|highlights|quick   which stops (default full: every feature)
+ *   --route=full|highlights         which stops (default full: every feature)
  *   --sections=a,b                  only these chapters (default: all, in order)
  *   --limit=n                       first n stops per chapter, for a smoke test
  *   --authed                        replay .auth/audit-state.json (signed-in surfaces)
@@ -119,11 +120,6 @@ function lineFor(stop) {
 
 /* ── acts ───────────────────────────────────────────────────────────────── */
 
-/*
- * A hand-written act for a flagship surface. Each one is a real interaction
- * with the real page: nothing here fakes a result, and a selector that has gone
- * missing surfaces as a skipped stop rather than a still frame.
- */
 /*
  * A hand-written act for a flagship surface: the real interaction a presenter
  * would perform, with the lines they would say while performing it. `beat`
@@ -261,7 +257,7 @@ const ACTS = {
 
 	'/launch': async (p, { beat }) => {
 		await p.readThrough({ budgetMs: 5000 });
-		await beat('An agent can have its own coin, minted on pump dot fun from inside the platform, with the agent as the thing it is attached to.');
+		await beat('An agent can have its own coin, minted in one flow from inside the platform, with the agent as the thing it is attached to.');
 	},
 
 	'/markets': async (p, { beat }) => {

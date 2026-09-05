@@ -2662,6 +2662,12 @@ URL: https://three.ws/docs/seeker-publishing
 
 The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.
 
+### Filming the product demo
+
+URL: https://three.ws/docs/product-demo
+
+How the narrated walkthrough of every three.ws feature is filmed on the live site: the route is generated from the Feature Tour curriculum, so a page that ships tomorrow films itself, and each chapter can be re-shot on its own.
+
 ### Filming three.ws on a Seeker without a Seeker
 
 URL: https://three.ws/docs/seeker-video

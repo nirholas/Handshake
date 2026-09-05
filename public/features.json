@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-05T00:10:33.182Z",
+	"generated_at": "2026-09-05T03:37:39.322Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4383,6 +4383,16 @@
 					"title": "Publishing to the Solana dApp Store",
 					"description": "The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.",
 					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/product-demo",
+					"title": "Filming the product demo",
+					"description": "How the narrated walkthrough of every three.ws feature is filmed on the live site: the route is generated from the Feature Tour curriculum, so a page that ships tomorrow films itself, and each chapter can be re-shot on its own.",
+					"added": "2026-09-05",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

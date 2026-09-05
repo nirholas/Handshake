@@ -83,11 +83,23 @@ settling after a search. Stepped frames freeze all of that, and nearly every rou
 the host cursor over a real session. It reports the interaction; it never stands in for one. Same
 for the click ring.
 
-**The voice is the platform's own.** Narration is synthesized through
-[`/api/tts/speak`](./api-reference.md), the free NVIDIA Magpie lane, so three.ws narrates three.ws.
-Clips are cached on their text under `marketing/product-demo/.raw/voice/`, so re-recording one
-chapter costs no synthesis and gets exactly the audio the full run would have given it. Captions
-carry the same words for anyone watching without sound.
+**The voice is the platform's own.** Narration is synthesized through the site's own TTS lane, so
+three.ws narrates three.ws. The default is `/api/tts/edge` (Microsoft Edge Neural voices, proxied
+and cached in R2 by the platform), because it allows 20 lines a minute for a signed-in caller and a
+full film has close to three hundred of them. `--narrator=speak` switches to the free NVIDIA Magpie
+lane behind `/api/tts/speak`, which is better suited to a handful of lines: it allows 40 an hour.
+Both lanes need the QA session, so `--authed` is not optional when there is a voice track.
+
+Every line is synthesized **before** the camera rolls. Filming is real time, so a line fetched
+mid-take is dead air on screen: the first cut of this film opened on 52 seconds of silence because
+its longest line was being synthesized while the page sat there. The warm-up collects the whole
+script (chapter intros, every stop's line, and the `beat()` literals inside the acts), synthesizes
+what is missing, and caches it on disk under `marketing/product-demo/.raw/voice/`. A rerun pays none
+of that twice, and a single re-shot chapter gets exactly the audio the full run gave it.
+
+Captions carry the same words for anyone watching without sound. What is written and what is spoken
+are not the same string, though: a caption reads `three.ws` and `USDC`, and the synthesizer is handed
+`three dot w s` and `U S D C`.
 
 The narration track is laid down as a single exact concatenation of speech and silence at the
 offsets each line was spoken at, then muxed with the video. Nothing is mixed, so an hour-long film
@@ -104,7 +116,8 @@ stays sample accurate end to end.
 | `--authed` | Replay the QA session, so signed-in surfaces are on screen |
 | `--origin=http://localhost:3000` | Film a dev server instead of production |
 | `--out=<dir>` | Write somewhere else |
-| `--voice=<id>` | Any voice from `/api/tts/voices` (default `nova`) |
+| `--narrator=edge\|speak` | Which TTS lane to synthesize on (default `edge`) |
+| `--voice=<id>` | Voice for that lane (default `en-US-AndrewMultilingualNeural`; the `speak` lane takes ids from `/api/tts/voices`) |
 | `--no-voice` | Captions only, no narration track |
 | `--reuse` | Keep chapter mp4s that already exist, and film the rest |
 | `--strict` | A failed stop fails the run |
@@ -115,12 +128,16 @@ stays sample accurate end to end.
 
 - **`--authed` needs a session.** `npm run audit:web:login` mints one into `.auth/audit-state.json`
   from the QA credentials in `.env`. Without it, the signed-in surfaces (x402 Studio, profile,
-  wallet) show their sign-in wall, and `/create/prompt` cannot start a real generation.
+  wallet) show their sign-in wall, `/create/prompt` cannot start a real generation, and the
+  narration cannot be synthesized at all: the edge lane answers an anonymous caller with a 401, and
+  the `speak` lane drops to ten lines an hour.
 - **`ffmpeg` and `ffprobe` must be on `PATH`** (`sudo apt-get install -y ffmpeg`). Playwright ships
   its own ffmpeg, but that build is VP8-only with no filters, so it can do neither the H.264 encode
   nor the audio mux.
 - **Check the disk.** A full run writes a raw webm per chapter before encoding it. Reclaim space
   first with `npm run clean:worktrees -- --apply` if the workspace is tight.
+- **The first run pays for the narration.** Warming close to three hundred lines at the edge lane's
+  20 a minute takes about 15 minutes before any filming starts. Later runs skip it.
 - **A full run takes about as long as the film.** It is a real-time recording of a real site, so
   budget roughly an hour of wall clock for the full route, and film it in chapters (`--sections=`,
   then `--reuse`) if you would rather not hold one process open that long.

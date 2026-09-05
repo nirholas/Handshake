@@ -3540,6 +3540,12 @@
 					"added": "2026-08-28"
 				},
 				{
+					"path": "/docs/product-demo",
+					"title": "Filming the product demo",
+					"description": "How the narrated walkthrough of every three.ws feature is filmed on the live site: the route is generated from the Feature Tour curriculum, so a page that ships tomorrow films itself, and each chapter can be re-shot on its own.",
+					"added": "2026-09-05"
+				},
+				{
 					"path": "/docs/seeker-video",
 					"title": "Filming three.ws on a Seeker without a Seeker",
 					"description": "How to record a Seeker screen recording of the app with no device: why the Trusted Web Activity makes a browser capture at the real panel geometry a genuine capture, and which moments still have to come from an Android emulator.",

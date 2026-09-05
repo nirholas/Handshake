@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Filming the product demo</title>
+			<link>https://three.ws/docs/product-demo</link>
+			<guid isPermaLink="false">2026-09-05:Filming the product demo</guid>
+			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the narrated walkthrough of every three.ws feature is filmed on the live site: the route is generated from the Feature Tour curriculum, so a page that ships tomorrow films itself, and each chapter can be re-shot on its own.</description>
+		</item>
+		<item>
 			<title>Trader Wrapped: your season on pump.fun</title>
 			<link>https://three.ws/wrapped</link>
 			<guid isPermaLink="false">2026-09-04:Trader Wrapped: your season on pump.fun</guid>
