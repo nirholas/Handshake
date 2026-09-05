@@ -113,6 +113,12 @@ let current = null;
 // Fit the machine in frame. `keepDirection` preserves whatever angle the user
 // has orbited to and changes only the distance, which is what a refit after an
 // explode should do: the view is theirs, the framing is ours.
+// The ground catches the shadow, so it tracks the lowest point of whatever is
+// on stage even when the camera is left alone.
+function settleShadow(root) {
+	shadowPlane.position.y = new THREE.Box3().setFromObject(root).min.y + 0.002;
+}
+
 function frameMachine(spec, root, { animate = false, keepDirection = false, explode = null } = {}) {
 	const restore = explode !== null && explode !== state.explode;
 	if (restore) applyExplode(root, explode);
@@ -180,11 +186,23 @@ function build(machineId, values, { frame = 'keep' } = {}) {
 	for (const g of state.hidden) setGroupVisible(built.root, g, false);
 	if (state.structure) setStructure(true);
 	if (frame === 'reset') frameMachine(machine.spec, built.root, { animate: true });
-	else frameMachine(machine.spec, built.root, { keepDirection: true, animate: false, explode: null, ...(frame === 'hold' ? {} : {}) });
+	else if (frame === 'first') frameMachine(machine.spec, built.root, { animate: false });
+	else settleShadow(built.root);
 	renderStats();
 	renderParts();
 	renderCode();
 	renderReadout();
+}
+
+// Pulling a machine apart makes it bigger. Refit the distance to the exploded
+// bounds while keeping the angle the user chose, so nothing leaves the frame.
+function refitForExplode() {
+	if (!current) return;
+	frameMachine(state.machine.spec, current.root, {
+		animate: true,
+		keepDirection: true,
+		explode: state.explodeTarget,
+	});
 }
 
 /* ── structure view ─────────────────────────────────────────────────── */
@@ -392,7 +410,7 @@ function selectMachine(id) {
 	for (const p of machine.spec.params) state.values[p.key] = p.value;
 	state.hidden.clear();
 	state.angle = 0;
-	build(id, state.values, { animate: true });
+	build(id, state.values, { frame: 'reset' });
 	renderTabs();
 	renderHeader();
 	renderParams();
@@ -558,11 +576,12 @@ function wire() {
 	$('maExplode').addEventListener('input', (e) => {
 		state.explodeTarget = Number(e.target.value);
 	});
+	$('maExplode').addEventListener('change', refitForExplode);
 	$('maStructure').addEventListener('click', () => setStructure(!state.structure));
 	$('maReset').addEventListener('click', () => {
 		for (const p of state.machine.spec.params) state.values[p.key] = p.value;
 		renderParams();
-		build(state.machine.spec.id, state.values, { animate: true });
+		build(state.machine.spec.id, state.values, { frame: 'reset' });
 		writeUrl();
 		toast('Back to the reference dimensions.');
 	});
@@ -583,6 +602,7 @@ function wire() {
 		} else if (e.key === 'e' || e.key === 'E') {
 			state.explodeTarget = state.explodeTarget > 0.5 ? 0 : 1;
 			$('maExplode').value = String(state.explodeTarget);
+			refitForExplode();
 		} else if (e.key === 's' || e.key === 'S') {
 			setStructure(!state.structure);
 		} else if (e.key >= '1' && e.key <= String(MACHINES.length)) {
@@ -651,7 +671,7 @@ renderTabs();
 renderHeader();
 renderParams();
 wire();
-build(start.machine.spec.id, start.values);
+build(start.machine.spec.id, start.values, { frame: 'first' });
 setPlaying(true);
 $('maSpeedOut').textContent = `${state.speed.toFixed(2)} rev/s`;
 $('maStage').classList.add('is-ready');
