@@ -1179,7 +1179,7 @@ function openVisitLinkModal(pin) {
 						<ol class="irl-visit-steps">
 							<li>A visitor scans it and allows camera and location.</li>
 							<li>Within 60 m of the spot, <b>${esc(name)}</b> appears in their camera and its card opens.</li>
-							<li>They tap it for the profile, wallet, tip QR and services; iPhone gets "See it in AR".</li>
+							<li>They tap it to talk to it out loud, view it in AR on their floor, and see the profile, wallet, tip QR and services.</li>
 						</ol>
 						<div class="irl-visit-actions">
 							<a class="irl-btn primary" href="${esc(signUrl)}" target="_blank" rel="noopener">Print a sign ↗</a>

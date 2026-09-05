@@ -1,6 +1,6 @@
 # Run an IRL street demo: drop an agent at a real spot, let strangers walk up
 
-This is the runbook for showing IRL to people who have never heard of three.ws: you place a 3D AI agent at a real location, put a sign there, and anyone who scans it sees the agent standing on that spot through their phone camera, taps it for its profile and wallet, and can stand it on the floor in AR. It was written for a demo in San Francisco, and everything in it applies to any city.
+This is the runbook for showing IRL to people who have never heard of three.ws: you place a 3D AI agent at a real location, put a sign there, and anyone who scans it sees the agent standing on that spot through their phone camera, taps it, talks to it out loud, and can stand it on their own floor in AR. It was written for a demo in San Francisco, and everything in it applies to any city.
 
 Nothing here needs an app or an account on the visitor's side. The owner needs a signed-in three.ws account so the pin is permanent.
 
@@ -11,8 +11,9 @@ Nothing here needs an app or an account on the visitor's side. The owner needs a
 1. They scan the sign. It opens `three.ws/irl?pin=<id>` in their phone browser.
 2. IRL asks for camera and location (and motion, on iPhone, which takes one extra tap). A banner at the top says **"You're here to meet <agent name>"** and that the agent appears within 60 m of the spot.
 3. Standing within range, the agent appears in their camera view, playing its idle animation and turning to look at them. Its name label flashes and its card opens on its own.
-4. The card shows the agent's bio, on-chain reputation, its **Solana wallet chip**, a **Tap to tip in person** panel (a Solana Pay QR plus an "Open in wallet" deep link), any paid x402 services, a message box, and **View profile**.
-5. **See it in AR** stands the agent on the real floor. iPhone opens ARKit Quick Look with the idle clip baked in; the Quick Look banner reads "Tip this agent" and tapping it brings them back to the card with the tip QR already open. Android and everything else go through the AR launcher (`/api/ar`), which routes Android to native AR.
+4. The card leads with **Talk** and **View in AR**, then shows the agent's bio, on-chain reputation, its **Solana wallet chip**, a **Tap to tip in person** panel (a Solana Pay QR plus an "Open in wallet" deep link), any paid x402 services, a message box, and **View profile**.
+5. **Talk** opens a conversation with the agent standing in front of them. They hold the mic and speak (or type). The reply is in the agent's persona, spoken aloud in its voice, and the model's mouth moves with the audio. Pressing the mic while it is speaking interrupts it.
+6. **View in AR** stands the agent on their real floor. iPhone opens ARKit Quick Look with the idle clip baked in; the Quick Look banner reads "Talk to <name>" and tapping it brings them back to the card with the conversation open. Android with ARCore enters a WebXR session that anchors this agent to the detected floor (tap to place, pinch to size). Anything else opens the AR launcher (`/api/ar`) in a new tab.
 
 Anyone who opens the link from somewhere else sees only the agent's name and a prompt to walk to the spot. The link never carries a coordinate, and the nearby read is presence-gated, so posting the link publicly is safe. See [How location works on IRL](/irl-privacy).
 
@@ -64,8 +65,10 @@ Test the sign with your own phone before you leave: scan it, walk 70 m away, con
 
 - **Your phone is the demo screen too.** The dashboard's **View in IRL** opens the same visit link, so you can show the walk-up while a visitor does it.
 - **Talk through the three taps:** scan, allow, look around. The banner carries the rest.
-- **Show the tip.** Open the card, expand **Tap to tip in person**, and let someone scan the Solana Pay QR with Phantom or Solflare. The agent's wallet is a real address; a tip lands on-chain.
-- **Show it on the floor.** On an iPhone, **See it in AR** is the moment people photograph.
+- **Let them talk first.** Hand the phone over with the card open and say "hold the mic and ask it anything". The agent answers out loud in its persona; that is the moment people remember. Give the agent a persona and a cloned voice beforehand (`/agents/<id>`, Brain Studio and the voice clone in talk mode) so it sounds like itself on the street.
+- **Show the tip.** Expand **Tap to tip in person**, and let someone scan the Solana Pay QR with Phantom or Solflare. The agent's wallet is a real address; a tip lands on-chain.
+- **Show it on the floor.** **View in AR** is the moment people photograph: Quick Look on an iPhone, a floor-anchored WebXR session on an Android phone with ARCore.
+- **Volume and noise.** Replies play through the phone speaker. On a loud street, hold the phone up or use a small speaker; typed turns work when speech recognition cannot hear.
 - **Messages and taps land in your dashboard.** The placements page lists every message, tap and pay under the pin, and the inbox lets you reply. `GET /api/irl/analytics` (admin) has the rollup afterwards.
 
 ---
@@ -77,7 +80,10 @@ Test the sign with your own phone before you leave: scan it, walk 70 m away, con
 | Banner never changes from "You're here to meet" | Visitor is outside 60 m, or their GPS fix is far off | Move to open sky, wait ten seconds, check the accuracy line on the card once it opens |
 | "Enable location" chip in the top bar | Location was denied | Tap the chip; on iPhone, Settings > Safari > Location if the prompt is gone |
 | Agent appears but does not move | Motion permission not granted (iPhone), or a non-humanoid body | Tap the motion chip; humanoid rigs animate, props do not |
-| "See it in AR" is missing | The pin's model is not an https GLB | Re-place the pin with a hosted avatar from your account |
+| "View in AR" is missing | The pin has no model URL | Re-place the pin with a hosted avatar from your account |
+| Talk shows "Voice input isn't available" | The browser has no speech recognition, or the mic was denied | Type in the box instead; on iPhone allow the microphone when Safari asks, or Settings > Safari > Microphone |
+| The agent answers but you hear nothing | The phone is on silent (iPhone honours the mute switch for web audio) or volume is down | Flip the ring/silent switch, raise the volume, tap the mic again |
+| The mouth does not move while it speaks | The body has no mouth morphs or jaw bone, or the model is still streaming in | Nothing to fix on site; the agent still talks. Rigs with ARKit or VRM mouth shapes animate |
 | Banner says the agent has moved on | The pin expired (anonymous pins last 7 days) or was removed | Place it again signed in and print a fresh sign |
 | Visitors see nothing at all, you see the agent | Your device owns the pin; theirs reads nearby only within range | Have them stand where you placed it, not where you are now |
 
@@ -88,4 +94,4 @@ Test the sign with your own phone before you leave: scan it, walk 70 m away, con
 - [IRL overview](/docs/irl): what IRL is, Money Drops, World Lines, the SDK
 - [How location works on IRL](/irl-privacy) and the [threat model](/docs/irl/THREAT-MODEL)
 - [Place a 3D agent in your real environment](/docs/tutorials/place-agent-irl)
-- [AR and WebXR reference](/docs/ar): the device routing behind "See it in AR"
+- [AR and WebXR reference](/docs/ar): the device routing behind "View in AR"

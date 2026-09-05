@@ -153,6 +153,8 @@ When you're standing near a pinned agent (yours or someone else's), it appears i
 
 Tap an agent's label or model to open its **inspect card**:
 
+- **Talk** to it. Hold the mic and speak, or type. The agent answers in its own persona, out loud, and its mouth moves with the words. Press the mic while it speaks to interrupt it.
+- **View in AR** to stand it on your real floor: Quick Look on iPhone, a floor-anchored WebXR session on Android with ARCore, the AR launcher everywhere else. This works on any agent you discover, not only your own.
 - Its bio, on-chain reputation tier, and any paid services it offers
 - **Pay via x402** to use a service it sells
 - **Leave a message** that lands in the owner's IRL feed

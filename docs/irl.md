@@ -52,6 +52,8 @@ Every discovered agent is alive in the camera view, not a statue: any humanoid a
 
 Tapping an agent opens its inspect card:
 
+- **Talk** opens a live, spoken conversation with the agent standing in front of you. Hold the mic and speak (or type); the reply comes back in the agent's own persona when the pin carries an agent identity, is voiced through its voice (a cloned one when it has it), and the 3D model's mouth moves with the audio on top of its idle. Pressing the mic while it speaks interrupts it, like a real conversation. The opening line of a conversation lands once in the owner's IRL feed as a `talk` interaction; the transcript never does.
+- **View in AR** stands that agent, anyone's, on your real floor through the device's native AR stack: iPhone bakes the pin's model into an animated USDZ and opens ARKit Quick Look (the banner inside AR reads "Talk to <name>" and brings you back to the card with the conversation open); Android with ARCore enters a WebXR hit-test session that anchors this agent's already-loaded model to a detected surface, view-only, with pinch to size; everything else opens the device-aware [AR launcher](./ar.md) in a new tab. Nothing is persisted from a view: the durable placement stays the owner's pin.
 - its bio, on-chain reputation tier, and any paid services it offers
 - **pay via x402** to use a service it sells, settled on-chain in the request
 - **leave a message** that lands in the owner's IRL feed
@@ -75,7 +77,7 @@ The **Share** button captures your camera feed and the placed agent as one photo
 
 A placement has a **visit link**, `three.ws/irl?pin=<id>`, and a printable sign at `/irl/sign?pin=<id>`. Both come from the pin's **Visit link** action in [/dashboard/irl-placements](/dashboard/irl-placements). Someone who scans the sign lands on /irl with a banner naming the agent they came to meet; the moment the presence-gated nearby read returns that pin, its label flashes and its card opens on its own. Neither link carries a coordinate, and the agent still appears only within range, so a sign can be posted anywhere. `?highlight=<id>` is an older alias of `?pin=`.
 
-The card of a discovered agent also offers **See it in AR**: on iPhone it bakes that pin's model into an animated USDZ and opens ARKit Quick Look, with a banner tap that returns to the card with the tip QR open; everywhere else it opens the [AR launcher](./ar.md), which routes Android to native AR.
+The card of a discovered agent also offers **Talk** and **View in AR** (see [Interact and pay](#interact-and-pay)): the visitor can hold the mic and speak with the agent, and stand it on the real floor through Quick Look on iPhone, WebXR on Android, or the [AR launcher](./ar.md) elsewhere.
 
 The full street-demo runbook (picking a spot for GPS, printing, what visitors see, on-site troubleshooting) is [Run an IRL street demo](./irl/street-demo.md).
 

@@ -84,7 +84,15 @@
 			<guid isPermaLink="false">2026-09-05:Invite people to an IRL agent with a visit link and a printable sign</guid>
 			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>Every agent you have placed in the real world now has a visit link and a sign you can print and tape to the spot. Someone who scans it opens IRL with a banner naming the agent they came to meet, and the moment they are close enough the agent appears in their camera, flashes, and opens its card by itself: bio, reputation, wallet, tip QR, services, and a message box. That card also gained See it in AR. On iPhone it stands the agent on the real floor in Quick Look, animated, and the banner inside AR brings you straight back to the tip panel; other phones open the AR launcher. The link never contains a location, so you can post it anywhere and the agent still only shows to people who are actually there. Find it under Visit link on each placement in your dashboard.</description>
+			<description>Every agent you have placed in the real world now has a visit link and a sign you can print and tape to the spot. Someone who scans it opens IRL with a banner naming the agent they came to meet, and the moment they are close enough the agent appears in their camera, flashes, and opens its card by itself: bio, reputation, wallet, tip QR, services, and a message box. That card also gained View in AR: on iPhone it stands the agent on the real floor in Quick Look, animated, and the banner inside AR brings you straight back to the card. The link never contains a location, so you can post it anywhere and the agent still only shows to people who are actually there. Find it under Visit link on each placement in your dashboard.</description>
+		</item>
+		<item>
+			<title>IRL no longer fails to load your agent on a cold start</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-09-05:IRL no longer fails to load your agent on a cold start</guid>
+			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Opening IRL on a fresh page could show &quot;Couldn't load this agent&quot; with a Retry button even though nothing was wrong with your connection. The 3D loader was asked for a compressed avatar a moment before its decoder had finished arriving, and it gave up instead of waiting. Every avatar load on IRL and in the AR Studio now waits for that decoder, so the first load works the same as the retry always did.</description>
 		</item>
 		<item>
 			<title>Machine Atlas: two working machines built in the browser from code, with no 3D model files</title>
@@ -117,6 +125,14 @@
 			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The navigation bar was set to stick to the top of the window but never actually did: it scrolled away with the page on every route, at every screen size, so reaching the menu meant scrolling all the way back up. The bar was mounted inside a wrapper exactly its own height, and a sticky element can only travel inside its parent, so it had nowhere to go. The header now stays on screen wherever you scroll, on phones and desktop alike.</description>
+		</item>
+		<item>
+			<title>Walk up to an IRL agent, talk to it out loud, and stand it on your floor in AR</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-09-05:Walk up to an IRL agent, talk to it out loud, and stand it on your floor in AR</guid>
+			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Tap any agent you discover on IRL and the card now leads with Talk and View in AR. Talk is a real conversation with the agent standing in front of you: hold the mic and speak, or type. It answers in its own persona, out loud in its voice (its cloned voice when it has one), and the 3D model's mouth moves with the words while it keeps breathing. Press the mic while it is talking to interrupt it. View in AR works on anyone's agent, not only your own: iPhone opens it in Quick Look on the real floor, animated, with a banner that brings you back to the conversation; Android phones with ARCore anchor it to the detected floor right inside the page, tap to place and pinch to size; every other device opens the AR launcher. Owners see a new &quot;talked with your agent&quot; event in their IRL feed when someone starts a conversation. The transcript stays between the visitor and the agent.</description>
 		</item>
 		<item>
 			<title>Your agent now lives in a handheld console you can put on any website</title>

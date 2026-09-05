@@ -55,7 +55,7 @@ import { errorStateEl, skeletonHTML, emptyStateHTML, errorStateHTML, ensureState
 import { startOnboarding, ensurePermission, needsMotionGesture, setPermissionState } from './irl/onboarding.js';
 import { reserveWebGLContext, releaseWebGLContext } from './webgl-budget.js';
 import { detectTier, BUDGETS, TIER_ORDER, shiftTier } from './irl/perf-budget.js';
-import { sharedGLTFLoader, createLoadQueue } from './irl/load-queue.js';
+import { loadGLTF, createLoadQueue } from './irl/load-queue.js';
 import { mountPinIdle, getIdleClipJson } from './irl/pin-idle.js';
 import { celebrationRingFrame, CELEBRATION_DURATION } from './irl/pin-celebration.js';
 import { applyAvatarMaterialRealism, looksLikeAvatarMesh } from './shared/avatar-material-realism.js';
@@ -260,7 +260,7 @@ let budget = BUDGETS[activeTier];
 // capped queue — replaces the old `new GLTFLoader()` per pin + `loadedCount < 5`
 // guard. Priority is the pin's live camera distance (set in enforceLOD).
 const glbQueue = createLoadQueue({
-	run: (pin) => sharedGLTFLoader().loadAsync(pin.avatar_url),
+	run: (pin) => loadGLTF(pin.avatar_url),
 	maxActive: budget.maxGLB,
 	priorityOf: (pin) => (pin._lodDist != null ? pin._lodDist : (pin.distance_m != null ? pin.distance_m : 1e9)),
 });
@@ -1166,7 +1166,7 @@ async function loadAvatar(idOrUrl, nameOverride) {
 	// Reuse the one shared Draco+meshopt loader (the pin queue's loader) instead of
 	// a fresh GLTFLoader per swap — the player's own avatar can be compressed too,
 	// and a per-swap loader allocated decoders the shared one already holds.
-	const gltf = await sharedGLTFLoader().loadAsync(glbUrl);
+	const gltf = await loadGLTF(glbUrl);
 	avatar = gltf.scene;
 	dressAvatarMaterials(avatar);
 	avatar.traverse(n => {
@@ -8499,6 +8499,15 @@ if (import.meta.env.DEV) {
 			const mLat = 110540;
 			const mLng = 111320 * Math.cos(lat * (Math.PI / 180));
 			return { lat: lat + north / mLat, lng: lng + east / mLng };
+		},
+		// Open the inspect sheet for a held pin by id, exactly as a tap on its label
+		// would. The e2e for Talk / View in AR drives the real sheet code through it
+		// instead of guessing where a 3D label landed on screen.
+		openSheet(id) {
+			const p = nearbyPins.find((x) => x.id === id);
+			if (!p) return false;
+			openPinSheet(p);
+			return true;
 		},
 		// Liveness probe for the T-pose regression: is the pin's full model mounted,
 		// does it carry a running idle mixer, and where is its skeleton right now?
