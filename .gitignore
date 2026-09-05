@@ -519,6 +519,9 @@ marketing/*/kit/cards/*.png
 # The script removes them on a clean run; a killed run leaves hundreds of JPEGs
 # behind, and one got swept into a commit before this rule existed.
 marketing/*/.raw/
+# The feature tour walks the whole app and leaves its own raw directory behind,
+# 700 frames and 174 MB on the run that landed here.
+marketing/*/.raw-*/
 
 # The product demo film (scripts/make-product-demo.mjs, `npm run demo:video`).
 # Every chapter is a 1080p screen recording of the live site and the set runs to
@@ -528,6 +531,12 @@ marketing/*/.raw/
 # .smoke/ tree is where a --out=...smoke test run lands; .raw/ is covered above.
 marketing/product-demo/*.mp4
 marketing/product-demo/.smoke/
+
+# Same reasoning for the Seeker long-form feature tour: seeker:screencast makes
+# a 14 second listing clip small enough to track (seeker-device.mp4 /
+# seeker-screen.mp4 stay committed), while seeker:feature-tour walks the whole
+# app and lands hundreds of megabytes that GitHub would refuse on push anyway.
+marketing/seeker-video/seeker-feature-tour-*.mp4
 
 # Screenshot captures dropped in the repo root by browser and mobile checks.
 # Real assets belong in public/; scratch captures are never committed.

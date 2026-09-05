@@ -123,8 +123,17 @@ export class Hand {
 		await this.paint();
 	}
 
+	/* A tap that navigates tears down the execution context while the bloom
+	   frames are still painting into it. The indicator is re-installed on the
+	   next document by the capture's addInitScript, so the only lost thing is
+	   this one in-flight frame's position, which the next paint restores. The
+	   frame's screenshot applies the same policy a step further down. */
 	async paint() {
-		await this.page.evaluate((s) => window.__seekerHand?.set(s), this.state);
+		try {
+			await this.page.evaluate((s) => window.__seekerHand?.set(s), this.state);
+		} catch (err) {
+			if (!/execution context|navigat|closed|destroyed/i.test(err.message)) throw err;
+		}
 	}
 
 	/** One captured frame at the current state, with a breath of idle drift. */
