@@ -336,7 +336,7 @@ WEB3_STORAGE_TOKEN=xxxxx
 ```
 
 #### Solana signer keys (`*_SECRET_KEY_B64`)
-**Optional.** Server-side Solana keypairs the cron jobs and on-chain flows sign with: `PUMP_CRON_RELAYER_SECRET_KEY_B64` (pays tx fees for the Pump.fun buyback cron), `COIN_TREASURY_SECRET_KEY_B64`, `THREE_BUYBACK_SECRET_KEY_B64`, `CLUB_SOLANA_TREASURY_SECRET_KEY_B64`, `PUMP_X402_LAUNCHER_SECRET_KEY_B64`. Each is the **base64 encoding of the 64 raw secret-key bytes** — the format `decodeSecretKey` expects (`api/_lib/solana-signers.js`).
+**Optional.** Server-side Solana keypairs the cron jobs and on-chain flows sign with: `PUMP_CRON_RELAYER_SECRET_KEY_B64` (pays tx fees for the Pump.fun buyback cron), `COIN_TREASURY_SECRET_KEY_B64`, `THREE_BUYBACK_SECRET_KEY_B64`, `CLUB_SOLANA_TREASURY_SECRET_KEY_B64`, `PUMP_X402_LAUNCHER_SECRET_KEY_B64`. Each is the **base64 encoding of the 64 raw secret-key bytes**, the format `decodeSecretKey` expects (`api/_lib/solana-signers.js`).
 
 ```
 PUMP_CRON_RELAYER_SECRET_KEY_B64=<base64 of 64-byte keypair>
