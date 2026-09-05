@@ -4135,7 +4135,9 @@ pin; non-owners get 403):
 POST /api/irl/interactions
 ```
 
-Body: `{ "pinId": "<uuid>", "type": "view" | "tap" | "message" | "pay", "message"?, ... }`.
+Body: `{ "pinId": "<uuid>", "type": "view" | "tap" | "message" | "pay" | "talk", "message"?, ... }`.
+`talk` records that a visitor opened a live conversation with the agent from the /irl Talk panel (one
+row per conversation, never the transcript).
 `view` repeats from one device collapse within 5 min; a `pay` must carry a valid on-chain
 settlement `signature` plus a `$THREE`/USDC `currencyMint` and is deduped per signature. The
 pin's owner and agent are always taken from the pin, never the caller.

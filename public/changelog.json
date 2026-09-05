@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-05T16:12:13.200Z",
+	"generated_at": "2026-09-05T16:13:12.871Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -33284,7 +33284,7 @@
 			"date": "2026-06-13",
 			"type": "launch",
 			"title": "IRL",
-			"summary": "Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.",
+			"summary": "Pin a 3D AI agent at a real place and meet the ones around you. Walk up, see it through your camera, talk to it out loud, view it in AR on your own floor, and pay it on the spot.",
 			"link": "/irl",
 			"tags": [
 				"launch"

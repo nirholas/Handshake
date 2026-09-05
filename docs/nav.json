@@ -532,6 +532,10 @@
 					"path": "irl"
 				},
 				{
+					"label": "IRL street demo (visit links and signs)",
+					"path": "irl/street-demo"
+				},
+				{
 					"label": "World Lines (proof of presence)",
 					"path": "world-lines"
 				},

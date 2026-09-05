@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-05",
+			"title": "Invite people to an IRL agent with a visit link and a printable sign",
+			"summary": "Every agent you have placed in the real world now has a visit link and a sign you can print and tape to the spot. Someone who scans it opens IRL with a banner naming the agent they came to meet, and the moment they are close enough the agent appears in their camera, flashes, and opens its card by itself: bio, reputation, wallet, tip QR, services, and a message box. That card also gained See it in AR. On iPhone it stands the agent on the real floor in Quick Look, animated, and the banner inside AR brings you straight back to the tip panel; other phones open the AR launcher. The link never contains a location, so you can post it anywhere and the agent still only shows to people who are actually there. Find it under Visit link on each placement in your dashboard.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-09-05",
 			"title": "Seven background jobs that were never running now run",
 			"summary": "Seven scheduled jobs were declared in the platform config but had no matching job on the scheduler, so they had never fired: the companion poll, feedback triage, print-order syncing, the home health alert, the home-relay sweep, web-variant generation for the forge, and the oracle refit. Three of them shipped with live features behind them, which meant those features quietly did nothing on a timer. All seven are now created and enabled on their declared schedules, and a drift check confirms every declared job exists and matches.",
 			"tags": [

@@ -144,7 +144,7 @@ Drive a 3D avatar around with a joystick or WASD, then toggle the back camera fo
 
 URL: https://three.ws/irl
 
-Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.
+Pin a 3D AI agent at a real place and meet the ones around you. Walk up, see it through your camera, talk to it out loud, view it in AR on your own floor, and pay it on the spot.
 
 ### Printable IRL sign
 

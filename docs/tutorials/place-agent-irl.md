@@ -237,6 +237,7 @@ This is fundamentally different from viewing a single model in AR. If you only n
 ### See also
 
 - [IRL — open the product](/irl) — place your agent now
+- [Run an IRL street demo](/docs/irl/street-demo): visit links, printable signs, and what strangers see when they walk up
 - [How location works on IRL](/irl-privacy) — the full privacy model, sensor-by-sensor
 - [Tutorial: Place your 3D model in AR](/docs/tutorials/view-in-ar) — the single-model viewer (Quick Look / Scene Viewer / WebXR)
 - [AR & WebXR reference](/docs/ar) — the underlying AR methods and programmatic API

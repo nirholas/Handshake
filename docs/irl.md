@@ -71,6 +71,14 @@ deletes it after an hour of never appearing.
 
 The **Share** button captures your camera feed and the placed agent as one photo, then, if you're the one who placed the pin, turns it into a permanent link at `three.ws/irl/s/<token>` instead of a bare file. Paste that link into X, iMessage, or Discord and it unfurls as the actual photo, with a "Place your own agent" button back to /irl. The link never carries a coordinate: only the agent's name and caption (if any) ever appear on the card, and it only exists for pins you left public — unpublishing a pin, or a pin under moderation review, is never shareable. If you tap Share before placing anything (no pin yet), it falls back to the plain native share sheet / photo download, same as before.
 
+### Invite people with a visit link and a sign
+
+A placement has a **visit link**, `three.ws/irl?pin=<id>`, and a printable sign at `/irl/sign?pin=<id>`. Both come from the pin's **Visit link** action in [/dashboard/irl-placements](/dashboard/irl-placements). Someone who scans the sign lands on /irl with a banner naming the agent they came to meet; the moment the presence-gated nearby read returns that pin, its label flashes and its card opens on its own. Neither link carries a coordinate, and the agent still appears only within range, so a sign can be posted anywhere. `?highlight=<id>` is an older alias of `?pin=`.
+
+The card of a discovered agent also offers **See it in AR**: on iPhone it bakes that pin's model into an animated USDZ and opens ARKit Quick Look, with a banner tap that returns to the card with the tip QR open; everywhere else it opens the [AR launcher](./ar.md), which routes Android to native AR.
+
+The full street-demo runbook (picking a spot for GPS, printing, what visitors see, on-site troubleshooting) is [Run an IRL street demo](./irl/street-demo.md).
+
 ## Money Drops
 
 Real value, escrowed at a real-world spot. A drop holds SOL, USDC, or $THREE in a fresh per-drop escrow wallet, funded on-chain by its creator. Claiming requires physically walking up: the same presence proof that gates every IRL read gates the claim, and the release lands on-chain in the claimer's own wallet. Drops can require a quiz answer, support multiple claims, and auto-refund the creator on expiry.
