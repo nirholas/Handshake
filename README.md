@@ -9995,7 +9995,7 @@ The full OpenAPI 3.1 spec is available at `/openapi.json`. The key API surface i
 
 Cron schedules are declared in `vercel.json` (still the live cron/route config the server reads) and executed in production by **Google Cloud Scheduler**, which calls each endpoint on its schedule. All cron endpoints are fail-closed — a missing auth token aborts with an error rather than silently skipping (see [Security Hardening](#security-hardening)).
 
-The crons in `vercel.json` (114 entries on 2026-09-03) are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs). The table below is a selection of the notable jobs, each schedule quoted verbatim from `vercel.json`; that file is the complete list.
+The crons in `vercel.json` (115 entries on 2026-09-05) are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs). The table below is a selection of the notable jobs, each schedule quoted verbatim from `vercel.json`; that file is the complete list.
 
 | Schedule             | Endpoint                                | Purpose                                                                                                                      |
 | -------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
