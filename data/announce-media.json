@@ -61,6 +61,13 @@
 			"url": "/rig-doctor",
 			"alt": "three.ws Rig Doctor: drop in any humanoid GLB and it names the skeleton convention, then lists joint by joint which bones will animate and which will not move",
 			"caption": "Rig Doctor tells you which joints will not move before you ever load a clip."
+		},
+		{
+			"id": "tour-hero",
+			"surface": "/tour",
+			"url": "/tour",
+			"alt": "The three.ws Guided Tour page: quick highlights of 18 picks in about 7 minutes, or the full tour of 257 features across 6 chapters, walked on the live site by a 3D guide that speaks and points, paced by you",
+			"caption": "The same 257-stop route the film walks, handed to the reader with the pacing controls."
 		}
 	]
 }

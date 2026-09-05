@@ -1,0 +1,1 @@
+257 stops on the live site, none skipped, 66 minutes, and three.ws narrates three.ws. The route is generated from the page index, not written by hand: three.ws/tour

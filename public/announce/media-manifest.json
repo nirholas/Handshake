@@ -1,6 +1,6 @@
 {
 	"generatedBy": "scripts/capture-doc-media.mjs",
-	"generatedAt": "2026-09-04T18:29:12.207Z",
+	"generatedAt": "2026-09-05T15:04:25.166Z",
 	"shots": {
 		"activity-hero": {
 			"id": "activity-hero",
@@ -110,6 +110,23 @@
 			"height": 1012,
 			"frames": 60,
 			"fps": 12
+		},
+		"tour-hero": {
+			"id": "tour-hero",
+			"src": "/announce/img/tour-hero.webp",
+			"alt": "The three.ws Guided Tour page: quick highlights of 18 picks in about 7 minutes, or the full tour of 257 features across 6 chapters, walked on the live site by a 3D guide that speaks and points, paced by you",
+			"caption": "The same 257-stop route the film walks, handed to the reader with the pacing controls.",
+			"route": "/tour",
+			"viewport": "wide",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-09-05T15:04:25.068Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "17c198dcc",
+			"sha256": "5fb55a3dae29b0b779047ad66e17cbf4ffedb6421129bb3564f9ffbcdf0a372f",
+			"bytes": 58652,
+			"width": 1800,
+			"height": 1013
 		}
 	}
 }
