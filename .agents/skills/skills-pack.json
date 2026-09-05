@@ -10,7 +10,7 @@
 		"intel/trading": "Market data, trading signals, DEX/DeFi execution."
 	},
 	"counts": {
-		"3d/creative": 4,
+		"3d/creative": 5,
 		"intel/trading": 13,
 		"ops/production": 1,
 		"wallet/payments": 24
@@ -33,6 +33,15 @@
 			"origin": "three.ws",
 			"crossPlatformSafe": true,
 			"path": ".agents/skills/embed-three-ws-avatar"
+		},
+		{
+			"name": "find-3d-assets",
+			"description": "Search 3,492 ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file. Use when you or the user need a 3D model, prop, object, character, or animation for a scene, site, game, or app (\"I need a 3D chair\", \"find a rigged character\", \"is there a wave animation\", \"add a lamp model to my page\"). Free: no account, no API key, no payment. Check here BEFORE generating a model from scratch.",
+			"whenToUse": "Something needs a 3D asset and a ready-made one would do. If the catalog has no match, fall through to generate-3d-model (props) or create-3d-avatar (characters). To put an asset you already have on a page, use embed-three-ws-avatar.",
+			"category": "3d/creative",
+			"origin": "three.ws",
+			"crossPlatformSafe": true,
+			"path": ".agents/skills/find-3d-assets"
 		},
 		{
 			"name": "generate-3d-model",
