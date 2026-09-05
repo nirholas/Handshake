@@ -1124,6 +1124,15 @@
 			"description": "Experimental features actively shipping. Expect fast iteration.",
 			"pages": [
 				{
+					"path": "/assembly",
+					"title": "Machine Atlas",
+					"description": "A radial aero engine and a steam locomotive generated in the browser from code, with no 3D model files: solved linkages, live dimensions, explode views and a GLB export.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"showcase": true,
+					"added": "2026-09-05"
+				},
+				{
 					"path": "/launchpad",
 					"title": "Launchpad Studio",
 					"description": "Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.",
@@ -1305,6 +1314,15 @@
 					"priority": 0.5,
 					"changefreq": "monthly",
 					"added": "2026-04-17"
+				},
+				{
+					"path": "/console",
+					"title": "Agent Console",
+					"description": "A handheld console with a live 3D agent inside the screen. Steer it with the D-pad, swap cartridges for any public agent, and embed the whole console anywhere with one line of HTML.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"showcase": true,
+					"added": "2026-09-05"
 				}
 			]
 		},

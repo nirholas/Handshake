@@ -980,6 +980,15 @@
 			"dest": "/spotlight.html"
 		},
 		{
+			"src": "/console/?$",
+			"headers": {
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh; worker-src 'self' blob:; report-uri /api/client-errors",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin"
+			},
+			"dest": "/console.html"
+		},
+		{
 			"src": "/spotlight/([0-9a-fA-F-]{36})/?$",
 			"has": [
 				{
@@ -1813,6 +1822,10 @@
 		{
 			"src": "/galaxy/?",
 			"dest": "/galaxy.html"
+		},
+		{
+			"src": "/assembly/?",
+			"dest": "/assembly.html"
 		},
 		{
 			"src": "/quality-bench/?",
