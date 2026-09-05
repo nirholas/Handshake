@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Agent Console · three.ws</title>
+		<meta
+			name="description"
+			content="A handheld console with a real 3D agent living inside the screen. Steer it with the D-pad, swap the cartridge for any public three.ws agent, pick a shell, and drop the whole console onto your own site with one line of HTML."
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="canonical" href="https://three.ws/console" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/console.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:title" content="Agent Console · three.ws" />
+		<meta
+			property="og:description"
+			content="A handheld console with a real 3D agent walking inside the screen. D-pad steers it, cartridges swap the agent, one line of HTML puts it on your site."
+		/>
+		<meta property="og:url" content="https://three.ws/console" />
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=labs&amp;t=Agent+Console&amp;d=A+handheld+console+with+a+real+3D+agent+walking+inside+the+screen.+D-pad+steers+it%2C+cartridges+swap+the+agent%2C+one+line+of+HTML+puts+it+on+your+site&amp;p=%2Fconsole"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:type" content="image/png" />
+		<meta property="og:image:alt" content="Agent Console - three.ws" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Agent Console · three.ws" />
+		<meta
+			name="twitter:description"
+			content="A handheld console with a real 3D agent walking inside the screen. D-pad steers it, cartridges swap the agent, one line of HTML puts it on your site."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=labs&amp;t=Agent+Console&amp;d=A+handheld+console+with+a+real+3D+agent+walking+inside+the+screen.+D-pad+steers+it%2C+cartridges+swap+the+agent%2C+one+line+of+HTML+puts+it+on+your+site&amp;p=%2Fconsole"
+		/>
+	</head>
+	<body>
+		<script>/* embed mode (?chrome=off) is the device and nothing else: the site nav, footer, walk companion, tour and language pill all belong to three.ws, not to the page hosting this iframe. Decided here, before any of them load. */(function(){try{if(new URLSearchParams(location.search).get('chrome')==='off'){document.body.dataset.chrome='off';document.body.setAttribute('data-no-lang-switcher','');}}catch(e){}})();</script>
+		<header><div id="nav-container"></div></header>
+
+		<main class="cn-shell">
+			<div class="cn-top">
+			<section class="cn-hero">
+				<p class="cn-kicker"><span class="cn-dot" aria-hidden="true"></span> Live 3D · not a mockup</p>
+				<h1 class="cn-title">Your agent, <em>in a handheld</em></h1>
+				<p class="cn-sub">
+					Everyone is drawing portfolios inside pretend consoles. This one boots. There is a
+					real 3D agent walking around inside the screen, the D-pad actually steers it, the
+					cartridges are live agents anyone on three.ws built, and one line of HTML drops the
+					whole thing onto your own site.
+				</p>
+				<div class="cn-ctas">
+					<a class="cn-btn cn-btn-primary" href="/create">Build your own agent</a>
+					<button type="button" class="cn-btn" id="cn-share">Copy share link</button>
+					<button type="button" class="cn-btn" id="cn-post">Post on X</button>
+				</div>
+			</section>
+
+			<section class="cn-stage" aria-label="Agent console">
+				<div class="cn-device" id="cn-device" data-shell="graphite" data-power="on">
+					<div class="cn-shoulders">
+						<button type="button" class="cn-shoulder" id="cn-l" aria-label="Previous agent">L</button>
+						<button type="button" class="cn-shoulder" id="cn-r" aria-label="Next agent">R</button>
+					</div>
+
+					<div class="cn-brandbar">
+						<span class="cn-brand-name">three.ws</span>
+						<span id="cn-model-line">pocket agent</span>
+					</div>
+
+					<div class="cn-bezel">
+						<span class="cn-power-led" aria-hidden="true"></span>
+						<span class="cn-power-label" aria-hidden="true">power</span>
+
+						<div class="cn-screen">
+							<div class="cn-screen-view">
+								<div class="cn-cart" id="cn-cart-play" data-cart="play"></div>
+
+								<section class="cn-panel" id="cn-cart-stats" data-cart="stats" aria-label="Agent stats">
+									<div class="cn-panel-head">
+										<span>Stats</span><span id="cn-stats-id">--</span>
+									</div>
+									<div class="cn-panel-body">
+										<dl id="cn-stats-list"></dl>
+										<p class="cn-panel-note" id="cn-stats-note"></p>
+									</div>
+								</section>
+
+								<section class="cn-panel" id="cn-cart-select" data-cart="select" aria-label="Select an agent">
+									<div class="cn-panel-head">
+										<span>Select agent</span><span id="cn-select-count">--</span>
+									</div>
+									<div class="cn-panel-body">
+										<div id="cn-roster" role="listbox" aria-label="Public agents"></div>
+									</div>
+								</section>
+							</div>
+
+							<div class="cn-boot" id="cn-boot">
+								<span id="cn-boot-text">Booting agent</span>
+								<span class="cn-boot-bar" aria-hidden="true"><span class="cn-boot-fill"></span></span>
+								<button type="button" class="cn-boot-retry" id="cn-boot-retry" hidden>Retry</button>
+							</div>
+
+							<div class="cn-glass" aria-hidden="true"></div>
+
+							<div class="cn-hud" aria-hidden="true">
+								<span class="cn-hud-name" id="cn-hud-name">loading</span>
+								<span class="cn-hud-cart" id="cn-hud-cart">play</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="cn-deck">
+						<div class="cn-dpad" role="group" aria-label="Direction pad">
+							<span class="cn-dpad-plate" aria-hidden="true"></span>
+							<span class="cn-dpad-hub" aria-hidden="true"></span>
+							<button type="button" class="cn-dir" data-dir="up" aria-label="Walk forward">&#9650;</button>
+							<button type="button" class="cn-dir" data-dir="left" aria-label="Walk left">&#9664;</button>
+							<button type="button" class="cn-dir" data-dir="right" aria-label="Walk right">&#9654;</button>
+							<button type="button" class="cn-dir" data-dir="down" aria-label="Walk back">&#9660;</button>
+						</div>
+
+						<div></div>
+
+						<div class="cn-face">
+							<button type="button" class="cn-face-btn" data-btn="b" aria-label="B button: jump">B<small>jump</small></button>
+							<button type="button" class="cn-face-btn" data-btn="a" aria-label="A button: wave">A<small>wave</small></button>
+						</div>
+					</div>
+
+					<div class="cn-menu">
+						<button type="button" class="cn-menu-btn" data-btn="select" aria-label="Select: change scene">select</button>
+						<button type="button" class="cn-menu-btn" data-btn="start" aria-label="Start: change cartridge">start</button>
+					</div>
+
+					<div class="cn-speaker" aria-hidden="true">
+						<span></span><span></span><span></span><span></span><span></span><span></span>
+					</div>
+
+					<span class="cn-gamepad-pill" id="cn-gamepad">controller live</span>
+				</div>
+			</section>
+
+			<div class="cn-tools">
+				<div class="cn-tool-group" role="group" aria-label="Shell colour">
+					<span class="cn-tool-label">Shell</span>
+					<button type="button" class="cn-tab" data-shell="graphite" aria-pressed="true">
+						<span class="cn-swatch" style="background: #34363c" aria-hidden="true"></span>Graphite
+					</button>
+					<button type="button" class="cn-tab" data-shell="bone" aria-pressed="false">
+						<span class="cn-swatch" style="background: #e0dcd2" aria-hidden="true"></span>Bone
+					</button>
+					<button type="button" class="cn-tab" data-shell="clear" aria-pressed="false">
+						<span class="cn-swatch" style="background: #98a0b8" aria-hidden="true"></span>Clear
+					</button>
+					<button type="button" class="cn-tab" data-shell="indigo" aria-pressed="false">
+						<span class="cn-swatch" style="background: #3b3568" aria-hidden="true"></span>Indigo
+					</button>
+				</div>
+
+				<div class="cn-tool-group" role="group" aria-label="Cartridge">
+					<span class="cn-tool-label">Cartridge</span>
+					<button type="button" class="cn-tab" data-cart="play" aria-pressed="true">Play</button>
+					<button type="button" class="cn-tab" data-cart="stats" aria-pressed="false">Stats</button>
+					<button type="button" class="cn-tab" data-cart="select" aria-pressed="false">Select</button>
+				</div>
+
+				<div class="cn-tool-group" role="group" aria-label="Scene">
+					<span class="cn-tool-label">Scene</span>
+					<button type="button" class="cn-tab" data-env="night" aria-pressed="true">Night</button>
+					<button type="button" class="cn-tab" data-env="studio" aria-pressed="false">Studio</button>
+					<button type="button" class="cn-tab" data-env="sunset" aria-pressed="false">Sunset</button>
+					<button type="button" class="cn-tab" data-env="grid" aria-pressed="false">Grid</button>
+				</div>
+			</div>
+
+			</div>
+
+			<section class="cn-rail" aria-labelledby="cn-rail-title">
+				<div class="cn-rail-head">
+					<h2 class="cn-rail-title" id="cn-rail-title">Cartridges</h2>
+					<p class="cn-rail-hint">Every agent here is real and public. Slot one in, or press L / R on the console.</p>
+				</div>
+				<div class="cn-carts" id="cn-carts" aria-busy="true"></div>
+			</section>
+
+			<div class="cn-panels">
+				<section class="cn-card">
+					<h2>Put this console on your site</h2>
+					<p>
+						One iframe. It carries the agent you have loaded right now, boots its 3D body, and
+						runs on any origin. No SDK, no build step, no API key.
+					</p>
+					<code class="cn-code" id="cn-embed-code"></code>
+					<button type="button" class="cn-btn" id="cn-copy-embed">Copy embed code</button>
+				</section>
+
+				<section class="cn-card">
+					<h2>Controls</h2>
+					<p>
+						Keyboard, touch and a real gamepad all drive the same console. Plug a controller in
+						and the D-pad on screen lights up with it.
+					</p>
+					<div class="cn-keys">
+						<div><span>Walk</span> <kbd>W A S D</kbd></div>
+						<div><span>Run</span> <kbd>Shift</kbd></div>
+						<div><span>Wave</span> <kbd>K</kbd></div>
+						<div><span>Jump</span> <kbd>J</kbd></div>
+						<div><span>Change cartridge</span> <kbd>Enter</kbd></div>
+						<div><span>Change scene</span> <kbd>Space</kbd></div>
+						<div><span>Previous / next agent</span> <kbd>Q</kbd> <kbd>E</kbd></div>
+						<div><span>Power</span> <kbd>P</kbd></div>
+					</div>
+				</section>
+			</div>
+		</main>
+
+		<div class="cn-toast" id="cn-toast" role="status"></div>
+		<div id="cn-live" class="sr-only" role="status" aria-live="polite"></div>
+
+		<script type="module" src="/src/console.js"></script>
+		<div id="footer-container"></div>
+		<script>/* Site chrome loads only outside embed mode. Same files, same order as every other page; an embedded console just never asks for them. */(function(){if(document.body.dataset.chrome==='off')return;for(const src of ['/nav.js','/footer.js']){const s=document.createElement('script');s.src=src;document.body.appendChild(s);}const b=document.createElement('script');b.src='/brand.js';b.defer=true;document.body.appendChild(b);const i=document.createElement('script');i.type='module';i.src='/i18n.js';document.body.appendChild(i);})();</script>
+	</body>
+</html>

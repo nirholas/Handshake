@@ -64,6 +64,16 @@ const SPEED_PARAM = (() => {
 	if (!Number.isFinite(n)) return 1.0;
 	return Math.min(3, Math.max(0.3, n));
 })();
+// Camera pull-in. The chase camera frames the avatar from `height * 1.95` back
+// by default, which reads well full-bleed but leaves a lot of empty sky when the
+// embed is squeezed into a small 4:3 window (the /console handheld screen). A
+// host passes ?zoom=0.5..2 to scale that distance and eye height; 1 is the
+// untouched default, below 1 pulls in.
+const ZOOM_PARAM = (() => {
+	const n = Number(params.get('zoom'));
+	if (!Number.isFinite(n)) return 1.0;
+	return Math.min(2, Math.max(0.5, n));
+})();
 // Attribution badge ships by default — the embed is the distribution channel, so
 // every dropped avatar links home. `?badge=false` removes it (paid/whitelabel).
 const SHOW_BADGE = params.get('badge') !== 'false' && params.get('badge') !== '0';
@@ -625,7 +635,7 @@ async function loadAvatar() {
 	avatarRig.add(avatar);
 
 	const height = Math.max(0.5, box.max.y - box.min.y);
-	CAM_OFFSET.set(0, height * 1.05, height * 1.95);
+	CAM_OFFSET.set(0, height * 1.05 * ZOOM_PARAM, height * 1.95 * ZOOM_PARAM);
 	CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
 	applyCameraImmediate();
 
@@ -960,7 +970,7 @@ const runtime = {
 			avatar.position.y -= box.min.y;
 			avatarRig.add(avatar);
 			const height = Math.max(0.5, box.max.y - box.min.y);
-			CAM_OFFSET.set(0, height * 1.05, height * 1.95);
+			CAM_OFFSET.set(0, height * 1.05 * ZOOM_PARAM, height * 1.95 * ZOOM_PARAM);
 			CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
 			applyCameraImmediate();
 			animationManager.attach(avatar);
