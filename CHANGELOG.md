@@ -6,7 +6,10 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-09-05
 
+- **Agent Console** (`/console`): A handheld console with a live 3D agent inside the screen. Steer it with the D-pad, swap cartridges for any public agent, and embed the whole console anywhere with one line of HTML.
 - **Filming the product demo** (`/docs/product-demo`): How the narrated walkthrough of every three.ws feature is filmed on the live site: the route is generated from the Feature Tour curriculum, so a page that ships tomorrow films itself, and each chapter can be re-shot on its own.
+- **Machine Atlas** (`/assembly`): A radial aero engine and a steam locomotive generated in the browser from code, with no 3D model files: solved linkages, live dimensions, explode views and a GLB export.
+- **AI coding assistants can now search the three.ws asset library and get working code back**: Every ready-made asset the platform publishes is now one search away from any AI coding client connected to the three.ws MCP server: 511 CC0 props, 107 rigged characters and 2,874 motion clips, all in a single searchable catalog instead of three separate browse pages. Ask for a wooden chair or an industrial lamp and you get matching items ranked best first, with tags, license, and the CDN link. Ask for the source and you get code that runs as it is: the model-viewer tag our own gallery renders with, the agent-3d web component pinned to the exact published version and its integrity hash, plain three.js, or a React component. Motion clips come back as three.js code that loads and plays them. All three tools are free and need no account, no API key and no payment, because you should be able to find out what is already here before you sign up for anything. A search that matches only part of what you typed says so instead of returning nothing. (`/docs/mcp`) `[feature, sdk]`
 
 ## 2026-09-04
 

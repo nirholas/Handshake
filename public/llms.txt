@@ -170,6 +170,7 @@ Create and customize an agent.
 
 Experimental features actively shipping. Expect fast iteration.
 
+- [Machine Atlas](https://three.ws/assembly): A radial aero engine and a steam locomotive generated in the browser from code, with no 3D model files: solved linkages, live dimensions, explode views and a GLB export.
 - [Launchpad Studio](https://three.ws/launchpad): Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.
 - [Multi-LLM Brain](https://three.ws/brain): Send one prompt to Claude, GPT, Qwen, ModelScope, and Groq simultaneously. Side-by-side streaming with latency and token stats.
 - [Lipsync (TTS)](https://three.ws/lipsync): Type text, stream it through the avatar's voice, and the mouth animates in real time via wawa-lipsync viseme detection.
@@ -192,6 +193,7 @@ Experimental features actively shipping. Expect fast iteration.
 - [Runway Lab](https://three.ws/economy-lab): A live digital twin of the three.ws x402 payment rail. Runs the exact admission-control code the production settle path runs, seeded with live production balances, so you can drag a knob and watch settlement survive or starve, then get the exact command that fixes it.
 - [Holo Sticker](https://three.ws/holo): A live holographic foil sticker rendered in your browser: tilt it with your pointer, peel the corner, switch foils, die-cut your own text, and download the frame as a PNG. Fully procedural, no assets.
 - [Claim the CZ agent](https://three.ws/cz): Connect a wallet, sign one line, and take ownership of the pre-registered CZ agent, then copy its embed snippet.
+- [Agent Console](https://three.ws/console): A handheld console with a live 3D agent inside the screen. Steer it with the D-pad, swap cartridges for any public agent, and embed the whole console anywhere with one line of HTML.
 
 ## Crypto
 
@@ -695,7 +697,6 @@ Docs, tutorials, and reference.
 - [Docs · The Oracle model, and how to run it yourself](https://three.ws/docs/oracle-model): How the three.ws conviction model is fitted, what its three heads predict, why the outcome labels had to be made independent of the SOL price, how the promotion gate decides which model ships, and how to score launches locally with @three-ws/oracle-model.
 - [Docs · x402 distribution](https://three.ws/docs/x402-distribution): three.ws sells dozens of pay-per-call services over x402. Building them is half the job; the other half is making sure every directory, crawler, and agent marketplace can find them. The distribution checklist.
 - [Docs · The closed-loop x402 ring economy](https://three.ws/docs/x402-ring-economy): A self-contained agent-to-agent payment loop where platform-controlled wallets pay the platform's own paid endpoints in real stablecoin, settled by the platform's own facilitator. No user funds are involved.
-- [Docs · The $THREE micro-buy loop](https://three.ws/docs/three-microbuy): Many tiny, real on-chain buys of $THREE per minute, each triggered by and paid through a settled pay-per-call payment. It exists to put continuous, verifiable buy pressure behind the platform's own token.
 - [Docs · IBM watsonx and Granite](https://three.ws/docs/ibm): three.ws agents can think on IBM Granite foundation models served through IBM watsonx.ai. The whole integration for developers and operators: model selection, credentials, request shapes, and the fallback behind it.
 - [Docs · IBM Granite pay-per-call MCP](https://three.ws/docs/ibm-x402-mcp): A menu of IBM AI capabilities (chat, code, embeddings, document analysis, forecasting) that any agent or MCP client can use by paying a few cents per call, with no account and no subscription.
 - [Docs · three.ws on Hugging Face](https://three.ws/docs/huggingface): Hugging Face is where the machine-learning community publishes models, demos, and engineering writing. three.ws publishes there under its organization account, and this is the index of the article, the avatar rigs, and the Space.

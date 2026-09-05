@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-05T03:37:39.322Z",
+	"generated_at": "2026-09-05T05:30:10.436Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1371,6 +1371,16 @@
 			"description": "Experimental features actively shipping. Expect fast iteration.",
 			"pages": [
 				{
+					"path": "/assembly",
+					"title": "Machine Atlas",
+					"description": "A radial aero engine and a steam locomotive generated in the browser from code, with no 3D model files: solved linkages, live dimensions, explode views and a GLB export.",
+					"added": "2026-09-05",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
 					"path": "/launchpad",
 					"title": "Launchpad Studio",
 					"description": "Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.",
@@ -1589,6 +1599,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/console",
+					"title": "Agent Console",
+					"description": "A handheld console with a live 3D agent inside the screen. Steer it with the D-pad, swap cartridges for any public agent, and embed the whole console anywhere with one line of HTML.",
+					"added": "2026-09-05",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
 				}
 			]
 		},
@@ -6532,16 +6552,6 @@
 					"path": "/docs/x402-ring-economy",
 					"title": "Docs · The closed-loop x402 ring economy",
 					"description": "A self-contained agent-to-agent payment loop where platform-controlled wallets pay the platform's own paid endpoints in real stablecoin, settled by the platform's own facilitator. No user funds are involved.",
-					"added": null,
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
-				},
-				{
-					"path": "/docs/three-microbuy",
-					"title": "Docs · The $THREE micro-buy loop",
-					"description": "Many tiny, real on-chain buys of $THREE per minute, each triggered by and paid through a settled pay-per-call payment. It exists to put continuous, verifiable buy pressure behind the platform's own token.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

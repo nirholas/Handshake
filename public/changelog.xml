@@ -7,12 +7,36 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent Console</title>
+			<link>https://three.ws/console</link>
+			<guid isPermaLink="false">2026-09-05:Agent Console</guid>
+			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A handheld console with a live 3D agent inside the screen. Steer it with the D-pad, swap cartridges for any public agent, and embed the whole console anywhere with one line of HTML.</description>
+		</item>
+		<item>
 			<title>Filming the product demo</title>
 			<link>https://three.ws/docs/product-demo</link>
 			<guid isPermaLink="false">2026-09-05:Filming the product demo</guid>
 			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How the narrated walkthrough of every three.ws feature is filmed on the live site: the route is generated from the Feature Tour curriculum, so a page that ships tomorrow films itself, and each chapter can be re-shot on its own.</description>
+		</item>
+		<item>
+			<title>Machine Atlas</title>
+			<link>https://three.ws/assembly</link>
+			<guid isPermaLink="false">2026-09-05:Machine Atlas</guid>
+			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A radial aero engine and a steam locomotive generated in the browser from code, with no 3D model files: solved linkages, live dimensions, explode views and a GLB export.</description>
+		</item>
+		<item>
+			<title>AI coding assistants can now search the three.ws asset library and get working code back</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-09-05:AI coding assistants can now search the three.ws asset library and get working code back</guid>
+			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every ready-made asset the platform publishes is now one search away from any AI coding client connected to the three.ws MCP server: 511 CC0 props, 107 rigged characters and 2,874 motion clips, all in a single searchable catalog instead of three separate browse pages. Ask for a wooden chair or an industrial lamp and you get matching items ranked best first, with tags, license, and the CDN link. Ask for the source and you get code that runs as it is: the model-viewer tag our own gallery renders with, the agent-3d web component pinned to the exact published version and its integrity hash, plain three.js, or a React component. Motion clips come back as three.js code that loads and plays them. All three tools are free and need no account, no API key and no payment, because you should be able to find out what is already here before you sign up for anything. A search that matches only part of what you typed says so instead of returning nothing.</description>
 		</item>
 		<item>
 			<title>Trader Wrapped: your season on pump.fun</title>
