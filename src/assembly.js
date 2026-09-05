@@ -27,10 +27,9 @@ const $ = (id) => document.getElementById(id);
 const state = {
 	machine: null,
 	values: {},
-	built: null,
 	angle: 0,
 	speed: 0.55,
-	playing: true,
+	playing: !matchMedia('(prefers-reduced-motion: reduce)').matches,
 	explode: 0,
 	explodeTarget: 0,
 	structure: false,
@@ -57,6 +56,8 @@ controls.dampingFactor = 0.07;
 controls.minDistance = 0.6;
 controls.maxDistance = 60;
 controls.maxPolarAngle = Math.PI * 0.495;
+// Orbit and pan from the keyboard, so the stage is not pointer-only.
+controls.listenToKeyEvents(host);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -180,7 +181,8 @@ function build(machineId, values, { frame = 'keep' } = {}) {
 	scene.add(built.root);
 	current = built;
 	state.machine = machine;
-	state.built = built;
+	hovered = null;
+	label.hidden = true;
 	built.update(state.angle);
 	applyExplode(built.root, state.explode);
 	for (const g of state.hidden) setGroupVisible(built.root, g, false);
@@ -448,6 +450,9 @@ function pick() {
 function setHovered(obj) {
 	if (obj === hovered) return;
 	if (hovered && hovered.userData.hoverMaterial) {
+		// The highlight is a clone of the part's own material, so it has to be
+		// freed on the way out; one leaked material per hover adds up fast.
+		hovered.material.dispose();
 		hovered.material = hovered.userData.hoverMaterial;
 		hovered.userData.hoverMaterial = null;
 	}
@@ -672,7 +677,7 @@ renderHeader();
 renderParams();
 wire();
 build(start.machine.spec.id, start.values, { frame: 'first' });
-setPlaying(true);
+setPlaying(state.playing);
 $('maSpeedOut').textContent = `${state.speed.toFixed(2)} rev/s`;
 $('maStage').classList.add('is-ready');
 track(ANALYTICS_EVENTS.SURFACE_OPENED, { surface: `visualizer:assembly:${start.machine.spec.id}` });

@@ -17,14 +17,14 @@
 		content="No model files. A radial aero engine and a steam locomotive built at runtime from dimensions, profiles and geometry functions, with solved linkages you can take apart."
 	/>
 	<meta property="og:url" content="https://three.ws/assembly" />
-	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Machine+Atlas&amp;d=Two+working+machines+generated+in+the+browser+from+code%3A+no+3D+model+files%2C+solved+linkages%2C+live+parameters%2C+GLB+export.&amp;p=%2Fassembly" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Machine+Atlas&amp;d=A+radial+aero+engine+and+a+steam+locomotive+generated+in+the+browser+from+code%2C+with+no+3D+model+files%3A+solved+linkages%2C+live+dimensions%2C+explode+views+and+a&amp;p=%2Fassembly" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="Machine Atlas · three.ws" />
 	<meta
 		name="twitter:description"
 		content="A radial engine and a steam locomotive, generated at runtime from dimensions and profiles. Move a slider and the geometry is rebuilt."
 	/>
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Machine+Atlas&amp;d=Two+working+machines+generated+in+the+browser+from+code%3A+no+3D+model+files%2C+solved+linkages%2C+live+parameters%2C+GLB+export.&amp;p=%2Fassembly" />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Machine+Atlas&amp;d=A+radial+aero+engine+and+a+steam+locomotive+generated+in+the+browser+from+code%2C+with+no+3D+model+files%3A+solved+linkages%2C+live+dimensions%2C+explode+views+and+a&amp;p=%2Fassembly" />
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:locale" content="en_US" />
@@ -45,7 +45,7 @@
 	<script src="/nav.js"></script>
 
 	<main class="ma-stage" id="maStage">
-		<div class="ma-canvas" id="maCanvas"></div>
+		<div class="ma-canvas" id="maCanvas" tabindex="0" role="application" aria-label="Machine viewport. Drag or use the arrow keys to move the camera."></div>
 		<div class="ma-label" id="maLabel" hidden></div>
 		<div class="ma-loading" aria-hidden="true">
 			<span></span><span></span><span></span>
@@ -64,7 +64,7 @@
 		</div>
 
 		<section class="ma-intro">
-			<p class="ma-kicker">Two machines. Two eras. Zero assets.</p>
+			<p class="ma-kicker">Two machines. Nothing downloaded.</p>
 			<h1 id="maName">Radial Nine</h1>
 			<p class="ma-subtitle" id="maSubtitle">Air-cooled radial aero engine</p>
 			<p class="ma-blurb" id="maBlurb"></p>

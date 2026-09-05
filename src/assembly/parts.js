@@ -378,10 +378,12 @@ export function mergeGeometries(geometries) {
 	return out;
 }
 
+// Triangles actually being drawn: a hidden subassembly costs nothing, and the
+// stat panel should say so.
 export function triangleCount(object) {
 	let n = 0;
 	object.traverse((o) => {
-		if (!o.isMesh || !o.geometry) return;
+		if (!o.isMesh || !o.geometry || !o.visible) return;
 		const g = o.geometry;
 		const count = g.index ? g.index.count : g.getAttribute('position').count;
 		n += (count / 3) * (o.isInstancedMesh ? o.count : 1);
