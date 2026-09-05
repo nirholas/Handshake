@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-05",
+			"title": "Seven background jobs that were never running now run",
+			"summary": "Seven scheduled jobs were declared in the platform config but had no matching job on the scheduler, so they had never fired: the companion poll, feedback triage, print-order syncing, the home health alert, the home-relay sweep, web-variant generation for the forge, and the oracle refit. Three of them shipped with live features behind them, which meant those features quietly did nothing on a timer. All seven are now created and enabled on their declared schedules, and a drift check confirms every declared job exists and matches.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-05",
 			"title": "The site header now stays put when you scroll",
 			"summary": "The navigation bar was set to stick to the top of the window but never actually did: it scrolled away with the page on every route, at every screen size, so reaching the menu meant scrolling all the way back up. The bar was mounted inside a wrapper exactly its own height, and a sticky element can only travel inside its parent, so it had nowhere to go. The header now stays on screen wherever you scroll, on phones and desktop alike.",
 			"tags": [
