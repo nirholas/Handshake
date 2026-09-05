@@ -122,7 +122,9 @@ export function installOverlay() {
 #${ID} .ds-chap-n{font-size:15px;letter-spacing:.34em;text-transform:uppercase;color:#8b7bff;font-weight:700}
 #${ID} .ds-chap-t{font-size:78px;line-height:1.06;font-weight:800;color:#fff;letter-spacing:-.02em;max-width:1200px}
 #${ID} .ds-chap-s{font-size:24px;color:#b9bad6;max-width:900px;line-height:1.5}
-#${ID} .ds-badge{position:absolute;right:34px;top:28px;display:flex;align-items:center;gap:9px;
+/* Bottom left: the top right of this site is its account chip and notification
+   bell, and a route badge sitting on top of them reads as a rendering bug. */
+#${ID} .ds-badge{position:absolute;left:34px;bottom:78px;display:flex;align-items:center;gap:9px;
   padding:9px 15px;border-radius:999px;background:rgba(9,9,20,.72);border:1px solid rgba(255,255,255,.13);
   color:#e8e9ff;font-size:15px;font-weight:600;letter-spacing:.01em;opacity:0;transition:opacity .4s ease}
 #${ID} .ds-badge.ds-on{opacity:1}
