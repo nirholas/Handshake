@@ -245,6 +245,11 @@ export const NAV_GROUPS = [
 						badge: 'New',
 						desc: 'The community showcase: agents people actually built something with, ranked by upvotes',
 					},
+					{
+						title: 'Pocket Console',
+						href: '/pocket',
+						desc: 'A handheld with a live 3D agent in the screen: the D-pad walks it, and one iframe puts it on your site',
+					},
 					{ title: 'Agents Index', href: '/agents', desc: 'Browse every registered agent' },
 					{
 						title: 'Live Agents',
