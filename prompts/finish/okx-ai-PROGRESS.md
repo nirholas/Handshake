@@ -6,6 +6,68 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-05, both fixes are LIVE in production and both were proven on the wire; only the resubmission is left
+
+The deploy the previous session staged went out with the morning release (production reads
+commit `0f75c2cf1`, revision `three-ws-api-00414-lr5`, built 03:44 UTC, and `a49056707` is an
+ancestor of it). Everything that was "fixed in main and in no production" yesterday is now
+serving. Both legs were then measured against the live site, not read in the diff.
+
+### Leg 1: the quotation. PASS 20 probes
+
+`node scripts/okx-compliance-probe.mjs` against `https://three.ws` is green on all four paid
+rows and all five request shapes, where the same run before the deploy reported 36 failing
+checks. Capture: `prompts/okx-ai/e2e-evidence/82-2026-09-05-post-deploy-compliance-probe.json`.
+The guide's bodyless self-check now answers 402 with a `PAYMENT-REQUIRED` header instead of
+415, and no rail is quoted twice.
+
+### Leg 2: the payment. A real signed authorization is now accepted
+
+The compliance probe stops at the quotation, so the EIP-7702 fix needed its own proof and now
+has a rerunnable one: **`node scripts/okx-payment-leg-probe.mjs`** (new). It pulls the live
+challenge, signs it through the `onchainos` TEE wallet, replays it with `PAYMENT-SIGNATURE`,
+and requires the answer to be `insufficient_balance`, which the verifier throws only after
+the signature, recipient, amount, validity window and unredeemed nonce have all passed.
+
+`PASS 4 paid rows accepted a signed authorization against https://three.ws`, captured in
+`prompts/okx-ai/e2e-evidence/83-2026-09-05-payment-leg-replay.json`. The same replay against
+production yesterday would have answered `EIP-3009 signature does not verify for
+authorization.from`, which is the exact refusal OKX's QA collected on 2026-08-27. The buyer
+signing here is `0x75d0...cf69`, a delegated EOA carrying `0xef0100...` code, so the delegated
+shape is genuinely exercised and not simulated. It holds 0 USD₮0, so nothing settled and no
+nonce was redeemed; the script refuses to sign at all if the buyer is ever funded, unless
+`--allow-spend` says the purchase is intended.
+
+Both probes are now the mandatory pre-resubmission gate in the RUNBOOK (new section 5.5).
+
+### The listing state, read live
+
+`agent get-my-agents` still reads `approvalDisplayStatus: 5`, `status: 2`. The rejection text
+has now landed in `approvalRemark` as well as the email, worded per row, and it repeats the
+"free or small payment test" note about the audit address
+`0xbc59eb75C55e3bF1E63aaeE653C2b8E02BFd2033`. Nothing here intercepts that address, and the
+amount branch was never what refused it: an authorization under the list price dies at the
+amount check with a different error and no RPC, while the 2026-08-27 wire capture shows 0.4 s
+to 0.7 s of chain work before the refusal. Their test paid the full price and we rejected the
+signature. That is fixed.
+
+`agent service-list --agent-id 2632` confirms all seven rows survive unchanged: the four paid
+rows still carry `A2MCP`, `chainIndex 196`, the USD₮0 contract, their registered fees
+(0.01 / 0.05 / 0.25 / 0.25 USDT) and their live endpoints. So the resubmission is still the
+bare activate, not a service delta.
+
+### The only remaining step, owner-gated
+
+```bash
+onchainos agent activate --agent-id 2632 --preferred-language en-US
+```
+
+An on-chain write, so it waits for the owner's explicit yes. Nothing else is outstanding: the
+code is live, both probes are green, the evidence is committed, and the wallet session is
+authenticated (`onchainos wallet status` reads `loggedIn: true`, `claude@three.ws`).
+
+---
+
 ## 2026-09-04, the chat host is deployable: the AI credential is no longer a missing secret
 
 The chat bot (agent #2632) is back online from the codespace stopgap, its Cloud Run deploy

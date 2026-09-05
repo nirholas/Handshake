@@ -1,0 +1,669 @@
+{
+  "captured_at": "2026-09-05T15:21:59.972Z",
+  "base": "https://three.ws",
+  "what": "Live A2MCP compliance capture of the four paid OKX.AI forge rows: the bodyless self-check answers the quotation, and every quotation names each rail once at the registered list price.",
+  "pass": true,
+  "failures": [],
+  "probes": [
+    {
+      "service": "forge-draft",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-draft",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-draft",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-draft",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-draft",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-standard",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-hd",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    },
+    {
+      "service": "forge-image",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false
+    }
+  ]
+}

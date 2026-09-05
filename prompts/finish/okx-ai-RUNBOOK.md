@@ -375,6 +375,45 @@ This is the holder-visible moment. Work the list top to bottom.
 
 ---
 
+## 5.5 The pre-resubmission gate: two probes, both must pass
+
+Never resubmit on a code review alone. Both of these run against live production, take about
+a minute together, and each one covers a leg the other cannot see. Every rejection since
+2026-07-04 would have been caught by one of them.
+
+```bash
+node scripts/okx-compliance-probe.mjs      # the 402 quotation, as the reviewer parses it
+node scripts/okx-payment-leg-probe.mjs     # the signed replay, as the reviewer pays it
+```
+
+- **`okx-compliance-probe.mjs`** walks all four paid rows through five request shapes,
+  including the A2MCP guide's own bodyless `curl -i -X POST` self-check, and fails unless
+  every one answers 402 with a `PAYMENT-REQUIRED` header that names each rail exactly once at
+  the row's registered list price. It exists because a duplicated `eip155:196` accept at two
+  prices reads to a validator as "quotation cannot be parsed", which is what rejection #3
+  said in the reviewer's internal note.
+- **`okx-payment-leg-probe.mjs`** fetches the challenge, signs it through the `onchainos` TEE
+  wallet (so the buyer is a real EIP-7702 delegated OKX agentic wallet, the same shape as the
+  audit address), replays it, and requires the answer to be `insufficient_balance` and
+  nothing else. That error is thrown after the signature, recipient, amount, validity window
+  and nonce have all been accepted, so it is the proof that a *funded* buyer settles. Our
+  buyer holds no USD₮0, so the run spends nothing; if it is ever funded the script refuses to
+  sign without `--allow-spend`, because then a pass would be a real purchase.
+
+Both take `--base` (point them at a staged worktree's server before a deploy) and `--out`
+(write the capture into `prompts/okx-ai/e2e-evidence/`). Commit the captures: they are the
+evidence trail for the next review.
+
+With both green and the seven rows still matching `api/_lib/okx-catalog.js` (§2), the
+resubmission is one command, and it is an on-chain write, so the owner confirms it first:
+
+```bash
+onchainos agent activate --agent-id 2632 --preferred-language en-US
+```
+
+Do not run the WO-08 service delta when the rows already match: it deletes and recreates
+correct rows and loses their service ids.
+
 ## 6. First-sale operations
 
 | What | How |
