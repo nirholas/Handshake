@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import { reportFor } from './inspect.js';
 import { trackPanel } from './active-panel.js';
+import { uniqueName } from './naming.js';
 
 export const VIEW_TYPE = 'threews3d.modelViewer';
 
@@ -89,6 +90,11 @@ export function openRemoteModel(context, links, output, url, title) {
 		readBytes: async () => {
 			const res = await fetch(url);
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const declared = Number(res.headers.get('content-length') || 0);
+			if (declared > MAX_INSPECT_BYTES) {
+				res.body?.cancel();
+				throw new Error(`model is ${declared} bytes, too large to inspect`);
+			}
 			return new Uint8Array(await res.arrayBuffer());
 		},
 	});
@@ -170,7 +176,14 @@ async function saveSnapshot(dataUrl, resource, output) {
 		return;
 	}
 	const stem = resource ? path(resource).replace(/\.(glb|gltf)$/i, '') : 'model';
-	const target = vscode.Uri.joinPath(folder, `${stem}.png`);
+	const taken = await vscode.workspace.fs.readDirectory(folder).then(
+		(entries) => new Set(entries.map(([name]) => name.toLowerCase())),
+		() => new Set(),
+	);
+	const target = vscode.Uri.joinPath(
+		folder,
+		uniqueName(stem, '.png', (name) => taken.has(name.toLowerCase())),
+	);
 	await vscode.workspace.fs.writeFile(target, bytes);
 	output.appendLine(`snapshot written to ${target.fsPath}`);
 	const open = await vscode.window.showInformationMessage(

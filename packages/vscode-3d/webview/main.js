@@ -68,7 +68,7 @@ key.position.set(3, 6, 4);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
 key.shadow.bias = -0.0005;
-scene.add(key, new THREE.HemisphereLight(0xffffff, 0x404040, 0.6));
+scene.add(key, key.target, new THREE.HemisphereLight(0xffffff, 0x404040, 0.6));
 
 const ground = new THREE.Mesh(
 	new THREE.PlaneGeometry(1, 1),
@@ -209,7 +209,6 @@ function resetView() {
 	controls.update();
 	key.target.position.set(0, height / 2, 0);
 	key.target.updateMatrixWorld();
-	scene.add(key.target);
 	const span = Math.max(r * 3, height * 1.5);
 	key.shadow.camera.left = -span;
 	key.shadow.camera.right = span;

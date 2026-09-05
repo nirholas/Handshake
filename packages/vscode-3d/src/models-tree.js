@@ -16,7 +16,6 @@ export class ModelsProvider {
 		this.onDidChangeTreeData = this._emitter.event;
 		this._files = [];
 		this._error = '';
-		this._loading = true;
 		this._watcher = vscode.workspace.createFileSystemWatcher(GLOB);
 		const bump = () => this.refresh();
 		this._watcher.onDidCreate(bump);
@@ -29,8 +28,8 @@ export class ModelsProvider {
 	}
 
 	async refresh() {
-		this._loading = true;
-		this._emitter.fire();
+		// The previous list stays on screen while the rescan runs, so the welcome
+		// view does not flash in and out every time a model is written.
 		try {
 			const uris = await vscode.workspace.findFiles(GLOB, EXCLUDE, 2000);
 			const stats = await Promise.all(
@@ -49,7 +48,6 @@ export class ModelsProvider {
 			this._error = err?.message || String(err);
 			this._files = [];
 		}
-		this._loading = false;
 		this._emitter.fire();
 	}
 
@@ -58,7 +56,6 @@ export class ModelsProvider {
 	}
 
 	getChildren(node) {
-		if (this._loading) return [];
 		if (this._error) return [infoNode(`Could not scan the workspace: ${this._error}`, 'error')];
 		if (!node) return this._groups();
 		return (node.files || []).map((file) => this._modelNode(file));
