@@ -14,8 +14,9 @@
  * the same way a screen recorder draws the host cursor over a real session. It
  * reports the interaction, it never stands in for one.
  *
- * The narration is spoken by the platform's own TTS endpoint (/api/tts/speak),
- * so a demo of three.ws is narrated by three.ws.
+ * The narration is spoken by the platform's own TTS endpoints (/api/tts/edge by
+ * default, /api/tts/speak on request), so a demo of three.ws is narrated by
+ * three.ws.
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -397,12 +398,6 @@ export class Presenter {
 		}
 	}
 
-	async toTop({ ms = 900 } = {}) {
-		const { y } = await this.scrollState();
-		if (y < 8) return;
-		await this.readDown(-y, { ms });
-	}
-
 	/** Put an element in the comfortable middle band of the frame. */
 	async bringIntoView(selector, { top = 140, bottom = 260 } = {}) {
 		const el = this.locate(selector);
@@ -587,8 +582,13 @@ export class Narrator {
 				body: JSON.stringify(this.lane.body(text, this.voice)),
 			});
 			if (res.status === 429) {
+				/* The handler answers JSON, but a limiter in front of it (CDN, load
+				   balancer) answers HTML, and parsing that would throw out of the
+				   retry loop and kill a warm-up ten minutes in. */
 				const body = await res.text();
-				const after = Number(res.headers.get('retry-after')) || JSON.parse(body || '{}').retry_after || 60;
+				let hinted = 0;
+				try { hinted = Number(JSON.parse(body || '{}').retry_after) || 0; } catch { hinted = 0; }
+				const after = Number(res.headers.get('retry-after')) || hinted || 60;
 				this.log(`narrator rate limited, waiting ${after}s`);
 				await sleep(Math.min(after, 300) * 1000 + 500);
 				continue;
@@ -718,6 +718,10 @@ export function concatParts(parts, out, work) {
 export function mediaInfo(file) {
 	const r = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration,size',
 		'-of', 'default=noprint_wrappers=1', file], { encoding: 'utf8' });
+	/* This feeds the committed run manifest. A probe that quietly failed would
+	   write a film of zero seconds into it, which reads as a bad recording
+	   rather than as a broken measurement. */
+	if (r.status !== 0) throw new Error(`ffprobe failed on ${file}: ${r.stderr || r.status}`);
 	const map = Object.fromEntries(r.stdout.trim().split('\n').map((l) => l.split('=')));
 	return { seconds: Number(map.duration || 0), bytes: Number(map.size || 0) };
 }

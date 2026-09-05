@@ -38,7 +38,7 @@ curriculum the in-product [Feature Tour](../tour-sdk/README.md) walks, which
 follow from that:
 
 - **A page that ships tomorrow is in the film.** Add it to `data/pages.json`, run
-  `npm run build:tour`, and the next recording visits it. Nothing here needs editing.
+  `node scripts/build-tour.mjs`, and the next recording visits it. Nothing here needs editing.
 - **The narration is the page's own description.** The words spoken over each stop are the same
   plain-language sentences that feed the sitemap, `llms.txt`, and the changelog, so the film cannot
   drift into claiming something the platform does not do.
@@ -86,8 +86,9 @@ for the click ring.
 **The voice is the platform's own.** Narration is synthesized through the site's own TTS lane, so
 three.ws narrates three.ws. The default is `/api/tts/edge` (Microsoft Edge Neural voices, proxied
 and cached in R2 by the platform), because it allows 20 lines a minute for a signed-in caller and a
-full film has close to three hundred of them. `--narrator=speak` switches to the free NVIDIA Magpie
-lane behind `/api/tts/speak`, which is better suited to a handful of lines: it allows 40 an hour.
+full film has close to three hundred of them. `--narrator=speak` switches to `/api/tts/speak`, which
+is better suited to a handful of lines: it allows 40 an hour, and its free NVIDIA Magpie lane falls
+through to a paid OpenAI backstop when Magpie errors, which on a few hundred lines is real spend.
 Both lanes need the QA session, so `--authed` is not optional when there is a voice track.
 
 Every line is synthesized **before** the camera rolls. Filming is real time, so a line fetched
@@ -122,6 +123,7 @@ stays sample accurate end to end.
 | `--reuse` | Keep chapter mp4s that already exist, and film the rest |
 | `--strict` | A failed stop fails the run |
 | `--crf=<n>` | x264 quality, default 22; lower is bigger |
+| `--name=<basename>` | Output basename (default `three-ws-demo`, or `three-ws-demo-<route>`) |
 | `--dry-run` | Print the route and exit |
 
 ## Before you film

@@ -523,8 +523,9 @@ marketing/*/.raw/
 # The product demo film (scripts/make-product-demo.mjs, `npm run demo:video`).
 # Every chapter is a 1080p screen recording of the live site and the set runs to
 # hundreds of megabytes, which is not something a git history should carry
-# forever. demo-manifest.json IS committed, so the repo still records what was
-# filmed, when, from which origin, and which stops were skipped.
+# forever. three-ws-demo-manifest.json IS committed, so the repo still records
+# what was filmed, when, from which origin, and which stops were skipped. The
+# .smoke/ tree is where a --out=...smoke test run lands; .raw/ is covered above.
 marketing/product-demo/*.mp4
 marketing/product-demo/.smoke/
 
@@ -592,12 +593,6 @@ public/announce/img/activity-*
 # `npm run announce:rank -- --write --probe`; delete this rule once approved.
 data/announcements.json
 
-# Product-demo capture scratch. `scripts/make-product-demo.mjs --smoke` writes
-# ~70 MB of intermediate wavs, per-track silence padding and rendered mp4s here
-# on every run. The finished demo is published, not committed, so this tree is
-# pure regenerable output; ignoring it keeps a concurrent `git add -A` sweep
-# from putting the binaries in the history.
-marketing/product-demo/.smoke/
 
 # The unanchored `demo/` rule above (NVIDIA TRELLIS local outputs) matches at any
 # depth, so it also swallowed 578 files of runnable demos inside the vendored MIT

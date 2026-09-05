@@ -5,7 +5,8 @@
  * The route is not hand-maintained: it is the same curriculum the in-product
  * Feature Tour walks (public/tour/curriculum.json, generated from
  * data/pages.json by scripts/build-tour.mjs), so a page that ships tomorrow is
- * one `npm run build:tour` away from being in the video, and the narration is
+ * one `node scripts/build-tour.mjs` away from being in the video, and the
+ * narration is
  * the page's own plain-language description rather than marketing invented
  * here. Chapters are the curriculum's sections.
  *
@@ -268,7 +269,8 @@ const ACTS = {
 
 	'/pay': async (p, { beat }) => {
 		await beat('This is machine to machine payment. An API answers a request with a price instead of a refusal, and the agent pays it.');
-		await p.clickIfPresent('button.chain-tab:has-text("BNB")', { after: 1300 });
+		/* Solana is the home chain, so the film opens this page on the Solana
+		   tab and stays there rather than touring the secondary rails. */
 		await p.clickIfPresent('button.chain-tab:has-text("Solana")', { after: 1300 });
 		await p.type('#prompt', 'validate https://example.com', { cps: 16, settle: 700 });
 		await beat('Solana first, in USDC, settling in under a second and costing a fraction of a cent.');
@@ -353,14 +355,29 @@ const wantSections = args.sections
 	? String(args.sections).split(',').map((s) => s.trim()).filter(Boolean)
 	: null;
 
-const chapters = [];
+/*
+ * A chapter's number is its place in the WHOLE route, not in whatever slice of
+ * it this run happens to film. Re-shooting one chapter has to write the file the
+ * joined film will look for, open without the film's welcome, and end without
+ * its sign-off, or the re-shot chapter cannot be dropped back in.
+ */
+const allChapters = [];
 for (const section of curriculum.sections) {
 	if (section.id === 'onboarding') continue;
-	if (wantSections && !wantSections.includes(section.id)) continue;
-	const stops = routeStops().filter((s) => s.section === section.id).slice(0, LIMIT);
-	if (stops.length) chapters.push({ ...section, stops });
+	const stops = routeStops().filter((s) => s.section === section.id);
+	if (stops.length) allChapters.push({ ...section, no: allChapters.length + 1, stops });
 }
+const lastChapterNo = allChapters.length;
+const chapters = allChapters
+	.filter((c) => !wantSections || wantSections.includes(c.id))
+	.map((c) => ({ ...c, stops: c.stops.slice(0, LIMIT) }))
+	.filter((c) => c.stops.length);
 if (!chapters.length) throw new Error('the route selected no stops');
+/* A run that did not cover the whole route must not overwrite the full film or
+   the manifest that records it; its chapters stand alone until a --reuse pass
+   joins them back up. */
+const COMPLETE = chapters.length === allChapters.length
+	&& chapters.every((c, i) => c.stops.length === allChapters[i].stops.length);
 
 const totalStops = chapters.reduce((n, c) => n + c.stops.length, 0);
 log(`route ${ROUTE}: ${totalStops} stops across ${chapters.length} chapters against ${ORIGIN}`);
@@ -400,17 +417,34 @@ const narrator = new Narrator({
  * source, so the whole script can be collected up front.
  */
 const BEAT_RE = /beat\(\s*'((?:[^'\\]|\\.)*)'\s*\)/g;
+/* A beat written with backticks or double quotes would be invisible here and
+   would then be synthesized mid-take, which is exactly the dead air the warm-up
+   exists to prevent. Counting the calls catches that at startup instead. */
+function beatsIn(act) {
+	const src = String(act);
+	const calls = (src.match(/\bbeat\(/g) || []).length;
+	const found = [...src.matchAll(BEAT_RE)].map((m) => m[1].replace(/\\'/g, "'"));
+	if (found.length !== calls) {
+		throw new Error(`an act has ${calls} beat() calls but ${found.length} readable literals; `
+			+ 'write every beat as a single-quoted string so the warm-up can synthesize it');
+	}
+	return found;
+}
+
 function scriptLines() {
 	const lines = [OPENING, CLOSING];
 	for (const chapter of chapters) {
 		lines.push(chapter.intro);
 		for (const stop of chapter.stops) lines.push(lineFor(stop));
 	}
-	for (const act of Object.values(ACTS)) {
-		for (const m of String(act).matchAll(BEAT_RE)) lines.push(m[1].replace(/\\'/g, "'"));
-	}
+	for (const act of Object.values(ACTS)) lines.push(...beatsIn(act));
 	return lines;
 }
+/* contextOptions carries the actionable message about minting a QA session, but
+   it is not reached until the first chapter, and the narration lane is
+   signed-in-only: without this the run dies seventeen minutes earlier on a bare
+   TTS 401. */
+if (args.authed) contextOptions({ authed: true });
 await narrator.warm(scriptLines());
 
 const skipped = [];
@@ -418,8 +452,8 @@ const parts = [];
 const browser = await chromium.launch(launchOptions());
 
 try {
-	for (const [ci, chapter] of chapters.entries()) {
-		const out = path.join(OUT, `${NAME}-${String(ci + 1).padStart(2, '0')}-${chapter.id}.mp4`);
+	for (const chapter of chapters) {
+		const out = path.join(OUT, `${NAME}-${String(chapter.no).padStart(2, '0')}-${chapter.id}.mp4`);
 		if (args.reuse && existsSync(out)) {
 			log(`chapter ${chapter.title}: reusing ${path.basename(out)}`);
 			parts.push(out);
@@ -438,17 +472,18 @@ try {
 		narrator.open(t0);
 		const p = new Presenter(page, { log });
 
-		log(`chapter ${ci + 1}/${chapters.length}: ${chapter.title} (${chapter.stops.length} stops)`);
+		log(`chapter ${chapter.no}/${lastChapterNo}: ${chapter.title} (${chapter.stops.length} stops)`);
 
 		/* Open on the chapter's first page so the title card sits over the real
 		   product rather than over a blank tab. The card carries the words while
 		   they are spoken, so the caption bar stays out of its way. */
 		const first = chapter.stops[0];
-		await page.goto(`${ORIGIN}${first.path}`, { waitUntil: 'domcontentloaded', timeout: 60_000 }).catch(() => {});
+		await page.goto(`${ORIGIN}${first.path}`, { waitUntil: 'domcontentloaded', timeout: 60_000 })
+			.catch((err) => log(`  opening ${first.path} failed: ${String(err.message).split('\n')[0]}`));
 		/* The card goes up as soon as the document exists, so the chapter opens
 		   on a title rather than on a page still streaming its 3D scene in. */
 		await p.showCursor(false);
-		if (ci === 0) {
+		if (chapter.no === 1) {
 			/* The opening already welcomes the viewer, so chapter one does not
 			   also read the guide's own welcome line back to them. */
 			await p.chapter('', 'three.ws', OPENING);
@@ -458,7 +493,7 @@ try {
 			await sleep(2600);
 		} else {
 			const intro = chapter.intro;
-			await p.chapter(`Chapter ${ci + 1}`, chapter.title, intro);
+			await p.chapter(`Chapter ${chapter.no}`, chapter.title, intro);
 			const introUntil = await narrator.say(p, intro, { caption: false });
 			await narrator.settle(introUntil);
 		}
@@ -501,7 +536,7 @@ try {
 			}
 		}
 
-		if (ci === chapters.length - 1) {
+		if (chapter.no === lastChapterNo) {
 			await p.caption('', '');
 			await p.badge('');
 			await p.showCursor(false);
@@ -526,14 +561,17 @@ try {
 }
 
 const full = path.join(OUT, `${NAME}.mp4`);
-if (parts.length > 1) {
+if (!COMPLETE) {
+	log(`partial run: ${parts.length} chapter file(s) written, none of them joined`);
+	log(`rejoin the whole film with: npm run demo:video -- --reuse${ROUTE === 'full' ? '' : ` --route=${ROUTE}`}`);
+} else if (parts.length > 1) {
 	concatParts(parts, full, WORK);
 	log(`wrote ${path.relative(ROOT, full)}`);
-} else if (parts.length === 1) {
+} else {
 	log(`single chapter: ${path.relative(ROOT, parts[0])}`);
 }
 
-const film = existsSync(full) ? full : parts[0];
+const film = COMPLETE && existsSync(full) ? full : null;
 const info = film ? mediaInfo(film) : { seconds: 0, bytes: 0 };
 const manifest = {
 	generatedAt: new Date().toISOString(),
@@ -555,8 +593,13 @@ const manifest = {
 	})),
 	skipped,
 };
-writeFileSync(path.join(OUT, `${NAME}-manifest.json`), `${JSON.stringify(manifest, null, '\t')}\n`);
+/* The full run's manifest is committed as the record of what the film covers,
+   so a one-chapter re-shoot writes its own beside it rather than replacing it
+   with a one-chapter record. */
+const manifestFile = path.join(OUT, COMPLETE ? `${NAME}-manifest.json` : `${NAME}-partial-manifest.json`);
+writeFileSync(manifestFile, `${JSON.stringify(manifest, null, '\t')}\n`);
 
 log(`${manifest.recorded}/${totalStops} stops recorded, ${skipped.length} skipped`);
 if (skipped.length) for (const s of skipped) log(`  skipped ${s.path}: ${s.why}`);
-log(`film: ${manifest.film} (${Math.round(info.seconds / 60)}m ${Math.round(info.seconds % 60)}s, ${(info.bytes / 1e6).toFixed(0)} MB)`);
+if (film) log(`film: ${manifest.film} (${Math.round(info.seconds / 60)}m ${Math.round(info.seconds % 60)}s, ${(info.bytes / 1e6).toFixed(0)} MB)`);
+log(`manifest: ${path.relative(ROOT, manifestFile)}`);
