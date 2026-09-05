@@ -48,8 +48,12 @@
 				"viewType": "threews3d.modelViewer",
 				"displayName": "three.ws 3D Viewer",
 				"selector": [
-					{ "filenamePattern": "*.glb" },
-					{ "filenamePattern": "*.gltf" }
+					{
+						"filenamePattern": "*.glb"
+					},
+					{
+						"filenamePattern": "*.gltf"
+					}
 				],
 				"priority": "default"
 			}
@@ -218,13 +222,21 @@
 				},
 				"threews3d.tier": {
 					"type": "string",
-					"enum": ["draft", "standard", "high"],
+					"enum": [
+						"draft",
+						"standard",
+						"high"
+					],
 					"default": "draft",
 					"description": "Detail level for text to 3D generation. Higher tiers take longer; all of them are free."
 				},
 				"threews3d.environment": {
 					"type": "string",
-					"enum": ["studio", "neutral", "none"],
+					"enum": [
+						"studio",
+						"neutral",
+						"none"
+					],
 					"default": "studio",
 					"description": "Image-based lighting used to light the model in the viewer."
 				},
@@ -256,6 +268,8 @@
 	"dependencies": {
 		"@gltf-transform/core": "^4.4.0",
 		"@gltf-transform/extensions": "^4.4.0",
+		"@gltf-transform/functions": "^4.5.0",
+		"gifenc": "^1.0.3",
 		"meshoptimizer": "^1.1.1",
 		"three": "^0.184.0"
 	},
