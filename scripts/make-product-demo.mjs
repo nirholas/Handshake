@@ -33,7 +33,8 @@
  *   --authed                        replay .auth/audit-state.json (signed-in surfaces)
  *   --origin=                       film a dev server instead of https://three.ws
  *   --out=                          output directory (default marketing/product-demo)
- *   --voice=                        TTS voice id (default nova)
+ *   --narrator=edge|speak           which TTS lane to synthesize on (default edge)
+ *   --voice=                        voice id for that lane (default en-US-AndrewMultilingualNeural)
  *   --no-voice                      caption-only, no narration track
  *   --reuse                         keep chapter mp4s that already exist
  *   --strict                        a failed stop fails the run
@@ -45,7 +46,7 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import {
 	ROOT, STAGE, FPS, Presenter, Narrator, installOverlay, launchOptions, contextOptions,
-	encodeSection, concatParts, mediaInfo, readJson, sleep,
+	encodeSection, concatParts, mediaInfo, readJson, sleep, sessionCookie,
 } from './lib/demo-stage.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
@@ -55,7 +56,8 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
 const ORIGIN = String(args.origin || 'https://three.ws').replace(/\/$/, '');
 const OUT = path.resolve(ROOT, String(args.out || 'marketing/product-demo'));
 const WORK = path.join(OUT, '.raw');
-const VOICE = String(args.voice || 'nova');
+const LANE = String(args.narrator || 'edge');
+const VOICE = args.voice ? String(args.voice) : null;
 const CRF = Number(args.crf || 22);
 const STRICT = Boolean(args.strict);
 const LIMIT = args.limit ? Number(args.limit) : Infinity;
@@ -65,17 +67,33 @@ const log = (...m) => console.log('[demo]', ...m);
 
 const curriculum = readJson(path.join(ROOT, 'public/tour/curriculum.json'));
 
-const OPENING = 'This is three dot w s, the 3D agent layer of the internet. Over the next few chapters '
+const OPENING = 'This is three.ws, the 3D agent layer of the internet. Over the next few chapters '
 	+ 'I am going to walk the whole platform with you, feature by feature, on the live site. Everything you '
 	+ 'are about to see is the real product answering in real time.';
 const CLOSING = 'That is the whole platform: build a body, give it a brain, put it to work, and let it '
-	+ 'hold its own wallet. Everything in this film is live at three dot w s right now.';
+	+ 'hold its own wallet. Everything in this film is live at three.ws right now.';
 
-/* A caption is read, narration is heard, and neither wants a raw slug. */
-const say = (text) => String(text || '')
+/* Captions carry the words as they are written; the synthesizer is handed the
+   same line with the pieces a reader parses silently spelled out for it. */
+const SPOKEN = {
+	'three.ws': 'three dot w s',
+	x402: 'x four oh two',
+	'ERC-8004': 'E R C 8004',
+	USDC: 'U S D C',
+	GLB: 'G L B',
+	SDK: 'S D K',
+	API: 'A P I',
+	APIs: 'A P Is',
+	MCP: 'M C P',
+	HTML: 'H T M L',
+	URL: 'U R L',
+	IK: 'I K',
+	FK: 'F K',
+};
+const SPOKEN_RE = new RegExp(`\\b(${Object.keys(SPOKEN).map((k) => k.replace(/[.\-]/g, '\\$&')).join('|')})\\b`, 'g');
+const speech = (text) => String(text || '')
+	.replace(SPOKEN_RE, (m) => SPOKEN[m] || m)
 	.replace(/three\.ws/gi, 'three dot w s')
-	.replace(/\bx402\b/gi, 'x four oh two')
-	.replace(/\bERC-8004\b/gi, 'E R C 8004')
 	/* build-tour.mjs writes the page descriptions with colons where the source
 	   copy had a dash, which a synthesizer reads as a full stop mid-clause. */
 	.replace(/(\w):\s+(?=[a-z])/g, '$1, ')
@@ -134,7 +152,7 @@ const ACTS = {
 
 	'/discover': async (p, { beat }) => {
 		await p.type('input[placeholder*="Search by name"]', 'agent', { cps: 13, settle: 1200 });
-		await beat('Every agent here is registered on chain, on Solana and on the E R C 8004 registries, so the directory is not ours to fake.');
+		await beat('Every agent here is registered on chain, on Solana and on the ERC-8004 registries, so the directory is not ours to fake.');
 		await p.clickIfPresent('button.tws-lc-chip:has-text("All agents")', { after: 1500 });
 		await p.readDown(760, { ms: 1500 });
 	},
@@ -228,16 +246,16 @@ const ACTS = {
 
 	'/agents': async (p, { beat }) => {
 		await p.type('#ag-search', 'trader', { cps: 12, settle: 1300 });
-		await beat('Every agent anyone has built on three dot w s, searchable, each with its own page.');
+		await beat('Every agent anyone has built on three.ws, searchable, each with its own page.');
 		await p.readDown(700, { ms: 1400 });
 	},
 
 	'/pay': async (p, { beat }) => {
-		await beat('This is machine to machine payment. An A P I answers a request with a price instead of a refusal, and the agent pays it.');
+		await beat('This is machine to machine payment. An API answers a request with a price instead of a refusal, and the agent pays it.');
 		await p.clickIfPresent('button.chain-tab:has-text("BNB")', { after: 1300 });
 		await p.clickIfPresent('button.chain-tab:has-text("Solana")', { after: 1300 });
 		await p.type('#prompt', 'validate https://example.com', { cps: 16, settle: 700 });
-		await beat('Solana first, in U S D C, settling in under a second and costing a fraction of a cent.');
+		await beat('Solana first, in USDC, settling in under a second and costing a fraction of a cent.');
 		await p.readThrough({ budgetMs: 3500 });
 	},
 
@@ -283,7 +301,7 @@ const ACTS = {
 
 	'/docs': async (p, { beat }) => {
 		await p.readThrough({ budgetMs: 4500 });
-		await beat('Every surface in this film has an A P I, an S D K, and a page in here explaining it.');
+		await beat('Every surface in this film has an API, an SDK, and a page in here explaining it.');
 	},
 };
 
@@ -345,7 +363,39 @@ if (args['dry-run']) {
 mkdirSync(OUT, { recursive: true });
 mkdirSync(WORK, { recursive: true });
 const voiceDir = path.join(WORK, 'voice');
-const narrator = new Narrator({ origin: ORIGIN, dir: voiceDir, voice: VOICE, log, enabled: !args['no-voice'] });
+const narrator = new Narrator({
+	origin: ORIGIN,
+	dir: voiceDir,
+	lane: LANE,
+	voice: VOICE,
+	cookie: sessionCookie(),
+	speechify: speech,
+	log,
+	enabled: !args['no-voice'],
+});
+
+/*
+ * Every line the film will speak, synthesized before the camera rolls.
+ *
+ * Filming is real time, so a line fetched mid-take is dead air on screen: the
+ * first cut of this film opened on 52 seconds of silence because the longest
+ * line in it was being synthesized while the page sat there. The stop lines and
+ * chapter intros are data, and an act's own beats are string literals in its
+ * source, so the whole script can be collected up front.
+ */
+const BEAT_RE = /beat\(\s*'((?:[^'\\]|\\.)*)'\s*\)/g;
+function scriptLines() {
+	const lines = [OPENING, CLOSING];
+	for (const chapter of chapters) {
+		lines.push(chapter.intro);
+		for (const stop of chapter.stops) lines.push(lineFor(stop));
+	}
+	for (const act of Object.values(ACTS)) {
+		for (const m of String(act).matchAll(BEAT_RE)) lines.push(m[1].replace(/\\'/g, "'"));
+	}
+	return lines;
+}
+await narrator.warm(scriptLines());
 
 const skipped = [];
 const parts = [];
@@ -379,23 +429,25 @@ try {
 		   they are spoken, so the caption bar stays out of its way. */
 		const first = chapter.stops[0];
 		await page.goto(`${ORIGIN}${first.path}`, { waitUntil: 'domcontentloaded', timeout: 60_000 }).catch(() => {});
-		await page.waitForTimeout(2600);
-		await p.ready();
+		/* The card goes up as soon as the document exists, so the chapter opens
+		   on a title rather than on a page still streaming its 3D scene in. */
 		await p.showCursor(false);
 		if (ci === 0) {
 			/* The opening already welcomes the viewer, so chapter one does not
 			   also read the guide's own welcome line back to them. */
-			await p.chapter('', 'three.ws', say(OPENING));
-			const until = await narrator.say(p, say(OPENING), { caption: false });
+			await p.chapter('', 'three.ws', OPENING);
+			const until = await narrator.say(p, OPENING, { caption: false });
 			await narrator.settle(until);
 			await p.chapter('Chapter 1', chapter.title, '');
 			await sleep(2600);
 		} else {
-			const intro = say(chapter.intro);
+			const intro = chapter.intro;
 			await p.chapter(`Chapter ${ci + 1}`, chapter.title, intro);
 			const introUntil = await narrator.say(p, intro, { caption: false });
 			await narrator.settle(introUntil);
 		}
+		await page.waitForLoadState('load', { timeout: 15_000 }).catch(() => {});
+		await p.ready();
 		await p.chapter('', '', '');
 		await p.showCursor(true);
 		await sleep(700);
@@ -406,20 +458,19 @@ try {
 				if (new URL(page.url()).pathname !== stop.path) {
 					await page.goto(`${ORIGIN}${stop.path}`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
 				}
-				await p.ready();
+				/* The line starts against the document as soon as it exists, so
+				   the film never sits in silence waiting for a 3D scene to
+				   stream in, and the caption is up while it arrives. */
 				await p.badge(`three.ws${stop.path === '/' ? '' : stop.path}`);
-				/* The line starts while the page is still settling, so the film
-				   never sits in silence waiting for a 3D scene to stream in. */
-				const until = await narrator.say(p, say(lineFor(stop)), { kicker: chapter.title });
-				await page.waitForLoadState('load', { timeout: 20_000 }).catch(() => {});
-				await sleep(stop.highlight ? 1800 : 900);
+				const until = await narrator.say(p, lineFor(stop), { kicker: chapter.title });
+				await page.waitForLoadState('load', { timeout: 12_000 }).catch(() => {});
+				await sleep(stop.highlight ? 1500 : 700);
 				await p.ready();
 				/* A line spoken from inside an act: the presenter keeps talking
 				   while they click, which is what keeps the film from clicking
 				   in silence on the surfaces that take a while to show. */
 				const beat = async (text) => {
-					const line = say(text);
-					const done = await narrator.say(p, line, { kicker: chapter.title });
+					const done = await narrator.say(p, text, { kicker: chapter.title });
 					await narrator.settle(done, { tail: 260 });
 				};
 				const act = ACTS[stop.path] || ((pp, c) => genericAct(pp, c.stop));
@@ -438,8 +489,8 @@ try {
 			await p.caption('', '');
 			await p.badge('');
 			await p.showCursor(false);
-			await p.chapter('', 'three.ws', say(CLOSING));
-			const until = await narrator.say(p, say(CLOSING), { caption: false });
+			await p.chapter('', 'three.ws', CLOSING);
+			const until = await narrator.say(p, CLOSING, { caption: false });
 			await narrator.settle(until, { tail: 1400 });
 		}
 
@@ -473,7 +524,7 @@ const manifest = {
 	origin: ORIGIN,
 	route: ROUTE,
 	authed: Boolean(args.authed),
-	voice: args['no-voice'] ? null : VOICE,
+	narrator: args['no-voice'] ? null : { lane: LANE, voice: narrator.voice },
 	stage: `${STAGE.width}x${STAGE.height}@${FPS}`,
 	stops: totalStops,
 	recorded: totalStops - skipped.length,

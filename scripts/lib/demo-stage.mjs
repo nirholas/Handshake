@@ -19,7 +19,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -221,6 +221,20 @@ export function installOverlay() {
 
 	if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build, { once: true });
 	else build();
+}
+
+/**
+ * The QA session as a Cookie header, for the API calls a recording makes on its
+ * own behalf (the narration lane is signed-in-only, and its anonymous bucket is
+ * far too small for a film).
+ */
+export function sessionCookie() {
+	if (!existsSync(AUTH_STATE)) return null;
+	const state = JSON.parse(readFileSync(AUTH_STATE, 'utf8'));
+	const jar = (state.cookies || [])
+		.filter((c) => String(c.domain || '').includes('three.ws'))
+		.map((c) => `${c.name}=${c.value}`);
+	return jar.length ? jar.join('; ') : null;
 }
 
 /**
@@ -490,15 +504,47 @@ export function ffmpeg(argv, { quiet = true } = {}) {
  * changed costs no synthesis at all, and a section re-recorded on its own gets
  * exactly the audio the full run would have given it.
  */
+export const NARRATOR_LANES = {
+	/* Microsoft Edge Neural voices, proxied and cached in R2 by the platform.
+	   Signed in, it allows 20 unique lines a minute, which is what makes a film
+	   with a few hundred spoken lines possible at all. */
+	edge: {
+		endpoint: '/api/tts/edge',
+		voice: 'en-US-AndrewMultilingualNeural',
+		ext: 'mp3',
+		body: (text, voice) => ({ text, voice }),
+		perMinute: 20,
+	},
+	/* The platform's own free NVIDIA Magpie lane. Better suited to a handful of
+	   lines than to a full film: it allows 40 an hour for a signed-in caller. */
+	speak: {
+		endpoint: '/api/tts/speak',
+		voice: 'nova',
+		ext: 'wav',
+		body: (text, voice) => ({ text, voice, format: 'wav' }),
+		perMinute: 0.6,
+	},
+};
+
 export class Narrator {
-	constructor({ origin, dir, voice = 'nova', log = () => {}, enabled = true }) {
+	constructor({ origin, dir, lane = 'edge', voice = null, cookie = null, speechify = (t) => t, log = () => {}, enabled = true }) {
+		this.lane = NARRATOR_LANES[lane];
+		if (!this.lane) throw new Error(`unknown narrator lane "${lane}"; use ${Object.keys(NARRATOR_LANES).join(' or ')}`);
+		this.laneId = lane;
 		this.origin = origin;
 		this.dir = dir;
-		this.voice = voice;
+		this.voice = voice || this.lane.voice;
+		this.cookie = cookie;
+		/* What is written on screen and what is spoken are not the same string:
+		   a caption reads "three.ws", a synthesizer needs "three dot w s". The
+		   cache is keyed on the spoken form, since that is what was rendered. */
+		this.speechify = speechify;
 		this.log = log;
 		this.enabled = enabled;
 		this.clips = [];
 		this.t0 = 0;
+		this.spacingMs = Math.ceil(60_000 / this.lane.perMinute) + 400;
+		this.lastCall = 0;
 		mkdirSync(dir, { recursive: true });
 	}
 
@@ -508,21 +554,76 @@ export class Narrator {
 		this.t0 = t0;
 	}
 
+	fileFor(text) {
+		const key = createHash('sha1').update(`${this.laneId}\u0000${this.voice}\u0000${text}`).digest('hex').slice(0, 20);
+		return path.join(this.dir, `${key}.wav`);
+	}
+
+	/**
+	 * One line of speech, cached on disk by lane, voice and text.
+	 *
+	 * Every lane is rate limited (that is the point of a shared endpoint), so a
+	 * 429 is a wait rather than a failure: the response carries how long, and a
+	 * film with hundreds of lines will meet one. Requests are also spaced to the
+	 * lane's own budget so the limiter is usually never reached.
+	 */
 	async synth(text) {
-		const key = createHash('sha1').update(`${this.voice}\u0000${text}`).digest('hex').slice(0, 20);
-		const file = path.join(this.dir, `${key}.wav`);
-		if (!existsSync(file)) {
-			const res = await fetch(`${this.origin}/api/tts/speak`, {
+		const file = this.fileFor(text);
+		if (existsSync(file)) return { file, ms: ffprobeDuration(file) };
+
+		const raw = `${file}.${this.lane.ext}`;
+		for (let attempt = 0; attempt < 5; attempt += 1) {
+			const wait = this.spacingMs - (Date.now() - this.lastCall);
+			if (wait > 0) await sleep(wait);
+			this.lastCall = Date.now();
+			const res = await fetch(`${this.origin}${this.lane.endpoint}`, {
 				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ text, voice: this.voice, format: 'wav' }),
+				headers: {
+					'content-type': 'application/json',
+					...(this.cookie ? { cookie: this.cookie } : {}),
+				},
+				body: JSON.stringify(this.lane.body(text, this.voice)),
 			});
-			if (!res.ok) throw new Error(`TTS ${res.status}: ${(await res.text()).slice(0, 200)}`);
+			if (res.status === 429) {
+				const body = await res.text();
+				const after = Number(res.headers.get('retry-after')) || JSON.parse(body || '{}').retry_after || 60;
+				this.log(`narrator rate limited, waiting ${after}s`);
+				await sleep(Math.min(after, 300) * 1000 + 500);
+				continue;
+			}
+			if (!res.ok) throw new Error(`TTS ${res.status} on ${this.lane.endpoint}: ${(await res.text()).slice(0, 180)}`);
 			const buf = Buffer.from(await res.arrayBuffer());
 			if (buf.length < 1024) throw new Error(`TTS returned ${buf.length} bytes for "${text.slice(0, 40)}"`);
-			writeFileSync(file, buf);
+			writeFileSync(raw, buf);
+			/* One format for every clip, so the track is a concatenation rather
+			   than a re-encode per line. */
+			ffmpeg(['-i', raw, '-ar', '44100', '-ac', '1', '-c:a', 'pcm_s16le', file]);
+			rmSync(raw, { force: true });
+			return { file, ms: ffprobeDuration(file) };
 		}
-		return { file, ms: ffprobeDuration(file) };
+		throw new Error(`TTS stayed rate limited for "${text.slice(0, 40)}"`);
+	}
+
+	/**
+	 * Synthesize a whole script before the camera rolls.
+	 *
+	 * Filming is real time, so a line that is fetched mid-take is dead air in
+	 * the film. Warming the cache first moves every one of those waits out of
+	 * the recording, and a rerun pays none of it twice.
+	 */
+	async warm(texts) {
+		if (!this.enabled) return { made: 0, cached: 0 };
+		const unique = [...new Set(texts.map((t) => this.speechify(String(t || '')).trim()).filter(Boolean))];
+		const todo = unique.filter((t) => !existsSync(this.fileFor(t)));
+		this.log(`narration: ${unique.length} lines, ${unique.length - todo.length} already synthesized`);
+		if (!todo.length) return { made: 0, cached: unique.length };
+		const eta = Math.ceil((todo.length * this.spacingMs) / 60_000);
+		this.log(`synthesizing ${todo.length} lines on the ${this.laneId} lane (about ${eta} min)`);
+		for (const [i, text] of todo.entries()) {
+			await this.synth(text);
+			if ((i + 1) % 20 === 0 || i + 1 === todo.length) this.log(`  ${i + 1}/${todo.length} lines`);
+		}
+		return { made: todo.length, cached: unique.length - todo.length };
 	}
 
 	/**
@@ -532,7 +633,7 @@ export class Narrator {
 	async say(presenter, text, { kicker = '', caption = true } = {}) {
 		if (caption) await presenter.caption(text, kicker);
 		if (!this.enabled) return Date.now() + Math.min(9000, 900 + text.length * 46);
-		const { file, ms } = await this.synth(text);
+		const { file, ms } = await this.synth(this.speechify(text));
 		this.clips.push({ at: Math.max(0, Date.now() - this.t0), file, ms });
 		return Date.now() + ms;
 	}
