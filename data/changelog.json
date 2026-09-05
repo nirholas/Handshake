@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-05",
+			"title": "The site header now stays put when you scroll",
+			"summary": "The navigation bar was set to stick to the top of the window but never actually did: it scrolled away with the page on every route, at every screen size, so reaching the menu meant scrolling all the way back up. The bar was mounted inside a wrapper exactly its own height, and a sticky element can only travel inside its parent, so it had nowhere to go. The header now stays on screen wherever you scroll, on phones and desktop alike.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-05",
 			"title": "3D models now open, animate and report on themselves inside VS Code",
 			"summary": "A new three.ws extension makes .glb and .gltf files first-class in the editor. Double-click one and it renders in an editor tab instead of showing binary-file-not-shown: orbit it, play its animation clips on a scrub bar, flip on the wireframe or the skeleton, and save the view as a PNG next to the model. A report panel counts triangles, textures, bones and extensions and says what to fix, using the same inspector as the validation page, running on your machine so the model is never uploaded to be measured. Compressed avatars decode locally, so it all works offline. From the command palette you can also generate a model or an avatar from a sentence on the free lane, rig a static model for animation, browse and import recent community creations, and drop in an agent-3d embed snippet with the current library version and its integrity hash already pinned.",
 			"tags": [

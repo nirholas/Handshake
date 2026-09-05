@@ -35,6 +35,18 @@
 .nav *, .nav-drawer * { box-sizing: border-box; }
 
 /* ── NAV ─────────────────────────────────────────────────────── */
+/* A sticky element travels only within its own parent's box. The header mounts
+   inside #nav-container (nav.js), a wrapper that is exactly as tall as the
+   header itself, so `position: sticky` on .nav had zero room to travel and the
+   bar scrolled away with the document on every page, at every width. The
+   wrapper is the child whose parent is the full-length page, so it is the one
+   that has to carry the sticky. It cannot be display:contents instead:
+   marketplace-v2.css needs #nav-container to stay a grid item so the header
+   spans both columns. :not(:empty) leaves the pre-hydration min-height reserve
+   in tokens.css on a plain static box, where it belongs. */
+#nav-container:not(:empty) {
+	position: sticky; top: 0; z-index: 100;
+}
 .nav {
 	position: sticky; top: 0; z-index: 100;
 	border-bottom: 1px solid var(--nv-hairline);
