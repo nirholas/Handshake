@@ -1,4 +1,4 @@
-// three.ws 3D — VS Code extension entry.
+// three.ws 3D: the VS Code extension entry point.
 //
 // Registers the model viewer (a custom editor for .glb/.gltf), the workspace and
 // gallery trees, and the commands that generate, rig, embed, and import models

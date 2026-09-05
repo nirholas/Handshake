@@ -2770,6 +2770,12 @@ URL: https://three.ws/docs/mcp
 
 Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
 
+### Docs · three.ws in VS Code
+
+URL: https://three.ws/docs/vscode
+
+The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.
+
 ### Docs · 3D Studio MCP (free)
 
 URL: https://three.ws/docs/mcp-studio

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-05T06:01:52.624Z",
+	"generated_at": "2026-09-05T15:06:35.031Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4563,6 +4563,16 @@
 					"title": "Docs · MCP",
 					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/vscode",
+					"title": "Docs · three.ws in VS Code",
+					"description": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",
+					"added": "2026-09-05",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

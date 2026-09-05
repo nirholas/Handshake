@@ -3654,6 +3654,12 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/vscode",
+					"title": "Docs \u00b7 three.ws in VS Code",
+					"description": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",
+					"added": "2026-09-05"
+				},
+				{
 					"path": "/docs/mcp-studio",
 					"title": "Docs · 3D Studio MCP (free)",
 					"description": "The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.",

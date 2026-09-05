@@ -1029,6 +1029,10 @@
 					"path": "chatgpt-3d-studio-gpt"
 				},
 				{
+					"label": "VS Code extension",
+					"path": "vscode"
+				},
+				{
 					"label": "Sketchfab showcase",
 					"path": "sketchfab"
 				},

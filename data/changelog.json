@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-05",
+			"title": "3D models now open, animate and report on themselves inside VS Code",
+			"summary": "A new three.ws extension makes .glb and .gltf files first-class in the editor. Double-click one and it renders in an editor tab instead of showing binary-file-not-shown: orbit it, play its animation clips on a scrub bar, flip on the wireframe or the skeleton, and save the view as a PNG next to the model. A report panel counts triangles, textures, bones and extensions and says what to fix, using the same inspector as the validation page, running on your machine so the model is never uploaded to be measured. Compressed avatars decode locally, so it all works offline. From the command palette you can also generate a model or an avatar from a sentence on the free lane, rig a static model for animation, browse and import recent community creations, and drop in an agent-3d embed snippet with the current library version and its integrity hash already pinned.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/vscode"
+		},
+		{
+			"date": "2026-09-05",
 			"title": "Your agent now lives in a handheld console you can put on any website",
 			"summary": "The new Pocket Console at /pocket is a real handheld with a real 3D agent inside the screen. The D-pad walks it, A waves, B jumps, START swaps between the agent walking, its live stats, and a menu of every public agent you can slot in like a cartridge, and L and R flip through them. It takes keyboard, touch and a plugged-in game controller. Four shell finishes, four scenes, and the whole state travels in the link, so what you share is the device exactly as you left it. Add chrome=off and one iframe puts the console, your agent included, on your own site: transparent background, no sign-in, no SDK, no API key.",
 			"tags": [

@@ -87,6 +87,7 @@ Publishable npm packages for the three.ws platform: client SDKs, agent tooling, 
 | [viewer-presets](viewer-presets/README.md) | Tuned visual presets for avatar viewers: light rigs, floor reflection, bloom, and PBR materials. |
 | [vision-mcp](vision-mcp/README.md) | MCP server that analyzes and describes images through the three.ws vision pipeline. |
 | [voice](voice/README.md) | Speech for avatars: ASR, TTS, and Audio2Face lipsync visemes in one import. |
+| [vscode-3d](vscode-3d/README.md) | VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, and generates, rigs, and embeds models from the editor. |
 | [vscode-x402](vscode-x402/README.md) | VS Code extension to browse the x402 bazaar, decode 402 challenges, and pay per call from the editor. |
 | [witness](witness/README.md) | Records a real user session as intent, not pixels, and compiles it into a Playwright spec that stays red until the reported bug is fixed. |
 | [x402-fetch](x402-fetch/README.md) | Drop-in fetch wrapper that automatically pays x402 payment challenges. |
