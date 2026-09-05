@@ -56,26 +56,6 @@ export function buildSignUrl(pinId, origin) {
 }
 
 /**
- * How "See it in AR" should launch for a DISCOVERED pin (someone else's agent).
- *
- * iOS has no WebXR, but ARKit Quick Look can show the agent on the real floor,
- * so the page bakes the pin's GLB into an animated USDZ on the device and opens
- * it in place. Everything else goes through the server-side AR launcher, which
- * already routes Android to a native AR intent and desktops to the WebGL viewer.
- * A pin with no https GLB (a legacy relative path, a blob) gets `none`, and the
- * button stays hidden rather than pointing at a viewer that would refuse it.
- */
-export function discoveredArLaunch({ avatarUrl, name, ios } = {}) {
-	const src = typeof avatarUrl === 'string' ? avatarUrl.trim() : '';
-	if (!/^https:\/\//i.test(src)) return { mode: 'none' };
-	if (ios) return { mode: 'quicklook', src };
-	const title = typeof name === 'string' ? name.trim().slice(0, 120) : '';
-	const qs = new URLSearchParams({ src, kind: 'avatar' });
-	if (title) qs.set('title', title);
-	return { mode: 'link', src, url: `/api/ar?${qs.toString()}` };
-}
-
-/**
  * Copy for the "you came to meet" banner while the visitor is not yet within
  * discovery range, and once the agent has appeared. The radius is the server's
  * hard cap on the nearby read, so the number a visitor is told is the real one.

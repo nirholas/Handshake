@@ -1,9 +1,8 @@
 // IRL visit links (src/irl/visit-link.js).
 //
 // A sign at a real spot carries one URL. Everything a stranger sees after scanning
-// it (which agent they came to meet, whether their phone opens Quick Look or the
-// server AR launcher, what the banner tells them before the agent is in range)
-// follows from these rules, so they are pinned here.
+// it (which agent they came to meet, what the banner tells them before the agent
+// is in range) follows from these rules, so they are pinned here.
 
 import { describe, it, expect } from 'vitest';
 
@@ -12,7 +11,6 @@ import {
 	parseVisitTarget,
 	buildVisitUrl,
 	buildSignUrl,
-	discoveredArLaunch,
 	meetBannerCopy,
 } from '../src/irl/visit-link.js';
 
@@ -57,31 +55,6 @@ describe('buildVisitUrl / buildSignUrl', () => {
 	it('refuses an invalid id at the boundary', () => {
 		expect(() => buildVisitUrl('nope')).toThrow(/pin id/);
 		expect(() => buildSignUrl('')).toThrow(/pin id/);
-	});
-});
-
-describe('discoveredArLaunch', () => {
-	const glb = 'https://cdn.three.ws/avatars/abc.glb';
-	it('opens Quick Look in place on iOS', () => {
-		expect(discoveredArLaunch({ avatarUrl: glb, name: 'Mira', ios: true })).toEqual({ mode: 'quicklook', src: glb });
-	});
-	it('routes everyone else through the server AR launcher with the living-agent kind', () => {
-		const r = discoveredArLaunch({ avatarUrl: glb, name: 'Mira', ios: false });
-		expect(r.mode).toBe('link');
-		const u = new URL(r.url, 'https://three.ws');
-		expect(u.pathname).toBe('/api/ar');
-		expect(u.searchParams.get('src')).toBe(glb);
-		expect(u.searchParams.get('kind')).toBe('avatar');
-		expect(u.searchParams.get('title')).toBe('Mira');
-	});
-	it('hides the action for a pin with no https model', () => {
-		expect(discoveredArLaunch({ avatarUrl: '/api/avatars/x/glb', ios: true })).toEqual({ mode: 'none' });
-		expect(discoveredArLaunch({ avatarUrl: 'blob:https://three.ws/1', ios: false })).toEqual({ mode: 'none' });
-		expect(discoveredArLaunch({})).toEqual({ mode: 'none' });
-	});
-	it('clamps a runaway name so the title never bloats the URL', () => {
-		const r = discoveredArLaunch({ avatarUrl: glb, name: 'n'.repeat(400), ios: false });
-		expect(new URL(r.url, 'https://three.ws').searchParams.get('title')).toHaveLength(120);
 	});
 });
 
