@@ -1,4 +1,4 @@
-// Agent Console (/console): a handheld with a live 3D agent inside the screen.
+// Pocket Console (/pocket): a handheld with a live 3D agent inside the screen.
 //
 // The screen is a real /walk-embed iframe, so the body walking around in there
 // is the same renderer, retargeting and animation library the rest of the
@@ -41,24 +41,24 @@ const canHover =
 	typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 const el = {
-	device: document.getElementById('cn-device'),
-	screenPlay: document.getElementById('cn-cart-play'),
-	boot: document.getElementById('cn-boot'),
-	bootText: document.getElementById('cn-boot-text'),
-	bootRetry: document.getElementById('cn-boot-retry'),
-	hudName: document.getElementById('cn-hud-name'),
-	hudCart: document.getElementById('cn-hud-cart'),
-	modelLine: document.getElementById('cn-model-line'),
-	statsId: document.getElementById('cn-stats-id'),
-	statsList: document.getElementById('cn-stats-list'),
-	statsNote: document.getElementById('cn-stats-note'),
-	roster: document.getElementById('cn-roster'),
-	selectCount: document.getElementById('cn-select-count'),
-	carts: document.getElementById('cn-carts'),
-	embedCode: document.getElementById('cn-embed-code'),
-	gamepadPill: document.getElementById('cn-gamepad'),
-	toast: document.getElementById('cn-toast'),
-	live: document.getElementById('cn-live'),
+	device: document.getElementById('pk-device'),
+	screenPlay: document.getElementById('pk-cart-play'),
+	boot: document.getElementById('pk-boot'),
+	bootText: document.getElementById('pk-boot-text'),
+	bootRetry: document.getElementById('pk-boot-retry'),
+	hudName: document.getElementById('pk-hud-name'),
+	hudCart: document.getElementById('pk-hud-cart'),
+	modelLine: document.getElementById('pk-model-line'),
+	statsId: document.getElementById('pk-stats-id'),
+	statsList: document.getElementById('pk-stats-list'),
+	statsNote: document.getElementById('pk-stats-note'),
+	roster: document.getElementById('pk-roster'),
+	selectCount: document.getElementById('pk-select-count'),
+	carts: document.getElementById('pk-carts'),
+	embedCode: document.getElementById('pk-embed-code'),
+	gamepadPill: document.getElementById('pk-gamepad'),
+	toast: document.getElementById('pk-toast'),
+	live: document.getElementById('pk-live'),
 };
 
 const state = {
@@ -218,7 +218,7 @@ async function loadRoster() {
 	}
 }
 
-// A shared /console?agent=<id> link can name an agent outside the first page of
+// A shared /pocket?agent=<id> link can name an agent outside the first page of
 // the public index. Pull that one record directly and put it at the head of the
 // roster so the link always boots the agent it promised.
 async function loadUnlistedAgent(id) {
@@ -255,7 +255,7 @@ function renderCartSkeletons() {
 	el.carts.replaceChildren();
 	for (let i = 0; i < 5; i += 1) {
 		const chip = document.createElement('div');
-		chip.className = 'cn-chip cn-chip-skeleton';
+		chip.className = 'pk-chip pk-chip-skeleton';
 		el.carts.appendChild(chip);
 	}
 }
@@ -263,12 +263,12 @@ function renderCartSkeletons() {
 function renderRosterError(reason) {
 	el.carts.replaceChildren();
 	const box = document.createElement('div');
-	box.className = 'cn-rail-error';
+	box.className = 'pk-rail-error';
 	const text = document.createElement('span');
 	text.textContent = `The cartridge shelf is unreachable (${reason}). The console still runs on its default body.`;
 	const retry = document.createElement('button');
 	retry.type = 'button';
-	retry.className = 'cn-btn';
+	retry.className = 'pk-btn';
 	retry.textContent = 'Try again';
 	retry.addEventListener('click', loadRoster);
 	box.append(text, retry);
@@ -276,7 +276,7 @@ function renderRosterError(reason) {
 
 	el.roster.replaceChildren();
 	const line = document.createElement('p');
-	line.className = 'cn-panel-note';
+	line.className = 'pk-panel-note';
 	line.textContent = 'NO SIGNAL. The agent index did not answer.';
 	el.roster.appendChild(line);
 	el.selectCount.textContent = '0';
@@ -291,24 +291,24 @@ function renderCarts() {
 	state.agents.forEach((agent, i) => {
 		const chip = document.createElement('button');
 		chip.type = 'button';
-		chip.className = 'cn-chip';
+		chip.className = 'pk-chip';
 		chip.setAttribute('aria-pressed', String(i === state.index));
 		chip.dataset.index = String(i);
 
 		const thumb = document.createElement('img');
-		thumb.className = 'cn-chip-thumb';
+		thumb.className = 'pk-chip-thumb';
 		thumb.alt = '';
 		thumb.loading = 'lazy';
 		thumb.decoding = 'async';
 		if (agent.avatar_thumbnail) thumb.src = agent.avatar_thumbnail;
 
 		const text = document.createElement('span');
-		text.className = 'cn-chip-text';
+		text.className = 'pk-chip-text';
 		const name = document.createElement('span');
-		name.className = 'cn-chip-name';
+		name.className = 'pk-chip-name';
 		name.textContent = agent.name;
 		const meta = document.createElement('span');
-		meta.className = 'cn-chip-meta';
+		meta.className = 'pk-chip-meta';
 		meta.textContent = cartMeta(agent);
 		text.append(name, meta);
 
@@ -329,14 +329,14 @@ function renderRoster() {
 	state.agents.forEach((agent, i) => {
 		const row = document.createElement('button');
 		row.type = 'button';
-		row.className = 'cn-roster-item';
+		row.className = 'pk-roster-item';
 		row.setAttribute('role', 'option');
 		row.setAttribute('aria-selected', String(i === state.rosterCursor));
 		const name = document.createElement('span');
-		name.className = 'cn-roster-name';
+		name.className = 'pk-roster-name';
 		name.textContent = agent.name;
 		const meta = document.createElement('span');
-		meta.className = 'cn-roster-meta';
+		meta.className = 'pk-roster-meta';
 		meta.textContent = i === state.index ? 'LOADED' : `${Number(agent.chat_count) || 0}`;
 		row.append(name, meta);
 		row.addEventListener('click', () => {
@@ -352,10 +352,22 @@ function moveRosterCursor(delta) {
 	if (!state.agents.length) return;
 	const next = (state.rosterCursor + delta + state.agents.length) % state.agents.length;
 	state.rosterCursor = next;
-	const rows = el.roster.querySelectorAll('.cn-roster-item');
+	const rows = el.roster.querySelectorAll('.pk-roster-item');
 	rows.forEach((row, i) => row.setAttribute('aria-selected', String(i === next)));
-	rows[next]?.scrollIntoView({ block: 'nearest' });
+	keepRowVisible(rows[next]);
 	announce(`${state.agents[next].name} highlighted`);
+}
+
+// scrollIntoView() would also scroll the document, so pressing down on the
+// D-pad scrolled the page out from under the player's thumb. Move only the
+// panel's own scroller, by exactly the overshoot.
+function keepRowVisible(row) {
+	const scroller = el.roster.closest('.pk-panel-body');
+	if (!row || !scroller) return;
+	const r = row.getBoundingClientRect();
+	const s = scroller.getBoundingClientRect();
+	if (r.top < s.top) scroller.scrollTop -= s.top - r.top;
+	else if (r.bottom > s.bottom) scroller.scrollTop += r.bottom - s.bottom;
 }
 
 // ── agent selection ───────────────────────────────────────────────────────
@@ -368,7 +380,7 @@ function selectAgent(index, { boot = false } = {}) {
 	state.rosterCursor = i;
 	const agent = state.agents[i];
 
-	el.carts.querySelectorAll('.cn-chip').forEach((chip) => {
+	el.carts.querySelectorAll('.pk-chip').forEach((chip) => {
 		chip.setAttribute('aria-pressed', String(Number(chip.dataset.index) === i));
 	});
 	renderRoster();
@@ -482,7 +494,7 @@ function renderStats(rec) {
 	el.statsList.replaceChildren();
 	for (const [label, value] of rows) {
 		const row = document.createElement('div');
-		row.className = 'cn-stat-row';
+		row.className = 'pk-stat-row';
 		const dt = document.createElement('dt');
 		dt.textContent = label;
 		const dd = document.createElement('dd');
@@ -503,13 +515,13 @@ function renderStats(rec) {
 function setCart(cart) {
 	if (!CARTS.includes(cart)) return;
 	state.cart = cart;
-	el.device.querySelectorAll('.cn-panel').forEach((panel) => {
+	el.device.querySelectorAll('.pk-panel').forEach((panel) => {
 		panel.dataset.active = panel.dataset.cart === cart ? '1' : '0';
 	});
 	el.screenPlay.style.display = cart === 'play' ? '' : 'none';
 	el.hudCart.textContent = cart;
 	document.querySelectorAll('[data-cart]').forEach((tab) => {
-		if (tab.classList.contains('cn-tab')) {
+		if (tab.classList.contains('pk-tab')) {
 			tab.setAttribute('aria-pressed', String(tab.dataset.cart === cart));
 		}
 	});
@@ -534,7 +546,7 @@ function setShell(shell) {
 	if (!SHELLS.includes(shell)) return;
 	state.shell = shell;
 	el.device.dataset.shell = shell;
-	document.querySelectorAll('[data-shell].cn-tab').forEach((tab) => {
+	document.querySelectorAll('[data-shell].pk-tab').forEach((tab) => {
 		tab.setAttribute('aria-pressed', String(tab.dataset.shell === shell));
 	});
 	syncUrl();
@@ -591,7 +603,7 @@ function setDir(dir, down) {
 }
 
 function paintDir(dir, down) {
-	const btn = el.device.querySelector(`.cn-dir[data-dir="${dir}"]`);
+	const btn = el.device.querySelector(`.pk-dir[data-dir="${dir}"]`);
 	if (btn) btn.dataset.held = down ? '1' : '0';
 }
 
@@ -644,7 +656,7 @@ function nextEnv() {
 }
 
 // Pointer: press and hold anywhere on a control.
-el.device.querySelectorAll('.cn-dir').forEach((btn) => {
+el.device.querySelectorAll('.pk-dir').forEach((btn) => {
 	const dir = btn.dataset.dir;
 	btn.addEventListener('pointerdown', (e) => {
 		btn.setPointerCapture(e.pointerId);
@@ -665,22 +677,22 @@ el.device.querySelectorAll('.cn-dir').forEach((btn) => {
 	});
 });
 
-el.device.querySelectorAll('.cn-face-btn').forEach((btn) => {
+el.device.querySelectorAll('.pk-face-btn').forEach((btn) => {
 	btn.addEventListener('click', () => pressFace(btn.dataset.btn));
 });
 
-el.device.querySelectorAll('.cn-menu-btn').forEach((btn) => {
+el.device.querySelectorAll('.pk-menu-btn').forEach((btn) => {
 	btn.addEventListener('click', () => {
 		if (btn.dataset.btn === 'start') nextCart();
 		else nextEnv();
 	});
 });
 
-document.getElementById('cn-l').addEventListener('click', () => selectAgent(state.index - 1));
-document.getElementById('cn-r').addEventListener('click', () => selectAgent(state.index + 1));
+document.getElementById('pk-l').addEventListener('click', () => selectAgent(state.index - 1));
+document.getElementById('pk-r').addEventListener('click', () => selectAgent(state.index + 1));
 
 // The power LED doubles as the power switch, the way the real thing does.
-el.device.querySelector('.cn-power-led')?.addEventListener('click', () => setPower(!state.power));
+el.device.querySelector('.pk-power-led')?.addEventListener('click', () => setPower(!state.power));
 
 const KEY_DIRS = {
 	arrowup: 'up',
@@ -714,34 +726,34 @@ window.addEventListener('keydown', (e) => {
 		return;
 	}
 	if (key === 'k') {
-		flash('.cn-face-btn[data-btn="a"]');
+		flash('.pk-face-btn[data-btn="a"]');
 		pressFace('a');
 		return;
 	}
 	if (key === 'j') {
-		flash('.cn-face-btn[data-btn="b"]');
+		flash('.pk-face-btn[data-btn="b"]');
 		pressFace('b');
 		return;
 	}
 	if (key === 'enter') {
 		e.preventDefault();
-		flash('.cn-menu-btn[data-btn="start"]');
+		flash('.pk-menu-btn[data-btn="start"]');
 		nextCart();
 		return;
 	}
 	if (key === ' ') {
 		e.preventDefault();
-		flash('.cn-menu-btn[data-btn="select"]');
+		flash('.pk-menu-btn[data-btn="select"]');
 		nextEnv();
 		return;
 	}
 	if (key === 'q') {
-		flash('#cn-l');
+		flash('#pk-l');
 		selectAgent(state.index - 1);
 		return;
 	}
 	if (key === 'e') {
-		flash('#cn-r');
+		flash('#pk-r');
 		selectAgent(state.index + 1);
 		return;
 	}
@@ -802,27 +814,27 @@ function pollPads() {
 			if (pressed && !prev[`b${i}`]) fn();
 		};
 		edge(0, () => {
-			flash('.cn-face-btn[data-btn="a"]');
+			flash('.pk-face-btn[data-btn="a"]');
 			pressFace('a');
 		});
 		edge(1, () => {
-			flash('.cn-face-btn[data-btn="b"]');
+			flash('.pk-face-btn[data-btn="b"]');
 			pressFace('b');
 		});
 		edge(4, () => {
-			flash('#cn-l');
+			flash('#pk-l');
 			selectAgent(state.index - 1);
 		});
 		edge(5, () => {
-			flash('#cn-r');
+			flash('#pk-r');
 			selectAgent(state.index + 1);
 		});
 		edge(8, () => {
-			flash('.cn-menu-btn[data-btn="select"]');
+			flash('.pk-menu-btn[data-btn="select"]');
 			nextEnv();
 		});
 		edge(9, () => {
-			flash('.cn-menu-btn[data-btn="start"]');
+			flash('.pk-menu-btn[data-btn="start"]');
 			nextCart();
 		});
 		padPrev.set(pad.index, now);
@@ -865,14 +877,14 @@ function shareUrl() {
 	if (agent) q.set('agent', agent.id);
 	q.set('shell', state.shell);
 	q.set('env', state.env);
-	return `${location.origin}/console?${q.toString()}`;
+	return `${location.origin}/pocket?${q.toString()}`;
 }
 
 function embedCode() {
 	const url = new URL(shareUrl());
 	url.searchParams.set('chrome', 'off');
 	const agent = currentAgent();
-	const title = agent ? `${agent.name} on three.ws` : 'three.ws Agent Console';
+	const title = agent ? `${agent.name} on three.ws` : 'three.ws Pocket Console';
 	return `<iframe src="${url.toString()}" width="440" height="700" title="${title}" style="border:0;background:transparent" allow="xr-spatial-tracking" loading="lazy"></iframe>`;
 }
 
@@ -924,15 +936,15 @@ function announce(message) {
 	el.live.textContent = message;
 }
 
-document.getElementById('cn-share')?.addEventListener('click', () => {
+document.getElementById('pk-share')?.addEventListener('click', () => {
 	copy(shareUrl(), 'Share link copied.');
 });
 
-document.getElementById('cn-copy-embed')?.addEventListener('click', () => {
+document.getElementById('pk-copy-embed')?.addEventListener('click', () => {
 	copy(embedCode(), 'Embed code copied.');
 });
 
-document.getElementById('cn-post')?.addEventListener('click', () => {
+document.getElementById('pk-post')?.addEventListener('click', () => {
 	const agent = currentAgent();
 	const who = agent ? agent.name : 'My agent';
 	const text = `${who} lives in a handheld now. Real 3D, the D-pad actually works, built on @trythreews`;
@@ -940,13 +952,13 @@ document.getElementById('cn-post')?.addEventListener('click', () => {
 	window.open(url, '_blank', 'noopener');
 });
 
-document.querySelectorAll('.cn-tab[data-shell]').forEach((tab) => {
+document.querySelectorAll('.pk-tab[data-shell]').forEach((tab) => {
 	tab.addEventListener('click', () => setShell(tab.dataset.shell));
 });
-document.querySelectorAll('.cn-tab[data-cart]').forEach((tab) => {
+document.querySelectorAll('.pk-tab[data-cart]').forEach((tab) => {
 	tab.addEventListener('click', () => setCart(tab.dataset.cart));
 });
-document.querySelectorAll('.cn-tab[data-env]').forEach((tab) => {
+document.querySelectorAll('.pk-tab[data-env]').forEach((tab) => {
 	tab.addEventListener('click', () => setEnv(tab.dataset.env));
 });
 
