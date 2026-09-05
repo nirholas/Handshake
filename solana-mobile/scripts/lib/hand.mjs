@@ -380,9 +380,16 @@ export class Hand {
 			}
 			return false;
 		}).catch(() => false);
-		if (pinned) return;
 		const box = await this.page.locator(selector).first().boundingBox();
 		if (!box) return;
+		/* Declaring sticky is not the same as being stuck. A sticky element only
+		   travels within its own parent's box, so one wrapped in a container no
+		   taller than itself scrolls off the top like static content, and the
+		   site header does exactly that today. Trusting the declaration put the
+		   tap at a negative y, off the glass, where it hit nothing. Skip the
+		   scroll only when the pinned element is genuinely on screen, which is
+		   what the corner companion widget below actually needs. */
+		if (pinned && box.y + box.height > 0 && box.y < this.css.height) return;
 		const lo = top;
 		const hi = this.css.height - bottom;
 		if (box.y >= lo && box.y + box.height <= hi) return;
