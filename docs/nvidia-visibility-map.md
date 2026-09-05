@@ -54,11 +54,49 @@ Everything here can be done today. Nothing waits on NVIDIA, a build, or a date.
 | 2 | **Inception co-marketing kit** | Portal benefit request, or `inceptionprogram@nvidia.com` | An entitlement we have never claimed. See [Benefits we are owed](#benefits-we-are-entitled-to-and-have-never-requested). |
 | 3 | **Portal product record correction** | `programs.nvidia.com/phoenix/application` | Gates the Showcase AND the Apps Catalog. Already specified in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) step 1. Nothing else in this doc lands well while the record says "CUDA consumer". |
 | 4 | **Inception Startup Showcase** | `inceptionprogram@nvidia.com` | NVIDIA's own wording is "member spotlights and story opportunities". Curated from the portal record, so do #3 first. |
-| 5 | **AI Podcast guest nomination** | Embedded form at [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) | Free, one form, and a founder-shaped story. Fields: name, business email, organization, industry, job title, location, preferred language, and a description of the proposal. |
+| 5 | **AI Podcast guest nomination** | Embedded form at [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) | Free, one form, and a founder-shaped story. **Answers drafted below: [AI Podcast nomination](#ai-podcast-nomination-paste-ready).** Re-verified 2026-09-04: the form is live and self-nomination is explicitly invited. |
 | 6 | **NVIDIA Developer Forums, post 3** | [forums.developer.nvidia.com](https://forums.developer.nvidia.com) | We are 2 for 2 on posts that landed. This is the one channel with a proven track record, and it is self-serve. **Drafted 2026-09-02: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md).** Owner-gated on the external-channel rule, then paste and post. See [Technical publishing](#technical-publishing-the-proven-channel). |
 | 7 | **NVIDIA Developer Discord** | [discord.com/invite/nvidiadeveloper](https://discord.com/invite/nvidiadeveloper) | NVIDIA engineers and product staff are in there. The browser Audio2Face demo is a conversation starter with the actual ACE team, not a marketing ask. |
 | 8 | **Fix `docs/listings.md`** | Ours | The "Startup & Credit Programs" table lists Quicknode and Google Cloud and has **no NVIDIA row at all**, which is the one canonical place a reader looks for our program memberships. Fixed in this change. |
-| 9 | **"Maximize Your Membership" benefits webinar** | Region registration from the Inception member mailer (Americas / EMEA / APAC) | Announced to members 2026-09-02. NVIDIA's own walkthrough of requesting and managing benefits through the portal, which is the exact mechanism gating items 2, 3 and 4 on this list. Attend it before sending the batched email, and use the Q&A to ask the co-marketing and Showcase questions live rather than waiting on an inbox. |
+| 9 | **"Maximize Your Membership" benefits webinar** | Region registration from the Inception member mailer (Americas / EMEA / APAC) | Announced to members 2026-09-02. NVIDIA's own walkthrough of requesting and managing benefits through the portal, which is the exact mechanism gating items 2, 3 and 4 on this list. The batched email went out 2026-09-04, so use the Q&A to chase asks 2 and 3 live rather than waiting on the inbox. |
+
+### AI Podcast nomination, paste-ready
+
+The form is embedded at [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) and its fields were re-read 2026-09-04. Self-nomination is invited in NVIDIA's own copy ("Have a podcast guest proposal for you or someone you know?"). One submission, no gatekeeper, and it is independent of the catalog email.
+
+| Field | Value |
+|---|---|
+| First name | Nicholas |
+| Last name | Yours |
+| Business email | support@three.ws (the address the Inception thread already runs on) |
+| Organization | three.ws |
+| Industry | Media and Entertainment if offered, otherwise Software and Internet |
+| Job title | Founder |
+| Location | Your country of residence. The form reveals a State/Province field conditionally, so answer that one only if it appears. |
+| Preferred language | English |
+
+Description field:
+
+```
+three.ws is a browser-native platform that turns a sentence into a rigged,
+animated 3D AI agent. Type a prompt and a textured, auto-rigged 3D character
+appears in seconds; it then talks, lip-syncs, and embeds on any website with a
+single script tag. The free lane requires no signup and no install.
+
+The episode I would want to record is about what it takes to give that away for
+free. We run a self-hosted fleet of NVIDIA L4 GPU workers alongside
+NVIDIA-hosted models: TRELLIS and Hunyuan3D for generation, Nemotron for agent
+reasoning, Riva for voice, and Audio2Face-3D for facial animation streaming
+into a browser tab rather than into Unreal or Omniverse. The engineering is
+public, including our field notes on running image-to-3D on L4 and Blackwell
+with sm_120 kernel builds, and two posts on the NVIDIA Developer Forums.
+
+three.ws is an NVIDIA Inception member. Happy to bring a live demo: the fastest
+version of this story is watching a face lip-sync in a browser tab with nothing
+installed.
+```
+
+Do not attach anything. The form has no upload field; the demo links belong in the description only if the field accepts URLs, and it does, so the two worth including if you want them are https://three.ws/forge and https://three.ws/demos/audio2face.
 
 ## Tier 2: needs a build first
 

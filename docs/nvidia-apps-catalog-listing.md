@@ -145,6 +145,22 @@ Nothing else checked. TensorRT/Triton/Omniverse stay unchecked here too.
 - Live A2F demo: https://three.ws/demos/audio2face
 - Voice stack source: https://github.com/nirholas/three.ws/tree/main/src/voice
 
+### Long description (about 1,500 characters)
+
+> `<agent-3d>` is a web component that puts a live, talking 3D AI agent on any website with one script tag. No plugin, no framework requirement, no install for the visitor: the avatar loads in a canvas, listens, answers, and lip-syncs in the browser tab.
+>
+> The voice loop is NVIDIA end to end. Speech in is NVIDIA Riva ASR over NVCF gRPC, which replaces the browser-only `webkitSpeechRecognition` path and works cross-browser. Reasoning is Nemotron through NIM APIs, with NemoGuard 8B content safety gating every reply before it reaches a visitor. Speech out is Riva Magpie multilingual TTS. Facial animation is NVIDIA Audio2Face-3D: the client streams 16 kHz mono PCM into the ACE `A2FControllerService` and renders the returned ARKit blendshape track against the avatar's own morph targets, remapping ARKit-52 at runtime onto whatever convention the model ships (ARKit, VRM vowels, Oculus visemes), so a creator's own upload lip-syncs without re-authoring it.
+>
+> The bodies it renders come from the three.ws generation fleet: NVIDIA L4 GPU workers running Hunyuan3D, TRELLIS, TripoSG, and Make-It-Animatable for auto-rigging. The embed is the delivery surface for everything that fleet produces, which is why the two product records are separate: one generates the digital human, this one ships it to an audience.
+
+### Categories (this record)
+
+- **Industry:** Software and Internet (alt: Media and Entertainment)
+- **Use case / workload:** Digital humans, Conversational AI, AI agents
+- **App type:** Web component / SDK embedded in a customer web application
+
+Filing note: this record is independent of the catalog email sent 2026-09-04. It is a portal form, not an email, and it can be filed the moment the main record's corrections are saved.
+
 ---
 
 ## Submission checklist
