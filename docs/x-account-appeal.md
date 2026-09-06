@@ -355,6 +355,33 @@ rewrite an earlier line.
 2. **Log in as `@nichxbt` on desktop.** If X shows an identity-verification
    prompt, complete it (government ID plus selfie, via Persona). This is the
    highest-value single step for an authenticity case.
+
+   **There is no URL that starts ID verification on demand, and the denial
+   email's "on-screen instructions" are not it.** X's locked-account page says
+   the lock flow is "verify ownership by phone, email or recaptcha"
+   ([help.x.com/en/managing-your-account/locked-and-limited-accounts](https://help.x.com/en/managing-your-account/locked-and-limited-accounts),
+   read from the 2026-08-03 Wayback capture because the live page blocks
+   automated readers): log in, find the "Your account has been locked"
+   message, press Start. No document is uploaded anywhere in it. Government ID
+   plus selfie is a separate check that X offers at login when it chooses to,
+   which is what happened to Gasparro; it cannot be requested. The two ID
+   flows that do have public URLs are different products and do not apply:
+   `help.x.com/en/forms/creator-id-verification` is monetization payouts, and
+   age verification is triggered by X. Do not chase either.
+
+   So logging in is a fork, and the screen decides the next move: a lock
+   prompt means do phone/email/recaptcha and the account clears itself; an ID
+   prompt means complete it and lead appeal #2 with it; the suspension
+   interstitial means no verification is on offer and appeal #2 offers to
+   complete ID verification instead (section 3, point 2). The probe on
+   2026-09-06 says to expect the third.
+
+   One form is worth knowing before that fork:
+   [`help.x.com/en/forms/account-restoration/locked`](https://help.x.com/en/forms/account-restoration/locked),
+   titled "Your Account is locked", is a **different form** from the
+   suspension appeal. Because X's own denial calls this a lock, filing it is
+   not a duplicate of appeal #1 and does not count as the same-text refiling
+   that section 4 says gets people denied. It renders only in a real browser.
 3. **File the appeal through the form.** Done, 2026-08-28 06:26; see the
    filing log. Keep the confirmation screenshot.
 4. **Wait a full 72 hours.** An automatic denial inside the first day is the
