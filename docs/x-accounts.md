@@ -10,7 +10,7 @@ link to a page, and before deciding which handle a meta tag should name.
 | Handle | Role | Status |
 | --- | --- | --- |
 | [`@trythreews`](https://x.com/trythreews) | Institutional. The platform account. | Live. This is the only handle to link to or post from today. |
-| `@nichxbt` | Personal. The founder account. | **Suspended 2026-08-27; appeal filed 2026-08-28 06:26, awaiting review.** Confirmed by X's own notification email. Do not link to it and do not plan a post from it. Status and filing log: [`x-account-appeal.md`](x-account-appeal.md). |
+| `@nichxbt` | Personal. The founder account. | **Suspended 2026-08-27; appeal #1 denied 2026-09-05; still suspended, re-confirmed by probe 2026-09-06.** Confirmed by X's own notification emails. Do not link to it and do not plan a post from it. Status and filing log: [`x-account-appeal.md`](x-account-appeal.md). |
 
 The suspension is confirmed, not inferred. X emailed the account owner at
 06:29 on 2026-08-27: the account "was reported and has been suspended",
@@ -29,10 +29,20 @@ Two operational facts from that email, both load-bearing:
 - **An X Premium subscription is not cancelled by the suspension** and keeps
   billing until someone cancels it deliberately.
 
-An appeal through X support is the only path back to the handle. The full
-case, X's own process, the precedents, the exact text to file, and the order
-to do it in are in [`x-account-appeal.md`](x-account-appeal.md). Nothing in
-this repo should wait on it.
+Appeal #1 was denied on 2026-09-05: X says a violation "did take place" and
+that it will not overturn the decision. That closes the first filing, not the
+route. Refiling through the form is what the documented reinstatements did,
+and it is the live next step. The full case, X's own process, the precedents,
+the exact text to file, and the order to do it in are in
+[`x-account-appeal.md`](x-account-appeal.md). Nothing in this repo should wait
+on it.
+
+One wording trap in that denial, because it will be read again later: the
+email says "lock", and a locked account normally clears itself through an
+on-screen flow at login. This one does not. The public probe still answers
+"User is suspended" for user ID `2817123964` (2026-09-06), so the account is
+suspended and the lock template is boilerplate. Do not record it as a
+downgrade in status, and do not tell anyone the handle is one login away.
 
 The reader-facing version of the status table lives on
 [three.ws/community](https://three.ws/community), which lists every channel and the

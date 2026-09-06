@@ -7,6 +7,25 @@ account is evasion and that an X Premium subscription keeps billing. The
 suspension is confirmed independently: X's public user endpoint answers
 `"User is suspended"` for the handle.
 
+**Appeal #1 was denied on 2026-09-05.** X reviewed it, said a violation "did
+take place", cited the authenticity rules again, and declined to overturn the
+lock. That is a decision on the first filing, not the end of the route:
+section 3 shows that most documented reinstatements came after several spaced
+filings, and several of them came after a denial worded exactly like this one.
+The live next step is refiling, per section 6 step 5.
+
+Two things in that denial are worth reading carefully before anyone acts on
+it. First, it says **"lock"** where the original said "suspend", and it invites
+the owner to "resolve the violations by logging into your account and
+completing the on-screen instructions", which is X's standard copy for a
+*locked* account that clears itself through a verification flow. Second, that
+is not the state the account is actually in: the public probe still answers
+`"User is suspended"` for user ID `2817123964` as of 2026-09-06. The
+remediation sentence is boilerplate in a template, not an unlock path that
+someone has failed to click. Log in and look anyway, because it costs one
+minute and it is the only way to see the account-level screen X actually
+serves, but do not plan around finding a self-serve fix there.
+
 This file is the whole case in one place: what X's own process is, what the
 documented successful appeals had in common, what got other people denied,
 the exact text to submit, and the order to do things in. It was assembled on
@@ -324,6 +343,8 @@ rewrite an earlier line.
 | --- | --- | --- |
 | 2026-08-27 06:29 | X emails: account "was reported and has been suspended" for "violating our rules against authenticity". | Suspension confirmed; public user endpoint answers "User is suspended". |
 | 2026-08-28 06:26 | Appeal #1 filed through the form with the text in section 5. | Form acknowledged receipt. Awaiting review. Next check: log in daily; earliest refiling if silent or auto-denied: 2026-08-31. |
+| 2026-09-05 04:25 | X emails the decision on appeal #1: "a violation of our Rules did take place", "Violating our Rules against authenticity", "we will not overturn our decision to lock your account". Adds that functionality can be restored by "logging into your account and completing the on-screen instructions". | Denied. Eight days from filing, so a human review rather than the documented same-day auto-denial: appeal #2 must carry a new fact, not the same text. See section 6 step 5. |
+| 2026-09-06 | Public probe re-run against both handles from a datacenter IP. | `@nichxbt` (id `2817123964`) still answers `"User is suspended"`; control `@trythreews` answers `200` and live. The denial's "lock" wording did not come with a change of state. X's own syndication endpoint rate-limits this IP (`429`), so the probe went through a public mirror of the same endpoint. |
 
 ## 6. The order of operations
 
@@ -337,12 +358,16 @@ rewrite an earlier line.
 3. **File the appeal through the form.** Done, 2026-08-28 06:26; see the
    filing log. Keep the confirmation screenshot.
 4. **Wait a full 72 hours.** An automatic denial inside the first day is the
-   documented norm and is not the end.
+   documented norm and is not the end. What arrived instead was a denial on
+   day 8 (2026-09-05), which is the slower human-review path.
 5. **If denied or silent after 72 hours: refile, reworded, with one new
    fact.** The new fact is ID verification if it completed after the first
    filing, otherwise a specific pointer such as the account's 2014 creation
    or a partner listing URL. Do not resend the same text. Every 3 to 5 days,
-   never sooner.
+   never sooner. **This is where the case stands now.** Appeal #1 was denied,
+   so appeal #2 is due, and the single highest-value new fact remains a
+   completed ID verification (step 2); if that is already done, lead with it
+   and say so in the first line.
 6. **Check by logging in, not by waiting for email.** Restoration was silent
    in the best-documented case. A "restored" email that does not restore
    access is a known 2026 bug: log out, reset password, log in again.
