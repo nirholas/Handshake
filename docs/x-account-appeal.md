@@ -334,6 +334,63 @@ in section 1; verified against production on 2026-08-28). So there is nothing
 to pre-empt, and volunteering the company account would only invite a
 reviewer to link two accounts that X has no reason to look at together.
 
+## 5b. Appeal #2, drafted and ready to file
+
+**Status: written, NOT yet filed.** Filing is the owner's action; add a line
+to the filing log the moment it goes in. Appeal #1 was denied on 2026-09-05,
+so section 6 step 5 applies: reworded, and carrying a fact the first one did
+not have. It carries three.
+
+**The new facts, and why these three.** The first is the strongest thing the
+denial handed us. X's notice says "lock" and tells the owner to complete
+on-screen instructions; there are none, and the public endpoint still reports
+the account suspended. That is a discrepancy inside X's own record rather
+than another character reference, and it gives a reviewer a concrete reason
+to pull the file, which is the whole objective of a refiling. The second is
+that no X developer application was ever created or authorized on the
+account, which a reviewer can confirm from their side in seconds and which
+directly rules out the automated-activity limb of the authenticity policy.
+The third replaces appeal #1's general "published partner listings" with one
+URL on a third party's own domain, per section 6 step 5. All four links in
+this packet were checked live on 2026-09-06; the IBM post is the one to send
+because the domain is IBM's and the author is a named IBM employee.
+
+> My appeal for @nichxbt was denied on September 5. The decision says you will
+> not overturn the lock on my account and that I can restore functionality by
+> logging in and completing the on-screen instructions. There are no on-screen
+> instructions when I log in, and the account is not locked: the profile shows
+> as suspended and your public user endpoint reports "User is suspended" for
+> user ID 2817123964. Please check which enforcement action is actually
+> recorded against this account, because your notice and the account state do
+> not describe the same thing.
+>
+> On the finding itself, here is one point you can verify from your side: no X
+> developer application has ever been created or authorized on this account,
+> so none of the automated activity the authenticity policy covers could have
+> run through it. I have held the account since 2014 and I post from it by
+> hand.
+>
+> I am a real person running a real company. IBM published this about our work
+> in June: https://community.ibm.com/community/user/blogs/jessica-swanson/2026/06/11/threews-the-open-on-chain-platform-for-3d-agents
+> I am willing to complete government-ID verification; no verification has
+> been offered to me on screen.
+>
+> Please have a person review both the account and the enforcement record.
+
+**One optional line, only if it is true on the day of filing.** Gasparro's
+winning appeals stated Premium+ subscriber status, and X's own email confirms
+the subscription keeps billing through a suspension. If the subscription is
+still active, add "I have been a paying subscriber throughout" to the third
+paragraph. Do not add it otherwise: section 5's rule about falsifiable claims
+is the one that turns a mistaken suspension into an upheld one.
+
+**What this deliberately still does not do.** It does not mention
+`@trythreews`, for the reason in section 5. It does not accuse anyone of
+reporting the account, does not argue policy, and does not ask for an
+apology. It does not repeat appeal #1's sentences about what the account is
+used for; a reviewer who pulls the file can already see appeal #1, and
+repeating it is what section 4 says gets refilings denied.
+
 ## Filing log
 
 Every contact with X about this suspension, in order. Append to it; never
