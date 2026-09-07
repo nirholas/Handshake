@@ -50,6 +50,9 @@
 		.hero { padding: 40px 0 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 		.hero-text h1 { font-size: clamp(26px, 4vw, 38px); font-weight: 800; letter-spacing: -0.024em; margin: 0 0 8px; }
 		.hero-text p { color: var(--muted); font-size: 15px; margin: 0; }
+		.hero-text .hero-alt { margin-top: 6px; font-size: 13px; }
+		.hero-text .hero-alt a { color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+		.hero-text .hero-alt a:hover { color: var(--cyan); }
 		.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px;
 			font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.14); transition: all .16s; cursor: pointer; text-decoration: none; }
 		.btn-primary { background: linear-gradient(135deg, var(--cyan), var(--violet)); border-color: transparent; color: #050610; }
@@ -120,6 +123,7 @@
 				<div class="hero-text">
 					<h1 data-i18n="my_agents_index.my_agents_2">My Agents</h1>
 					<p data-i18n="my_agents_index.your_3d_ai_agents_edit_chat_and">Your 3D AI agents — edit, chat, and manage them from here.</p>
+					<p class="hero-alt" data-i18n-html="my_agents_index.see_everything">Avatars and forged 3D models too? <a href="/mine">My creations</a> has all of it in one grid.</p>
 				</div>
 				<a class="btn btn-primary" href="/create-agent" id="create-cta" style="display:none" data-i18n="my_agents_index.create_agent">+ Create agent</a>
 			</div>

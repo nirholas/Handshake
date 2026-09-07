@@ -1424,6 +1424,23 @@
 				justify-content: center;
 				flex-wrap: wrap;
 			}
+			/* Where this agent lives from now on. New creators told us the hard
+			   part was not building the agent, it was finding it again the next
+			   day, so the wizard says it out loud at the moment it is created. */
+			.success-find {
+				margin: 16px auto 0;
+				max-width: 460px;
+				font-size: 0.82rem;
+				line-height: 1.55;
+				color: var(--muted);
+			}
+			.success-find a {
+				color: var(--text);
+				font-weight: 600;
+				text-decoration: underline;
+				text-underline-offset: 3px;
+			}
+			.success-find a:hover { color: var(--accent, var(--text)); }
 
 			.success-deploy {
 				margin-top: 22px;
@@ -2056,6 +2073,10 @@
 									 data-i18n="create_agent.view_my_profile">View my profile</a
 								>
 							</div>
+							<p class="success-find" data-i18n-html="create_agent.find_it_again">
+								Need it later? It is always waiting under
+								<a href="/mine">My creations</a> in the menu.
+							</p>
 							<div class="success-deploy">
 								<p class="success-deploy-label" data-i18n="create_agent.take_it_further">Take it further</p>
 								<div class="success-deploy-actions">

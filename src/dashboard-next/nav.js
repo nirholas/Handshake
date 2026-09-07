@@ -17,6 +17,7 @@ export const NAV = [
 	// ── Create ──────────────────────────────────────────────────────────
 	{ path: '/start',                 label: 'Get started',     icon: 'sparkle',   group: 'Create',     tags: ['new', 'wizard', 'onboarding', 'create agent', 'setup'], external: true },
 	{ path: '/dashboard',             label: 'Overview',        icon: 'home',      group: 'Create',     tags: ['home', 'dashboard', 'start'] },
+	{ path: '/mine',                  label: 'My Creations',    icon: 'gallery',   group: 'Create',     tags: ['mine', 'my creations', 'my stuff', 'my agents', 'my avatars', 'my models', 'find', 'made', 'where'], external: true },
 	{ path: '/dashboard/avatars',     label: 'Avatars',         icon: 'avatar',    group: 'Create',     tags: ['models', 'glb', 'creations', 'selfie', 'upload'] },
 	{ path: '/dashboard/agents',      label: 'Agents',          icon: 'agent',     group: 'Create',     tags: ['bot', 'ai', 'identity', 'erc-8004', 'persona', 'reputation'] },
 	{ path: '/dashboard/library',     label: 'Library',         icon: 'library',   group: 'Create',     tags: ['animations', 'memory', 'voice', 'strategy', 'clips', 'strategy-lab'] },

@@ -1978,6 +1978,13 @@ Indexable: no (excluded from sitemap)
 
 Account, profile, and notification settings.
 
+### My Creations
+
+URL: https://three.ws/mine
+Indexable: no (excluded from sitemap)
+
+Everything you have made on three.ws in one newest-first grid: the agents you built, the 3D avatars you saved, and every model you forged, including models forged in this browser before you had an account. Open, edit, or copy a link to any of them in one click.
+
 ### Your creator portfolio
 
 URL: https://three.ws/profile

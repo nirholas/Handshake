@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-07T01:11:24.106Z",
+	"generated_at": "2026-09-07T05:11:39.753Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3247,6 +3247,16 @@
 					"description": "Account, profile, and notification settings.",
 					"added": "2026-04-28",
 					"auth": "required",
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/mine",
+					"title": "My Creations",
+					"description": "Everything you have made on three.ws in one newest-first grid: the agents you built, the 3D avatars you saved, and every model you forged, including models forged in this browser before you had an account. Open, edit, or copy a link to any of them in one click.",
+					"added": "2026-09-07",
+					"auth": "optional",
 					"indexable": false,
 					"tags": [],
 					"showcase": false
