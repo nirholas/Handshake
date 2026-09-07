@@ -37,8 +37,8 @@ var or add quota · 🟢 self-healing, no action needed.
 > renders it with a plain-language fix for each degradation, and
 > **`/api/healthz`** carries a machine-readable `subsystems` block (database, cache,
 > rate limiter, Helius RPC, the whole Solana RPC lane tier (`rpc_lanes`), x402 ring,
-> **x402 settlement success**, **Forge 3D generation**, world, sniper, the OKX chat
-> bot, x402 config). The uptime cron
+> **x402 settlement success**, **Forge 3D generation**, **object storage**, world,
+> sniper, the OKX chat bot, x402 config). The uptime cron
 > ([api/cron/uptime-check.js](../../api/cron/uptime-check.js)) parks a snapshot
 > each tick and re-pages a degradation that persists. Source of the roll-up:
 > [api/_lib/ops/subsystem-health.js](../../api/_lib/ops/subsystem-health.js). This
@@ -86,6 +86,56 @@ guard env violated:
 - **Resolve (owner):** set `ADMIN_CODE` on the world service and re-run
   `deploy/world/apply-hardening.sh`. It's a security credential the owner must
   choose and store — not something to auto-generate here.
+
+---
+
+## 🔴 `The request signature we calculated does not match the signature you provided` (r2-credential)
+
+**Signature.** Any of: a 502 from `POST /api/forge` or `/api/gpt-forge` carrying that
+sentence, `[cdn-object] signed read failed, serving public bucket domain`,
+`[forge] object storage rejected the generation`, `[register/prep] object storage
+rejected the manifest`, or `object_storage: down` in `/api/healthz`.
+
+**What it is.** Cloudflare R2 is refusing our signed requests. The access key id is
+recognized (that would be `InvalidAccessKeyId`); the SECRET is wrong. Every signed
+operation fails at once, read and write.
+
+**Blast radius, which is the whole product.** 3D generation dies before it writes a
+row: the reference image cannot be parked, so text→3D fails on the website AND on
+the ChatGPT surfaces (they share the bucket, not the endpoint). Uploads cannot land.
+Agent registration cannot store its manifest. `/cdn/*` cannot read an object, so
+every avatar, thumbnail and GLB on the site falls back to the public bucket domain.
+
+**First seen 2026-09-07**, ~00:19 UTC: generation stopped dead for nearly five hours
+and was reported by users in Telegram, not by us, because nothing here had a signal
+for it. Two gaps were closed in the same change and both are worth knowing about:
+`forge_generation` read `ok, 89% success` throughout (its ledger only contains
+generations that got far enough to write a row, so a total stop looked like a quiet
+hour), and `isStorageInfrastructureError` matched only the compact
+`SignatureDoesNotMatch` code, which appears in `err.name` and never in the sentence
+above. `object_storage` now probes the credential directly and the forge sensor now
+reports a stall.
+
+**Resolution (owner).** Re-set the secret on the Cloud Run service:
+
+```bash
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars S3_SECRET_ACCESS_KEY=<secret>   # or --update-secrets for a Secret Manager ref
+```
+
+Two traps that produce this exact error and look like a correct value:
+- On R2 the **Secret Access Key is the SHA-256 digest of the API token**, not the
+  token value. Pasting the token itself signs into `SignatureDoesNotMatch`.
+- A **trailing newline** in the stored secret fails identically. `env.js` trims
+  credential-class values now, so a padded value can only bite a consumer that
+  reads `process.env` directly.
+
+Verify with `curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[]
+| select(.name=="object_storage")'`, then one `POST /api/forge {"prompt":"cube"}`.
+
+**No code change routes around it.** The read path fails over to the public bucket
+domain (rate-limited, so it is a degradation, not a fix) and writes cannot fail over
+at all.
 
 ---
 

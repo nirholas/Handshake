@@ -9,7 +9,7 @@ import { parse } from '../../_lib/validate.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 import { erc8004RegistryFields } from '../../_lib/three-brand.js';
-import { r2, publicUrl } from '../../_lib/r2.js';
+import { r2, publicUrl, isStorageInfrastructureError } from '../../_lib/r2.js';
 import { SERVER_CHAIN_META } from '../../_lib/onchain.js';
 import { evmRpcEndpoints } from '../../_lib/evm/rpc.js';
 import { publishFeedEvent } from '../../_lib/feed.js';
@@ -128,7 +128,28 @@ async function handlePrep(req, res) {
 		...(body.embedPolicy && { embedPolicy: body.embedPolicy }),
 		...(body.demoSlug && { demoSlug: body.demoSlug }),
 	};
-	const { cid, metadataURI } = await pinRegistrationJson(registrationJson);
+	// The manifest has to be stored somewhere resolvable before an on-chain
+	// registration can point at it, and the last-resort store is our own bucket:
+	// when the bucket rejects our credential there is nowhere to put it and the
+	// registration genuinely cannot proceed. Say that, instead of throwing the
+	// store's signing complaint at someone who was creating an agent (on
+	// 2026-09-07 a rejected R2 secret failed this path and the forge together, so
+	// an agent could be neither given an avatar nor registered).
+	let pinned;
+	try {
+		pinned = await pinRegistrationJson(registrationJson);
+	} catch (err) {
+		if (!isStorageInfrastructureError(err)) throw err;
+		console.error(`[register/prep] object storage rejected the manifest: ${err?.message || err}`);
+		res.setHeader('retry-after', '60');
+		return error(
+			res,
+			503,
+			'storage_unavailable',
+			'Agent registration is temporarily unavailable while our asset storage recovers. Your avatar is safe: try again shortly.',
+		);
+	}
+	const { cid, metadataURI } = pinned;
 	const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 	// payload stores the pinned manifest plus a _local block confirm needs to
 	// bind the identity row (never pinned: added after the pin above).

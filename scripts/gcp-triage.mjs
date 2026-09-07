@@ -56,6 +56,12 @@ const KNOWN_SIGNATURES = [
 		action: `world.three.ws serving without ADMIN_CODE: every visitor has build rights. Owner runs deploy/world/apply-hardening.sh. ${RUNBOOK} §world.`,
 	},
 	{
+		id: 'r2-credential-rejected',
+		match: /does not match the signature you provided|SignatureDoesNotMatch|InvalidAccessKeyId|object storage rejected/i,
+		class: 'owner',
+		action: `Object storage is rejecting our credential: 3D generation, uploads and agent registration all fail, and /cdn falls back to the rate-limited public bucket domain. NO code path routes around it. Owner re-sets S3_SECRET_ACCESS_KEY on three-ws-api (on R2 the secret is the token's SHA-256 digest, not the token value). ${RUNBOOK} §r2-credential.`,
+	},
+	{
 		id: 'replicate-credit',
 		match: /replicate billing\/credit failure|insufficient credit/i,
 		class: 'owner',
