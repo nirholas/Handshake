@@ -4,17 +4,17 @@ Everything open lives in [finish/](finish/) as one flat folder of 197 work order
 audits + 47 everything else). That folder tells you what is open; it does not tell you what
 matters. This file ranks it.
 
-**Measured 2026-09-03**, not copied from any pack's status text:
+**Measured 2026-09-06**, not copied from any pack's status text:
 
 | Probe | Result |
 |---|---|
-| `curl -s https://three.ws/api/version` | `19906ce52` (built 2026-09-02 22:02 UTC) |
-| `git rev-parse --short main` | `d5bda0f6d` |
-| commits live on `main`, not in production | **219** |
-| `curl -s https://three.ws/api/healthz` | `subsystems.status: down` (10 ok, 2 down, 1 degraded) |
-| down | `x402_settle` (settle 10.0%, 6/60 paid attempts, 1126 `fee_wallet_below_floor`), the marketplace chat-bot subsystem (heartbeat 1193 min old) |
-| degraded | `sniper` (4 of 11 wallets starved) |
-| recovered since the last map | `agent_index` is now **ok** (5 of 1,604 agents erroring, 35m median lag, 0 stale EVM chains), so its order was verified and retired on 2026-09-03 |
+| `curl -s https://three.ws/api/version` | `8770c06c2` on revision `three-ws-api-00415-cbr` (built 2026-09-05 15:29 UTC) |
+| `git rev-parse --short main` | `c5d0cbc63` |
+| commits live on `main`, not in production | **17** (was 219 on 2026-09-03) |
+| `curl -s https://three.ws/api/healthz` | `subsystems.status: down` (9 ok, 4 degraded, 1 down) |
+| down | `x402_settle`, now **0.0%** (0 of 39 paid attempts over 3 hours), Solana accept withdrawn on 82 `no_solana_accept`, sponsor under the SOL floor |
+| degraded | `okx_chat_bot` (chat IS delivered now; the AI provider returns 403 `Lightning dunning decision is deny for project: projects/93741856042`), `agent_index` (84 of 1,605 agents erroring, 39m median lag), `sniper` (4 of 11 wallets starved, needs 0.2397 SOL, funding master holds 0.0250), `helius` / `rpc_lanes` (all four paid Solana lanes over quota at once) |
+| changed since the last map | The 2026-09-05 deploy cleared the old P0 row 1. The chat-bot host is no longer down, so backlog 08's premise moved: it is a credential failure, not a hosting one. A **GCP billing dunning hold** is the new cross-cutting blocker, and `gcloud` in this workspace answers `Reauthentication failed` (OWNER-ACTIONS row 15 is live, not standing) |
 
 Re-run those five commands before trusting this file. Ranking rule used throughout: a live
 production defect outranks an unshipped fix, an unshipped fix outranks a new feature, and
@@ -24,21 +24,31 @@ The tier is the priority. Inside a tier, the order of the rows is the order to r
 
 ---
 
-## P0. Production is stale and two subsystems are down (run today)
+## P0. Every remaining row is an owner action, not an agent session (collect, do not run)
 
-| Order | Why now (measured) | Gate |
+The 2026-09-05 deploy cleared the ranking's old top row: production is 17 commits behind, not
+219, and those 17 are the vscode-3d, IRL and docs commits from 2026-09-05 and 2026-09-06. What is
+left at P0 no longer multiplies the other tiers, because nothing here is unblocked by writing
+code. Batch these into one owner message and start an agent session from P1.
+
+| Row | Why now (measured) | Who clears it |
 |---|---|---|
-| [finish/production-100-01-ship-readiness.md](finish/production-100-01-ship-readiness.md) | 219 commits of shipped fixes are sitting on `main` and reaching nobody. Every other order in this file lands behind this one, so running it first multiplies all of them. | Owner approval for the deploy (OWNER-ACTIONS row 1). Everything up to `gcloud builds submit` is agent work. |
-| Backlog order 08, the marketplace chat-bot host (index: [finish/backlog-00-INDEX.md](finish/backlog-00-INDEX.md)) | The chat-bot subsystem is **down**, heartbeat 1193 minutes old: marketplace chat is not delivered at all. Buyers messaging our listing get silence, which also blocks the listing work in P4. | Needs a durable host (Cloud Run), plus one owner OTP read (row 10). Commit gate applies (row 11). |
-| [finish/backlog-01-x402-settle-runway.md](finish/backlog-01-x402-settle-runway.md) | `x402_settle` is **down**: 1126 settle attempts failed on `fee_wallet_below_floor`, 10% success. The money rail is the platform's revenue story. | The code half is done; the fee wallet needs external SOL (OWNER-ACTIONS row 2). The ring cannot self-fund this. Do the agent-side reclaim and reporting, then hand the owner one funding line. |
+| GCP billing dunning hold | Production's own healthz quotes the provider: `Lightning dunning decision is deny for project: projects/93741856042`. That denial is project-wide, so it silently defeats "use Vertex, it is pre-approved" for any order that needs an LLM or an image lane, and it is why `okx_chat_bot` can deliver a message and still author no reply. Nothing in this repo can route around a billing hold. | Owner (billing). Verify with one live Vertex call before treating any Vertex-dependent order as runnable. |
+| `gcloud` re-auth in this workspace | `gcloud projects describe` answers `Reauthentication failed. cannot prompt during non-interactive execution`. This is OWNER-ACTIONS row 15 in its live state, and it gates the deploy submit, the Cloud Scheduler comparison in fix-queue 03, and the fleet reads in quality-bar 03. | Owner (`gcloud auth login`). Retry a real call first; this row has cleared itself before. |
+| Fund the settle sponsor (OWNER-ACTIONS row 2) | `x402_settle` got worse, not better: 10.0% settle on 2026-09-03, **0.0%** now, and the Solana accept is withdrawn from every 402 challenge. [finish/backlog-01-x402-settle-runway.md](finish/backlog-01-x402-settle-runway.md)'s code half is already done; the wallet needs about 1 SOL from outside. The ring cannot self-fund it. | Owner (~1 SOL). The `sniper` refill (0.2397 SOL) is the same class and the same message. |
+| Ship the 17 (OWNER-ACTIONS row 1) | Small now, and worth batching with the re-auth above rather than running as its own campaign session. | Owner approval plus a working `gcloud`. |
 
-## P1. Cheap wins and platform health (run this week)
+Backlog order 08 has left this tier. The chat-bot subsystem reports chat as delivered; its
+remaining failure is the billing hold in row 1 of this table, so re-read the order before
+running it as a hosting task.
+
+## P1. The highest-value agent work available today (start here)
 
 | Order | Why now (measured) | Gate |
 |---|---|---|
 | [finish/swarm-100-sweep-console.md](finish/swarm-100-sweep-console.md) | The console sweep still exits 1, and its root causes (`draco_decoder.wasm` 404 on every 3D page, `/fees` logging seven 404s) are the same defects that make ~29 of the 150 route audits fail. Fixing the shared causes once retires route orders in bulk. | None. |
-| [finish/fix-queue-03-cron-drift-garment-sweep.md](finish/fix-queue-03-cron-drift-garment-sweep.md) | P1 silent failure: a cron declared in `vercel.json` has never fired in production. Nothing errors, the job just never runs. | Needs a live `gcloud` read. The auth failure here is intermittent, not standing (row 15); retry before parking it. |
-| [finish/production-100-04b-fact-check-publish-run.md](finish/production-100-04b-fact-check-publish-run.md) | Re-measured 2026-09-03: the benchmark now answers from `database` with a published run, so the campaign's definition-of-100% line 6 passes, but the run scores **16 of 40** and the `mixed` class the fix targeted is **0 of 10**. The order stands, with a sharper target than when it was written. | Needs an LLM lane; use Vertex (pre-approved) rather than waiting on row 5. |
+| [finish/fix-queue-03-cron-drift-garment-sweep.md](finish/fix-queue-03-cron-drift-garment-sweep.md) (needs the P0 re-auth) | P1 silent failure: a cron declared in `vercel.json` has never fired in production. Nothing errors, the job just never runs. | Needs a live `gcloud` read. The auth failure here is intermittent, not standing (row 15); retry before parking it. |
+| [finish/production-100-04b-fact-check-publish-run.md](finish/production-100-04b-fact-check-publish-run.md) (blocked while the dunning hold stands) | Re-measured 2026-09-03: the benchmark now answers from `database` with a published run, so the campaign's definition-of-100% line 6 passes, but the run scores **16 of 40** and the `mixed` class the fix targeted is **0 of 10**. The order stands, with a sharper target than when it was written. | Needs an LLM lane, and as of 2026-09-06 Vertex is denied project-wide by the billing hold in P0. Probe the lane before starting; if it is still denied, run one of the rows above instead. |
 | [finish/swarm-100-sweep-authed-audit.md](finish/swarm-100-sweep-authed-audit.md) | 33 pages had error findings in the last authed report (2026-08-19) and the QA login now exists, so the order's own "blocked" premise is stale. Signed-in users see a different, worse site than the probes measure. | None (`npm run audit:web:login`). |
 
 ## P2. Quality bar, the visible half of the product
@@ -63,7 +73,7 @@ Finishing a partial beats starting a new campaign; the expensive half is already
 | Order | State |
 |---|---|
 | [finish/roadmap-generation-suite.md](finish/roadmap-generation-suite.md) | Tools, smoke cron and gallery shipped; PBR map outputs, job webhooks and the API contract doc open. Pairs naturally with quality-bar-04. |
-| [finish/gcp-credits-05-catalog-animation-seeding.md](finish/gcp-credits-05-catalog-animation-seeding.md) | The catalog seed runs at scale (56,898 avatars); the generated motion library still has **0 clips**. Pure credit spend, pre-approved, no gate. |
+| [finish/gcp-credits-05-catalog-animation-seeding.md](finish/gcp-credits-05-catalog-animation-seeding.md) | The catalog seed runs at scale (56,898 avatars); the generated motion library still has **0 clips**. Pure credit spend and pre-approved, but the 2026-09-06 billing hold in P0 denies the generation lane, so probe before starting. |
 | [finish/event-06-photo-mode-share.md](finish/event-06-photo-mode-share.md) | Cross-engine verification and the changelog entry remain. Check `event-PROGRESS.md` first; another agent was on it 2026-09-02. |
 | [finish/event-02-play-polish-sweep.md](finish/event-02-play-polish-sweep.md) | Rewritten to its remainder: one harness run on a quiet box. |
 | [finish/fable-audit-RESIDUALS.md](finish/fable-audit-RESIDUALS.md) | Three deliberately-left items: a negative fixture and an OIDC step, an API-only task, and six seed drifts behind the commit gate. |
