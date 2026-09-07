@@ -34,6 +34,15 @@ const WINDOW_INTERVAL = '6 hours';
 // without letting a quiet stretch read as an outage.
 const MIN_ATTEMPTS = 15;
 
+// Stall detection. The rate above can only judge generations that got far enough
+// to write a forge_creations row, so a failure UPSTREAM of that row (object
+// storage rejecting the reference-image upload, on 2026-09-07) produces no rows
+// at all, and no rows reads as a quiet hour. Silence is only innocent when the
+// forge was already quiet: a lane that was starting a generation every couple of
+// minutes and has started nothing since is down, whatever the surviving rows say.
+const STALL_MIN_HOURLY = 3;
+const STALL_AGE_MS = 45 * 60 * 1000;
+
 // Rate bands. 3D generation legitimately fails sometimes (hard prompts/images),
 // so the healthy bar is not 100%: ok ≥ 85%, degraded 60–85%, down < 60%. The
 // 2026-07 image burst (~52% success) reads `down`; a 77% day reads `degraded`.
@@ -115,6 +124,27 @@ export function classifyForgeBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = {
 }
 
 /**
+ * Judge whether the forge has stopped STARTING generations. Pure: takes the age
+ * of the newest row and the recent hourly rate, so the "quiet night vs outage"
+ * boundary is unit-testable without a clock or a DB.
+ * @param {{ lastCreatedAgeMs: number|null, hourlyRate: number }} input
+ * @returns {{ stalled: boolean, detail?: string, hint?: string, ageMinutes: number|null }}
+ */
+export function classifyForgeStall({ lastCreatedAgeMs, hourlyRate }) {
+	const ageMinutes = lastCreatedAgeMs == null ? null : Math.round(lastCreatedAgeMs / 60000);
+	if (lastCreatedAgeMs == null || hourlyRate < STALL_MIN_HOURLY || lastCreatedAgeMs < STALL_AGE_MS) {
+		return { stalled: false, ageMinutes };
+	}
+	return {
+		stalled: true,
+		ageMinutes,
+		detail: `no generation has STARTED in ${ageMinutes}m (the forge was averaging ${hourlyRate.toFixed(0)}/hour)`,
+		hint:
+			'Zero new rows is not a quiet hour at this volume: the request is failing BEFORE forge_creations is written, so the success-rate sensor cannot see it. That is the shape of a shared dependency, not a lane fault. Check object_storage in this same payload first (a rejected bucket credential blocks the reference-image upload every lane needs), then the text→image lane, then POST /api/forge with a one-word prompt and read the error body.',
+	};
+}
+
+/**
  * Read the last WINDOW_INTERVAL of forge outcomes and classify them. Fail-soft:
  * a missing DB, absent table, or query error resolves to `unknown` so a health
  * read never throws. Pre-aggregates in SQL (bounded rows) so it is safe on the
@@ -139,7 +169,28 @@ export async function gatherForgeHealth() {
 				GROUP BY status, backend, path, reason
 			`
 		);
+		// One extra bounded read: the newest row and the recent volume, so a total
+		// stop (no rows at all) is distinguishable from a quiet stretch.
+		const [pulse] = /** @type {Array<{ last_at: string|null, n6: number }>} */ (
+			await sql`
+				SELECT max(created_at) AS last_at,
+				       count(*)::int AS n6
+				FROM forge_creations
+				WHERE created_at >= now() - '6 hours'::interval
+			`
+		);
+		const lastCreatedAgeMs = pulse?.last_at ? Date.now() - new Date(pulse.last_at).getTime() : null;
+		const stall = classifyForgeStall({ lastCreatedAgeMs, hourlyRate: (Number(pulse?.n6) || 0) / 6 });
 		const v = classifyForgeBuckets(buckets);
+		if (stall.stalled) {
+			return {
+				...base,
+				status: 'down',
+				detail: stall.detail || 'no generation has started recently',
+				hint: stall.hint,
+				metrics: { windowHours: 6, stalled: true, lastStartMinutesAgo: stall.ageMinutes, recentStarts: Number(pulse?.n6) || 0 },
+			};
+		}
 		return {
 			...base,
 			status: v.status,
