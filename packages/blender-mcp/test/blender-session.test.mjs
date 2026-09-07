@@ -199,3 +199,65 @@ test('an unsupported output format fails with an actionable message', { skip: SK
 	assert.equal(payload.error, 'format_unsupported');
 	assert.match(payload.message, /Supported:/);
 });
+
+test('blender_render hands the image back inline so the caller can see it', { skip: SKIP }, async () => {
+	const output = path.join(workdir, 'inline.png');
+	const result = await client.callTool({
+		name: 'blender_render',
+		arguments: { input: fixture, output, samples: 4, resolution: [1024, 1024] },
+	});
+	const image = result.content.find((block) => block.type === 'image');
+	assert.ok(image, 'the render must come back as an MCP image block, not just a path');
+	assert.equal(image.mimeType, 'image/png');
+	assert.ok(image.data.length > 100, 'the image block must carry real base64 data');
+
+	const payload = payloadOf(result);
+	// The full-resolution render stays on disk; only a scaled copy is inlined.
+	assert.equal(payload.resolution[0], 1024);
+	assert.ok(payload.preview_bytes < payload.output_bytes, 'the inlined copy must be smaller than the render');
+	await assert.rejects(stat(payload.preview), 'the scaled copy is temporary and must not be left behind');
+});
+
+test('inline_image: false suppresses the image block', { skip: SKIP }, async () => {
+	const result = await client.callTool({
+		name: 'blender_render',
+		arguments: { input: fixture, output: path.join(workdir, 'no-inline.png'), samples: 4, resolution: [160, 160], inline_image: false },
+	});
+	assert.ok(!result.content.some((block) => block.type === 'image'));
+	assert.equal(payloadOf(result).ok, true);
+});
+
+test('blender_scene_info reports the texture budget, not just an image count', { skip: SKIP }, async () => {
+	const textured = path.join(workdir, 'textured.glb');
+	await callTool('blender_run_python', {
+		output: textured,
+		code: [
+			'import bpy',
+			'bpy.ops.mesh.primitive_cube_add()',
+			"image = bpy.data.images.new('Albedo', width=512, height=512)",
+			"image.generated_type = 'COLOR_GRID'",
+			"material = bpy.data.materials.new('Textured')",
+			'material.use_nodes = True',
+			"node = material.node_tree.nodes.new('ShaderNodeTexImage')",
+			'node.image = image',
+			"material.node_tree.links.new(node.outputs['Color'], material.node_tree.nodes['Principled BSDF'].inputs['Base Color'])",
+			'bpy.context.object.data.materials.append(material)',
+		].join('\n'),
+	});
+
+	const { payload } = await callTool('blender_scene_info', { input: textured });
+	assert.equal(payload.textures.length, 1);
+	assert.deepEqual(payload.textures[0].resolution, [512, 512]);
+	assert.ok(payload.textures[0].bytes > 0, 'a packed texture must report its byte size');
+	assert.equal(payload.counts.texture_bytes, payload.textures[0].bytes);
+});
+
+test('parallel calls queue instead of exhausting the machine', { skip: SKIP }, async () => {
+	const results = await Promise.all(
+		Array.from({ length: 5 }, () => callTool('blender_scene_info', { input: fixture, include_objects: false })),
+	);
+	assert.ok(
+		results.every((r) => r.isError === false && r.payload.counts.meshes === 1),
+		'every queued call must succeed',
+	);
+});

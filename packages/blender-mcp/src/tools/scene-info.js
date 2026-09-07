@@ -16,8 +16,11 @@ export const def = {
 	description:
 		'Open a 3D file with Blender and report what is inside it: object list with types, parents, dimensions and ' +
 		'modifiers; evaluated triangle and vertex counts; materials; armature bone names; animation actions with ' +
-		'their frame ranges; and world-space bounds. Accepts .blend plus every format this Blender can import ' +
-		'(.glb, .gltf, .fbx, .obj, .stl, .ply, .dae, .abc, .usd*, .x3d). Read-only: the file is never modified.',
+		'their frame ranges; a texture inventory with each image\'s resolution and byte size plus the total, which is ' +
+		'usually what decides whether an asset is deliverable; and world-space bounds. Accepts .blend plus every ' +
+		'format this Blender can import (.glb, .gltf, .fbx, .obj, .stl, .ply, .dae, .abc, .usd*, .x3d). Counts describe ' +
+		'the file AS LOADED, so a GLB reports more vertices than the .blend it came from (glTF splits vertices at UV ' +
+		'and normal seams) while the triangle count is identical. Read-only: the file is never modified.',
 	inputSchema: {
 		input: z.string().min(1).describe('Path to the 3D file to inspect. Absolute, or relative to the server working directory.'),
 		include_objects: z
