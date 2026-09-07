@@ -337,7 +337,20 @@ reviewer to link two accounts that X has no reason to look at together.
 ## 5b. Appeal #2, drafted and ready to file
 
 **Status: written, NOT yet filed.** Filing is the owner's action; add a line
-to the filing log the moment it goes in. Appeal #1 was denied on 2026-09-05,
+to the filing log the moment it goes in.
+
+**Where it goes:**
+[`help.x.com/en/forms/account-access/appeals`](https://help.x.com/en/forms/account-access/appeals),
+logged in as `@nichxbt` so the handle and email pre-fill, which is the same
+form appeal #1 went through. There is a second, non-duplicate channel worth
+using alongside it:
+[`help.x.com/en/forms/account-restoration/locked`](https://help.x.com/en/forms/account-restoration/locked)
+("Your Account is locked"). X's own denial calls this a lock, so filing the
+lock form is answering X in X's own terms rather than refiling the same
+appeal twice, and it puts the notice-versus-state discrepancy in front of a
+different queue. Both render only in a real browser. An EU variant of the
+lock form exists (`account-restoration/locked-eu`) and does not apply from
+the US; see section 7 point 5 on why EU routes are not available here. Appeal #1 was denied on 2026-09-05,
 so section 6 step 5 applies: reworded, and carrying a fact the first one did
 not have. It carries three.
 
