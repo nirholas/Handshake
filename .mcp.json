@@ -21,6 +21,10 @@
 				"MCP_SVM_PAYMENT_ADDRESS": "${MCP_SVM_PAYMENT_ADDRESS}"
 			}
 		},
+		"blender": {
+			"command": "node",
+			"args": ["packages/blender-mcp/src/index.js"]
+		},
 		"atelier": {
 			"type": "http",
 			"url": "https://app.useatelier.ai/mcp"

@@ -4942,6 +4942,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/blender-mcp",
+					"title": "Docs · Blender MCP",
+					"description": "Give an AI agent the Blender on your own machine, headless: inspect, convert, render and script 3D files, plus text-to-3D straight into a scene.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/spatial-mcp",
 					"title": "Docs · Spatial MCP",
 					"description": "An open response shape for returning a live, interactive 3D scene as an MCP tool result instead of a URL in text. A conforming host renders it inline: orbit, animate, and place it in AR. Free to implement, CC0.",

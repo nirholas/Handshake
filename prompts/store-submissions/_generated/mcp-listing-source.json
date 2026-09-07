@@ -23,9 +23,9 @@
     "icon": "Card/avatar image on all directories."
   },
   "counts": {
-    "total": 50,
+    "total": 51,
     "remote": 7,
-    "stdio": 43
+    "stdio": 44
   },
   "servers": [
     {
@@ -412,6 +412,37 @@
       "websiteUrl": "https://three.ws",
       "repository": "https://github.com/nirholas/three.ws",
       "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fbilling-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/blender-mcp",
+      "title": "three.ws Blender",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/blender-mcp",
+      "npmPackage": "@three-ws/blender-mcp",
+      "version": "0.1.0",
+      "description": "Drive a local Blender headlessly: inspect, convert, render and script 3D files.",
+      "tagline": "Drive the Blender on your own machine: inspect, convert, render and script 3D files, headless.",
+      "category": "3d",
+      "tags": [
+        "blender",
+        "gltf",
+        "fbx",
+        "usd",
+        "render",
+        "headless",
+        "pipeline"
+      ],
+      "examplePrompts": [
+        "What is inside this FBX: how many triangles, materials and bones?",
+        "Convert this FBX to a web-ready GLB in metres and render me a preview.",
+        "Halve the triangle count on every mesh and export it as a new GLB."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fblender-mcp",
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {

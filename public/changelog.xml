@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Point an AI agent at the Blender on your own machine</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-07:Point an AI agent at the Blender on your own machine</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new MCP server drives the Blender you already have installed, with no GUI open and no add-on to install first. An assistant can now read a 3D file and tell you what is actually in it (objects, triangle counts, materials, bones, animations, real-world size), convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and .blend in either direction, render a preview image of a bare asset file that arrives with no camera or lighting of its own, and run a Blender Python script to do the things no single tool covers, like halving a mesh's triangle count and exporting the result in one step. It also reaches back into three.ws: describe something in a sentence and the free text-to-3D lane generates it and opens it in Blender. Blender runs in the background, one process per request, so it works the same on a laptop, a server, or in CI.</description>
+		</item>
+		<item>
 			<title>Docs · Pocket Console</title>
 			<link>https://three.ws/docs/pocket</link>
 			<guid isPermaLink="false">2026-09-05:Docs · Pocket Console</guid>
@@ -125,6 +133,14 @@
 			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The navigation bar was set to stick to the top of the window but never actually did: it scrolled away with the page on every route, at every screen size, so reaching the menu meant scrolling all the way back up. The bar was mounted inside a wrapper exactly its own height, and a sticky element can only travel inside its parent, so it had nowhere to go. The header now stays on screen wherever you scroll, on phones and desktop alike.</description>
+		</item>
+		<item>
+			<title>The VS Code extension now animates, refines, optimizes and reviews your models, and checks your embeds</title>
+			<link>https://three.ws/docs/vscode</link>
+			<guid isPermaLink="false">2026-09-05:The VS Code extension now animates, refines, optimizes and reviews your models, and checks your embeds</guid>
+			<pubDate>Sat, 05 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Open a rigged model in VS Code, press Animate, and pick from the same 2,800-clip motion library the site uses: the clip is retargeted onto that model's own skeleton right in the editor, and Bake clip writes it into a copy of the file so it plays in Unity, Unreal or Blender too. Describe a motion in words and the GPU fleet samples one for you. Refine takes a change like make it metallic and generates a new version anchored to the current one, keeping the version history. Optimize runs the platform's web passes on your machine and tells you what it saved. Compare pulls the committed version straight out of git, opens both side by side, and writes a structural review of what changed. Check quality asks a vision model to score the render and hands its fix straight to Refine. A turntable GIF button makes README material in one click. And in HTML, React, Vue, Svelte, Astro and Markdown files the editor now checks agent-3d tags as you type: a missing source or size, an unpinned library script, a stale integrity hash the browser would refuse, a misspelt attribute, each with a one-click fix, plus hovers and completions for every attribute.</description>
 		</item>
 		<item>
 			<title>Walk up to an IRL agent, talk to it out loud, and stand it on your floor in AR</title>

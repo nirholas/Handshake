@@ -128,7 +128,8 @@
 		"packages/portal",
 		"packages/tty-avatar",
 		"packages/home-bridge",
-		"packages/home-mcp"
+		"packages/home-mcp",
+		"packages/blender-mcp"
 	],
 	"main": "src/app.js",
 	"browserslist": [

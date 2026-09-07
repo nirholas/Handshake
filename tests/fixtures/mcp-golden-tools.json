@@ -397,6 +397,32 @@
 			"schemaHash": "9609ea7b118c"
 		}
 	],
+	"api/_mcp/tools/library.js": [
+		{
+			"name": "get_catalog_item",
+			"title": "Read one catalog item",
+			"descHead": "FREE, no account or payment. Read one three.ws catalog item in full by i",
+			"descHash": "0aa2b2e399fe",
+			"annotations": "ref:READ_ANNOTATIONS",
+			"schemaHash": "7d00667a7c62"
+		},
+		{
+			"name": "get_item_source",
+			"title": "Get paste-ready source for a catalog item",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:READ_ANNOTATIONS",
+			"schemaHash": "0277736ebf5c"
+		},
+		{
+			"name": "search_catalog",
+			"title": "Search the three.ws asset catalog",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:READ_ANNOTATIONS",
+			"schemaHash": "f097cbda0f2e"
+		}
+	],
 	"api/_mcp/tools/memory.js": [
 		{
 			"name": "forget",
@@ -2147,6 +2173,94 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "2a36fb1e6577"
+		}
+	],
+	"packages/blender-mcp/src/tools/convert.js": [
+		{
+			"name": "blender_convert",
+			"title": "Convert a 3D file between formats",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "0bcf070dca1a"
+		}
+	],
+	"packages/blender-mcp/src/tools/forge-import.js": [
+		{
+			"name": "blender_forge_import",
+			"title": "Generate a 3D model with three.ws and open it in Blender",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "d01f6cc958ef"
+		}
+	],
+	"packages/blender-mcp/src/tools/info.js": [
+		{
+			"name": "blender_info",
+			"title": "Inspect the local Blender install",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "44136fa355b3"
+		}
+	],
+	"packages/blender-mcp/src/tools/render.js": [
+		{
+			"name": "blender_render",
+			"title": "Render a preview image of a 3D file",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "410e05e10d92"
+		}
+	],
+	"packages/blender-mcp/src/tools/run-python.js": [
+		{
+			"name": "blender_run_python",
+			"title": "Run a Python script inside Blender",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"idempotentHint": false,
+				"openWorldHint": false
+			},
+			"schemaHash": "16cd5146d77d"
+		}
+	],
+	"packages/blender-mcp/src/tools/scene-info.js": [
+		{
+			"name": "blender_scene_info",
+			"title": "Describe a 3D file with Blender",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "0a178135c9d4"
 		}
 	],
 	"packages/brain-mcp/src/tools/chat.js": [

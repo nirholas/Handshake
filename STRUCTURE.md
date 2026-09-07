@@ -337,6 +337,7 @@ packages/alibaba-cloud-mcp/   → @three-ws/alibaba-cloud-mcp  (MCP server — A
 packages/three-token-mcp/     → @three-ws/three-token-mcp   (MCP server — $THREE token tools)
 packages/threews-avatar-mcp/  → @three-ws/threews-avatar-mcp (MCP server — three.ws avatar ops)
 packages/scene-mcp/           → @three-ws/scene-mcp         (MCP server — text→3D diorama scenes)
+packages/blender-mcp/         → @three-ws/blender-mcp       (MCP server - drives a LOCAL headless Blender: inspect/convert/render/script 3D files, plus text-to-3D import)
 packages/assistant-mcp/       → @three-ws/assistant-mcp     (MCP server — generate a 3D avatar assistant widget embed)
 packages/vanity-mcp/          → @three-ws/vanity-mcp        (MCP server — Solana vanity bounty market + rarity gallery)
 packages/naming-mcp/          → @three-ws/naming-mcp        (MCP server — .sol resolve + *.threews.sol identity availability)

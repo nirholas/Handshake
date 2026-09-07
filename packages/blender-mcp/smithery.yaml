@@ -1,0 +1,21 @@
+# Smithery deployment config for @three-ws/blender-mcp
+# https://smithery.ai/docs/config#smitheryyaml
+#
+# This server drives a Blender install on the host it runs on, so a hosted
+# deployment needs Blender 3.0+ present in the runtime image.
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      blenderPath:
+        type: string
+        title: Blender executable
+        description: Absolute path to Blender 3.0+. Leave empty to discover it on PATH.
+    required: []
+  commandFunction: |
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@three-ws/blender-mcp"],
+      env: config.blenderPath ? { BLENDER_PATH: config.blenderPath } : {}
+    })

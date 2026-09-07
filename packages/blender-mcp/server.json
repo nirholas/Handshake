@@ -1,0 +1,82 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/blender-mcp",
+	"title": "three.ws Blender",
+	"description": "Drive a local Blender headlessly: inspect, convert, render and script 3D files.",
+	"websiteUrl": "https://three.ws",
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": [
+				"any"
+			]
+		}
+	],
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/blender-mcp"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/blender-mcp",
+			"version": "0.1.0",
+			"runtimeHint": "npx",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "BLENDER_PATH",
+					"description": "Absolute path to the Blender 3.0+ executable. Leave unset to discover it on PATH and at the platform's standard install locations.",
+					"format": "string",
+					"isRequired": false
+				},
+				{
+					"name": "BLENDER_MCP_TIMEOUT_MS",
+					"description": "Ceiling for one Blender job in milliseconds. Renders and heavy conversions are the slow ones.",
+					"format": "number",
+					"isRequired": false,
+					"default": "300000"
+				},
+				{
+					"name": "BLENDER_MCP_WORKDIR",
+					"description": "Directory for outputs written when a tool is called without an explicit output path.",
+					"format": "string",
+					"isRequired": false
+				},
+				{
+					"name": "BLENDER_MCP_ALLOW_PYTHON",
+					"description": "Set to 0 to withdraw blender_run_python, which executes caller-supplied Python inside Blender, from the advertised tool list.",
+					"format": "string",
+					"isRequired": false,
+					"default": "1"
+				},
+				{
+					"name": "THREE_WS_BASE",
+					"description": "Base URL of the three.ws deployment backing blender_forge_import.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://three.ws"
+				},
+				{
+					"name": "THREE_WS_FORGE_TIMEOUT_MS",
+					"description": "Ceiling for one text-to-3D generation in milliseconds.",
+					"format": "number",
+					"isRequired": false,
+					"default": "600000"
+				},
+				{
+					"name": "THREE_WS_FORGE_PROVIDER_KEY",
+					"description": "Meshy/Tripo API key for the bring-your-own-key geometry lane. The default image lane is free and needs no key.",
+					"format": "string",
+					"isSecret": true,
+					"isRequired": false
+				}
+			]
+		}
+	]
+}

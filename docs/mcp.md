@@ -43,7 +43,7 @@ The MCP server configuration is at `.mcp.json` in the project root, which Claude
 
 ## The full three.ws MCP ecosystem
 
-This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **50 three.ws MCP servers**, all listed in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas), so any MCP-compatible client can discover them by name.
+This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **51 three.ws MCP servers**, all listed in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas), so any MCP-compatible client can discover them by name.
 
 The hosted servers are also self-describing: [`https://three.ws/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json) is a machine-readable directory of every hosted endpoint with its transport, auth model, and a one-line description, so an agent can enumerate all of them with a single fetch.
 
@@ -61,7 +61,7 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `get_new_tokens` and `get_trending_tokens` read the live pump.fun feed with no indexer needed; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
-**Forty install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
+**Forty-one install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
 
 ```bash
 # 3D & avatars
@@ -71,6 +71,7 @@ npx -y @three-ws/avatar-mcp       # drop a live 3D avatar into any chat
 npx -y @three-ws/concierge-mcp    # ask any site's AI concierge; generate the 3D chat-widget embed
 npx -y @three-ws/avatar-agent     # turn any GLB into a riggable 3D AI agent
 npx -y @three-ws/mcp-server       # full 3D + agent toolkit, paid per call in USDC
+npx -y @three-ws/blender-mcp      # drive the Blender on your own machine, headless (needs Blender 3.0+ installed)
 
 # Payments & the agent economy
 npx -y @three-ws/x402-mcp         # self-custodial wallet: find, inspect & pay any x402 service in USDC
@@ -149,6 +150,7 @@ Ready-to-submit listing packages for each directory, plus the canonical metadata
 Deep dives — every tool, argument, env var, and example:
 
 - **Hosted remote:** [3D Studio (free)](./mcp-studio.md) · [3D Studio (paid)](./mcp-3d-studio.md) · [Agent wallet](./mcp-agent.md) · [x402 Bazaar](./mcp-x402-bazaar.md) · [IBM x402](./ibm-x402-mcp.md)
+- **Runs against your machine:** [Blender MCP](./blender-mcp.md) drives the Blender installed on your own computer, headless: inspect, convert, render and script 3D files, plus text-to-3D straight into a scene.
 - **Install-and-run:** each npm server ships its usage guide (tools, arguments, env vars, examples) in its package README on [npmjs.com/org/three-ws](https://www.npmjs.com/org/three-ws). The [MCP Tools Catalog](./mcp-tools.md) maps every tool to its server and price.
 
 ---

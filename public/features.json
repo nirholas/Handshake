@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-05T16:25:38.038Z",
+	"generated_at": "2026-09-07T00:35:01.146Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6372,6 +6372,16 @@
 					"path": "/docs/solana",
 					"title": "Docs · Solana agents",
 					"description": "Give your agent a real on-chain identity on Solana. Your wallet signs one transaction that mints an NFT representing the agent, which is what lets the identity outlive any single platform.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/blender-mcp",
+					"title": "Docs · Blender MCP",
+					"description": "Give an AI agent the Blender on your own machine, headless: inspect, convert, render and script 3D files, plus text-to-3D straight into a scene.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

@@ -26759,6 +26759,15 @@
 				"improvement"
 			],
 			"link": "/demo"
+		},
+		{
+			"date": "2026-09-07",
+			"title": "Point an AI agent at the Blender on your own machine",
+			"summary": "A new MCP server drives the Blender you already have installed, with no GUI open and no add-on to install first. An assistant can now read a 3D file and tell you what is actually in it (objects, triangle counts, materials, bones, animations, real-world size), convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and .blend in either direction, render a preview image of a bare asset file that arrives with no camera or lighting of its own, and run a Blender Python script to do the things no single tool covers, like halving a mesh's triangle count and exporting the result in one step. It also reaches back into three.ws: describe something in a sentence and the free text-to-3D lane generates it and opens it in Blender. Blender runs in the background, one process per request, so it works the same on a laptop, a server, or in CI.",
+			"tags": [
+				"feature",
+				"sdk"
+			]
 		}
 	]
 }

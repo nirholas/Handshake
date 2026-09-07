@@ -64,6 +64,16 @@ const OVERLAY = {
 			"Announce the build result on my open three.ws tab.",
 		],
 	},
+	"io.github.nirholas/blender-mcp": {
+		tagline: "Drive the Blender on your own machine: inspect, convert, render and script 3D files, headless.",
+		category: "3d",
+		tags: ["blender", "gltf", "fbx", "usd", "render", "headless", "pipeline"],
+		examplePrompts: [
+			"What is inside this FBX: how many triangles, materials and bones?",
+			"Convert this FBX to a web-ready GLB in metres and render me a preview.",
+			"Halve the triangle count on every mesh and export it as a new GLB.",
+		],
+	},
 	"io.github.nirholas/home-mcp": {
 		tagline: "Read and safely act on a real Home Assistant house: rooms, live state, scenes, gated actions.",
 		category: "home",
