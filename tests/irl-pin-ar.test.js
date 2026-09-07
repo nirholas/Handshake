@@ -50,7 +50,7 @@ describe('absoluteGlbUrl', () => {
 	});
 
 	it('passes an absolute CDN URL through untouched', () => {
-		const cdn = 'https://cdn.three.ws/models/abc.glb?v=2';
+		const cdn = 'https://three.ws/cdn/models/abc.glb?v=2';
 		expect(absoluteGlbUrl(cdn, ORIGIN)).toBe(cdn);
 	});
 

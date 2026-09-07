@@ -84,8 +84,8 @@ Every word of `q` must match somewhere, which keeps a two-word query precise. If
 			"tags": ["chair", "wood", "painted"],
 			"license": "CC0",
 			"format": "glb",
-			"url": "https://cdn.three.ws/objects/polyhaven/glb/painted_wooden_chair_01.glb",
-			"thumb": "https://cdn.three.ws/objects/polyhaven/thumbs/painted_wooden_chair_01.png",
+			"url": "https://three.ws/cdn/objects/polyhaven/glb/painted_wooden_chair_01.glb",
+			"thumb": "https://three.ws/cdn/objects/polyhaven/thumbs/painted_wooden_chair_01.png",
 			"bytes": 491572
 		}
 	],
@@ -127,14 +127,14 @@ Returns the item, the site links that browse/preview/edit it, up to six related 
 		"browse": "https://three.ws/objects",
 		"preview": "https://three.ws/app#model=...&kind=object",
 		"ar": "https://three.ws/ar/studio?src=...",
-		"download": "https://cdn.three.ws/objects/..."
+		"download": "https://three.ws/cdn/objects/..."
 	},
 	"related": [{ "id": "object:bar_chair_round_01", "title": "Bar Chair Round 01" }],
 	"frameworks": ["model-viewer", "three", "agent-3d", "react"],
 	"snippets": {
 		"model-viewer": {
 			"language": "html",
-			"code": "<model-viewer src=\"https://cdn.three.ws/...\" ...></model-viewer>",
+			"code": "<model-viewer src=\"https://three.ws/cdn/...\" ...></model-viewer>",
 			"notes": ["This is the exact renderer and build the three.ws browse grids use."]
 		}
 	}
