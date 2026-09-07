@@ -538,6 +538,7 @@ function renderDrawer(navData) {
 	html += navData.DRAWER_LEGAL.map(renderDrawerLink).join('');
 	html += `<div class="dr-h"${i18nAttr('More')}>More</div>`;
 	html += navData.NAV_LINKS.filter((l) => !l.highlight).map(renderTopLink).join('');
+	html += `<a href="/mine" id="home-nav-drawer-mine" data-auth="in" hidden${i18nAttr('My creations')}>My creations</a>`;
 	html += `<a href="/dashboard" id="home-nav-drawer-dashboard" data-auth="in" hidden${i18nAttr('Dashboard')}>Dashboard</a>`;
 	html += `<a href="/guardian" id="home-nav-drawer-guardian" data-auth="in" hidden${i18nAttr('Guardian console')}>Guardian console</a>`;
 	html += `<div class="sep"></div>`;

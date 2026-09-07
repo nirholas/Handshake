@@ -98,6 +98,23 @@
 	padding: 7px 16px; border-radius: 7px; margin-left: 6px;
 }
 .nav-end .console:hover { border-color: var(--nv-text); background: rgba(255,255,255,0.04); }
+
+/* "My creations": the way back to everything you built. It sits beside the
+   plain nav-end links but reads as a control, not prose: people came looking
+   for a button, so give them one they can spot without reading the row. */
+.nav-end .nav-mine {
+	gap: 7px; color: var(--nv-text); font-weight: 500;
+	border: 1px solid var(--nv-hairline); border-radius: 7px; padding: 6px 12px;
+}
+.nav-end .nav-mine:hover { border-color: var(--nv-hairline-strong); background: rgba(255,255,255,0.04); }
+.nav-mine-ico { flex: none; opacity: 0.72; }
+.nav-end .nav-mine:hover .nav-mine-ico { opacity: 1; }
+/* Below the wide breakpoint the row gets tight: keep the icon, drop the words.
+   The title attribute keeps the label reachable for pointer and assistive tech. */
+@media (max-width: 1080px) {
+	.nav-mine-label { display: none; }
+	.nav-end .nav-mine { padding: 6px 9px; }
+}
 .nav-end [hidden] { display: none; }
 
 /* $THREE holder tier chip. The chip's own look (pill, tier colours) is injected

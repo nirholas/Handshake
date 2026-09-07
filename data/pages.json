@@ -2657,6 +2657,16 @@
 					"added": "2026-04-28"
 				},
 				{
+					"path": "/mine",
+					"title": "My Creations",
+					"description": "Everything you have made on three.ws in one newest-first grid: the agents you built, the 3D avatars you saved, and every model you forged, including models forged in this browser before you had an account. Open, edit, or copy a link to any of them in one click.",
+					"priority": 0.5,
+					"changefreq": "daily",
+					"auth": "optional",
+					"indexable": false,
+					"added": "2026-09-07"
+				},
+				{
 					"path": "/profile",
 					"title": "Your creator portfolio",
 					"description": "Your public three.ws portfolio: every avatar, agent, forged 3D model, world, coin, skill, and plugin you've made, in one place. Signed out, this redirects to sign-in; every user's own page also lives at /u/:username.",

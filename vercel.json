@@ -1016,6 +1016,14 @@
 			"dest": "/creations.html"
 		},
 		{
+			"src": "/mine/?",
+			"dest": "/mine.html"
+		},
+		{
+			"src": "/my-creations/?",
+			"dest": "/mine.html"
+		},
+		{
 			"src": "/pulse/?",
 			"dest": "/pulse.html"
 		},

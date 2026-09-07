@@ -111,6 +111,18 @@
 				</svg>
 				<span class="nav-notif-badge" hidden aria-live="polite"></span>
 			</button>
+			<!-- "Where did the thing I just made go?" is answered here: the one-click way back to
+			     everything you built. Signed-in only; signed-out visitors reach it
+			     from the Build menu, and /mine still shows this browser's models. -->
+			<a class="nav-mine" href="/mine" id="home-nav-mine" data-auth="in" hidden aria-label="My creations" title="Everything you have made" data-i18n-attr="aria-label:nav.my_creations_arialabel;title:nav.everything_you_have_made_title">
+				<svg class="nav-mine-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="15" height="15">
+					<rect x="2.75" y="2.75" width="6" height="6" rx="1.6" />
+					<rect x="11.25" y="2.75" width="6" height="6" rx="1.6" />
+					<rect x="2.75" y="11.25" width="6" height="6" rx="1.6" />
+					<rect x="11.25" y="11.25" width="6" height="6" rx="1.6" />
+				</svg>
+				<span class="nav-mine-label" data-i18n="nav.my_creations">My creations</span>
+			</a>
 			<a href="/dashboard" id="home-nav-dashboard-li" data-auth="in" hidden data-i18n="nav.4zftyz">Dashboard</a>
 			<a href="/login" id="home-nav-cta" data-auth="out" data-i18n="nav.w9nig3">Sign in</a>
 			<a class="console" href="/dashboard" id="home-nav-user" data-auth-name data-i18n="nav.15pjwv8">Console →</a>

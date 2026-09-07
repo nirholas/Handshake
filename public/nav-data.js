@@ -59,6 +59,12 @@ export const NAV_GROUPS = [
 						desc: 'The front door: pick agent, avatar, 3D model, or token world',
 					},
 					{
+						title: 'My Creations',
+						href: '/mine',
+						badge: 'New',
+						desc: 'Everything you have made: agents, avatars and forged models, newest first',
+					},
+					{
 						title: 'Create an agent',
 						href: '/create-agent',
 						desc: 'Guided wizard: name, 3D body, skills, personality → ship it',
