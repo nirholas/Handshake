@@ -72,7 +72,7 @@ export const LIMB_GROUPS = Object.freeze([
 // `schema` maps onto the avatar-manifest `skeleton` enum
 // (packages/avatar-schema/schema/avatar.v1.json), so the generated manifest
 // declares the right value instead of defaulting everything to `custom`.
-const CONVENTIONS = [
+export const CONVENTIONS = [
 	{
 		id: 'rpm', label: 'Ready Player Me', schema: 'rpm',
 		test: (ctx) => ctx.meshNames.some((n) => /^Wolf3D_/i.test(n)) && ctx.joints.some((n) => /Hips$/i.test(n)),
