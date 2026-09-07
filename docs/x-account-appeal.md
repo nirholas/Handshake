@@ -449,6 +449,19 @@ Point 4 asks for counts and dates only, deliberately. Asking who reported the
 account guarantees a refusal on third-party privacy grounds and gives X a
 clean reason to decline the whole request rather than the parts it can answer.
 
+## Filing log
+
+Every contact with X about this suspension, in order. Append to it; never
+rewrite an earlier line.
+
+| When | What | Result |
+| --- | --- | --- |
+| 2026-08-27 06:29 | X emails: account "was reported and has been suspended" for "violating our rules against authenticity". | Suspension confirmed; public user endpoint answers "User is suspended". |
+| 2026-08-28 06:26 | Appeal #1 filed through the form with the text in section 5. | Form acknowledged receipt. Awaiting review. Next check: log in daily; earliest refiling if silent or auto-denied: 2026-08-31. |
+| 2026-09-05 04:25 | X emails the decision on appeal #1: "a violation of our Rules did take place", "Violating our Rules against authenticity", "we will not overturn our decision to lock your account". Adds that functionality can be restored by "logging into your account and completing the on-screen instructions". | Denied. Eight days from filing, so a human review rather than the documented same-day auto-denial: appeal #2 must carry a new fact, not the same text. See section 6 step 5. |
+| 2026-09-06 | Public probe re-run against both handles from a datacenter IP. | `@nichxbt` (id `2817123964`) still answers `"User is suspended"`; control `@trythreews` answers `200` and live. The denial's "lock" wording did not come with a change of state. X's own syndication endpoint rate-limits this IP (`429`), so the probe went through a public mirror of the same endpoint. |
+| 2026-09-07 | Owner logs in as `@nichxbt` to look for the remediation flow the denial pointed at. | Nothing on offer: no lock prompt, no phone/email/recaptcha step, no ID verification. This closes the ID-verification path (section 6 step 2) rather than leaving it open, and it confirms from inside the account what the probe showed from outside: the enforcement applied is a suspension, so the denial's "lock" wording and its remediation sentence describe a state this account is not in. Appeal #2 leads with exactly that. |
+
 ## The schedule, from here
 
 Dates matter more than effort in this process: section 3 found that every
@@ -468,18 +481,6 @@ of Product (point 2) needs a personal or community account and must never run
 from `@trythreews`, so it has no vehicle while the personal account is down.
 Legal (point 6) ends every goodwill path above it and is not opened on a case
 this young.
-
-## Filing log
-
-Every contact with X about this suspension, in order. Append to it; never
-rewrite an earlier line.
-
-| When | What | Result |
-| --- | --- | --- |
-| 2026-08-27 06:29 | X emails: account "was reported and has been suspended" for "violating our rules against authenticity". | Suspension confirmed; public user endpoint answers "User is suspended". |
-| 2026-08-28 06:26 | Appeal #1 filed through the form with the text in section 5. | Form acknowledged receipt. Awaiting review. Next check: log in daily; earliest refiling if silent or auto-denied: 2026-08-31. |
-| 2026-09-05 04:25 | X emails the decision on appeal #1: "a violation of our Rules did take place", "Violating our Rules against authenticity", "we will not overturn our decision to lock your account". Adds that functionality can be restored by "logging into your account and completing the on-screen instructions". | Denied. Eight days from filing, so a human review rather than the documented same-day auto-denial: appeal #2 must carry a new fact, not the same text. See section 6 step 5. |
-| 2026-09-06 | Public probe re-run against both handles from a datacenter IP. | `@nichxbt` (id `2817123964`) still answers `"User is suspended"`; control `@trythreews` answers `200` and live. The denial's "lock" wording did not come with a change of state. X's own syndication endpoint rate-limits this IP (`429`), so the probe went through a public mirror of the same endpoint. |
 
 ## 6. The order of operations
 
