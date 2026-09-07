@@ -12,7 +12,6 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { env } from '../api/_lib/env.js';
-import { objectStorageConfigured } from '../api/_lib/r2.js';
 
 const KEYS = ['S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'S3_ENDPOINT', 'S3_BUCKET', 'S3_PUBLIC_DOMAIN'];
 let saved;
@@ -47,25 +46,5 @@ describe('S3 credential getters', () => {
 	it('treats a whitespace-only credential as missing, not as configured', () => {
 		process.env.S3_SECRET_ACCESS_KEY = '   \n';
 		expect(() => env.S3_SECRET_ACCESS_KEY).toThrow(/S3_SECRET_ACCESS_KEY/);
-	});
-});
-
-describe('objectStorageConfigured', () => {
-	it('is false when a credential is present but blank', () => {
-		process.env.S3_ENDPOINT = 'https://acct.r2.cloudflarestorage.com';
-		process.env.S3_BUCKET = 'three-ws';
-		process.env.S3_PUBLIC_DOMAIN = 'https://pub-example.r2.dev';
-		process.env.S3_ACCESS_KEY_ID = 'AKIAEXAMPLE';
-		process.env.S3_SECRET_ACCESS_KEY = '\n';
-		expect(objectStorageConfigured()).toBe(false);
-	});
-
-	it('is true when every var carries a real value', () => {
-		process.env.S3_ENDPOINT = 'https://acct.r2.cloudflarestorage.com';
-		process.env.S3_BUCKET = 'three-ws';
-		process.env.S3_PUBLIC_DOMAIN = 'https://pub-example.r2.dev';
-		process.env.S3_ACCESS_KEY_ID = 'AKIAEXAMPLE';
-		process.env.S3_SECRET_ACCESS_KEY = 'abc123secret';
-		expect(objectStorageConfigured()).toBe(true);
 	});
 });

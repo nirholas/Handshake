@@ -70,13 +70,26 @@ export function objectStorageConfigured() {
 // Exported as a pattern string so the SQL repair path can ask the same question
 // with `~*` instead of maintaining a second, drifting copy (see
 // resetInfrastructureFailures in avatar-thumbs.js). JS/POSIX-ERE compatible.
+// `does not match the signature` is the S3 error's human MESSAGE; the compact
+// `SignatureDoesNotMatch` form only ever appears in err.name / err.Code, never in
+// the sentence the SDK throws. Matching the name alone (as this did until
+// 2026-09-07) meant the single most common credential fault sailed past every
+// caller of this helper, including the batch runners that use it to decide
+// whether an asset is blameless, and surfaced to users as a raw "Check your
+// secret access key" in the browser.
 export const STORAGE_ERROR_PATTERN =
-	'missing required env var: s3_|invalidaccesskeyid|signaturedoesnotmatch|nosuchbucket|access denied|econnrefused|enotfound|socket hang up|econnreset';
+	'missing required env var: s3_|invalidaccesskeyid|signaturedoesnotmatch|does not match the signature|nosuchbucket|access denied|econnrefused|enotfound|socket hang up|econnreset';
 
 const STORAGE_ERROR_RE = new RegExp(STORAGE_ERROR_PATTERN, 'i');
 
 export function isStorageInfrastructureError(err) {
-	return STORAGE_ERROR_RE.test(String(err?.message || err || ''));
+	// The SDK splits one fault across three fields: name/Code carry the compact
+	// code, message carries the sentence. Judge all of them, so neither shape
+	// escapes.
+	const text = [err?.name, err?.Code, err?.message ?? (err == null ? '' : String(err))]
+		.filter(Boolean)
+		.join(' ');
+	return STORAGE_ERROR_RE.test(text);
 }
 
 // Short-lived signed URL for direct browser upload (PUT).

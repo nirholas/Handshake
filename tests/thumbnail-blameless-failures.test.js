@@ -107,4 +107,14 @@ describe('objectStorageConfigured', () => {
 			expect(withEnv(partial, objectStorageConfigured), `missing ${missing}`).toBe(false);
 		}
 	});
+
+	// A credential that is nothing but a newline is not configured storage: it
+	// signs every request straight into a SignatureDoesNotMatch while a bare
+	// truthiness check reads healthy.
+	it('is false when any single var is blank', () => {
+		for (const blank of KEYS) {
+			const padded = { ...full, [blank]: '  \n' };
+			expect(withEnv(padded, objectStorageConfigured), `blank ${blank}`).toBe(false);
+		}
+	});
 });

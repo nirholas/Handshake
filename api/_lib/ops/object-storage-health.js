@@ -55,8 +55,14 @@ export function classifyObjectStorageProbe(probe) {
 		}
 		return { status: 'ok', detail: `signed read ok (${ms}ms)` };
 	}
-	const message = String(probe.error?.message || probe.error || 'unknown error');
-	const rejected = /signaturedoesnotmatch|invalidaccesskeyid|access denied|forbidden/i.test(message);
+	const err = /** @type {any} */ (probe.error);
+	const message = String(err?.message || err || 'unknown error');
+	// The compact code lives in name/Code and the sentence in message, so read
+	// both: `SignatureDoesNotMatch` never appears in the text a user or a log
+	// line sees (see isStorageInfrastructureError in ../r2.js).
+	const rejected = /signaturedoesnotmatch|does not match the signature|invalidaccesskeyid|access denied|forbidden/i.test(
+		[err?.name, err?.Code, message].filter(Boolean).join(' '),
+	);
 	return {
 		status: 'down',
 		detail: rejected
