@@ -23,6 +23,19 @@ function trimSlash(s) {
 // checksum. Trim address-like env values at the source so no consumer ever
 // emits whitespace into a 402 challenge. Returns undefined when blank so the
 // `if (env.X402_PAY_TO_SOLANA)` guards downstream still skip cleanly.
+// A credential pasted into a dashboard, echoed into a Secret Manager payload, or
+// copied out of a provider console frequently carries a trailing newline or a
+// stray space. For an S3-compatible key that whitespace is invisible and fatal:
+// the SDK signs the request with the padded secret and the store answers
+// `SignatureDoesNotMatch`, which reads as "wrong key" rather than "wrong
+// bytes". Trim credential-class values at the source, the same way addr() does
+// for addresses, so no signer ever sees the padding.
+function secret(name) {
+	const v = req(name).trim();
+	if (!v) throw new Error(`Missing required env var: ${name}`);
+	return v;
+}
+
 function addr(value) {
 	if (value == null) return value;
 	const v = String(value).trim();
@@ -283,10 +296,10 @@ export const env = {
 		return trimSlash(req('S3_ENDPOINT'));
 	},
 	get S3_ACCESS_KEY_ID() {
-		return req('S3_ACCESS_KEY_ID');
+		return secret('S3_ACCESS_KEY_ID');
 	},
 	get S3_SECRET_ACCESS_KEY() {
-		return req('S3_SECRET_ACCESS_KEY');
+		return secret('S3_SECRET_ACCESS_KEY');
 	},
 	get S3_BUCKET() {
 		return req('S3_BUCKET');

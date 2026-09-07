@@ -47,12 +47,16 @@ export const r2 = new Proxy(
 // claim a batch of work and fail every item on `Missing required env var: S3_…`
 // gate on this and skip the tick instead (api/cron/avatar-thumbnail-*.js).
 export function objectStorageConfigured() {
-	return Boolean(
-		process.env.S3_ENDPOINT &&
-			process.env.S3_BUCKET &&
-			process.env.S3_PUBLIC_DOMAIN &&
-			process.env.S3_ACCESS_KEY_ID &&
-			process.env.S3_SECRET_ACCESS_KEY,
+	// Trimmed, because a credential that is nothing but a newline is not
+	// configured storage: it signs every request into a `SignatureDoesNotMatch`
+	// while every truthiness check above it reads healthy (see env.js secret()).
+	const set = (name) => Boolean(String(process.env[name] ?? '').trim());
+	return (
+		set('S3_ENDPOINT') &&
+		set('S3_BUCKET') &&
+		set('S3_PUBLIC_DOMAIN') &&
+		set('S3_ACCESS_KEY_ID') &&
+		set('S3_SECRET_ACCESS_KEY')
 	);
 }
 
