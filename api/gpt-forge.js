@@ -98,6 +98,7 @@ import {
 	markFailed,
 	findByJob,
 } from './_lib/forge-store.js';
+import { isStorageInfrastructureError } from './_lib/r2.js';
 import { getSessionUser } from './_lib/auth.js';
 import { constantTimeEquals } from './_lib/crypto.js';
 import {
@@ -2489,6 +2490,21 @@ async function startJob(req, res) {
 				error: 'generation_unavailable',
 				message: 'Free 3D generation is temporarily unavailable. Please try again shortly.',
 				retry_after: 30,
+			});
+		}
+		// Object storage rejected us (a rotated/whitespace-padded credential, or an
+		// unreachable endpoint). Nothing about the prompt is wrong and no lane
+		// failover can route around it: every lane has to park a reference image or
+		// a finished mesh in the bucket. Answer with the designed unavailable state
+		// instead of forwarding the store's raw signing complaint, which read as
+		// "Check your secret access key" in the user's browser on 2026-09-07.
+		if (isStorageInfrastructureError(err)) {
+			console.error(`[gpt-forge] object storage rejected the generation: ${err?.message || err}`);
+			res.setHeader('retry-after', '60');
+			return json(res, 503, {
+				error: 'storage_unavailable',
+				message: '3D generation is temporarily unavailable while our asset storage recovers. Please try again shortly.',
+				retry_after: 60,
 			});
 		}
 		return json(res, 502, {

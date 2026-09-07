@@ -37,6 +37,7 @@ import { rateLimiterHealth } from '../rate-limit.js';
 import { checkRingInvariants } from '../x402/ring-allowlist.js';
 import { gatherX402SettleHealth } from './x402-settle-health.js';
 import { gatherForgeHealth } from './forge-health-sensor.js';
+import { gatherObjectStorageHealth } from './object-storage-health.js';
 import { gatherIndexLagHealth } from './index-lag.js';
 import { gatherHomeHealth } from './home-health.js';
 import { describeSolvency } from '../sniper-solvency.js';
@@ -557,6 +558,12 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		// Settle SUCCESS RATE, not just "armed" — reads x402_autonomous_log. Needs
 		// the DB, so it shares the probeDb gate; skipped-DB callers get `unknown`.
 		probeDb ? gatherX402SettleHealth() : Promise.resolve({ name: 'x402_settle', label: 'x402 settlement success', status: 'unknown', detail: 'settle read skipped' }),
+		// Object storage credentials. Not DB-gated: it is a signed one-key list
+		// against the bucket. A rejected credential takes down 3D generation AND
+		// every avatar/thumbnail/GLB read at once, and on 2026-09-07 it did so with
+		// no health signature at all, because the forge sensor below can only see
+		// generations that got far enough to write a row.
+		gatherObjectStorageHealth(),
 		// Generation SUCCESS RATE, not just lane liveness — reads forge_creations.
 		// DB-gated like the settle sensor; skipped-DB callers get `unknown`.
 		probeDb ? gatherForgeHealth() : Promise.resolve({ name: 'forge_generation', label: 'Forge 3D generation', status: 'unknown', detail: 'forge read skipped' }),

@@ -19,7 +19,7 @@
 
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { cors, error, wrap } from './_lib/http.js';
-import { r2 } from './_lib/r2.js';
+import { r2, isStorageInfrastructureError, publicUrlOrNull } from './_lib/r2.js';
 import { env } from './_lib/env.js';
 
 // Object keys are caller-controlled path input — keep them boring. UUID-based
@@ -161,6 +161,25 @@ export default wrap(async (req, res) => {
 		}
 		if (code === 'InvalidRange' || status === 416) {
 			return error(res, 416, 'invalid_range', 'requested range not satisfiable');
+		}
+		// The signed read itself is broken: the credentials are rejected, or the
+		// endpoint is unreachable, which says nothing about the object. The same
+		// bytes are readable, unauthenticated, on the bucket's public domain, so
+		// hand the caller there instead of 502ing every avatar, thumbnail and GLB
+		// on the site. On 2026-09-07 a rejected R2 secret took the signed read
+		// down and this route answered `upstream_error` for every object it
+		// serves; the public domain was serving those same keys with a 200
+		// throughout. Redirect, never cache: 302 + no-store, so the moment the
+		// credential is healthy again traffic returns to the signed path (which
+		// exists to dodge the public domain's rate limit) without a stale hop
+		// pinned in anyone's cache.
+		const fallback = isStorageInfrastructureError(err) ? publicUrlOrNull(key) : null;
+		if (fallback) {
+			console.error('[cdn-object] signed read failed, serving public bucket domain:', key, err?.message);
+			res.statusCode = 302;
+			res.setHeader('location', fallback);
+			res.setHeader('cache-control', 'no-store');
+			return res.end();
 		}
 		console.error('[cdn-object] r2 fetch failed:', key, err?.message);
 		return error(res, 502, 'upstream_error', 'failed to fetch object');
