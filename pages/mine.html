@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>My Creations · three.ws</title>
+		<meta
+			name="description"
+			content="Everything you have made on three.ws in one place: your agents, your 3D avatars, and every model you forged, newest first. Open, edit, or share any of them in one click."
+		/>
+		<meta name="robots" content="noindex, follow" />
+		<link rel="canonical" href="https://three.ws/mine" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/mine" />
+		<meta property="og:title" content="My Creations · three.ws" />
+		<meta property="og:description" content="Your agents, avatars, and forged 3D models on three.ws, newest first." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=My+Creations&amp;d=Your+agents%2C+avatars%2C+and+forged+3D+models+on+three.ws%2C+newest+first.&amp;p=%2Fmine" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="My Creations · three.ws" />
+		<meta name="twitter:description" content="Your agents, avatars, and forged 3D models on three.ws, newest first." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=My+Creations&amp;d=Your+agents%2C+avatars%2C+and+forged+3D+models+on+three.ws%2C+newest+first.&amp;p=%2Fmine" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/mine.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<script src="/model-viewer-meshopt.js"></script>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"></script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="mn-shell">
+			<section class="mn-hero">
+				<p class="mn-kicker">Your account</p>
+				<h1 class="mn-title">My <em>Creations</em></h1>
+				<p class="mn-sub">
+					Everything you have made on three.ws, newest first: the agents you built, the 3D avatars you
+					saved, and every model you forged. Open one, edit it, or copy its link.
+				</p>
+				<div class="mn-hero-ctas">
+					<a class="mn-btn mn-btn-primary" href="/create-agent">Create an agent</a>
+					<a class="mn-btn" href="/forge">Forge a 3D model</a>
+					<a class="mn-btn" href="/create">All the ways to create</a>
+				</div>
+			</section>
+
+			<div class="mn-note" id="mn-anon-note" hidden role="status">
+				<div class="mn-note-body">
+					<strong>You are signed out.</strong>
+					This page is showing the models forged in this browser. Sign in to see the agents and avatars
+					saved to your account.
+				</div>
+				<a class="mn-btn mn-btn-primary" id="mn-anon-signin" href="/login?next=%2Fmine">Sign in</a>
+			</div>
+
+			<section class="mn-stats" id="mn-stats" hidden aria-label="What you have made">
+				<a class="mn-stat" href="#mn-grid" data-stat-filter="agent">
+					<span class="mn-stat-n" id="mn-stat-agents">0</span>
+					<span class="mn-stat-l">Agents</span>
+				</a>
+				<a class="mn-stat" href="#mn-grid" data-stat-filter="avatar">
+					<span class="mn-stat-n" id="mn-stat-avatars">0</span>
+					<span class="mn-stat-l">Avatars</span>
+				</a>
+				<a class="mn-stat" href="#mn-grid" data-stat-filter="model">
+					<span class="mn-stat-n" id="mn-stat-models">0</span>
+					<span class="mn-stat-l">3D models</span>
+				</a>
+			</section>
+
+			<div class="mn-controls" id="mn-controls" hidden>
+				<label class="mn-search" for="mn-search-input">
+					<svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+						<circle cx="7.5" cy="7.5" r="5" />
+						<line x1="11.5" y1="11.5" x2="16" y2="16" />
+					</svg>
+					<input type="search" id="mn-search-input" placeholder="Search your creations by name or prompt" autocomplete="off" />
+					<span class="mn-sr-only">Search your creations</span>
+				</label>
+				<div class="mn-chips" role="tablist" aria-label="Filter by type">
+					<button type="button" class="mn-chip is-on" role="tab" aria-selected="true" data-filter="all">All</button>
+					<button type="button" class="mn-chip" role="tab" aria-selected="false" data-filter="agent">Agents</button>
+					<button type="button" class="mn-chip" role="tab" aria-selected="false" data-filter="avatar">Avatars</button>
+					<button type="button" class="mn-chip" role="tab" aria-selected="false" data-filter="model">3D models</button>
+				</div>
+			</div>
+
+			<section class="mn-results" aria-label="Your creations">
+				<div class="mn-grid" id="mn-grid" aria-busy="true"></div>
+			</section>
+
+			<section class="mn-elsewhere" id="mn-elsewhere" hidden>
+				<h2 class="mn-section-h">Looking for something else?</h2>
+				<div class="mn-elsewhere-links">
+					<a class="mn-elsewhere-card" href="/profile">
+						<span class="mn-elsewhere-t">Public portfolio</span>
+						<span class="mn-elsewhere-d">The page other people see at three.ws/u/yourname</span>
+					</a>
+					<a class="mn-elsewhere-card" href="/dashboard">
+						<span class="mn-elsewhere-t">Console</span>
+						<span class="mn-elsewhere-d">Billing, API keys, wallets, and every advanced control</span>
+					</a>
+					<a class="mn-elsewhere-card" href="/my-agents">
+						<span class="mn-elsewhere-t">On-chain agents</span>
+						<span class="mn-elsewhere-d">Agents registered to your linked wallets, ready to import</span>
+					</a>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/mine.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>
