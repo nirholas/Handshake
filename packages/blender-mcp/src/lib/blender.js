@@ -18,7 +18,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BLENDER_PATH, JOB_TIMEOUT_MS, WORKDIR } from '../config.js';
+import { BLENDER_PATH, JOB_TIMEOUT_MS, MAX_CONCURRENCY, WORKDIR } from '../config.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const RUNNER_PATH = path.join(HERE, '..', 'py', 'runner.py');
@@ -30,6 +30,7 @@ const MIN_VERSION = [3, 0];
 const LOG_TAIL_BYTES = 4000;
 
 let cached = null;
+let inFlight = null;
 
 function candidatePaths() {
 	const found = [];
@@ -55,29 +56,46 @@ function candidatePaths() {
 	return found;
 }
 
+/**
+ * Probe one candidate with `--version`.
+ *
+ * Returns `{ version, tuple }` on success, or `{ error }` naming what went
+ * wrong. The distinction matters: a spawn that fails because the host is out of
+ * memory is transient and worth retrying, while a binary that is not Blender
+ * never will be. Collapsing both into "not found" is what turns a busy machine
+ * into a message telling the user to install software they already have.
+ */
 function runVersion(binary) {
 	return new Promise((resolve) => {
 		let child;
 		try {
 			child = spawn(binary, ['--version'], { stdio: ['ignore', 'pipe', 'pipe'] });
-		} catch {
-			resolve(null);
+		} catch (err) {
+			resolve({ error: `spawn failed: ${err.message}`, transient: true });
 			return;
 		}
 		let out = '';
-		const timer = setTimeout(() => child.kill('SIGKILL'), 20000);
+		let timedOut = false;
+		const timer = setTimeout(() => {
+			timedOut = true;
+			child.kill('SIGKILL');
+		}, 20000);
 		child.stdout.on('data', (chunk) => {
 			out += chunk;
 		});
-		child.on('error', () => {
+		child.on('error', (err) => {
 			clearTimeout(timer);
-			resolve(null);
+			resolve({ error: `spawn failed: ${err.message}`, transient: true });
 		});
 		child.on('close', () => {
 			clearTimeout(timer);
+			if (timedOut) {
+				resolve({ error: '--version did not answer within 20s', transient: true });
+				return;
+			}
 			const match = /Blender\s+(\d+)\.(\d+)(?:\.(\d+))?/i.exec(out);
 			if (!match) {
-				resolve(null);
+				resolve({ error: 'ran, but did not identify itself as Blender', transient: false });
 				return;
 			}
 			resolve({
@@ -96,18 +114,29 @@ function runVersion(binary) {
  */
 export async function resolveBlender() {
 	if (cached) return cached;
+	// Parallel tool calls must share one discovery pass. Without this, several
+	// calls each spawn their own `--version` probes at the same moment, which is
+	// exactly the memory pressure that makes probing fail.
+	if (inFlight) return inFlight;
+	inFlight = discoverBlender().finally(() => {
+		inFlight = null;
+	});
+	return inFlight;
+}
 
-	const tried = [];
-	for (const candidate of candidatePaths()) {
-		if (tried.includes(candidate)) continue;
-		tried.push(candidate);
+async function probeCandidates(candidates) {
+	const diagnostics = [];
+	for (const candidate of candidates) {
 		try {
 			await access(candidate, constants.X_OK);
 		} catch {
-			continue;
+			continue; // Nothing there: not worth reporting, the list is speculative.
 		}
 		const info = await runVersion(candidate);
-		if (!info) continue;
+		if (info.error) {
+			diagnostics.push({ path: candidate, problem: info.error, transient: info.transient });
+			continue;
+		}
 		if (info.tuple[0] < MIN_VERSION[0] || (info.tuple[0] === MIN_VERSION[0] && info.tuple[1] < MIN_VERSION[1])) {
 			throw Object.assign(
 				new Error(
@@ -116,8 +145,39 @@ export async function resolveBlender() {
 				{ code: 'blender_too_old' },
 			);
 		}
-		cached = { path: candidate, version: info.version, tuple: info.tuple };
+		return { found: { path: candidate, version: info.version, tuple: info.tuple }, diagnostics };
+	}
+	return { found: null, diagnostics };
+}
+
+async function discoverBlender() {
+	const candidates = [...new Set(candidatePaths())];
+	let { found, diagnostics } = await probeCandidates(candidates);
+
+	// A Blender that exists but would not answer is a transient condition on a
+	// loaded machine, not a missing install. Give it one more chance before
+	// telling anyone their setup is wrong.
+	if (!found && diagnostics.some((entry) => entry.transient)) {
+		await new Promise((resolve) => setTimeout(resolve, 750));
+		const retry = await probeCandidates(diagnostics.filter((entry) => entry.transient).map((entry) => entry.path));
+		if (retry.found) found = retry.found;
+		else diagnostics = [...diagnostics, ...retry.diagnostics];
+	}
+
+	if (found) {
+		cached = found;
 		return cached;
+	}
+
+	if (diagnostics.length > 0) {
+		throw Object.assign(
+			new Error(
+				`Blender is installed at ${diagnostics[0].path} but could not be run: ${diagnostics[0].problem}. ` +
+					'On a loaded machine this is usually transient (retry the call); otherwise check that the executable ' +
+					'works by running it yourself, or point BLENDER_PATH at a different one.',
+			),
+			{ code: 'blender_unusable', diagnostics },
+		);
 	}
 
 	throw Object.assign(
@@ -126,13 +186,14 @@ export async function resolveBlender() {
 				'and either put it on PATH or set BLENDER_PATH to the executable ' +
 				'(macOS: /Applications/Blender.app/Contents/MacOS/Blender).',
 		),
-		{ code: 'blender_not_found', tried: tried.slice(0, 12) },
+		{ code: 'blender_not_found', tried: candidates.slice(0, 12) },
 	);
 }
 
 /** Reset the cached executable. Tests use this; nothing else needs it. */
 export function resetBlenderCache() {
 	cached = null;
+	inFlight = null;
 }
 
 function tail(text) {
@@ -144,6 +205,27 @@ function tail(text) {
 export async function ensureWorkdir() {
 	await mkdir(WORKDIR, { recursive: true });
 	return WORKDIR;
+}
+
+// Blender costs a few hundred MB per process, so unbounded parallelism on a
+// small machine turns into spawn failures rather than throughput. Calls queue
+// instead of competing.
+let running = 0;
+const waiting = [];
+
+async function acquireSlot() {
+	if (running < MAX_CONCURRENCY) {
+		running += 1;
+		return;
+	}
+	await new Promise((resolve) => waiting.push(resolve));
+	running += 1;
+}
+
+function releaseSlot() {
+	running -= 1;
+	const next = waiting.shift();
+	if (next) next();
 }
 
 /**
@@ -158,6 +240,7 @@ export async function ensureWorkdir() {
 export async function runJob(job, { timeoutMs } = {}) {
 	const blender = await resolveBlender();
 	await ensureWorkdir();
+	await acquireSlot();
 	const dir = await mkdtemp(path.join(WORKDIR, 'job-'));
 	const jobPath = path.join(dir, 'job.json');
 	const resultPath = path.join(dir, 'result.json');
@@ -224,6 +307,7 @@ export async function runJob(job, { timeoutMs } = {}) {
 		}
 		return { ...payload, blender_path: blender.path };
 	} finally {
+		releaseSlot();
 		await rm(dir, { recursive: true, force: true });
 	}
 }

@@ -47,6 +47,20 @@ export const WORKDIR = path.resolve(env('BLENDER_MCP_WORKDIR', path.join(os.tmpd
 // unattended deployments and the tool is not advertised at all.
 export const ALLOW_PYTHON = boolean('BLENDER_MCP_ALLOW_PYTHON', true);
 
+// Longest edge of the render copy returned inline in a tool result. A tool
+// result travels through the model's context, so the image that goes back is a
+// scaled copy; the full-resolution PNG is always written to disk.
+export const INLINE_IMAGE_MAX_PX = positiveNumber('BLENDER_MCP_INLINE_IMAGE_PX', 768);
+
+// Hard ceiling on the inlined bytes. Past this the image is left on disk and the
+// response says so, rather than blowing up the caller's context.
+export const INLINE_IMAGE_MAX_BYTES = positiveNumber('BLENDER_MCP_INLINE_IMAGE_BYTES', 1500000);
+
+// How many Blender processes may run at once. Each one costs a few hundred MB,
+// and a parallel agent issuing several calls at once on a small machine pushed
+// the host into spawn failures that surfaced as a bogus "Blender not found".
+export const MAX_CONCURRENCY = positiveNumber('BLENDER_MCP_MAX_CONCURRENCY', 2);
+
 // three.ws deployment backing blender_forge_import.
 export const THREE_WS_BASE = env('THREE_WS_BASE', 'https://three.ws').replace(/\/+$/, '');
 

@@ -81,13 +81,19 @@ export function buildServer() {
 				try {
 					const result = await tool.handler(args, extra);
 					const text = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
-					return { content: [{ type: 'text', text }] };
+					// A tool may return extra MCP content blocks alongside its JSON
+					// payload. blender_render uses this to hand back the rendered
+					// image itself, so the caller can SEE the model in the same call
+					// instead of needing filesystem access it may not have.
+					const attachments = tool.attachments ? await tool.attachments(result) : [];
+					return { content: [{ type: 'text', text }, ...attachments] };
 				} catch (err) {
 					const payload = {
 						ok: false,
 						error: err?.code || 'unhandled',
 						message: err?.message || String(err),
 						...(err?.status ? { status: err.status } : {}),
+						...(err?.diagnostics ? { diagnostics: err.diagnostics } : {}),
 						...(err?.traceback ? { traceback: err.traceback } : {}),
 						...(err?.log ? { blender_log: err.log } : {}),
 					};
