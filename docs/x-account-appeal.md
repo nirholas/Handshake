@@ -404,6 +404,71 @@ apology. It does not repeat appeal #1's sentences about what the account is
 used for; a reviewer who pulls the file can already see appeal #1, and
 repeating it is what section 4 says gets refilings denied.
 
+## 5c. The data-access request, ready to file
+
+**Status: written, NOT yet filed.** Section 7 point 4 says to file this
+regardless of what the appeals do, and that judgement stands: it costs
+nothing, it dates the request, and it is the only route that has ever forced
+X to name the real trigger for an enforcement action, albeit in the EU and
+only under litigation (Mekic v. X). From the US it is a long shot. File it
+anyway, and do not wait on it or let it change the appeal cadence.
+
+**Where it goes:**
+[`help.x.com/en/forms/privacy/request-account-info/me`](https://help.x.com/en/forms/privacy/request-account-info/me)
+(the "myself" branch of `forms/privacy/request-account-info`; the other
+branches are for a representative or an organisation). Like every other
+`help.x.com` page it answers `403` to an automated reader and renders only in
+a browser.
+
+**What it is actually for.** The gap this packet cannot close from outside is
+that nobody has ever been told *which* post or behaviour triggered the
+report. Every appeal so far argues the rule does not fit the account, which
+is a claim about the whole account. If X returns even the rule sub-clause or
+the date of the triggering content, the next appeal stops being general and
+becomes specific, and section 1 already shows specific appeals do far better.
+That is the value here, not the privacy right itself.
+
+> Under the California Consumer Privacy Act I am requesting the specific
+> pieces of personal information you hold about my account @nichxbt (user ID
+> 2817123964), and in particular:
+>
+> 1. The enforcement record for this account: every action taken against it,
+>    the date of each, and whether each was applied as a lock or a suspension.
+> 2. The specific rule or sub-clause of the authenticity policy the account
+>    was found to have violated on August 27, 2026, and the content or
+>    behaviour that triggered it.
+> 3. Whether the action was taken by an automated system or a human reviewer,
+>    and the output of any automated classifier applied to the account.
+> 4. The number of reports received against the account and the dates they
+>    were received. I am not requesting the identity of any reporter.
+>
+> I am the account holder and I can complete any identity verification you
+> require to process this request.
+
+Point 4 asks for counts and dates only, deliberately. Asking who reported the
+account guarantees a refusal on third-party privacy grounds and gives X a
+clean reason to decline the whole request rather than the parts it can answer.
+
+## The schedule, from here
+
+Dates matter more than effort in this process: section 3 found that every
+documented success spaced its filings and every documented failure did not.
+Section 4's specific finding is that nobody who succeeded filed within 24
+hours of a denial.
+
+| When | What | Gate it satisfies |
+| --- | --- | --- |
+| 2026-09-05 | Appeal #1 denied. | |
+| 2026-09-07 onward | **Appeal #2 (section 5b) is fileable now.** Two days past the denial, and the text is new rather than a resend. File the lock form (section 5b) at the same time; it is a different queue, not a second filing in the same one. File the data-access request above on the same day. | Past the 24-hour floor. |
+| 3 to 5 days after #2 | Appeal #3: reworded again, one further new fact. Do not send it sooner even if nothing has come back. | The 3-to-5-day spacing. |
+| 2026-09-11 at the earliest, and only after three filings | Executive email, once (section 7 point 3). Both conditions are required: two weeks of the form path, which began 2026-08-28, and three filings on the record. | Section 7 point 3. |
+
+Two escalations in section 7 stay shut for now. The public thread to X's Head
+of Product (point 2) needs a personal or community account and must never run
+from `@trythreews`, so it has no vehicle while the personal account is down.
+Legal (point 6) ends every goodwill path above it and is not opened on a case
+this young.
+
 ## Filing log
 
 Every contact with X about this suspension, in order. Append to it; never
