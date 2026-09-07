@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-09-07T00:35:01.169Z",
+	"generated_at": "2026-09-07T01:11:24.115Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "A payment we cannot read now comes back with the price list, not a bare error",
+			"summary": "When an agent pays one of our x402 endpoints and the payment header arrives mangled (truncated in transit, double-encoded, wrapped by a proxy), the answer used to be a plain 400 error with no prices in it, so the agent had nothing left to work from and no way to retry. Every rejected payment now returns the ordinary 402 with the full list of accepted rails, tokens and amounts attached, exactly as it does when a payment is simply missing. That is what the x402 spec and the OKX seller SDK both do, and it means a paying agent can always read the quote again and try once more. Only a real server fault answers without a quote.",
+			"link": "/docs/okx-marketplace",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-09-07",
 			"type": "update",

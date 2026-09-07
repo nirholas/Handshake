@@ -95,6 +95,19 @@ On an unpaid request to a paid A2MCP resource, respond `HTTP 402` with:
 | `resource.mimeType` | ⬜ optional | `"application/json"` (WIRE-OKLINK). WIRE-COINANK omits it. |
 | top-level `error` | conditional | Added only on a rejected paid replay (e.g. `"insufficient_balance"`); the full `accepts` is re-emitted so the client can retry. See PAY-LEG2 / Appendix D. |
 
+**Rule: every rejected payment leaves with the quotation attached, an undecodable
+`PAYMENT-SIGNATURE` included.** OKX's seller SDK (`@okxweb3/x402-core`,
+`x402HTTPResourceServer.extractPayment`) catches a header it cannot base64/JSON-decode, logs
+it, and treats the request as unpaid, so the caller gets the ordinary 402 with the full
+`accepts` back. Ours used to answer that one case with a bare `HTTP 400
+{"error":"invalid_payment"}` and no `accepts` at all. A marketplace validator that replays a
+payment reads a response with no `accepts` as "the x402 quotation cannot be parsed", which is
+verbatim the internal note on the 2026-09-04 rejection. Only a genuine server fault (5xx) may
+answer a paid request without re-emitting the quotation. Implemented in `sendX402Error()`
+([api/_mcp/payments.js](../api/_mcp/payments.js)) for the A2MCP rows and in
+`handleRestService()` ([api/okx/3d/[service].js](../api/okx/3d/%5Bservice%5D.js)) for the REST
+rows; covered by `tests/api/okx-forge.test.js` and `tests/api/okx-3d-services.test.js`.
+
 Notes vs. our current Bazaar-heavy body: OKX sellers emit **no** `extensions.bazaar`, **no** `builder-code`, **no** `offer-receipt`, **no** per-accept `description`. The OKX validator does not require them; keep the body minimal for the `eip155:196` accepts.
 
 ### 1.2 Verify → do-work → settle (seller → OKX facilitator)

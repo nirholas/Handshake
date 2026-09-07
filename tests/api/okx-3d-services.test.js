@@ -570,6 +570,25 @@ describe('failure paths never charge', () => {
 		expect(settlePaymentMock).not.toHaveBeenCalled();
 	});
 
+	// The decode failure used to be the one rejection on the paid path that
+	// answered without a quotation (a bare 400 carrying no accepts[]), which a
+	// marketplace validator replaying a payment reads as an unparseable x402
+	// quotation. OKX's own seller SDK re-issues the 402 here.
+	it('an undecodable payment header re-issues the quotation, never a bare 400', async () => {
+		const { X402Error } = await import('../../api/_lib/x402-errors.js');
+		verifyPaymentMock.mockRejectedValueOnce(
+			new X402Error('invalid_payment', 'X-PAYMENT JSON parse failed: Unexpected token', 400),
+		);
+		const res = makeRes();
+		await handler(paidReq('rig', VALID_INPUT.rig), res);
+		expect(res.statusCode).toBe(402);
+		const body = JSON.parse(res.body);
+		expect(body).toEqual(decode402Header(res));
+		expect(body.accepts[0].network).toBe('eip155:196');
+		expect(body.error).toMatch(/parse failed/);
+		expect(settlePaymentMock).not.toHaveBeenCalled();
+	});
+
 	it('settle failure after delivered work surfaces the x402 error path', async () => {
 		const { X402Error } = await import('../../api/_lib/x402-errors.js');
 		settlePaymentMock.mockRejectedValueOnce(new X402Error('settle_failed', 'facilitator down', 502));

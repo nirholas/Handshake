@@ -303,6 +303,33 @@ describe('402 challenge: the OKX Agent Payments Protocol integration', () => {
 		expect(submitted).toHaveLength(0);
 	});
 
+	// A payment header we cannot decode is still a caller trying to pay, and the
+	// only thing it can do next is read the quotation again. OKX's own seller
+	// SDK answers an undecodable PAYMENT-SIGNATURE with a fresh 402; ours
+	// answered a bare 400 whose body carried no accepts[] at all, the one
+	// response on the paid path with nothing to parse.
+	for (const header of ['not-base64-at-all!!', Buffer.from('notjson', 'utf8').toString('base64')]) {
+		it(`an undecodable PAYMENT-SIGNATURE (${header.slice(0, 12)}) re-issues the quotation, never a bare 400`, async () => {
+			const res = makeRes();
+			await handler(
+				makeReq({
+					service: 'forge-draft',
+					body: rpc(FORGE_TOOL, { prompt: 'a low-poly fox' }),
+					headers: { 'payment-signature': header },
+				}),
+				res,
+			);
+			expect(res.statusCode).toBe(402);
+			expect(res.headers['payment-required']).toBeTruthy();
+			const challenge = JSON.parse(res.body);
+			expect(challenge.x402Version).toBe(2);
+			expect(challenge.accepts[0].network).toBe('eip155:196');
+			expect(challenge.accepts[0].amount).toBe('10000');
+			expect(challenge.error).toMatch(/PAYMENT|JSON|decode/i);
+			expect(submitted).toHaveLength(0);
+		});
+	}
+
 	// GET is the discovery challenge a reviewer opens first. paymentRequirements()
 	// was quoting the shared default there while the prepended rail quoted the
 	// real price, so the same rail appeared twice at two different amounts and a

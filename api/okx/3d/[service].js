@@ -329,7 +329,13 @@ async function handleRestService(req, res, entry) {
 		try {
 			verified = await verifyPayment({ paymentHeader, requirements });
 		} catch (err) {
-			if (err instanceof X402Error && err.status === 402) {
+			// A rejected payment always leaves with the quotation attached, an
+			// undecodable PAYMENT-SIGNATURE included (that one used to answer a
+			// bare 400 carrying no accepts[], which a marketplace validator
+			// replaying a payment reads as "the x402 quotation cannot be
+			// parsed"). Same rule as sendX402Error on the A2MCP branch, and the
+			// same rule OKX's own seller SDK follows.
+			if (err instanceof X402Error && (err.status === 402 || err.code === 'invalid_payment')) {
 				return sendOkx402(res, { resourceUrl, accepts: requirements, error: err.message });
 			}
 			return error(res, err.status || 502, err.code || 'verify_failed', err.message);

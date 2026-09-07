@@ -1,0 +1,59 @@
+{
+  "captured_at": "2026-09-07T01:06:51.767Z",
+  "tool": "onchainos agent x402-check (onchainos v4.5.2)",
+  "note": "OKX's own endpoint validator, the tool behind the listing review's quotation stage. Run against production.",
+  "rows": {
+    "forge-draft": {
+      "ok": true,
+      "amountHuman": 0.01,
+      "amountMinimal": "10000",
+      "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+      "decimals": 6,
+      "network": "eip155:196",
+      "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+      "scheme": "exact",
+      "tokenSymbol": "USDT",
+      "valid": true,
+      "x402Version": 2
+    },
+    "forge-standard": {
+      "ok": true,
+      "amountHuman": 0.05,
+      "amountMinimal": "50000",
+      "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+      "decimals": 6,
+      "network": "eip155:196",
+      "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+      "scheme": "exact",
+      "tokenSymbol": "USDT",
+      "valid": true,
+      "x402Version": 2
+    },
+    "forge-hd": {
+      "ok": true,
+      "amountHuman": 0.25,
+      "amountMinimal": "250000",
+      "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+      "decimals": 6,
+      "network": "eip155:196",
+      "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+      "scheme": "exact",
+      "tokenSymbol": "USDT",
+      "valid": true,
+      "x402Version": 2
+    },
+    "forge-image": {
+      "ok": true,
+      "amountHuman": 0.25,
+      "amountMinimal": "250000",
+      "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+      "decimals": 6,
+      "network": "eip155:196",
+      "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+      "scheme": "exact",
+      "tokenSymbol": "USDT",
+      "valid": true,
+      "x402Version": 2
+    }
+  }
+}

@@ -16,7 +16,16 @@ export { reservePaymentProof } from '../_lib/x402/payment-identifier-server.js';
 // server's description and no serviceName/tags/iconUrl.
 export async function sendX402Error(res, { resourceUrl, accepts, challenge }, err) {
 	if (err instanceof X402Error) {
-		if (err.status === 402)
+		// Every rejected payment re-issues the quotation, including a payment
+		// header we could not even decode. OKX's own seller SDK
+		// (@okxweb3/x402-core) treats an undecodable PAYMENT-SIGNATURE as "no
+		// payment presented" and answers 402 with a fresh challenge; ours
+		// answered a bare 400 whose body carried no accepts[] at all. A
+		// marketplace validator that replays a payment reads that response as
+		// "x402 quotation cannot be parsed", which is verbatim what OKX's
+		// listing review reported (rejection 2026-09-04, internal note). Only a
+		// genuine server fault may answer without a quotation.
+		if (err.status === 402 || err.code === 'invalid_payment')
 			return await send402(res, { resourceUrl, accepts, ...(challenge || {}), error: err.message });
 		res.statusCode = err.status;
 		res.setHeader('content-type', 'application/json; charset=utf-8');

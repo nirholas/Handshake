@@ -6,6 +6,75 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-07, the new rejection email is the OLD verdict: the listing state never moved, and OKX's own validator now passes us
+
+An OKX rejection mail landed naming all four paid rows plus the internal note *"x402 quotation
+cannot be parsed or is non-compliant (parsing failed / no exact / missing amount), and has not
+entered the payment stage."* Read live before touching anything: **that is rejection #3's
+verdict, not a new one.**
+
+- `agent get-my-agents` reads `approvalDisplayStatus: 5`, `approvalLabel: "Listing rejected"`,
+  the same state as 2026-09-05. Nothing was resubmitted, so nothing was re-reviewed. The
+  4109-character `approvalRemark` is the same text the 2026-09-04 session root-caused
+  (the internal note included, quoted verbatim in the entry below).
+- Both defects that verdict describes have been live-fixed since the 2026-09-05 release, and
+  both gates are green again today against production: `okx-compliance-probe.mjs` →
+  `PASS 20 probes` (capture `85-2026-09-07-compliance-probe.json`),
+  `okx-payment-leg-probe.mjs` → `PASS 4 paid rows accepted a signed authorization`.
+
+### OKX's own validator was pointed at the endpoints, and it passes
+
+`onchainos agent x402-check` is the tool behind the review's quotation stage. All four paid
+rows answer `"valid": true` with the rail resolved exactly as the service row registers it
+(`eip155:196`, `exact`, USD₮0, `payTo 0x4022de2D…f402`, `amountMinimal` 10000 / 50000 /
+250000 / 250000). Capture: `prompts/okx-ai/e2e-evidence/84-2026-09-07-okx-x402-check.json`.
+This is now a third pre-resubmission check in RUNBOOK §5.5.
+
+The live challenge was also run through OKX's published seller SDK
+(`@okxweb3/x402-core@0.1.0`, the package the rejection mail's SDK guide points at). Its
+`PaymentRequiredSchema` (zod) accepts our envelope from all eleven request shapes probed
+(bodyless POST, `{}`, `initialize`, `tools/list`, `tools/call`, text/plain, form-encoded,
+GET, GET+HTML, and a garbage payment header), and its `Base64EncodedRegex` accepts our
+`PAYMENT-REQUIRED` header. There is no shape left in which a compliant reader fails to parse
+what we serve.
+
+### One real divergence found and fixed: the rejection with no quotation
+
+The SDK's `extractPayment` catches a `PAYMENT-SIGNATURE` it cannot base64/JSON-decode and
+treats the request as unpaid, so the caller gets the ordinary 402 with the whole `accepts`
+back. Ours answered that single case with a bare `HTTP 400 {"error":"invalid_payment"}` and
+no `accepts` at all (long-standing, captured in `53-case5d-garbage.json` back in July). It is
+the only response on the paid path with nothing to parse, and it is what an audit agent
+replaying a payment would collect if its header ever arrived mangled. Both branches now
+re-issue the quotation:
+
+- A2MCP rows: `sendX402Error()` in `api/_mcp/payments.js` re-quotes on `err.status === 402`
+  **or** `err.code === 'invalid_payment'`. Only a genuine 5xx fault still answers bare.
+- REST rows: the same condition in `handleRestService()` (`api/okx/3d/[service].js`).
+- Covered by new cases in `tests/api/okx-forge.test.js` (43 pass) and
+  `tests/api/okx-3d-services.test.js`; `specs/okx-agent-payments.md` §1.1 states the rule.
+
+### Two chain facts worth not re-deriving
+
+- The audit address `0xbc59eb75…2033` holds **19.550213 USD₮0**, unchanged since 2026-09-04.
+  It was always funded, so no funding story explains any rejection.
+- No USD₮0 has moved INTO the seller `0x4022de2D…f402` between 2026-08-03 and 2026-09-07
+  (3.4 M blocks swept in 10 k chunks via `xlayer.drpc.org`; the public OKX/xlayer nodes cap
+  `eth_getLogs` at a 100-block range, which is why this needs drpc). Its 2.427731 USD₮0
+  predates that window. Nothing has ever settled on this rail, including OKX's 2026-08-27 QA
+  visit.
+
+### Still the only open step, still owner-gated
+
+```bash
+onchainos agent activate --agent-id 2632 --preferred-language en-US
+```
+
+An on-chain write. The code fix above should ship with it (deploy is owner-gated too), but it
+does not block: the quotation the reviewer parses is already correct in production today.
+
+---
+
 ## 2026-09-05, both fixes are LIVE in production and both were proven on the wire; only the resubmission is left
 
 The deploy the previous session staged went out with the morning release (production reads

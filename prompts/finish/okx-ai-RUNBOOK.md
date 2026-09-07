@@ -375,15 +375,18 @@ This is the holder-visible moment. Work the list top to bottom.
 
 ---
 
-## 5.5 The pre-resubmission gate: two probes, both must pass
+## 5.5 The pre-resubmission gate: three checks, all must pass
 
-Never resubmit on a code review alone. Both of these run against live production, take about
-a minute together, and each one covers a leg the other cannot see. Every rejection since
-2026-07-04 would have been caught by one of them.
+Never resubmit on a code review alone. These run against live production, take about a minute
+together, and each one covers a leg the others cannot see. Every rejection since 2026-07-04
+would have been caught by one of them.
 
 ```bash
 node scripts/okx-compliance-probe.mjs      # the 402 quotation, as the reviewer parses it
 node scripts/okx-payment-leg-probe.mjs     # the signed replay, as the reviewer pays it
+for s in forge-draft forge-standard forge-hd forge-image; do
+  onchainos agent x402-check --endpoint "https://three.ws/api/okx/3d/$s" --agent-id 2632
+done                                       # the quotation, as OKX's OWN validator parses it
 ```
 
 - **`okx-compliance-probe.mjs`** walks all four paid rows through five request shapes,
@@ -400,7 +403,16 @@ node scripts/okx-payment-leg-probe.mjs     # the signed replay, as the reviewer 
   buyer holds no USD₮0, so the run spends nothing; if it is ever funded the script refuses to
   sign without `--allow-spend`, because then a pass would be a real purchase.
 
-Both take `--base` (point them at a staged worktree's server before a deploy) and `--out`
+- **`onchainos agent x402-check`** is OKX's own endpoint validator, the tool behind the
+  review's quotation stage, so it answers the exact question the rejection note asks. A pass
+  reads `"valid": true` and echoes the rail it resolved: `network: eip155:196`,
+  `scheme: exact`, `amountMinimal` equal to the row's registered fee, `payTo` and `asset`
+  matching the service row. It needs a live wallet session (`onchainos wallet status` →
+  `loggedIn: true`), which is why the two scripts above stay the machine-runnable gate and
+  this is the confirmation on top of them. Capture:
+  `prompts/okx-ai/e2e-evidence/84-2026-09-07-okx-x402-check.json`.
+
+The two scripts take `--base` (point them at a staged worktree's server before a deploy) and `--out`
 (write the capture into `prompts/okx-ai/e2e-evidence/`). Commit the captures: they are the
 evidence trail for the next review.
 
