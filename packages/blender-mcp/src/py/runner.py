@@ -166,6 +166,43 @@ def triangle_count(obj, depsgraph):
         evaluated.to_mesh_clear()
 
 
+def image_inventory():
+    """Every image datablock with the numbers that decide a delivery budget.
+
+    A delivered GLB is usually mostly texture, not mesh, so "1 image" is not a
+    useful answer: resolution and byte size are what tell a caller whether to
+    resize before shipping. Bytes come from the packed file when the asset
+    carries its textures inline (every GLB does) and from disk otherwise.
+    """
+    images = []
+    total = 0
+    for image in bpy.data.images:
+        if image.source == "VIEWER" or not tuple(image.size):
+            continue
+        size_bytes = 0
+        if image.packed_file is not None:
+            size_bytes = image.packed_file.size
+        elif image.filepath:
+            try:
+                size_bytes = os.path.getsize(bpy.path.abspath(image.filepath))
+            except OSError:
+                size_bytes = 0
+        total += size_bytes
+        images.append(
+            {
+                "name": image.name,
+                "resolution": list(image.size),
+                "channels": image.channels,
+                "file_format": image.file_format,
+                "colorspace": image.colorspace_settings.name,
+                "bytes": size_bytes,
+                "packed": image.packed_file is not None,
+            }
+        )
+    images.sort(key=lambda entry: entry["bytes"], reverse=True)
+    return images, total
+
+
 def world_bounds(objects):
     """Axis-aligned world-space bounds of ``objects`` as (min, max, center, radius)."""
     corners = []
@@ -208,6 +245,7 @@ def scene_summary(include_objects=True):
             entry["bones"] = [bone.name for bone in obj.data.bones]
         objects.append(entry)
 
+    images, texture_bytes = image_inventory()
     bounds = world_bounds([obj for obj in bpy.context.scene.objects if obj.type in {"MESH", "CURVE", "SURFACE"}])
     animations = []
     for action in bpy.data.actions:
@@ -237,8 +275,10 @@ def scene_summary(include_objects=True):
             "actions": len(bpy.data.actions),
             "triangles": total_tris,
             "vertices": total_verts,
+            "texture_bytes": texture_bytes,
         },
         "materials": [mat.name for mat in bpy.data.materials],
+        "textures": images,
         "animations": animations,
     }
     if bounds:
@@ -442,6 +482,33 @@ def render_still(scene):
         return False
 
 
+def write_inline_preview(rendered_path, max_px):
+    """Save a downscaled copy of a render for returning inline to the caller.
+
+    A tool result travels through the model's context, so a full-resolution
+    render is the wrong thing to inline. Scaling happens in this same Blender
+    process rather than in a second launch, and the original file is untouched.
+    Returns the preview path, or None when the render is already small enough.
+    """
+    if not max_px or max_px <= 0:
+        return None
+    image = bpy.data.images.load(rendered_path)
+    try:
+        width, height = image.size
+        if max(width, height) <= max_px:
+            return None
+        ratio = max_px / float(max(width, height))
+        image.scale(max(int(width * ratio), 1), max(int(height * ratio), 1))
+        stem, ext = os.path.splitext(rendered_path)
+        preview_path = f"{stem}.preview{ext}"
+        image.filepath_raw = preview_path
+        image.file_format = "PNG"
+        image.save()
+        return preview_path
+    finally:
+        bpy.data.images.remove(image)
+
+
 def op_render(job):
     load_input(job["input"])
     scene = bpy.context.scene
@@ -475,10 +542,13 @@ def op_render(job):
     denoised = render_still(scene)
     if not os.path.isfile(output):
         raise JobError(f"Blender rendered but wrote no image at {output}", code="render_failed")
+    preview = write_inline_preview(output, int(job.get("inline_max_px", 0)))
     return {
         "input": os.path.abspath(job["input"]),
         "output": output,
         "output_bytes": os.path.getsize(output),
+        "preview": preview,
+        "preview_bytes": os.path.getsize(preview) if preview else None,
         "engine": engine,
         "samples": samples,
         "resolution": [scene.render.resolution_x, scene.render.resolution_y],
